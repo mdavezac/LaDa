@@ -120,6 +120,7 @@ def explore(self, cmdl):
 #     else: job.untag()
 
   elif args.type == "all": 
+    if interactive.jobfolder_path is None: return
     for job in interactive.jobfolder.itervalues(): job.untag()
 
 def _explore_impl(self, args):
@@ -197,8 +198,7 @@ def _explore_impl(self, args):
 def completer(self, event): 
   """ Completer for explore. """ 
   from ..jobfolder import JobFolder
-  from . import jobfolder_file_completer, get_shell
-  shell = get_shell(self)
+  from . import jobfolder_file_completer
   
   data = event.line.split()[1:]
   results, has_file, has_expr = [], False, False
@@ -210,9 +210,9 @@ def completer(self, event):
   if len(data) == 0: data = [''] 
   elif event.line[-1] == ' ': data.append('')
   if not has_file:
-    results.extend( name for name, u in shell.user_ns.iteritems()              \
+    results.extend( name for name, u in self.user_ns.iteritems()               \
                     if isinstance(u, JobFolder)                                \
                        and name[0] != '_'                                      \
                        and name not in data )
-  if not has_expr: results.extend( jobfolder_file_completer(self, data))
+  if not has_expr: results.extend( jobfolder_file_completer(data))
   return list(results)

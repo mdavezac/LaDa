@@ -164,7 +164,8 @@ debug_queue = "queue", "debug"
 qsub_exe = "sbatch"
 """ Qsub/sbatch executable. """
 
-default_pbs = {'account': accounts[0], 'walltime': "06:00:00", 'nnodes': 1 }
+default_pbs = { 'account': accounts[0], 'walltime': "06:00:00", 'nnodes': 1,
+                'ppn': 1 }
 """ Defaults parameters filling the pbs script. """
 pbs_string =  "#! /bin/bash/\n"\
               "#SBATCH --account={account}\n"\

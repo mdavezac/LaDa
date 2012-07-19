@@ -53,7 +53,7 @@ def get_shell(self):
   a = float(a) if a.find('.') != -1 else int(a)
   return self if a < 12 else self.shell
 
-def jobfolder_file_completer(self, data):
+def jobfolder_file_completer(data):
   """ Returns list of potential job-folder and directories. """
   from os.path import isdir
   from glob import iglob

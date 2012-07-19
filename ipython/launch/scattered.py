@@ -16,7 +16,7 @@ def launch(self, event, jobfolders):
   from ...misc import Changedir
   from ...jobfolder import __file__ as jobs_filename
   from ... import pbs_string, default_pbs, qsub_exe, default_comm
-  from . import get_walltime, get_mppalloc, get_queues
+  from . import get_walltime, get_mppalloc, get_queues, scattered_script
 
   shell = get_shell(self)
 
@@ -30,7 +30,8 @@ def launch(self, event, jobfolders):
  
 
   # gets python script to launch in pbs.
-  pyscript = jobs_filename.replace(splitpath(jobs_filename)[1], "runone.py")
+  pyscript = scattered_script.__file__
+  if pyscript[-1] == 'c': pyscript = pyscript[:-1]
 
   # creates file names.
   hasprefix = getattr(event, "prefix", None)                               

@@ -8,8 +8,8 @@ def launch(self, event, jobfolders):
   from os import remove
   from ... import pbs_string, default_pbs, qsub_exe, default_comm
   from .. import get_shell
-  from . import get_walltime, get_queues
-  from .. import __file__ as launch_filename
+  from . import get_walltime, get_queues, get_mppalloc
+  from . import asone_script
 
   shell = get_shell(self)
 
@@ -19,15 +19,17 @@ def launch(self, event, jobfolders):
   if not get_queues(shell, event, pbsargs): return
 
   # gets python script to launch in pbs.
-  pyscript = launch_filename.replace(dirname(launch_filename)[1], "asone.script.py")
+  pyscript = asone_script.__file__
+  if pyscript[-1] == 'c': pyscript = pyscript[:-1]
 
   # creates file names.
   hasprefix = getattr(event, "prefix", None)                               
   def pbspaths(directory, jobname, suffix):
     """ creates filename paths. """
-    return join( join(directory,jobname),
-                 '{0}-pbs{1}'.format(event.prefix, suffix) if hasprefix        \
-                 else 'pbs{0}'.format(suffix) ) 
+    name = '{0}-{1}{2}'.format(event.prefix, jobname, suffix) if hasprefix     \
+           else '{0}{1}'.format(jobname, suffix)
+    return join(directory, name)
+
   # now  loop over jobfolders
   pbsscripts = []
   for current, path in jobfolders:
@@ -47,24 +49,24 @@ def launch(self, event, jobfolders):
       nbjobs += 1
     if path.rfind('.') != -1: name = path[:path.rfind('.')]
     # now creates script
-    pbsargs['n'] = event.nbprocs                                              
+    pbsargs['n'] = get_mppalloc(shell, event, False)                                              
     pbsargs['nnodes'] = (pbsargs['n'] + pbsargs['ppn'] - 1)                    \
                         // pbsargs['ppn']                                     
-    pbsargs['err'] = pbspaths('{0}.err'.format(name))                    
-    pbsargs['out'] = pbspaths('{0}.out'.format(name))
+    pbsargs['err'] = pbspaths(directory, name, '.err')                    
+    pbsargs['out'] = pbspaths(directory, name, '.out')
     pbsargs['name'] = basename(path)
     pbsargs['directory'] = directory                                     
     pbsargs['scriptcommand']                                                   \
          = "{0} --nbprocs {n} --ppn {ppn} --pools={1} {2}"                     \
            .format(pyscript, event.pools, path, **pbsargs)                      
-    pbsscripts.append('{0}.script'.format(name))             
+    pbsscripts.append(pbspaths(directory, name, '.script')) 
                                                                          
     # write pbs scripts                                                  
     if exists(pbsscripts[-1]):
       a = ''
       while a not in ['n', 'y']:
         a = raw_input( "PBS script {0} already exists.\n"                      \
-                       "Are you sure this job is not currently running?"       \
+                       "Are you sure this job is not currently running [y/n]? "\
                        .format(pbsscripts[-1]) )
       if a == 'n':
         print "Aborting."
@@ -75,8 +77,8 @@ def launch(self, event, jobfolders):
                else pbs_string.format(**pbsargs)                         
       file.write(string)                                                 
     assert exists(pbsscripts[-1])                                        
-    print "Created pbsscript {0[-1]} for job-folder {1}."                      \
-          .format(pbsscripts, path)
+    print "Created pbsscript {0} for job-folder {1}."                          \
+          .format(pbsscripts[-1], path)
 
   if event.nolaunch: return
   # otherwise, launch.
@@ -85,30 +87,25 @@ def launch(self, event, jobfolders):
 
 def completer(self, info, data):
   """ Completer for scattered launcher. """
-  from .. import get_shell
-  from ... import queues, accounts, debug_queue, jobfolder_file_completer
-  try: 
-    shell = get_shell(self)
-    if len(data) > 0: 
-      if data[-1] == "--walltime":
-        return [ u for u in shell.user_ns                                        \
-                 if u[0] != '_' and isinstance(shell.user_ns[u], str) ]
-      elif data[-1] == "--pools":   return ['']
-      elif data[-1] == "--nbprocs": return ['']
-      elif data[-1] == '--ppn':     return ['']
-      elif data[-1] == "--prefix":  return ['']
-      elif data[-1] == "--queue":   return queues
-      elif data[-1] == "--account": return accounts
-    result = ['--force', '--walltime', '--nbprocs', '--help']
-    if len(queues) > 0: result.append("--queue") 
-    if len(accounts) > 0: result.append("--account") 
-    if debug_queue is not None: result.append("--debug")
-    result.extend(jobfolder_file_completer(self, [info.symbol]))
-    result = list(set(result) - set(data))
-    return result
-  except Exception as e:
-    print type(e), e
-    raise
+  from .. import jobfolder_file_completer
+  from ... import queues, accounts, debug_queue
+  if len(data) > 0: 
+    if data[-1] == "--walltime":
+      return [ u for u in self.user_ns                                         \
+               if u[0] != '_' and isinstance(self.user_ns[u], str) ]
+    elif data[-1] == "--pools":   return ['']
+    elif data[-1] == "--nbprocs": return ['']
+    elif data[-1] == '--ppn':     return ['']
+    elif data[-1] == "--prefix":  return ['']
+    elif data[-1] == "--queue":   return queues
+    elif data[-1] == "--account": return accounts
+  result = ['--force', '--walltime', '--nbprocs', '--help']
+  if len(queues) > 0: result.append("--queue") 
+  if len(accounts) > 0: result.append("--account") 
+  if debug_queue is not None: result.append("--debug")
+  result.extend(jobfolder_file_completer([info.symbol]))
+  result = list(set(result) - set(data))
+  return result
 
 def parser(self, subparsers, opalls):
   """ Adds subparser for scattered. """ 
@@ -118,7 +115,7 @@ def parser(self, subparsers, opalls):
               description="Each job folder is launched as a single job",
               parents=[opalls])
   set_default_parser_options(result)
-  result.add_argument( '--nbprocs', type=int, dest="nbprocs",
+  result.add_argument( '--nbprocs', type=str, dest="nbprocs", required=True,
               help="Total number of processors per pbsjob/jobfolder" )
   result.add_argument( '--ppn', dest="ppn",
               default=default_comm.get('ppn', 1), type=int,

@@ -102,14 +102,14 @@ def completer(self, info):
   return ["scattered", "interactive", 'asone', '--help']
          
 
-def get_mppalloc(shell, event):
+def get_mppalloc(shell, event, withdefault=True):
   """ Gets mpp allocation. """
   try: mppalloc = shell.ev(event.nbprocs)
   except Exception as e: 
     print "Could not make sense of --nbprocs argument {0}.\n{1}"               \
           .format(event.nbprocs, e)
     return
-  if mppalloc is None:
+  if mppalloc is None and withdefault:
     def mppalloc(job): 
       """ Returns number of processes for this job. """
       N = len(job.structure) # number of atoms.
