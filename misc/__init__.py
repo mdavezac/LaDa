@@ -166,8 +166,8 @@ def read_input(filename='input.py', global_dict=None, local_dict = None, paths=N
   with open(filename, 'r') as file: string = file.read()
   return exec_input(string, global_dict, local_dict, paths, comm, basename(filename))
 
-def exec_input( script, global_dict=None, local_dict = None,\
-                paths=None, comm = None, name=None):
+def exec_input( script, global_dict=None, local_dict=None,
+                paths=None, name=None ):
   """ Executes input script and returns local dictionary (as namespace instance). """
   # stuff to import into script.
   from os import environ

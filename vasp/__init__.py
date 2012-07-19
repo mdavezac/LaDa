@@ -16,7 +16,7 @@
     compiled.
 """
 __docformat__ = "restructuredtext en"
-__all__ = ['Vasp', 'Extract', 'Specie', 'MassExtract', 'relax', 'emass']
+__all__ = ['Vasp', 'Extract', 'Specie', 'MassExtract', 'relax', 'emass', 'read_input', 'exec_input']
 from .extract import Extract, MassExtract
 from .specie import Specie
 from .functional import Vasp
@@ -43,3 +43,14 @@ def read_input(filepath="input.py", namespace=None):
                 'Relax': Relax, 'Epitaxial': Epitaxial }
   if namespace is not None: input_dict.update(namespace)
   return read_input(filepath, input_dict)
+
+def exec_input( script, global_dict=None, local_dict=None,
+                paths=None, name=None ):
+  """ Specialized exec_input function for vasp. """
+  from ..misc import exec_input
+
+  # names we need to create input.
+  if global_dict is None: global_dict = {}
+  for k in __all__:
+    if k != 'read_input' and k != 'exec_input': global_dict[k] = globals()[k]
+  return exec_input(script, global_dict, local_dict, paths, name)

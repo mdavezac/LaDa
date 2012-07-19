@@ -240,7 +240,7 @@ class Extract(ExtractDFT):
               dummy[index] = band_x[u] if abs(band_x[u]) > 1e-12 else 0
             u += 1
         # add tensor to results for that order.
-        dummy *= self.eigenvalues.units * angstrom**order
+        dummy = dummy * self.eigenvalues.units * angstrom**order
         result[current_order].append(dummy)
       current_order += 1
 

@@ -54,7 +54,7 @@ class ExtractBase(object):
         Requires the functional to be pasted at the end of the calculations. 
     """
     from re import compile
-    from ...misc import exec_input
+    from .. import exec_input
     regex = compile('#+ FUNCTIONAL #+\n((.|\n)*)\n#+ END FUNCTIONAL #+')
     with self.__outcar__() as file: result = regex.search(file.read())
     if result is None: return None
@@ -91,7 +91,7 @@ class ExtractBase(object):
     from numpy import array, dot
     from numpy.linalg import inv
     from ...crystal import Structure
-    from ...misc import exec_input
+    from .. import exec_input
 
     try:
       regex = compile('#+ INITIAL STRUCTURE #+\n((.|\n)*)\n#+ END INITIAL STRUCTURE #+')
