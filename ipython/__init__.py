@@ -47,11 +47,7 @@ def unload_ipython_extension(ip):
 
 def get_shell(self):
   """ Gets shell despite ipython version issues """
-  from IPython import sys_info
-
-  a = eval(sys_info())['ipython_version'][2:] 
-  a = float(a) if a.find('.') != -1 else int(a)
-  return self if a < 12 else self.shell
+  return getattr(self, 'shell', self)
 
 def jobfolder_file_completer(data):
   """ Returns list of potential job-folder and directories. """
