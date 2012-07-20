@@ -164,7 +164,7 @@ def read_input(filename='input.py', global_dict=None, local_dict = None, paths=N
   from os.path import exists, basename
   assert exists(filename), IOError('File {0} does not exist.'.format(filename))
   with open(filename, 'r') as file: string = file.read()
-  return exec_input(string, global_dict, local_dict, paths, comm, basename(filename))
+  return exec_input(string, global_dict, local_dict, paths, basename(filename))
 
 def exec_input( script, global_dict=None, local_dict=None,
                 paths=None, name=None ):
