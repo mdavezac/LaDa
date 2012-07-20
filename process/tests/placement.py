@@ -1,13 +1,15 @@
 #! /work/y07/y07/nag/python-shared-xe6/2.6.5/bin/python
-#PBS -e placement_err
-#PBS -o placement_out
+#PBS -e /home/e05/e05/mdavezac/bull/placement_err
+#PBS -o /home/e05/e05/mdavezac/bull/placement_out
 #PBS -N placement_comm
 #PBS -l mppwidth=64
 #PBS -l walltime=00:02:00
 #PBS -A e05-qmdev-nic
-#PBS -V 
+#PBS -V
 
 def test(nbprocs, ppn, executable):
+  from os import getcwd
+  print 'IN DIRECTORY', getcwd()
   from lada.process.mpi import create_global_comm
   from lada.process.iterator import IteratorProcess
   from functional import Functional
@@ -68,6 +70,8 @@ if __name__ == '__main__':
   path = '~/usr/src/LaDa/master/'
 
   from lada.misc import RelativePath
+  from os import chdir
+  chdir('/home/e05/e05/mdavezac/bull') # crappy Cray
   path = RelativePath(path).path
   import sys
   sys.path.append(path + '/process/tests')

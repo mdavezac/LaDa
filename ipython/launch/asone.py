@@ -83,7 +83,7 @@ def launch(self, event, jobfolders):
   if event.nolaunch: return
   # otherwise, launch.
   for script in pbsscripts:
-    self.system("{0} {1}".format(qsub_exe, script))
+    shell.system("{0} {1}".format(qsub_exe, script))
 
 def completer(self, info, data):
   """ Completer for scattered launcher. """
@@ -99,7 +99,7 @@ def completer(self, info, data):
     elif data[-1] == "--prefix":  return ['']
     elif data[-1] == "--queue":   return queues
     elif data[-1] == "--account": return accounts
-  result = ['--force', '--walltime', '--nbprocs', '--help']
+  result = ['--force', '--walltime', '--nbprocs', '--help', '--pools', '--ppn']
   if len(queues) > 0: result.append("--queue") 
   if len(accounts) > 0: result.append("--account") 
   if debug_queue is not None: result.append("--debug")

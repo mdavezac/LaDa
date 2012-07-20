@@ -10,11 +10,10 @@ __docformat__ = "restructuredtext en"
 def launch(self, event, jobfolders):
   """ Launch scattered jobs: one job = one pbs script. """
   from copy import deepcopy
-  from os.path import split as splitpath, join, dirname, exists, basename
+  from os.path import join, dirname, exists, basename
   from os import remove
   from .. import get_shell
   from ...misc import Changedir
-  from ...jobfolder import __file__ as jobs_filename
   from ... import pbs_string, default_pbs, qsub_exe, default_comm
   from . import get_walltime, get_mppalloc, get_queues, scattered_script
 
@@ -87,7 +86,7 @@ def launch(self, event, jobfolders):
   if event.nolaunch: return
   # otherwise, launch.
   for script in pbsscripts:
-    self.system("{0} {1}".format(qsub_exe, script))
+    shell.system("{0} {1}".format(qsub_exe, script))
 
 
 def completer(self, info, data):

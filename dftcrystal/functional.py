@@ -309,6 +309,11 @@ class Functional(object):
 
       # writes/copies files before launching.
       self.bringup(structure, workdir, restart=self.restart)
+      dompi = comm['n'] is not None
+      if comm is not None:
+        from ..misc import copyfile
+        copyfile('crystal.d12', 'INPUT')
+       
 
       # figure out the program to launch.
       program = self.program if self.program is not None else crystal_program
@@ -321,9 +326,10 @@ class Functional(object):
 
       # now creates the process, with a callback when finished.
       def onfinish(process, error): self.bringdown(structure, workdir, outdir)
-      yield ProgramProcess( program, outdir=outdir, onfinish=onfinish,
+      yield ProgramProcess( program, outdir=workdir, onfinish=onfinish,
                             stdout='crystal.out', stderr='crystal.err',
-                            stdin='crystal.d12', dompi=comm is not None )
+                            stdin=None if dompi else 'crystal.d12', 
+                            dompi=dompi )
     # yields final extraction object.
     yield Extract(outdir)
 

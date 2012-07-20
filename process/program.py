@@ -159,7 +159,10 @@ class ProgramProcess(Process):
     if poll is None: return False
     # call callback.
     if hasattr(self.onfinish, '__call__'):
-      self.onfinish(process=self, error=(poll!=0))
+      try: self.onfinish(process=self, error=(poll!=0))
+      except Exception as e: 
+        self._cleanup()
+        raise Fail('Error on call to "onfinish"\n{0}: {1}'.format(type(e), e))
     # now check possible error.
     if poll != 0:
       self.nberrors += 1

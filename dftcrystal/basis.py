@@ -401,7 +401,8 @@ class BasisSet(AttrBlock):
     from pprint import pprint
     from StringIO import StringIO
     from ..functools.uirepr import add_to_imports
-    results = super(BasisSet, self).__ui_repr__(imports, name, defaults, ['raw'])
+    results = super(BasisSet, self).__ui_repr__( imports, name, defaults,
+                                                 ['raw', 'gaussian94'] )
     if name is None:
       name = getattr(self, '__ui_name__', self.__class__.__name__.lower())
     for key, value in self._functions.iteritems():
