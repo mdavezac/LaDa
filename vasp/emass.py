@@ -145,7 +145,7 @@ class Extract(ExtractDFT):
   @property
   def parameters(self):
     """ Parameters for the least-square-fit approach. """
-    from numpy import zeros, pi
+    from numpy import zeros, pi, abs
     from math import factorial
 
     if not hasattr(self, "_parameters"): 
@@ -182,10 +182,15 @@ class Extract(ExtractDFT):
         There is currently no attempt at accounting for band-crossing.
         This is simply the eigenvalues reshaped so spin is unrolled.
     """
-    if self.ispin == 1: return self.eigenvalues.magnitude
+    if self.ispin == 1:
+      center = self.eigenvalues[0] if self.nbpoints % 2 == 0                   \
+               else self.eigenvalues[len(self.kpoints) // 2]
+      return self.eigenvalues.magnitude - center.magnitude
     shape = self.eigenvalues.shape[0] * self.eigenvalues.shape[1],             \
             self.eigenvalues.shape[2]
-    return self.eigenvalues.reshape(*shape).magnitude
+    center = self.eigenvalues[0] if self.nbpoints % 2 == 0                     \
+             else self.eigenvalues[len(self.kpoints) // 2]
+    return self.eigenvalues.reshape(*shape).magnitude - center.magnitude
 
   @property 
   def fitresults(self):
@@ -212,16 +217,14 @@ class Extract(ExtractDFT):
     current_index, current_order = 0, 0
     # add results for order 0.
     if self.order[0] == 0:
-      result[current_order] = all_xs[current_index].copy()                     \
+      result[current_order] = all_xs[:, current_index].copy()                  \
                               * self.eigenvalues.units                         
       current_index += 1                                                       
       current_order += 1                                                       
     # add results for order 1.                                                 
     if 1 in self.order:                                                        
-      result[current_order]                                                    \
-           = [ i.copy() * self.eigenvalues.units * angstrom                    \
-               for i in all_xs[current_index:current_index+3].T ]
-                              
+      result[current_order] = all_xs[:, current_index:current_index+3]         \
+                              * self.eigenvalues.units * angstrom
       current_index += 3
       current_order += 1
 
