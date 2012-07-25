@@ -185,7 +185,8 @@ class Functional(object):
     from os.path import join
     from datetime import datetime
     return join( environ.get('PBS_TMPDIR', outdir),
-                 '{0!s}.{1}'.format(datetime.today(), getpid()))
+                 '{0!s}.{1}'.format(datetime.today(), getpid())\
+                            .replace(' ', '_') )
 
   def bringup(self, structure, workdir, restart):
     """ Creates file environment for run. """
@@ -218,9 +219,11 @@ class Functional(object):
   def bringdown(self, structure, workdir, outdir):
     """ Copies files back to output directory. 
     
-        Prefixes output with input.
+        Cats input intO output.
+	Removes workdir if different from outdir **and** run was successfull.
     """
-    from os.path import join
+    from os.path import join, samefile
+    from shutil import rmtree
     from ..misc import copyfile, Changedir
     from .. import CRYSTAL_filenames
 
@@ -245,6 +248,10 @@ class Functional(object):
         file.write('\n{0} {1} {0}\n'.format(header, 'STRUCTURE'))
         file.write(repr(structure))
         file.write('\n{0} END {1} {0}\n'.format(header, 'STRUCTURE'))
+    
+    if Extract(outdir).success and not samefile(outdir, workdir):
+      rmtree(workdir)
+      
 
   
   @assign_attributes(ignore=['overwrite', 'comm', 'workdir'])
@@ -327,7 +334,8 @@ class Functional(object):
       # now creates the process, with a callback when finished.
       def onfinish(process, error): self.bringdown(structure, workdir, outdir)
       yield ProgramProcess( program, outdir=workdir, onfinish=onfinish,
-                            stdout='crystal.out', stderr='crystal.err',
+                            stdout=None if dompi else 'crystal.out', 
+                            stderr='crystal.out' if dompi else 'crystal.err',
                             stdin=None if dompi else 'crystal.d12', 
                             dompi=dompi )
     # yields final extraction object.

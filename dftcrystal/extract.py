@@ -210,16 +210,17 @@ class ExtractBase(object):
     """
     from numpy import array
     from ..crystal import Structure
+    from .basis import specie_name
     result = Structure()
     file.next(); file.next() # move to first line.
     for line in file:
       line = line.split()
       if len(line) != 7: break
-      type = int(line[2])
-      if type < 100: type = line[3]
+      type = specie_name(int(line[2]))
       asymmetric = line[1] == 'T' 
-      result.add_atom( pos=array(line[4:7], dtype='float64'),                 \
-                       type=type, label=int(line[0]), asymmetric=asymmetric )
+      result.add_atom( pos=array(line[4:7], dtype='float64'),
+                       type=type, label=int(line[0]), asymmetric=asymmetric,
+                       group=line[3] )
       
     # then find cell.
     header = 'DIRECT LATTICE VECTORS CARTESIAN '                             \
@@ -229,7 +230,7 @@ class ExtractBase(object):
       if len(line) != 6: continue
       if line == header: break
     file.next()
-    result.cell = array( [file.next().split() for i in xrange(3)],           \
+    result.cell = array( [file.next().split() for i in xrange(3)],
                          dtype='float64' )
 
     # Then re-reads atoms, but in cartesian coordinates.

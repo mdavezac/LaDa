@@ -3,6 +3,8 @@ debug_queue = None
 
 qsub_exe = "qsub"
 """ Qsub executable. """
+qdel_exe = "qdel"
+""" Qdel executable. """
           
 default_pbs = { 'walltime': "00:55:00", 'nnodes': 1, 'ppn': 32,
                 'account': 'eO5' }
@@ -12,14 +14,14 @@ def pbs_string(**kwargs):
   """ Returns pbs script. """
   if 'name' in kwargs:
     kwargs['name'] = kwargs['name'][:min(len(kwargs['name']), 15)]
-  return "#! /bin/bash\n"                                                      \
+  return "#! /bin/bash --login\n"                                              \
          "#PBS -e \"{err}\"\n"                                                 \
          "#PBS -o \"{out}\"\n"                                                 \
          "#PBS -N {name}\n"                                                    \
          "#PBS -l mppwidth={n}\n"                                              \
          "#PBS -l mppnppn={ppn}\n"                                             \
          "#PBS -l walltime={walltime}\n"                                       \
-         "#PBS -A {accounts}\n"                                                \
+         "#PBS -A {account}\n"                                                 \
          "#PBS -V \n\n"                                                        \
          "export TMPDIR=/work/e05/e05/`whoami`/lada_tmp\n"                     \
          "if [ ! -e $TMPDIR ] ; then\n"                                        \
@@ -35,12 +37,13 @@ mpirun_exe = "aprun -n {n} {placement} {program} "
 """ Command-line to launch external mpi programs. """
 do_multiple_mpi_program = True
 """ Whether setup to lauch multiple MPI programs. """
+accounts = ['e05-power-nic', 'e05-qmdev-nic']
 
 def machine_dependent_call_modifier(formatter=None, comm=None, env=None):
   """ Placement modifications for MPI processes. 
   
       Nodefile is re-written with one hostname per line and per processor
-      (rather than  per host, with 'slots=n' arguments indicating the number of
+      (rather than  per host, e05-qmdev-nicwith 'slots=n' arguments indicating the number of
       procs per node). Finally, the environment variable ``PBS_NODEFILE`` is
       modified to point to the new nodefile. 
 
@@ -83,12 +86,28 @@ def ipython_qstat(self, arg):
   """ Prints jobs of current user. """
   from subprocess import Popen, PIPE
   from IPython.utils.text import SList
+  from itertools import chain
   # get user jobs ids
-  jobs   = SList(Popen(['qstat', '-f'], stdout=PIPE).communicate()[0].split('\n'))
+  whoami = Popen(['whoami'], stdout=PIPE).communicate()[0].rstrip().lstrip()
+  jobs   = Popen(['qstat', '-u', whoami], stdout=PIPE).communicate()[0].split('\n')
+  if len(jobs) == 1: return
+  ids    = SList(jobs[5:-1]).fields(0)
+  # now gets full info
+  jobs   = SList(Popen(['qstat', '-f'] + ids, stdout=PIPE).communicate()[0].split('\n'))
   names  = [u[u.find('=')+1:].lstrip().rstrip() for u in jobs.grep('Job_Name')]
   mpps   = [int(u[u.find('=')+1:]) for u in jobs.grep('Resource_List.ncpus')]
   states = [u[u.find('=')+1:].lstrip().rstrip() for u in jobs.grep('job_state')]
   ids    = [u[u.find(':')+1:].lstrip().rstrip() for u in jobs.grep('Job Id')]
-  return SList([ "{0:>10} {1:>4} {2:>3} -- {3}".format(id, mpp, state, name) \
-                 for id, mpp, state, name in zip(ids, mpps, states, names)])
+  # the result is then  synthesized, with the first field the job id, and the
+  # last the job name. This is important since it will be used by cancel as such.
+  return SList([ "{0:>10} {1:>4} {2:>3} -- {3}".format(id, mpp, state, name)   \
+                 for id, mpp, state, name in zip(ids, mpps, states, names)]) 
+
+def crystal_program(self, comm=None):
+  """ Calls serial or sequential version. """
+  ser = 'crystal'
+  mpi = 'MPPcrystal'
+  if comm is None: return ser
+  if comm['n'] == 1: return ser
+  return mpi
 

@@ -32,7 +32,8 @@ CRYSTAL_filenames = { 'crystal.out':   '{0}.out',      # output file
                       'FINDSYM.DAT':   '{0}.findsym',  # Findsym input
                       'OPTHESS.DAT':   '{0}.opthess',  # formatted hessian
                       'OPTINFO.DAT':   '{0}.optinfo',  # restart info
-                      'PPAN.DAT':      '{0}.ppan'      # Muliken population analysis
+                      'PPAN.DAT':      '{0}.ppan',     # Muliken population analysis
+                      'ERROR':         '{0}.err'       # Error file in parallel CRYSTAL
                     }
 """ Filnames of crystal programs. 
 

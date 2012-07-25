@@ -8,6 +8,28 @@ crystal_bohr = UnitQuantity('crystal_bohr', 0.5291772083*angstrom, symbol='bohr'
 crystal_invbohr2 = UnitQuantity( 'crystal_invbohr2',
                                  1e0/crystal_bohr/crystal_bohr, symbol='bohr^-2' )
 
+def specie_name(specie):
+  """ Translate from CRYSTAL to sensible sepcie name. 
+
+      CRYSTAL uses a fairly obscure numbering system to map species to
+      basis-sets. This function translates that mapping into a more explicit
+      naming scheme.
+  """
+  from ..periodic_table import find as find_specie
+  try: n = int(specie)
+  except: pass
+  else: specie = n
+  if isinstance(specie, str): 
+    specie = specie.rstrip().lstrip()
+    try: n = find_specie(name=specie)
+    except: pass
+    else: specie = n.symbol
+  elif specie < 100:
+    try: n = find_specie(atomic_number=specie)
+    except: pass
+    else: specie = n.symbol
+  return specie
+
 class Shell(object):
   """ Defines a gaussian basis set for a specific orbital shell. """
   def __init__(self, type='s', charge=None, **kwargs):
@@ -220,6 +242,8 @@ class Ghosts(VariableListKeyword):
     return "{0.__class__.__name__}(".format(self) + ', '.join(args) + ')'
   def print_input(self, **kwargs):
     """ Prints CRYSTAL input """
+    if self.value is None: return None
+    if len(self.value) == 0: return None
     result = 'KEEPSYM\n' if self.keepsym else 'BREAKSYM\n'
     result += self.keyword.upper() + '\n'
     result += self.raw
@@ -258,9 +282,8 @@ class BasisSet(AttrBlock):
     from ..error import KeyError
     from .. import periodic_table as pt
     # figure out set of species
-    atoms = getattr(structure, 'atoms', structure)
-    species = set([a.type for a in atoms]) if atoms is not None                \
-              else self.iterkeys()
+    species = self.iterkeys() if structure is None                             \
+              else set([a.type for a in structure.eval()])
     # Now print them
     result = ''
     for key in species:
@@ -294,7 +317,7 @@ class BasisSet(AttrBlock):
       line = lines.pop(0).split()
       type, nshells = int(line[0]), int(line[1])
       if type == 99: break
-      type = self._specie(type)
+      type = specie_name(type)
       self._functions[type] = []
       for i in xrange(nshells):
         bt = int(lines[0].split()[0])
@@ -309,38 +332,21 @@ class BasisSet(AttrBlock):
           raise NA('Basis type {0} hasnot yet been implemented.'.format(bt))
 
 
-  def _specie(self, specie):
-    """ Translate from specie to dictionary keyword. """
-    from ..periodic_table import find as find_specie
-    try: n = int(specie)
-    except: pass
-    else: specie = n
-    if isinstance(specie, str): 
-      specie = specie.rstrip().lstrip()
-      try: specie = find_specie(name=specie)
-      except: pass
-      else: specie = specie.symbol
-    elif specie < 100:
-      try: specie = find_specie(atomic_number=specie)
-      except: pass
-      else: specie = specie.symbol
-    return specie
-
   def __setitem__(self, specie, shell):
     """ Sets basis function for a particular specie. """
-    specie = self._specie(specie)
+    specie = specie_name(specie)
     self._functions[specie] = shell
   def __getitem__(self, specie):
     """ Gets basis-functions for a given specie. """
-    specie = self._specie(specie)
+    specie = specie_name(specie)
     return self._functions[specie]
   def __delitem__(self, specie):
     """ Gets basis-functions for a given specie. """
-    specie = self._specie(specie)
+    specie = specie_name(specie)
     del self._functions[specie]
   def __contains__(self, specie):
     """ Gets basis-functions for a given specie. """
-    specie = self._specie(specie)
+    specie = specie_name(specie)
     return specie in self._functions
   def __len__(self):
     """ Number of atomic species. """
@@ -369,7 +375,7 @@ class BasisSet(AttrBlock):
 
   def append(self, specie, shell):
     """ Adds shell to set. """
-    specie = self._specie(specie)
+    specie = specie_name(specie)
     # now adds shell correctly.
     if specie in self._functions: self._functions[specie].append(shell)
     else: self._functions[specie] = [shell]
@@ -382,7 +388,7 @@ class BasisSet(AttrBlock):
     return uirepr(self, name=name, defaults=defaults)
 
   def print_input(self, **kwargs):
-    """ Dumps CRSTAL input to string. """
+    """ Dumps CRYSTAL input to string. """
     post = super(BasisSet, self).print_input(**kwargs).rstrip()
     post = post[post.find('end of basis functions per se')+1:]
     post = post[post.find('\n')+1:] if post.find('\n') != -1 else ''

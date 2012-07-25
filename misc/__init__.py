@@ -1,7 +1,7 @@
 """ Miscellaneous ressources. """
 __all__ = ['Program', 'execute_program', 'copyfile', 'Changedir', \
            'read_input', 'exec_input', 'load', 'RelativePath', \
-           'LockFile', 'open_exclusive']
+           'LockFile', 'open_exclusive', 'translate_to_regex']
 from collections import namedtuple
 from types import ModuleType
 
@@ -258,3 +258,42 @@ def import_header_string(modules):
   for key, values in modules.iteritems():
     result += "from {0} import {1}\n".format(key, ", ".join(values))
   return result
+
+def translate_to_regex(pat):
+  """ Translates a pattern from unix to re. 
+
+      Compared to fnmatch.translate, doesn't use '.', but rather '[^/]'.
+      And doesn't add the tail that fnmatch.translate does.
+      Otherwise, code is taked from fnmatch.translate.
+  """
+  from re import escape
+  i, n = 0, len(pat)
+  res = ''
+  while i < n:
+      c = pat[i]
+      i = i+1
+      if c == '*':
+          res = res + '[^/]*'
+      elif c == '?':
+          res = res + '[^/]'
+      elif c == '[':
+          j = i
+          if j < n and pat[j] == '!':
+              j = j+1
+          if j < n and pat[j] == ']':
+              j = j+1
+          while j < n and pat[j] != ']':
+              j = j+1
+          if j >= n:
+              res = res + '\\['
+          else:
+              stuff = pat[i:j].replace('\\','\\\\')
+              i = j+1
+              if stuff[0] == '!':
+                  stuff = '^' + stuff[1:]
+              elif stuff[0] == '^':
+                  stuff = '\\' + stuff
+              res = '{0}[{0}]'.format(res, stuff)
+      else:
+          res = res + escape(c)
+  return res 

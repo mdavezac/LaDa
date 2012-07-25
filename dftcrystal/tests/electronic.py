@@ -1,6 +1,7 @@
 def test_shrink():
   from numpy import array, all
   from lada.dftcrystal.electronic import Shrink
+  from lada.dftcrystal.molecule import Molecule
 
   a = Shrink()
   assert a.mp == 1
@@ -96,6 +97,8 @@ def test_shrink():
   except ValueError: pass
   else: raise Exception()
 
+  assert a.print_input(structure=Molecule()) is None
+
 def test_levshift():
   from quantities import hartree, UnitQuantity, eV, kbar
   from lada.dftcrystal.electronic import LevShift, Electronic
@@ -119,7 +122,7 @@ def test_levshift():
   assert abs(a.shift.magnitude - 2) < 1e-8
 
   a.lock = True
-  assert a.raw == str(float(2)) + ' ' + str(1)
+  assert a.raw == str(2) + ' ' + str(1)
   assert a.lock == True
   assert len(a.print_input().split('\n')) == 3
   assert a.print_input().split('\n')[0] == 'LEVSHIFT'
@@ -127,12 +130,12 @@ def test_levshift():
   assert a.print_input().split('\n')[-1] == ''
 
   a.lock = False
-  assert a.raw == str(float(2)) + ' ' + str(0)
+  assert a.raw == str(2) + ' ' + str(0)
 
   a = Electronic()
   assert a.levshift.raw == ''
   a.levshift = 2, False
-  assert a.levshift.raw == str(float(2)) + ' ' + str(0)
+  assert a.levshift.raw == str(2) + ' ' + str(0)
   assert abs(a.levshift[0] - 0.2 * hartree) < 1e-8
   assert a.levshift[1] is False
 

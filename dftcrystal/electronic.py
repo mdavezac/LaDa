@@ -155,6 +155,13 @@ class Shrink(Keyword):
     add_to_imports(self, imports)
     return {name: self.__repr__()}
 
+  def print_input(self, **kwargs):
+    """ Prints SHRINK keyword """
+    from .molecule import Molecule
+    # The 'get' piece is to make testing a bit easier
+    if type(kwargs.get('structure', None)) is Molecule: return None
+    return super(Shrink, self).print_input(**kwargs)
+
 
 class LevShift(Keyword):
   """ Implements LevShift keyword. """
@@ -222,11 +229,11 @@ class LevShift(Keyword):
   def raw(self):
     """ CRYSTAL input as a string """
     if self.shift is None or self.lock is None: return ''
-    return '{0} {1}'.format(float(self.shift), 1 if self.lock else 0)
+    return '{0} {1}'.format(int(float(self.shift)+0.01), 1 if self.lock else 0)
   @raw.setter
   def raw(self, value):
     """ Sets instance from raw data """
-    self.shift = float(value.split()[0])
+    self.shift = int(value.split()[0])
     self.lock = int(value.split()[1]) != 0
   def print_input(self, **kwargs):
     if self.shift is None or self.lock is None: return None

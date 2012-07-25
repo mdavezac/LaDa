@@ -161,50 +161,11 @@ class AbstractMassExtract(object):
       if rekey.match(key): return True
     return False
 
-  @staticmethod
-  def _translate_regex(pat):
-    """ Translates a pattern from unix to re. 
-
-        Compared to fnmatch.translate, doesn't use '.', but rather '[^/]'.
-        And doesn't add the tail that fnmatch.translate does.
-        Otherwise, code is taked from fnmatch.translate.
-    """
-    from re import escape
-    i, n = 0, len(pat)
-    res = ''
-    while i < n:
-        c = pat[i]
-        i = i+1
-        if c == '*':
-            res = res + '[^/]*'
-        elif c == '?':
-            res = res + '[^/]'
-        elif c == '[':
-            j = i
-            if j < n and pat[j] == '!':
-                j = j+1
-            if j < n and pat[j] == ']':
-                j = j+1
-            while j < n and pat[j] != ']':
-                j = j+1
-            if j >= n:
-                res = res + '\\['
-            else:
-                stuff = pat[i:j].replace('\\','\\\\')
-                i = j+1
-                if stuff[0] == '!':
-                    stuff = '^' + stuff[1:]
-                elif stuff[0] == '^':
-                    stuff = '\\' + stuff
-                res = '{0}[{0}]'.format(res, stuff)
-        else:
-            res = res + escape(c)
-    return res 
-
   def _regex_pattern(self, pattern, flags=0):
     """ Returns a regular expression. """
     from re import compile
-    if self.unix_re: pattern = self._translate_regex(pattern)
+    from ..misc import translate_to_regex
+    if self.unix_re: pattern = translate_to_regex(pattern)
     if len(pattern) == 0: return compile("", flags)
     if pattern[-1] in ('/', '\Z', '$'): return compile(pattern, flags)
     return compile(pattern + r"(?=/|\Z)(?ms)", flags)

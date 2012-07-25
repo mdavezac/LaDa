@@ -184,7 +184,11 @@ class IteratorProcess(Process):
         result = self._iterator.next()
       return result
     except StopIteration: return None
-    except Exception as e: raise Fail(e)
+    except Exception as e:
+     import sys, traceback
+     exc_type, exc_value, exc_traceback = sys.exc_info()
+     tb = traceback.format_tb(exc_traceback)
+     raise Fail('{0}: {1}\n{2}'.format(type(e), e, '\n'.join(tb)))
 
   def _next(self, process=None):
     """ Launches next process. """

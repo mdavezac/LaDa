@@ -64,7 +64,7 @@ class Molecule(ListBlock):
     result = str(self.symmgroup).rstrip().lstrip() + '\n'
 
     # number of atoms + atoms
-    result += '\n{0}\n'.format(len(self.atoms))
+    result += '{0}\n'.format(len(self.atoms))
     for atom in self.atoms:
       try: n = find_specie(name=atom.type).atomic_number
       except:

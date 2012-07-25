@@ -163,6 +163,8 @@ debug_queue = "queue", "debug"
 """
 qsub_exe = "sbatch"
 """ Qsub/sbatch executable. """
+qdel_exe = 'scancel'
+""" Qdel/scancel executable. """
 
 default_pbs = { 'account': accounts[0], 'walltime': "06:00:00", 'nnodes': 1,
                 'ppn': 1 }

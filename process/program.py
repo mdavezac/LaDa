@@ -161,8 +161,12 @@ class ProgramProcess(Process):
     if hasattr(self.onfinish, '__call__'):
       try: self.onfinish(process=self, error=(poll!=0))
       except Exception as e: 
+        import sys, traceback
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        tb = traceback.format_tb(exc_traceback)
         self._cleanup()
-        raise Fail('Error on call to "onfinish"\n{0}: {1}'.format(type(e), e))
+        raise Fail( 'Error on call to "onfinish"\n{0}: {1}\n{2}\n'             \
+                    .format(type(e), e, '\n'.join(tb)) )
     # now check possible error.
     if poll != 0:
       self.nberrors += 1
