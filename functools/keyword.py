@@ -22,6 +22,11 @@ class BaseKeyword(object):
     if 'raw' in self.__dict__: args.append("raw={0.raw!r}".format(self))
     return "{0.__class__.__name__}(".format(self) + ', '.join(args) + ')'
 
+  def output_map(self, **kwargs):
+    """ Map keyword, value """
+    if getattr(self, 'keyword', None) is None: return None
+    return { self.keyword: getattr(self, 'raw', None) }
+
 class ValueKeyword(BaseKeyword):
   """ Keywords which expect a value of some kind. 
   
@@ -125,6 +130,11 @@ class ValueKeyword(BaseKeyword):
         except: pass
     if dovalue: args.append('value={0.value!r}'.format(self))
     return '{0.__class__.__name__}({1})'.format(self, ', '.join(args))
+
+  def output_map(self, **kwargs):
+    """ Map keyword, value """
+    if self.value is None: return None
+    return super(ValueKeyword, self).output_map(**kwargs)
   
 
 class TypedKeyword(ValueKeyword):
@@ -335,6 +345,10 @@ class BoolKeyword(ValueKeyword):
   def value(self): return self._value
   @value.setter
   def value(self, value): self._value = (value == True)
+  def output_map(self, **kwargs):
+    """ Map keyword, value """
+    if self.value == False: return None
+    return super(BoolKeyword, self).output_map(**kwargs)
 
 class ChoiceKeyword(BaseKeyword):
   """ Keyword value must be chosen from a given set. """
@@ -377,6 +391,11 @@ class ChoiceKeyword(BaseKeyword):
     return str(self.value)
   @raw.setter
   def raw(self, value): self.value = value
+  def output_map(self, **kwargs):
+    """ Map keyword, value """
+    if self._value is None: return None
+    if getattr(self, 'keyword', None) is None: return None
+    return { self.keyword: str(self.value).upper() }
     
 class QuantityKeyword(ValueKeyword):
   """ Keyword with a value which is signed by a unit. """

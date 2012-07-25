@@ -83,7 +83,7 @@ class ValueKeyword(Keyword):
     """
   def print_input(self, **kwargs):
     """ Prints keyword to string. """
-    if self.value == None: return None
+    if self.value is None: return None
     return '{0}\n{1}\n'.format(self.keyword.upper(), self.raw.rstrip())
   @property
   def raw(self):

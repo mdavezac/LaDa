@@ -54,7 +54,7 @@ class AttrBlock(BaseKeyword):
     else: super(AttrBlock, self).__delattr__(name)
   def __dir__(self):
     """ List of attributes and members. """
-    return list( set(self._input.iterkeys())                               \
+    return list( set(self._input.iterkeys())                                   \
                  | set(self.__dict__.iterkeys())                               \
                  | set(dir(self.__class__)) )
 
@@ -154,3 +154,21 @@ class AttrBlock(BaseKeyword):
   def __setstate__(self, value):
     self.__dict__['_input'] = value[1]
     self.__dict__.update(value[0])
+
+  def output_map(self, **kwargs):
+    """ Map of keyword, value """
+    result = {}
+    for key, value in self._crysinput.iteritems():
+      if value is None: continue
+      elif isinstance(value, bool):
+        result[key] = '.TRUE.' if value else '.FALSE.'
+      elif hasattr(value, 'output_map'):
+        dummy = value.output_map(**kwargs)
+        if dummy is not None: result.update(dummy)
+      elif getattr(value, 'raw', None) is not None:
+        result[key] = str(value.raw)
+      elif hasattr(value, '__iter__'):
+        result[key] =  ' '.join(str(u) for u in value)
+      else: result[key] = str(value)
+    return result
+

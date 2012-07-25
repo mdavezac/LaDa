@@ -2,17 +2,21 @@
 __docformat__ = "restructuredtext en"
 __all__ = ['Vasp']
 from ..functools import stateless, assign_attributes
+from ..functools.block import AttrBlock
 from ..misc import add_setter
 from extract import Extract
-from incar import Incar
 
-class Vasp(Incar):
+
+class Vasp(AttrBlock):
   """ Interface to VASP code. """
   Extract = staticmethod(Extract)
   """ Extraction class. """
 
   def __init__(self, copy=None, species=None, kpoints=None, **kwargs):
     """ Initializes vasp class. """
+    from .keywords import BoolKeyword, Magmom, System, Npar, ExtraElectron,    \
+                          NElect, Algo, Ediff, Ediffg, Encut, EncutGW
+    from ..functools import TypedKeyword
     super(Vasp, self).__init__()
 
     self.restart_from_contcar = kwargs.pop('restart_from_contcar', True)
@@ -50,6 +54,249 @@ class Vasp(Incar):
             In other words, different vasp executables can be used depending on
             the parameters. 
     """
+    from ..functools import ChoiceKeyword
+    self.addgrid = BoolKeyword()
+    """ Adds additional support grid for augmentation charge evaluation. 
+
+        Can be only True or False (or None for VASP_ default).
+
+        .. seealso:: 
+
+           ADDGRID_
+
+           .. _ADDGRID: http://cms.mpi.univie.ac.at/wiki/index.php/ADDGRID
+    """
+    self.ispin   = ChoiceKeyword(values=(1, 2))
+    """ Whether to perform spin-polarized or spin-unpolarized calculations.
+
+        Can be only 1 or 2 (or None for VASP_ default).
+
+        .. seealso:: 
+
+           ISPIN_ 
+
+           .. _ISPIN: http://cms.mpi.univie.ac.at/wiki/index.php/ISPIN
+    """
+    self.istart    = ChoiceKeyword(values=range(5))
+    """ Starting point of calculation.
+
+        Can take a value between 1 and 4 included (and None for VASP_ default).
+
+        .. seealso:: 
+
+           ISTART_ 
+
+           .. _ISTART: http://cms.mpi.univie.ac.at/wiki/index.php/ISTART
+    """
+    self.isym      = ChoiceKeyword(values=range(3))
+    """ Symmetry scheme.
+
+        .. seealso:: 
+         
+           ISYM_
+
+           .. _ISYM: http://cms.mpi.univie.ac.at/vasp/guide/node115.html
+    """ 
+    self.lmaxmix   = TypedKeyword(type=int)
+    """ Cutoff *l*-quantum number of PAW charge densities passed to mixer 
+
+        .. seealso:: 
+
+           LMAXMIX_ 
+
+           .. _LMAXMIX: http://cms.mpi.univie.ac.at/wiki/index.php/LMAXMIX
+    """
+    self.lorbit    = ChoiceKeyword(values=(0, 1, 2, 5, 10, 11, 12))
+    """ Decides whether PROOUT and PROOCAR are writtent to disk.
+
+        Can be one of 0|1|2|5|10|11|12|None. 
+
+        .. seealso:: 
+
+           LORBIT_ 
+
+           .. _LORBIT: http://cms.mpi.univie.ac.at/wiki/index.php/LORBIT
+    """
+    self.nbands    = TypedKeyword(type=int)
+    self.nomega    = TypedKeyword(type=int)
+    self.nupdown   = TypedKeyword(type=int)
+    self.symprec   = TypedKeyword(type=float)
+    self.lwave     = BoolKeyword(value=False)
+    self.lcharg    = BoolKeyword(value=True)
+    self.lvtot     = BoolKeyword(value=False)
+    self.lrpa      = BoolKeyword()
+    self.loptics   = BoolKeyword()
+    self.lpead     = BoolKeyword()
+    self.nelm      = TypedKeyword(type=int)
+    self.nelmin    = TypedKeyword(type=int)
+    self.nelmdl    = TypedKeyword(type=int)
+    self.ngx       = TypedKeyword(type=int)
+    self.ngy       = TypedKeyword(type=int)
+    self.ngz       = TypedKeyword(type=int)
+    
+    
+    self.magmom    = Magmom()
+    """ Sets the initial magnetic moments on each atom.
+    
+        There are three types of usage: 
+    
+        - if None or False, does nothing
+        - if calculations are not spin-polarized, does nothing.
+        - if a string, uses that as for the MAGMOM_ keyword
+        - if True and at least one atom in the structure has a non-zero
+          ``magmom`` attribute, then creates the relevant moment input for VASP_
+    
+        If the calculation is **not** spin-polarized, then the magnetic moment
+        tag is not set.
+    
+        .. note:: Please set by hand for non-collinear calculations
+
+        .. seealso:: MAGMOM_
+
+        .. _MAGMOM: http://cms.mpi.univie.ac.at/wiki/index.php/MAGMOM
+    """
+    self.system    = System()
+    """ System title to use for calculation.
+    
+        - If None and ... 
+           - if the structure has a ``name`` attribute, uses that as the
+             calculations title
+           - else does not use SYSTEM_ tag
+        - If something else which is convertable to a string,  and ...
+           - if the structure has a ``name`` attribute, uses 'string: name' as
+             the title
+           - otherwise, uses the string
+    
+        .. seealso:: SYSTEM_
+    
+        .. _SYSTEM: http://cms.mpi.univie.ac.at/vasp/guide/node94.html>
+    """
+    self.npar      = Npar()
+    """ Parallelization over bands. 
+    
+        Npar defines how many nodes work on one band.
+        It can be set to a particular number:
+    
+        >>> vasp.npar = 2
+    
+        Or it can be deduced automatically. Different schemes are available:
+        
+          - power of two: npar is set to the largest power of 2 which divides the
+            number of processors.
+   
+            >>> vasp.npar = "power of two"
+    
+            If the number of processors is not a power of two, prints nothing.
+    
+          - square root: npar is set to the square root of the number of processors.
+    
+            >>> vasp.npar = "sqrt"
+        
+    
+        .. seealso: `NPAR <http://cms.mpi.univie.ac.at/vasp/guide/node138.html>`_
+    """
+    self.extraelectron = ExtraElectron()
+    """ Number of electrons relative to neutral system.
+        
+        Gets the number of electrons in the (neutral) system. Then adds value to
+        it and computes with the resulting number of electrons.
+    
+        >>> vasp.extraelectron =  0  # charge neutral system
+        >>> vasp.extraelectron =  1  # charge -1 (1 extra electron)
+        >>> vasp.extraelectron = -1  # charge +1 (1 extra hole)
+    
+        .. seealso:: `NELECT <http://cms.mpi.univie.ac.at/wiki/index.php/NELECT>`_
+    """
+    self.nelect = NElect()
+    """ Sets the absolute number of electrons.
+        
+        Disables :py:attr:`lada.vasp.functional.Functional.extraelectron` if set to
+        something other than None.
+    
+        .. seealso:: `NELECT <http://cms.mpi.univie.ac.at/wiki/index.php/NELECT>`_
+    """
+    self.algo = Algo()
+    """ Electronic minimization. 
+    
+        Defines the kind of algorithm vasp will run.
+          - very fast
+          - fast, f (default)
+          - normal, n
+          - all, a
+          - damped, d 
+          - Diag 
+          - conjugate, c (vasp 5)
+          - subrot (vasp 5)
+          - eigenval (vasp 5)
+          - Nothing (vasp 5)
+          - Exact  (vasp 5)
+          - chi
+          - gw
+          - gw0
+          - scgw
+          - scgw0
+    
+        If :py:data:`is_vasp_4 <lada.is_vasp_4>` is an existing configuration
+        variable of :py:mod:`lada` the parameters marked as vasp 5 will fail.
+    
+        .. warning:: The string None is not  allowed, as it would lead to
+           confusion with the python object None. Please use "Nothing" instead.
+           The python object None will simply not print the ALGO keyword to the
+           INCAR file.
+    
+        .. note:: By special request, "fast" is the default algorithm.
+    
+        .. seealso:: `ALGO <http://cms.mpi.univie.ac.at/vasp/vasp/ALGO_tag.html>`_
+    """ 
+    self.ediff = Ediff()
+    """ Sets the convergence criteria (per atom) for electronic minimization.
+    
+        - value > 0e0: the tolerance is multiplied by the number of atoms in the
+          system. This makes tolerance consistent from one system to the next.
+        - value < 0e0: tolerance is given as absolute value, without multiplying
+          by size of system.
+    
+        .. seealso:: `EDIFF <http://cms.mpi.univie.ac.at/vasp/guide/node105.html>`_
+    """
+    self.ediffg = Ediffg()
+    """ Sets the convergence criteria (per atom) for ionic minimization.
+    
+        - value > 0e0: the tolerance is multiplied by the number of atoms in the
+          system. This makes tolerance consistent from one system to the next.
+        - value < 0e0: tolerance is given as is (negative), and applies to forces.
+    
+        .. seealso:: `EDIFFG <http://cms.mpi.univie.ac.at/vasp/guide/node107.html>`_
+    """
+    self.encut = Encut()
+    """ Defines cutoff factor for calculation. 
+    
+        There are three ways to set this parameter:
+    
+        - if value is floating point and 0 < value <= 3: then the cutoff is
+          ``value * ENMAX``, where ENMAX is the maximum recommended cutoff for
+          the species in the system.
+        - if value > 3 eV, then prints encut is exactly value (in eV). Any energy
+          unit is acceptable.
+        - if value < 0 eV or None, does not print anything to INCAR. 
+        
+        .. seealso:: `ENCUT <http://cms.mpi.univie.ac.at/vasp/vasp/ENCUT_tag.html>`_
+    """
+    self.encutgw = EncutGW()
+    """ Defines cutoff factor for GW calculation. 
+  
+        There are three ways to set this parameter:
+  
+        - if value is floating point and 0 < value <= 3: then the cutoff is
+          ``value * ENMAX``, where ENMAX is the maximum recommended cutoff for
+          the species in the system.
+        - if value > 3 eV, then prints encut is exactly value (in eV). Any energy
+          unit is acceptable.
+        - if value < 0 eV or None, does not print anything to INCAR. 
+        
+        .. seealso:: `ENCUTGW
+          <http://cms.mpi.univie.ac.at/vasp/vasp/ENCUTGW_energy_cutoff_response_function.html>`_
+    """
+
     # sets all known keywords as attributes.
     for key, value in kwargs.iteritems():
       if hasattr(self, key): setattr(self, key, value)
@@ -234,10 +481,11 @@ class Vasp(Incar):
       return
 
     if comm is None: comm = default_comm
-    for line in self.incar_lines(structure=structure, vasp=self, comm=comm):
-      path.write(line)
+    map = self.input_map(structure=structure, vasp=self, comm=comm)
+    length = max(len(u) for u in map)
+    for key, value in map.iteritems():
+      path.write('{0: >{length}} = {1}\n'.format(key, value, length=length))
 
-    
   def write_kpoints(self, file, structure, kpoints=None):
     """ Writes kpoints to a stream. """
     if kpoints == None: kpoints = self.kpoints
