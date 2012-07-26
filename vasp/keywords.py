@@ -393,3 +393,53 @@ class EncutGW(Encut):
         <http://cms.mpi.univie.ac.at/vasp/vasp/ENCUTGW_energy_cutoff_response_function.html>`_
   """
   keyword = 'ENCUTGW'
+
+class PartialRestart(ValueKeyword):
+  """ Restart from previous run.
+      
+      It is either an vasp extraction object of some kind, or None.  In the
+      latter case, the calculation starts from scratch.  However, if an
+      extraction object exists *and* the calculation it refers to was
+      successfull, then it will check whether WAVECAR and CHGCAR exist. It also
+      checks whether :py:attr:`nonscf <incar.Incar.nonscf>` is True or False,
+      and sets ICHARG_ accordingly. The CONTCAR file is *never* copied from the
+      previous run. For an alternate behavior, see :py:class:`Restart`.
+
+      .. seealso:: ICHARG_, ISTART_, :py:class:`Restart`
+  """
+  def __init__(self, value): super(PartialRestart, self).__init__(value=value)
+
+  def output_map(self, **kwargs):
+    from os.path import join, exists, getsize
+    from shutil import copy
+    from ...misc import copyfile
+    from .. import files
+
+    if self.value is None or self.value.success == False:
+      if kwargs['vasp'].nonscf: kwargs['vasp'].icharg = 12
+      return None
+    else:
+      ewave = exists( join(self.value.directory, files.WAVECAR) )
+      if ewave: ewave = getsize(join(self.value.directory, files.WAVECAR)) > 0
+      if ewave:
+        copy(join(self.value.directory, files.WAVECAR), ".")
+        kwargs['vasp'].istart = 1
+      else: kwargs['vasp'].istart = 0
+      echarg = exists( join(self.value.directory, files.CHGCAR) )
+      if echarg: echarg = getsize(join(self.value.directory, files.CHGCAR)) > 0
+      if echarg:
+        copy(join(self.value.directory, files.CHGCAR), ".")
+        kwargs['vasp'].icharg = 1
+      else: kwargs['vasp'].icharg = 0 if kwargs['vasp'].istart == 1 else 2
+      if getattr(kwargs["vasp"], 'nonscf', False): kwargs['vasp'].icharg += 10
+
+      copyfile(join(self.value.directory, files.EIGENVALUES), nothrow='same exists',
+               nocopyempty=True) 
+      copyfile(join(self.value.directory, files.WAVEDER), files.WAVEDER,
+               nothrow='same exists', symlink=getattr(kwargs["vasp"], 'symlink', False),
+               nocopyempty=True) 
+      copyfile(join(self.value.directory, files.TMPCAR), files.TMPCAR,
+               nothrow='same exists', symlink=getattr(kwargs["vasp"], 'symlink', False),
+               nocopyempty=True) 
+      if kwargs['vasp'].lsorbit == True: kwargs['vasp'].nbands = 2*self.value.nbands 
+    return None
