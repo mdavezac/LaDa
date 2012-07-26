@@ -123,7 +123,7 @@ def qdel(self, arg):
   
   result = qstat(self, arg)
   for u, name in zip(result.fields(0), result.fields(-1)): 
-    self.api.system(qdel_exe + " " + str(u))
+    self.shell.system('{0} {1}'.format(qdel_exe, u))
 
 def qstat(self, arg):
   """ SList of user's jobs. 

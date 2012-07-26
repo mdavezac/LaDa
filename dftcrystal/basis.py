@@ -184,7 +184,7 @@ class Ghosts(VariableListKeyword):
 
       This results in the following crystal input:
 
-        | KEEPSYM
+        | KEEPSYMM
         | GHOSTS
         | 3
         | 1 3 5
@@ -244,7 +244,7 @@ class Ghosts(VariableListKeyword):
     """ Prints CRYSTAL input """
     if self.value is None: return None
     if len(self.value) == 0: return None
-    result = 'KEEPSYM\n' if self.keepsym else 'BREAKSYM\n'
+    result = 'KEEPSYMM\n' if self.keepsym else 'BREAKSYM\n'
     result += self.keyword.upper() + '\n'
     result += self.raw
     return result
