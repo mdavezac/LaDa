@@ -16,11 +16,11 @@ def launch(self, event, jobfolders):
   from ... import default_comm
   
   kwargs = dict(event.kwargs) if event.kwargs is not None else dict()
-  comm = deepcopy(default_comm)
-  comm['n'] = event.nbprocs
-  comm["ppn"] = event.ppn
-  kwargs['comm'] = comm
-
+  if event.nbprocs != 0: 
+    comm = deepcopy(default_comm)
+    comm['n'] = event.nbprocs
+    comm["ppn"] = event.ppn
+    kwargs['comm'] = comm
 
   for current, path in jobfolders:
     # start computations.
@@ -42,11 +42,11 @@ def completer(self, event, data):
   """ Completer for scattered launcher. """
   from .. import jobfolder_file_completer
   if data[-1] == "--kwargs":
-    return [u for u in self.api.user_ns if u[0] != '_' and isinstance(self.api.user_ns[u], dict)]
+    return [u for u in self.user_ns if u[0] != '_' and isinstance(self.user_ns[u], dict)]
   elif data[-1] == "--nbprocs": return ['']
   elif data[-1] == "--ppn": return ['']
   result = ['--force', '--kwargs', '--help', '--nbprocs', '--ppn']
-  result.extend(jobfolder_file_completer(self, [event.symbol]))
+  result.extend(jobfolder_file_completer([event.symbol]))
   result = list(set(result) - set(data))
   return result
 
@@ -62,9 +62,9 @@ def parser(self, subparsers, opalls):
                        help="Dictionary which contains arguments for the functionals. "\
                             "\"outdir\" and \"comm\" are added automatically. "\
                             "The functional must accept these arguments." )
-  result.add_argument( '--nbprocs', type=int, default=default_comm.get('n', 1),
+  result.add_argument( '--nbprocs', type=int, default=default_comm.get('n', 0),
                        nargs='?', help="Number of processes over which to launch external calculations. "\
-                                       "Defaults to {0}.".format(default_comm.get('n', 1)))
+                                       "Defaults to {0}. Do 0 for serial.".format(default_comm.get('n', 1)))
   result.add_argument( '--ppn', dest="ppn", default=default_comm.get('ppn', 1), type=int,
                        help="Number of processes per node with which to launch external calculations. "\
                             "Defaults to {0}.".format(default_comm.get('ppn', 1)) )

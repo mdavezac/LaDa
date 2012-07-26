@@ -91,17 +91,16 @@ def launch(self, event, jobfolders):
 
 def completer(self, info, data):
   """ Completer for scattered launcher. """
-  from .. import get_shell
-  from ... import queues, accounts, debug_queue, jobfolder_file_completer
-  shell = get_shell(self)
+  from .. import jobfolder_file_completer
+  from ... import queues, accounts, debug_queue
   if len(data) > 0: 
     if data[-1] == "--walltime":
-      return [ u for u in shell.user_ns                                        \
-               if u[0] != '_' and isinstance(shell.user_ns[u], str) ]
+      return [ u for u in self.user_ns                                         \
+               if u[0] != '_' and isinstance(self.user_ns[u], str) ]
     elif data[-1] == "--nbprocs": 
-      result = [ u for u in shell.user_ns                                      \
-                 if u[0] != '_' and isinstance(shell.user_ns[u], int) ]
-      result.extend( [ u for u in shell.user_ns                                \
+      result = [ u for u in self.user_ns                                       \
+                 if u[0] != '_' and isinstance(self.user_ns[u], int) ]
+      result.extend( [ u for u in self.user_ns                                 \
                        if u[0] != '_' and hasattr(u, "__call__") ])
       return result
     elif data[-1] == '--ppn': return ['']
@@ -112,7 +111,7 @@ def completer(self, info, data):
   if len(queues) > 0: result.append("--queue") 
   if len(accounts) > 0: result.append("--account") 
   if debug_queue is not None: result.append("--debug")
-  result.extend(jobfolder_file_completer(self, [info.symbol]))
+  result.extend(jobfolder_file_completer([info.symbol]))
   result = list(set(result) - set(data))
   return result
 

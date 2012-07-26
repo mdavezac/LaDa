@@ -168,6 +168,17 @@ class ExtractBase(object):
     with self.__stdout__() as file: tree = parse(file)
     return tree.keys()[0]
 
+  @property
+  @make_cached
+  def is_molecular(self):
+    """ True if a molecular calculation """
+    pattern = "^\s+(MOLECULAR|CRYSTAL)\s+CALCULATION\s*$"
+    regex = self._find_last_STDOUT(pattern)
+    if regex is None:
+      raise GrepError('Could not determine whether molecular calculation')
+    return regex.group(1) == 'MOLECULAR'
+    
+
   def _parsed_tree(self):
     """ Returns parsed input tree. """
     from .parse import parse
@@ -184,7 +195,8 @@ class ExtractBase(object):
         structure on which are applied a sequence of transformations. This
         structure format is grepped directly from the output.
     """
-    from .geometry import Crystal
+    from .crystal import Crystal
+    from .molecule import Molecule
     from .. import CRYSTAL_geom_blocks as starters
     from ..error import IOError, NotImplementedError
 
@@ -197,7 +209,7 @@ class ExtractBase(object):
     if starter.lower() != 'crystal': 
       raise NotImplementedError('Can only read 3d structures.')
 
-    result = Crystal()
+    result = Molecule() if self.is_molecular else Crystal()
     result.read_input(tree[starter])
     return result
 
@@ -208,8 +220,9 @@ class ExtractBase(object):
         conjunction with some search method and seek to extract either the
         first or the last structure, or anything in between.
     """
-    from numpy import array
+    from numpy import array, identity
     from ..crystal import Structure
+    from ..error import GrepError
     from .basis import specie_name
     result = Structure()
     file.next(); file.next() # move to first line.
@@ -222,21 +235,26 @@ class ExtractBase(object):
                        type=type, label=int(line[0]), asymmetric=asymmetric,
                        group=line[3] )
       
-    # then find cell.
-    header = 'DIRECT LATTICE VECTORS CARTESIAN '                             \
-             'COMPONENTS (ANGSTROM)'.split()
-    for line in file: 
-      line = line.split()
-      if len(line) != 6: continue
-      if line == header: break
-    file.next()
-    result.cell = array( [file.next().split() for i in xrange(3)],
-                         dtype='float64' )
-
-    # Then re-reads atoms, but in cartesian coordinates.
-    for i in xrange(6): file.next()
-    for atom in result:
-      atom.pos = array(file.next().split()[3:6], dtype='float64')
+    # If a molecule, set cell to 500.0 as in CRYSTAL
+    if self.is_molecular:
+      self.cell = identity(3, dtype='float64') * 500.0
+    else:
+      # then find cell.
+      header = 'DIRECT LATTICE VECTORS CARTESIAN '                             \
+               'COMPONENTS (ANGSTROM)'.split()
+      for line in file: 
+        line = line.split()
+        if len(line) != 6: continue
+        if line == header: break
+      try: file.next()
+      except StopIteration: raise GrepError('File is incomplete.')
+      result.cell = array( [file.next().split() for i in xrange(3)],
+                           dtype='float64' )
+  
+      # Then re-reads atoms, but in cartesian coordinates.
+      for i in xrange(6): file.next()
+      for atom in result:
+        atom.pos = array(file.next().split()[3:6], dtype='float64')
 
     # adds more stuff
     try: title = self.title

@@ -316,11 +316,10 @@ class Functional(object):
 
       # writes/copies files before launching.
       self.bringup(structure, workdir, restart=self.restart)
-      dompi = comm['n'] is not None
-      if comm is not None:
+      dompi = comm is not None
+      if dompi:
         from ..misc import copyfile
         copyfile('crystal.d12', 'INPUT')
-       
 
       # figure out the program to launch.
       program = self.program if self.program is not None else crystal_program
@@ -343,20 +342,17 @@ class Functional(object):
 
   def __call__( self, structure, outdir=None, workdir=None, comm=None,         \
                 overwrite=False, **kwargs):
-    result = None
     for program in self.iter( structure, outdir=outdir, workdir=workdir,
                               comm=comm, overwrite=overwrite, **kwargs ):
       # iterator may yield the result from a prior successfull run. 
-      if getattr(program, 'success', False):
-        result = program
-        continue
+      if getattr(program, 'success', False): continue
       # otherwise, it should yield a Program tuple to execute.
       program.start(comm)
       program.wait()
     # Last yield should be an extraction object.
-    if not result.success:
+    if not program.success:
       raise RuntimeError("CRYSTAL failed to execute correctly.")
-    return result
+    return program
   __call__.__doc__ = iter.__doc__
  
   def __repr__(self, defaults=True, name=None):
