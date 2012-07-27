@@ -32,20 +32,18 @@ def export(self, event):
       help='Path to the tarfile. Suffixes ".gz" and ".tgz" indicate '          \
            'gzip compression, whereas ".bz" and ".bz2" indicate bzip '         \
            'compression. Otherwise, no compression is used.')
-  parser.add_argument( '--incar', action="store_true", dest="incar",
-                       help='Include INCAR files.' )
-  parser.add_argument( '--doscar', action="store_true", dest="doscar",
-                       help='Include DOSCAR files.' )
-  parser.add_argument( '--poscar', action="store_true", dest="poscar",
-                       help='Include POSCAR files.' )
-  parser.add_argument( '--chgcar', action="store_true", dest="chgcar",
-                       help='Include CHGCAR files.' )
+  parser.add_argument( '--input', action="store_true", dest="input",
+                       help='Include input (INCAR/crystal.d12) files.' )
+  parser.add_argument( '--dos', action="store_true", dest="dos",
+                       help='Include Density of States (DOSCAR) files.' )
+  parser.add_argument( '--structure', action="store_true", dest="structure",
+                       help='Include structure input (POSCAR) files.' )
+  parser.add_argument( '--charge', action="store_true", dest="charge",
+                       help='Include charge (CHGCAR) files.' )
   parser.add_argument( '--contcar', action="store_true", dest="contcar",
-                       help='Include POTCAR files.' )
-  parser.add_argument( '--potcar', action="store_true", dest="potcar",
-                       help='Include POTCAR files.' )
-  parser.add_argument( '--wavecar', action="store_true", dest="wavecar",
-                       help='Include WAVECAR files.' )
+                       help='Include CONTCAR files.' )
+  parser.add_argument( '--wavefunctions', action="store_true", dest="wavefunctions",
+                       help='Include wavefunctions (WAVECAR/crystal.98) files.' )
   parser.add_argument( '--procar', action="store_true", dest="procar",
                        help='Include PROCAR files.' )
   group = parser.add_mutually_exclusive_group(required=False)

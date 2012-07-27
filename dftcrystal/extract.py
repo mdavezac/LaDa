@@ -296,7 +296,7 @@ class ExtractBase(object):
       for pos in self._find_structure(file): continue
       file.seek(pos, 0)
       return self._grep_structure(file)
-  
+
   @property
   @make_cached
   def total_energy(self):
@@ -311,6 +311,16 @@ class ExtractBase(object):
 
   @property
   @make_cached
+  def total_energies(self):
+    """ Total energies until convergences. """
+    from numpy import array
+    from quantities import hartree
+    pattern = r"CYC\s+(?:\d+)\s+ETOT\(AU\)\s+(\S+)"
+    result = [u.group(1) for u in self._search_STDOUT(pattern)]
+    return array(result, dtype='float64') * hartree
+
+  @property
+  @make_cached
   def delta_energy(self):
     """ Difference in energy between last two minimization steps. """
     from quantities import hartree
@@ -320,6 +330,24 @@ class ExtractBase(object):
       raise GrepError( 'Could not grep delta energy from '                     \
                        '{0.directory}/{0.STDOUT}.'.format(self) )
     return float(regex.group(1)) * hartree
+
+  def iterfiles(self, **kwargs):
+    """ iterates over input/output files. 
+    
+        :param bool input: Include INCAR file
+        :param bool wavefunctions: Include WAVECAR file
+        :param bool structure: Include POSCAR file
+    """
+    from os.path import exists, join
+    from glob import iglob
+    from itertools import chain
+    files = [self.STDOUT]
+    if kwargs.get('input', False):   files.append('crystal.d12')
+    if kwargs.get('wavefunctions', False): files.append('crystal.f98')
+    if kwargs.get('structure', False):  files.append('crystal.34')
+    for file in files:
+      file = join(self.directory, file)
+      if exists(file): yield file
 
 class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
   """ Extracts DFT data from an OUTCAR. """

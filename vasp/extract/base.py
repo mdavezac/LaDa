@@ -782,56 +782,56 @@ class ExtractBase(object):
   def lwave(self):
     """ Greps LWAVE from OUTCAR. """
     result = self._find_first_OUTCAR(r"""^\s*LWAVE\s*=\s*(\S)""")
-    if result == None: return None
+    if result is None: return None
     return result.group(1) == 'T' 
    
   @property
   def lcharg(self):
     """ Greps LWAVE from OUTCAR. """
     result = self._find_first_OUTCAR(r"""^\s*LCHARG\s*=\s*(\S)""")
-    if result == None: return None
+    if result is None: return None
     return result.group(1) == 'T' 
    
   @property
   def lnoncollinear(self):
     """ Greps LNONCOLLINEAR from OUTCAR. """
     result = self._find_first_OUTCAR(r"""^\s*LNONCOLLINEAR\s*=\s*(\S)""")
-    if result == None: return None
+    if result is None: return None
     return result.group(1) == 'T' 
    
   @property
   def lsecvar(self):
     """ Greps LSECVAR from OUTCAR. """
     result = self._find_first_OUTCAR(r"""^\s*LSECVAR\s*=\s*(\S)""")
-    if result == None: return None
+    if result is None: return None
     return result.group(1) == 'T' 
 
   @property
   def lelf(self):
     """ Greps LELF from OUTCAR. """
     result = self._find_first_OUTCAR(r"""^\s*LELF\s*=\s*(\S)""")
-    if result == None: return None
+    if result is None: return None
     return result.group(1) == 'T' 
 
   @property
   def ldipol(self):
     """ Greps LDIPOL from OUTCAR. """
     result = self._find_first_OUTCAR(r"""^\s*LDIPOL\s*=\s*(\S)""")
-    if result == None: return None
+    if result is None: return None
     return result.group(1) == 'T' 
 
   @property
   def lvtot(self):
     """ Greps LVTOT from OUTCAR. """
     result = self._find_first_OUTCAR(r"""^\s*LVTOT\s*=\s*(\S)""")
-    if result == None: return None
+    if result is None: return None
     return result.group(1) == 'T' 
 
   @property
   def nelm(self):
     """ Greps NELM from OUTCAR. """
     result = self._find_first_OUTCAR(r"""^\s*NELM\s*=\s*(\d+)""")
-    if result == None: return None
+    if result is None: return None
     return int(result.group(1))
 
   @property
@@ -841,7 +841,7 @@ class ExtractBase(object):
              """\s*NELMIN\s*=\s*\d+\s*;"""\
              """\s*NELMDL\s*=\s*(-?\d+)"""
     result = self._find_first_OUTCAR(regex)
-    if result == None: return None
+    if result is None: return None
     return int(result.group(1))
 
   @property
@@ -849,7 +849,7 @@ class ExtractBase(object):
     """ Greps NELMIN from OUTCAR. """
     regex = r"""^\s*NELM\s*=\s*\d+\s*;\s*NELMIN\s*=\s*(\d+)"""
     result = self._find_first_OUTCAR(regex)
-    if result == None: return None
+    if result is None: return None
     return int(result.group(1))
 
   @property
@@ -857,7 +857,8 @@ class ExtractBase(object):
   def nbands(self):
     """ Number of bands in calculation. """
     result = self._find_first_OUTCAR("""NBANDS\s*=\s*(\d+)""")
-    assert result is not None, GrepError("Could not find NBANDS in OUTCAR.")
+    if result not None:
+      raise GrepError("Could not find NBANDS in OUTCAR.")
     return int(result.group(1))
 
   @property
@@ -865,44 +866,35 @@ class ExtractBase(object):
   def nbprocs(self):
     """ Number of bands in calculation. """
     result = self._find_first_OUTCAR("""running\s+on\s+(\d+)\s+nodes""")
-    assert result is not None, GrepError("Could not find number of processes in OUTCAR.")
+    if result is None:
+      raise GrepError("Could not find number of processes in OUTCAR.")
     return int(result.group(1))
 
 
   def iterfiles(self, **kwargs):
     """ iterates over input/output files. 
     
-        :kwarg errors: Include stderr files.
-        :type errors: bool
-        :kwarg incar: Include INCAR file
-        :type incar: bool
-        :kwarg wavecar: Include WAVECAR file
-        :type wavecar: bool
-        :kwarg doscar: Include CHGCAR file
-        :type doscar: bool
-        :kwarg chgcar: Include CHGCAR file
-        :type chgcar: bool
-        :kwarg poscar: Include POSCAR file
-        :type poscar: bool
-        :kwarg contcar: Include CONTCAR file
-        :type contcar: bool
-        :kwarg procar: Include PROCAR file
-        :type procar: bool
+        :param bool stout: Include standard output files
+        :param bool errors: Include stderr files.
+        :param bool input: Include INCAR file
+        :param bool wavefunctions: Include WAVECAR file
+        :param bool dos: Include DOSCAR file
+        :param bool charge: Include CHGCAR file
+        :param bool structure: Include POSCAR file
+        :param bool contcar: Include CONTCAR file
+        :param bool procar: Include PROCAR file
     """
     from os.path import exists, join
     from glob import iglob
     from itertools import chain
     files = [self.OUTCAR]
-    try: files.append(self.functional.STDOUT)
-    except: pass
-    if kwargs.get('errors', False): 
-      try: files.append(self.functional.STDERR)
-      except: pass
-    if kwargs.get('incar', False):   files.append('INCAR')
-    if kwargs.get('wavecar', False): files.append('WAVECAR')
-    if kwargs.get('doscar', False):  files.append('DOSCAR')
-    if kwargs.get('chgcar', False):  files.append('CHGCAR')
-    if kwargs.get('poscar', False):  files.append('POSCAR')
+    if kwargs.get('stdout', False): files.append('stdout')
+    if kwargs.get('errors', False): files.append('stderr')
+    if kwargs.get('input', False):  files.append('INCAR')
+    if kwargs.get('wavefunctions', False): files.append('WAVECAR')
+    if kwargs.get('dos', False):  files.append('DOSCAR')
+    if kwargs.get('charge', False):  files.append('CHGCAR')
+    if kwargs.get('structure', False):  files.append('POSCAR')
     if kwargs.get('contcar', False): files.append('CONTCAR')
     if kwargs.get('procar', False): files.append('PROCAR')
     for file in files:

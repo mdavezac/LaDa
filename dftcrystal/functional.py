@@ -245,9 +245,10 @@ class Functional(object):
         file.write('\n{0} {1} {0}\n'.format(header, 'FUNCTIONAL'))
         file.write(self.__repr__(defaults=False))
         file.write('\n{0} END {1} {0}\n'.format(header, 'FUNCTIONAL'))
-        file.write('\n{0} {1} {0}\n'.format(header, 'STRUCTURE'))
-        file.write(repr(structure))
-        file.write('\n{0} END {1} {0}\n'.format(header, 'STRUCTURE'))
+      if len([0 for filename in iglob(join(workdir, 'ERROR.*'))]):
+        with open('crystal.err', 'w') as out:
+          for filename in iglob(join(workdir, 'ERROR.*')):
+            with open(filename, 'r') as file: out.write(file.read() + '\n')
     
     if Extract(outdir).success and not samefile(outdir, workdir):
       rmtree(workdir)
