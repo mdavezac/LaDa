@@ -1,5 +1,5 @@
 from ..functools.keyword import BoolKeyword as BaseBoolKeyword, ValueKeyword,  \
-                                TypedKeyword
+                                TypedKeyword, AliasKeyword
 class BoolKeyword(BaseBoolKeyword):
   """ Boolean keyword.
 
@@ -393,6 +393,230 @@ class EncutGW(Encut):
         <http://cms.mpi.univie.ac.at/vasp/vasp/ENCUTGW_energy_cutoff_response_function.html>`_
   """
   keyword = 'ENCUTGW'
+
+class ICharge(ValueKeyword):
+  """ Charge from which to start. 
+
+      It is best to keep this attribute set to -1, in which case, LaDa takes
+      care of copying the relevant files.
+
+        - -1: Automatically determined by LaDA. Depends on the value of restart_
+              and the existence of the relevant files. Also takes care of non-scf
+              bit.
+  
+        - 0: Tries to restart from wavefunctions. Uses the latest WAVECAR file
+             between the one currently in the output directory and the one in
+             the restart directory (if speciefied). Sets nonscf_ to False.
+  
+             .. note:: CHGCAR is also copied, just in case.
+  
+        - 1: Tries to restart from wavefunctions. Uses the latest WAVECAR file
+             between the one currently in the output directory and the one in
+             the restart directory (if speciefied). Sets nonscf_ to False.
+  
+        - 2: Superimposition of atomic charge densities. Sets nonscf_ to False.
+  
+        - 4: Reads potential from POT file (VASP-5.1 only). The POT file is
+             deduced the same way as for CHGAR and WAVECAR above.  Sets nonscf_
+             to False.
+  
+        - 10, 11, 12: Same as 0, 1, 2 above, but also sets nonscf_ to True. This
+             is a shortcut. The value is actually kept to 0, 1, or 2:
+  
+             >>> vasp.icharg = 10
+             >>> vasp.nonscf, vasp.icharg
+             (True, 0)
+
+      .. note::
+      
+         Files are copied right before the calculation takes place, not before.
+
+      .. seealso:: ICHARG_
+
+      .. _ICHARG: http://cms.mpi.univie.ac.at/wiki/index.php/ICHARG
+      .. _restart: :py:attr:`~lada.vasp.functional.Functional.restart`
+      .. _nonscf: :py:attr:`~lada.vasp.functional.Functional.nonscf`
+  """ 
+  keyword = 'ICHARG'
+  """ VASP keyword """
+  def __init__(self, value=-1): 
+    super(ICharge, self).__init__(value)
+  def __set__(self, instance, value):
+    """ Sets internal value. 
+
+        Makes sure that the input value is allowed, and that the nonscf_
+        attribute is set properly.
+
+      .. _nonscf: :py:attr:`~lada.vasp.functional.Functional.nonscf`
+    """
+    from ..error import ValueError
+    if value is None: 
+      self.value = None
+      return
+    value = int(value)
+    if value not in [-1, 0, 1, 2, 4, 10, 11, 12]: 
+      raise ValueError('Incorrect value for icharg')
+    if value > 9: 
+      value -= 10
+      instance.scf = True
+    elif value != -1: instance.scf = False
+    self.value = value
+
+  def output_map(self, **kwargs):
+    from ..misc import latest_file, copyfile
+    from . import files
+
+    icharge = self.value
+    if icharge is None: return None
+    # some files will be copied.
+    if icharge not in [2, 12]: 
+      # determines directories to look into.
+      vasp = kwargs['vasp']
+      outdir = kwargs['outdir']
+      hasrestart = getattr(vasp.restart, 'success', False)
+      directories = [outdir]
+      if hasrestart: directories += [vasp.restart.directory]
+      # determines which files exist
+      last_wfn = None if icharge in [1, 11]                                    \
+                 else latest_file(files.WAVECAR, *directories)
+      last_chg = latest_file(files.CHGCAR, *directories) 
+      last_pot = None if icharge != 4 else latest_file(files.POT, *directories) 
+
+      # determines icharge depending on file. 
+      if last_wfn is not None: icharge = 10 if vasp.nonscf else 0
+      elif last_chg is not None: icharge = 11 if vasp.nonscf else 1
+      if last_pot is not None and not vasp.nonscf: icharge = 4
+      if icharge < 0: return None
+
+      # copies relevant files.
+      if last_wfn is not None: copyfile(last_wfn, outdir, nothrow='same')
+      if last_chg is not None: copyfile(last_chg, outdir, nothrow='same')
+      if last_pot is not None: copyfile(last_pot, outdir, nothrow='same')
+    return {self.keyword: icharge}
+
+class IStart(ValueKeyword):
+  """ Starting wavefunctions.
+
+      It is best to keep this attribute set to -1, in which case, LaDa takes
+      care of copying the relevant files.
+
+        - -1: Automatically determined by LaDA. Depends on the value of restart_
+              and the existence of the relevant files.
+  
+        - 0: Start from scratch.
+
+        - 1: Restart with constant cutoff.
+  
+        - 2: Restart with constant basis.
+  
+        - 3: Full restart, including TMPCAR.
+
+      .. note::
+      
+         Files are copied right before the calculation takes place, not before.
+
+      .. seealso:: ISTART_
+
+      .. _ISTART: http://cms.mpi.univie.ac.at/wiki/index.php/ISTART
+      .. _restart: :py:attr:`~lada.vasp.functional.Functional.restart`
+  """ 
+  keyword = 'ISTART'
+  """ VASP keyword """
+  aliases = { -1: ['auto', -1], 0: ['scracth', 0],
+               1: ['cutoff', 1], 2: ['basis', 2], 3: ['tmpcar', 'full', 3] }
+  """ Mapping of aliases. """
+  def __init__(self, value=-1): 
+    super(IStart, self).__init__(value)
+
+  def output_map(self, **kwargs):
+    from ..misc import latest_file, copyfile
+    from ..error import RuntimeError
+    from . import files
+
+    istart = self.value
+    if istart is None: return None
+    # some files will be copied.
+    if istart != 0:
+      # determines directories to look into.
+      vasp = kwargs['vasp']
+      outdir = kwargs['outdir']
+      hasrestart = getattr(vasp.restart, 'success', False)
+      directories = [outdir]
+      if hasrestart: directories += [vasp.restart.directory]
+      # determines which files exist
+      last_wfn = latest_file(files.WAVECAR, *directories)
+      last_tmp = latest_file(files.TMPCAR, *directories) 
+
+      # determines icharge depending on file. 
+      if last_wfn is not None:
+        if istart < 0: istart = 1
+        else:
+          raise RuntimeError( 'Wavefunction file does not exist and ISTART={0}'\
+                              .format(istart) )
+      if istart == 4 and last_tmp is None:
+        raise RuntimeError( 'TMPCAR file does not exist and ISTART={0}'\
+                            .format(istart) )
+      if last_wfn is not None: copyfile(last_wfn, outdir, nothrow='same')
+      if last_tmp is not None: copyfile(last_tmp, outdir, nothrow='same')
+    return {self.keyword: istart}
+
+class IStruc(AliasKeyword):
+  """ Initial starting structure. """
+  aliases = { 'auto': ['auto', 0], 'scratch': ['scracth', 1],
+              'contcar': ['contcar', 2], 'restart': ['restart', 3] }
+  """ Aliases for the same option. """
+  def __init__(self, value='auto'):
+    super(IStruc, self).__init__(value=value)
+  def output_map(self, **kwargs):
+    from ..misc import latest_file, copyfile
+    from ..error import RuntimeError, ValueError
+    from ..crystal import write
+    from . import files
+
+    istruc = self.istruc
+    if istruc is None: return None
+    # some files will be copied.
+    # determines directories to look into.
+    vasp = kwargs['vasp']
+    outdir = kwargs['outdir']
+    hasrestart = getattr(vasp.restart, 'success', False)
+    directories = [outdir]
+    if hasrestart: directories += [vasp.restart.directory]
+    # determines which files exist
+    last_poscar = latest_file(files.POSCAR, *directories)
+    last_contcar = latest_file(files.CONTCAR, *directories) 
+    if last_contcar is not None and last_contcar is not None:
+      earliest = stat(last_contcar).st_mtime > stat(last_poscar).st_mtime
+      earliest = last_contcar if earliest else last_poscar
+    else: earliest = last_contcar if last_contcar is not None else last_poscar
+
+    if istruc == 'scratch' or (last_poscar is None and last_contcar is None):
+      structure = kwargs['structure']
+      if len(structure) == 0: raise ValueError('Structure is empty')
+      if structure.scale < 1e-8: raise ValueError('Structure scale is zero')
+      if structure.volume < 1e-8: raise ValueError('Structure volume is zero')
+      write.poscar(structure)
+    if istruc == 'contcar': 
+      if not last_contcar: raise ValueError('No contcar file to copy')
+      copyfile(last_contcar, '.', nothrow='same')
+    elif istruc == 'restart':
+      if not last_
+      
+      raise ValueError(
+    # determines icharge depending on file. 
+      if last_wfn is not None:
+        if istart < 0: istart = 1
+        else:
+          raise RuntimeError( 'Wavefunction file does not exist and ISTART={0}'\
+                              .format(istart) )
+      if istart == 4 and last_tmp is None:
+        raise RuntimeError( 'TMPCAR file does not exist and ISTART={0}'\
+                            .format(istart) )
+      if last_wfn is not None: copyfile(last_wfn, outdir, nothrow='same')
+      if last_tmp is not None: copyfile(last_tmp, outdir, nothrow='same')
+    return {self.keyword: istart}
+
+
 
 class PartialRestart(ValueKeyword):
   """ Restart from previous run.

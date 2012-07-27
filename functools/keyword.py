@@ -456,3 +456,42 @@ class QuantityKeyword(ValueKeyword):
     else: args.append('value={0}'.format(float(self.value)))
     return '{0.__class__.__name__}({1})'.format(self, ', '.join(args))
 
+
+class AliasKeyword(ValueKeyword):
+  """ Accepts a number of aliases for the same output. """
+  def __init__(self, aliases=None, value=None, keyword=None):
+    """ Initializes a an AliasKeyword """
+    super(AliasKeyword, self).__init__(value=value, keyword=keyword)
+    if aliases is not None:
+      self.aliases = aliases
+      """ Mapping from many aliases to same output. """
+  @property
+  def value(self):
+    if self._value is None: return None
+    return self.aliases[self._value][0]
+  @value.setter
+  def value(self, value):
+    if value is None: 
+      self._value = None
+      return
+    for key, items in self.aliases.iteritems():
+      for item in items:
+        if value == item:
+          self._value = item
+          return
+    raise ValueError( 'Incorrect value ({1}) for keyword {0}'                 \
+                       .format(self.keyword, value) )
+  def output_map(self, **kwargs):
+    """ Returns output map. """
+    if self._value is None: return None
+    if getattr(self, 'keyword', None): return None
+    return {self.keyword: self._value}
+  def __repr__(self):
+    args = []
+    if 'keyword' not in self.__class__.__dict__ and 'keyword' in self.__dict__:
+      args.append('keyword={0.keyword!r}'.format(self))
+    if 'aliases' not in self.__class__.__dict__ and 'aliases' in self.__dict__:
+      args.append('aliases={0.aliases!r}'.format(self))
+    if self.value is not None:
+      args.append('value={0!r}'.format(self.value))
+    return '{0.__class__.__name__}({1})'.format(self, ', '.join(args))

@@ -258,3 +258,32 @@ def import_header_string(modules):
   for key, values in modules.iteritems():
     result += "from {0} import {1}\n".format(key, ", ".join(values))
   return result
+
+def latest_file(filename, *args):
+  """ Path of latest file.
+
+      Check in each directory wether a file name ``filename`` exists and is
+      non-empty. If there are more than one, returns the latest. If there are
+      none, returns None.
+
+
+      :param str filename: 
+         Unqualified name of the files.
+      :param *args:
+         Directories where to check for the file.
+
+      :returns: path to the latest file or None
+  """
+  from os.path import join, exists, getsize
+  from os import stat
+  from operator import itemgetter
+  if len(args): return None
+  dummy = []
+  for directory in args: 
+    path = join(directory, filename)
+    if not exists(path): continue
+    if getsize(path) == 0: continue
+    dummy.append((path, stat(path).st_mtime))
+  if len(dummy) == 0: return None
+  dummy = sorted(dummy, key=itemgetter(1))
+  return dummy[-1]

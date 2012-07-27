@@ -417,15 +417,11 @@ class Vasp(AttrBlock):
         - Saves pickle of self.
     """
     import cPickle
-    from ..crystal import specieset, write
+    from ..crystal import specieset
     from ..misc.changedir import Changedir
     from . import files
 
     with Changedir(outdir) as tmpdir:
-      # creates poscar file. Might be overwriten by restart.
-      write.poscar(structure)
-
-
       # creates INCAR file. Note that POSCAR file might be overwritten here by Restart.
       self.write_incar(structure, comm=comm)
   
