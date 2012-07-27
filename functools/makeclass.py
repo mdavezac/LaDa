@@ -167,25 +167,26 @@ def create_call_from_iter(iter, excludes):
         .format(first_line, iter)
   # add iteration line:
   result += "  result = None\n  for program in self.iter(".format(iter)
+  iterargs = []
   if args.args is not None and len(args.args) > 1:
     # first add arguments without default (except for first == self).
     nargs = len(args.args) - len(args.defaults)
-    for key in args.args[1:nargs]: result += "{0}, ".format(key)
+    for key in args.args[1:nargs]: iterargs.append("{0}".format(key))
   if args.args is not None and len(args.args) > 1:
     # then add arguments with default
     nargs = len(args.args) - len(args.defaults)
     for key in args.args[nargs:]:
-      if key in excludes: result += "{0}={0}, ".format(key)
-    if result[-2:] == ', ': result = result[:-2]
+      if key in excludes: iterargs.append("{0}={0}".format(key))
   # adds arguments to overloaded function. 
-  if args.keywords is not None: result += ", **kwargs"
-  result += "):\n"\
+  iterargs.append('comm=comm')
+  if args.keywords is not None: iterargs.append("**kwargs")
+  result += "{0}):\n"\
             "    if getattr(program, 'success', False):\n"\
             "      result = program\n"\
             "      continue\n"\
             "    program.start(comm)\n"\
             "    program.wait()\n"\
-            "  return result"
+            "  return result".format(', '.join(iterargs))
   return result
 
 def create_call(call, excludes):
@@ -355,17 +356,18 @@ def makefunc(name, iter, module=None):
   funcstring += "  from {0.__module__} import {0.func_name}\n"\
                 "  for program in {0.func_name}(".format(iter)
   # ... including detailed call to iterator function.
+  iterargs = []
   if args.args is not None and len(args.args) > 0:
-    for key in args.args: funcstring += "{0}, ".format(key)
-    if len(args.args[nargs:]) > 0: funcstring = funcstring[:-2]
-  if args.keywords is not None: funcstring += ', **kwargs'
-  funcstring += "):\n"\
+    for key in args.args: iterargs.append("{0}".format(key))
+  iterargs.append('comm=comm')
+  if args.keywords is not None: iterargs.append('**kwargs')
+  funcstring += "{0}):\n"\
                 "    if getattr(program, 'success', False):\n"\
                 "      result = program\n"\
                 "      continue\n"\
                 "    program.start(comm)\n"\
                 "    program.wait()\n"\
-                "  return result"
+                "  return result".format(', '.join(iterargs))
   funcs = {}
   exec funcstring in funcs
   if module is not None:  funcs[name].__module__ = module

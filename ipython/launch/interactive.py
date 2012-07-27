@@ -35,6 +35,7 @@ def launch(self, event, jobfolders):
           continue
       print "Working on {0} in {1}.".format(name, path)
       kwargs["outdir"] = join(dirname(path), name)
+      if event.force: kwargs['overwrite'] = True
       job.compute(**kwargs)
 
 

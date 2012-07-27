@@ -154,7 +154,7 @@ class Vasp(Incar):
     def onfinish(process, error):  self.bringdown(outdir, structure)
     yield ProgramProcess( program, cmdline=[], outdir=outdir,
                           onfinish=onfinish, stdout='stdout', stderr='stderr',
-                          dompi=True )
+                          dompi=comm is not None )
     # yields final extraction object.
     yield Extract(outdir)
 
@@ -221,7 +221,6 @@ class Vasp(Incar):
 
   def write_incar(self, structure, path=None, comm=None):
     """ Writes incar file. """
-    from lada import default_comm
     from ..misc import RelativePath
     from .files import INCAR
 
@@ -233,7 +232,6 @@ class Vasp(Incar):
         self.write_incar(structure, path=file, comm=comm)
       return
 
-    if comm is None: comm = default_comm
     for line in self.incar_lines(structure=structure, vasp=self, comm=comm):
       path.write(line)
 
