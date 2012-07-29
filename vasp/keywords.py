@@ -1,3 +1,4 @@
+from quantity import eV
 from ..functools.keyword import BoolKeyword as BaseBoolKeyword, ValueKeyword,  \
                                 TypedKeyword, AliasKeyword
 class BoolKeyword(BaseBoolKeyword):
@@ -816,3 +817,13 @@ class Relaxation(Keyword):
     else: instance.isif = 2
 
   def output_map(self, **kwargs): return None
+
+def ISmear(AliasKeyword):
+  keyword = 'ISMEAR'
+  aliases = { -5: ['metal', -5], -4: ['tetra', -4], -3: ['dynamic', -3],
+              -1: ['fermi', -1], -2: 'fixed', 0: ['gaussian', 0],
+               1: ['mp', 'mp1', 'mp 1', 1], 2: ['mp 2', 'mp2', 2],
+               3: ['mp3', 'mp 3', 3] }
+def Sigma(QuantityKeyword): 
+  keyword  = 'SIGMA'
+  units = eV

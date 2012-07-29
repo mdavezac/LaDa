@@ -466,9 +466,27 @@ class Vasp(AttrBlock):
         It makes sure that isif_, ibrion_, and nsw_ take the right value for the
         kind of relaxation.
     """
+    self.ismear = ISmear()
+    """ Smearing function 
 
+        Vasp allows a number of options:
 
+        - metal (-5): Tetrahedron method with Blöchl correction (requires a
+          |Gamma|-centered *k*-mesh)
+        - tetra (-4): Tetrahedron method (requires a |Gamma|-centered *k*-mesh)
+        - dynamic (-3): Performs a loop over smearing parameters supplied in
+          :py:attr:`~lada.vasp.functional.smearings`
+        - fixed: (-2): Fixed occupation, set *via* FERWE and FERDO
+        - fermi (-1): Fermi function
+        - gaussian (0): Gaussian function
+        - mp n (n>0): Methfessel-Paxton smearing function of order n
 
+        .. |Gamma|  unicode:: U+00393 .. GREEK CAPITAL LETTER GAMMA
+    """
+    self.isigma = ISigma()
+    self.smearings = TypedValue(type=[int])
+    self.ferwe = TypedValue(type=[int])
+    self.ferdo = TypedValue(type=[int])
 
     # sets all known keywords as attributes.
     for key, value in kwargs.iteritems():
