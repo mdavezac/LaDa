@@ -561,13 +561,30 @@ class IStart(ValueKeyword):
     return {self.keyword: istart}
 
 class IStruc(AliasKeyword):
-  """ Initial starting structure. """
-  aliases = { 'auto': ['auto', 0], 'scratch': ['scracth', 1],
-              'contcar': ['contcar', 2], 'restart': ['restart', 3] }
+  """ Initial structure. 
+  
+      Determines which structure is written to the POSCAR. In practice, it
+      makes it possible to restart a crashed job from the latest contcar.
+      There are two possible options:
+
+        - auto: LaDa determines automatically what to use. If a CONTCAR exists
+                in either the current directory or in the restart directory (if
+                any), then uses the latest. Otherwise, uses input structure.
+        - scratch: Always uses input structure.
+
+      If the run was given the ``overwrite`` option, then always uses the input
+      structure.
+
+      .. note:: There is no VASP equivalent to this option.
+  """
+  aliases = { 'auto': ['auto', 0], 'scratch': ['scracth', 1] }
   """ Aliases for the same option. """
+  keyword = None
+  """ Does not correspond to a VASP keyword """
   def __init__(self, value='auto'):
     super(IStruc, self).__init__(value=value)
   def output_map(self, **kwargs):
+    from os.path import join
     from ..misc import latest_file, copyfile
     from ..error import RuntimeError, ValueError
     from ..crystal import write
@@ -575,95 +592,227 @@ class IStruc(AliasKeyword):
 
     istruc = self.istruc
     if istruc is None: return None
-    # some files will be copied.
-    # determines directories to look into.
+
+    # determines which CONTCAR is the latest, if any exist.
     vasp = kwargs['vasp']
     outdir = kwargs['outdir']
     hasrestart = getattr(vasp.restart, 'success', False)
     directories = [outdir]
     if hasrestart: directories += [vasp.restart.directory]
-    # determines which files exist
-    last_poscar = latest_file(files.POSCAR, *directories)
     last_contcar = latest_file(files.CONTCAR, *directories) 
-    if last_contcar is not None and last_contcar is not None:
-      earliest = stat(last_contcar).st_mtime > stat(last_poscar).st_mtime
-      earliest = last_contcar if earliest else last_poscar
-    else: earliest = last_contcar if last_contcar is not None else last_poscar
 
-    if istruc == 'scratch' or (last_poscar is None and last_contcar is None):
+    # Depending on different options and what's available, writes structure or
+    # copies contcar.
+    if istruc == 'scratch' or last_contcar is None                             \
+       or kwargs.get('overwrite') == True:
       structure = kwargs['structure']
       if len(structure) == 0: raise ValueError('Structure is empty')
       if structure.scale < 1e-8: raise ValueError('Structure scale is zero')
       if structure.volume < 1e-8: raise ValueError('Structure volume is zero')
       write.poscar(structure)
-    if istruc == 'contcar': 
-      if not last_contcar: raise ValueError('No contcar file to copy')
-      copyfile(last_contcar, '.', nothrow='same')
-    elif istruc == 'restart':
-      if not last_
-      
-      raise ValueError(
-    # determines icharge depending on file. 
-      if last_wfn is not None:
-        if istart < 0: istart = 1
-        else:
-          raise RuntimeError( 'Wavefunction file does not exist and ISTART={0}'\
-                              .format(istart) )
-      if istart == 4 and last_tmp is None:
-        raise RuntimeError( 'TMPCAR file does not exist and ISTART={0}'\
-                            .format(istart) )
-      if last_wfn is not None: copyfile(last_wfn, outdir, nothrow='same')
-      if last_tmp is not None: copyfile(last_tmp, outdir, nothrow='same')
-    return {self.keyword: istart}
+    else: copyfile(last_contcar, join(outdir, files.POSCAR), nothrow='same')
+    return None
 
+class UParams(AliasKeyword): 
+  """ Sets U, nlep, and enlep parameters. 
+ 
+      The U, nlep, and enlep parameters of the atomic species are set at the
+      same time as the pseudo-potentials. This object merely sets up the incar
+      with right input.
 
+      However, it does accept one parameter, which can be "off", "on", "occ" or
+      "all", and defines the level of verbosity of VASP (with respect to U and nlep).
 
-class PartialRestart(ValueKeyword):
-  """ Restart from previous run.
-      
-      It is either an vasp extraction object of some kind, or None.  In the
-      latter case, the calculation starts from scratch.  However, if an
-      extraction object exists *and* the calculation it refers to was
-      successfull, then it will check whether WAVECAR and CHGCAR exist. It also
-      checks whether :py:attr:`nonscf <incar.Incar.nonscf>` is True or False,
-      and sets ICHARG_ accordingly. The CONTCAR file is *never* copied from the
-      previous run. For an alternate behavior, see :py:class:`Restart`.
-
-      .. seealso:: ICHARG_, ISTART_, :py:class:`Restart`
+      .. seealso:: `LDAU, LDAUTYPE, LDAUL, LDAUPRINT
+        <http://cms.mpi.univie.ac.at/vasp/vasp/On_site_Coulomb_interaction_L_S_DA_U.html>`_
   """
-  def __init__(self, value): super(PartialRestart, self).__init__(value=value)
+  aliases = { 0: ['off', 0], 1: ['occupancy', 'occ', 2],
+              2: ['all', 'pot', 'potential', 2] }
+  """ Dictionary of aliases. """
+  keyword = 'LDAUPRINT'
+  """ VASP keyword corresponding to the value. """
+  def __init__(self, value=None): super(UParams, self).__init__(value=value)
 
   def output_map(self, **kwargs):
-    from os.path import join, exists, getsize
-    from shutil import copy
-    from ...misc import copyfile
-    from .. import files
+    from ...crystal import specieset
+    types = specieset(kwargs['structure'])
+    species = kwargs['vasp'].species
+    # existence and sanity check
+    has_U, which_type = False, None 
+    for type in types:
+      specie = species[type]
+      if len(specie.U) == 0: continue
+      if len(specie.U) > 4: 
+        raise AssertionError, "More than 4 channels for U/NLEP parameters"
+      has_U = True
+      # checks consistency.
+      which_type = specie.U[0]["type"]
+      for l in specie.U[1:]: 
+        assert which_type == l["type"], \
+               AssertionError("LDA+U/NLEP types are not consistent across species.")
+    if not has_U: return None
 
-    if self.value is None or self.value.success == False:
-      if kwargs['vasp'].nonscf: kwargs['vasp'].icharg = 12
-      return None
+    # parameters other than U and NLEP themselves.
+    result = super(UParams, self).output_map(**kwargs)
+    result['LDAU'] = '.TRUE.'
+    result['LDAUTYPE'] = str(which_type)
+
+    # U and NLEP themselves.
+    for i in range( max(len(species[type].U) for type in types) ):
+      ldul, lduu, lduj, lduo = [], [], [], []
+      for type in types:
+        specie = species[type]
+        a = -1, 0e0, 0e0, 1
+        if len(specie.U) <= i: pass
+        elif specie.U[i]["func"] == "U":    
+          a = [specie.U[i]["l"], specie.U[i]["U"], specie.U[i]["J"], 1]
+        elif specie.U[i]["func"] == "nlep": 
+          a = [specie.U[i]["l"], specie.U[i]["U0"], 0e0, 2]
+        elif specie.U[i]["func"] == "enlep":
+          a = [specie.U[i]["l"], specie.U[i]["U0"], specie.U[i]["U1"], 3]
+        else: raise RuntimeError, "Debug Error."
+        if hasattr(a[1], "rescale"): a[1] = a[1].rescale("eV")
+        if hasattr(a[2], "rescale"): a[2] = a[2].rescale("eV")
+        ldul.append('{0[0]}'.format(a))
+        lduu.append('{0[1]:18.10e}'.format(a))
+        lduj.append('{0[2]:18.10e}'.format(a))
+        lduo.append('{0[3]}'.format(a))
+      result['LDUL{0}'.format(i+1)] = ' '.join(ldul)
+      result['LDUU{0}'.format(i+1)] = ' '.join(lduu)
+      result['LDUJ{0}'.format(i+1)] = ' '.join(lduj)
+      result['LDUO{0}'.format(i+1)] = ' '.join(lduo)
+    return result
+
+class PrecFock(AliasKeyword):
+  aliases = { 'Low': ['low'], 'Medium': ['medium'], 'Fast': ['fast'],
+              'Normal': ['normal'], 'Accurate': ['accurate'] }
+  """ Aliases for the values of the VASP keyword. """
+  keyword = 'PRECFOCK'
+  """ Vasp keyword. """
+
+class Precision(AliasKeyword):
+  aliases = { 'Accurate': ['accurate'], 'Low': ['low'], 'Normal': ['normal'],
+              'Medium': ['medium'], 'High': ['high'], 'Single': ['single'] }
+  """ Aliases for the values of the VASP keyword. """
+  keyword = 'PREC'
+  """ Vasp keyword. """
+
+class Nsw(TypedKeyword):
+  type = int
+  """ Type of the keyword. """
+  keyword = 'NSW'
+  """ VASP keyword. """
+class Isif(ChoiceKeyword):
+  keyword = 'ISIF'
+  def __init__(self, value=None):
+    super(Ibrion, self).__init__(value=value)
+    self.value = value
+  def __get__(self, instance, owner=None): return self.value
+  def __set__(self, instance, value):
+    from ..error import ValueError
+    try: dummy = int(value)
+    except: raise ValueError('ISIF accepts only integer values')
+    else: value = dummy
+    if value < 0 or value > 6:
+      raise ValueError('Unexpected value for ISIF')
+    self.value = value
+  def output_map(self, **kwargs):
+    vasp = kwargs['vasp']
+    if self.value is None: return None
+    return {self.keyword: str(self.value)}
+
+class Ibrion(Keyword):
+  keyword = 'IBRION'
+  """ VASP keyword """
+  def __init__(self, value=None):
+    super(Ibrion, self).__init__(value=value)
+    self.value = value
+  def __get__(self, instance, owner=None): return self.value
+  def __set__(self, instance, value):
+    from ..error import ValueError
+    try: dummy = int(value)
+    except: raise ValueError('Ibrion accepts only integer values')
+    else: value = dummy
+    if value < -1 or (value > 8 and value !=44):
+      raise ValueError('Unexpected value for IBRION')
+    self.value = value
+  def output_map(self, **kwargs):
+    vasp = kwargs['vasp']
+    if vasp.relaxation == 'static': 
+      return {self.keyword: str(-1)}
+    if self.value is None: return None
+    return {self.keyword: str(self.value)}
+
+class Relaxation(Keyword):
+  """ Simple relaxation parameter 
+
+      It accepts two parameters:
+
+        - static: for calculation without geometric relaxation.
+        - combination of ionic, volume, cellshape: for the type of relaxation
+          requested.
+
+      It makes sure that isif_, ibrion_, and nsw_ take the right value for the
+      kind of relaxation.
+  """
+  keyword = None
+  """ Just an alias for ISIF. """
+  def __init__(self, value=None):
+    super(Relaxation, self).__init__()
+    self.value = value
+  def __get__(self, instance, owner=None): 
+    nsw = instance.nsw if instance.nsw is not None else 0
+    ibrion = instance.ibrion if instance.ibrion is not None                    \
+             else (-1 if nsw <= 0 else 2)
+    if nsw <= 0 or instance.ibrion == -1: return 'static'
+    return { None: 'cellshape ions volume',
+             0: 'ions', 
+             1: 'ions', 
+             2: 'ions', 
+             3: 'cellshape ions volume',
+             4: 'cellshape ions',
+             5: 'cellshape',
+             6: 'cellshape volume',
+             7: 'volume' }[instance.isif]
+  def __set__(self, instance, value):
+    from ..error import ValueError
+    if hasattr(value, '__iter__'): value = ' '.join([str(u) for u in value])
+    value = set(value.lower().replace(',', ' ').rstrip().lstrip().split())
+    result = []
+    if 'all' in value: result = 'ions cellshape volume'.split()
     else:
-      ewave = exists( join(self.value.directory, files.WAVECAR) )
-      if ewave: ewave = getsize(join(self.value.directory, files.WAVECAR)) > 0
-      if ewave:
-        copy(join(self.value.directory, files.WAVECAR), ".")
-        kwargs['vasp'].istart = 1
-      else: kwargs['vasp'].istart = 0
-      echarg = exists( join(self.value.directory, files.CHGCAR) )
-      if echarg: echarg = getsize(join(self.value.directory, files.CHGCAR)) > 0
-      if echarg:
-        copy(join(self.value.directory, files.CHGCAR), ".")
-        kwargs['vasp'].icharg = 1
-      else: kwargs['vasp'].icharg = 0 if kwargs['vasp'].istart == 1 else 2
-      if getattr(kwargs["vasp"], 'nonscf', False): kwargs['vasp'].icharg += 10
+      if 'ion' in value or 'ions' in value or 'ionic' in value:
+        result.append('ions')
+      if 'cell' in value or 'cellshape' in value or 'cell-shape' in value: 
+        result.append('cellshape')
+      if 'volume' in value: result.append('volume')
+    result = ', '.join(result)
 
-      copyfile(join(self.value.directory, files.EIGENVALUES), nothrow='same exists',
-               nocopyempty=True) 
-      copyfile(join(self.value.directory, files.WAVEDER), files.WAVEDER,
-               nothrow='same exists', symlink=getattr(kwargs["vasp"], 'symlink', False),
-               nocopyempty=True) 
-      copyfile(join(self.value.directory, files.TMPCAR), files.TMPCAR,
-               nothrow='same exists', symlink=getattr(kwargs["vasp"], 'symlink', False),
-               nocopyempty=True) 
-      if kwargs['vasp'].lsorbit == True: kwargs['vasp'].nbands = 2*self.value.nbands 
-    return None
+    # static case
+    if len(result) == 0:
+      instance.nsw = 0
+      if instance.ibrion is not None: instance.ibrion = -1
+      if instance.isif is not None:
+        if instance.isif > 2: instance.isif = 2
+      return
+    
+    # non-static
+    if instance.nsw is not None:
+      if instance.nsw <= 0: instance.nsw = 50
+    if instance.ibrion is not None:
+      if instance.ibrion == -1: instance.ibrion = 2
+    ionic = 'ions' in value
+    cellshape = 'cellshape' in value
+    volume = 'volume' in value
+    if ionic and (not cellshape) and (not volume):   instance.isif = 2
+    elif ionic and cellshape and (not volume):       instance.isif = 4
+    elif ionic and cellshape and volume:             instance.isif = 3
+    elif (not ionic) and cellshape and volume:       instance.isif = 6
+    elif (not ionic) and cellshape and (not volume): instance.isif = 5
+    elif (not ionic) and (not cellshape) and volume: instance.isif = 7
+    elif ionic and (not cellshape) and volume: 
+      raise RuntimeError( "VASP does not allow relaxation of atomic position " \
+                          "and volume at constant cell-shape.\n" )
+    else: instance.isif = 2
+
+  def output_map(self, **kwargs): return None

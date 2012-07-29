@@ -15,12 +15,11 @@ class Vasp(AttrBlock):
   def __init__(self, copy=None, species=None, kpoints=None, **kwargs):
     """ Initializes vasp class. """
     from .keywords import BoolKeyword, Magmom, System, Npar, ExtraElectron,    \
-                          NElect, Algo, Ediff, Ediffg, Encut, EncutGW
-    from ..functools import TypedKeyword
+                          NElect, Algo, Ediff, Ediffg, Encut, EncutGW, IStart, \
+                          ICharge, IStruc, UParams, PrecFock, Precision, Nsw,  \
+                          Isif, Ibrion, Relaxation
+    from ..functools import TypedKeyword, from ..functools import ChoiceKeyword
     super(Vasp, self).__init__()
-
-    self.restart_from_contcar = kwargs.pop('restart_from_contcar', True)
-    """ If True and self. CONTCAR exists in directory, will restart from it. """
 
     # copies values from other functional.
     if copy is not None: 
@@ -54,7 +53,6 @@ class Vasp(AttrBlock):
             In other words, different vasp executables can be used depending on
             the parameters. 
     """
-    from ..functools import ChoiceKeyword
     self.addgrid = BoolKeyword()
     """ Adds additional support grid for augmentation charge evaluation. 
 
@@ -133,7 +131,12 @@ class Vasp(AttrBlock):
     self.ngx       = TypedKeyword(type=int)
     self.ngy       = TypedKeyword(type=int)
     self.ngz       = TypedKeyword(type=int)
-    
+    self.nonscf    = BoolKeyword()
+    """ If True, performs a non-self consistent calculation.
+
+        The value of this keyword is checked by :py:attr:`icharg` and used
+        appropriately.
+    """
     
     self.magmom    = Magmom()
     """ Sets the initial magnetic moments on each atom.
@@ -296,6 +299,176 @@ class Vasp(AttrBlock):
         .. seealso:: `ENCUTGW
           <http://cms.mpi.univie.ac.at/vasp/vasp/ENCUTGW_energy_cutoff_response_function.html>`_
     """
+    self.istart = IStart()
+    """ Starting wavefunctions.
+    
+        It is best to keep this attribute set to -1, in which case, LaDa takes
+        care of copying the relevant files.
+    
+          - -1: Automatically determined by LaDA. Depends on the value of
+                restart_ and the existence of the relevant files.
+    
+          - 0: Start from scratch.
+    
+          - 1: Restart with constant cutoff.
+    
+          - 2: Restart with constant basis.
+    
+          - 3: Full restart, including TMPCAR.
+    
+        .. note::
+        
+           Files are copied right before the calculation takes place, not
+           before.
+    
+        .. seealso:: ISTART_
+    
+        .. _ISTART: http://cms.mpi.univie.ac.at/wiki/index.php/ISTART
+        .. _restart: :py:attr:`~lada.vasp.functional.Functional.restart`
+    """ 
+    self.icharg = ICharge()
+    """ Charge from which to start. 
+    
+        It is best to keep this attribute set to -1, in which case, LaDa takes
+        care of copying the relevant files.
+    
+          - -1: Automatically determined by LaDA. Depends on the value of
+                restart_ and the existence of the relevant files. Also takes
+                care of non-scf bit.
+    
+          - 0: Tries to restart from wavefunctions. Uses the latest WAVECAR
+               file between the one currently in the output directory and the
+               one in the restart directory (if speciefied). Sets nonscf_ to
+               False.
+    
+               .. note:: CHGCAR is also copied, just in case.
+    
+          - 1: Tries to restart from wavefunctions. Uses the latest WAVECAR
+               file between the one currently in the output directory and the
+               one in the restart directory (if speciefied). Sets nonscf_ to
+               False.
+    
+          - 2: Superimposition of atomic charge densities. Sets nonscf_ to
+               False.
+    
+          - 4: Reads potential from POT file (VASP-5.1 only). The POT file is
+               deduced the same way as for CHGAR and WAVECAR above.  Sets
+               nonscf_ to False.
+    
+          - 10, 11, 12: Same as 0, 1, 2 above, but also sets nonscf_ to True.
+               This is a shortcut. The value is actually kept to 0, 1, or 2:
+    
+               >>> vasp.icharg = 10
+               >>> vasp.nonscf, vasp.icharg
+               (True, 0)
+    
+        .. note::
+        
+           Files are copied right before the calculation takes place, not before.
+    
+        .. seealso:: ICHARG_
+    
+        .. _ICHARG: http://cms.mpi.univie.ac.at/wiki/index.php/ICHARG
+        .. _restart: :py:attr:`~lada.vasp.functional.Functional.restart`
+        .. _nonscf: :py:attr:`~lada.vasp.functional.Functional.nonscf`
+    """ 
+    self.functional.istruc = IStruc()
+    """ Initial structure. 
+    
+        Determines which structure is written to the POSCAR. In practice, it
+        makes it possible to restart a crashed job from the latest contcar.
+        There are two possible options:
+  
+          - auto: LaDa determines automatically what to use. If a CONTCAR
+                  exists in either the current directory or in the restart
+                  directory (if any), then uses the latest. Otherwise, uses
+                  input structure.
+          - scratch: Always uses input structure.
+  
+        If the run was given the ``overwrite`` option, then always uses the
+        input structure.
+
+        .. note:: There is no VASP equivalent to this option.
+    """
+    self.ldauprint = UParams()
+    """ Sets U, nlep, and enlep parameters. 
+   
+        The U, nlep, and enlep parameters of the atomic species are set at the
+        same time as the pseudo-potentials. This object merely sets up the incar
+        with right input.
+    
+        However, it does accept one parameter, which can be "off", "on", "occ" or
+        "all", and defines the level of verbosity of VASP (with respect to U and nlep).
+    
+        .. seealso:: `LDAU, LDAUTYPE, LDAUL, LDAUPRINT
+          <http://cms.mpi.univie.ac.at/vasp/vasp/On_site_Coulomb_interaction_L_S_DA_U.html>`_
+    """
+    self.precfock = PrecFock()
+    """ Sets up FFT grid in hartree-fock related routines.
+        
+        Allowable options are:
+    
+        - low
+        - medium
+        - fast
+        - normal
+        - accurate
+    
+        .. seealso:: PRECFOCK_
+        
+        .. _PRECFOCK: http://cms.mpi.univie.ac.at/wiki/index.php/PRECFOCK
+    """
+    self.precision = Precision()
+    """ Sets accuracy of calculation. 
+    
+        - accurate (default)
+        - low
+        - medium
+        - high
+        - single
+    
+        .. seealso:: PREC_
+        
+        .. _PREC: http://cms.mpi.univie.ac.at/wiki/index.php/PREC
+    """
+    self.nsw = Nsw()
+    """ Maxium number of ionic iterations. 
+
+        .. seealso:: NSW_
+
+        .. _NSW: http://cms.mpi.univie.ac.at/wiki/index.php/NSW
+    """
+    self.ibrion = Ibrion()
+    """ Ions/cell-shape/volume optimization method.
+    
+        Can only take a restricted set of values: -1 | 0 | 1 | 2 | 3 | 5 | 6 | 7 | 8 | 44.
+
+        .. seealso:: IBRION_
+
+        .. _IBRION: cms.mpi.univie.ac.at/wiki/index.php/IBRIONN
+    """
+    self.isif = Isif()
+    """ Degree of librerty to optimize during geometry optimization
+
+        .. seealso:: ISIF_
+
+        .. _ISIF: http://cms.mpi.univie.ac.at/vasp/guide/node112.html
+    """
+    self.relaxation = Relaxation()
+    """ Short-cut for setting up relaxation. 
+
+        It accepts two parameters:
+        
+          - static: for calculation without geometric relaxation.
+          - combination of ionic, volume, cellshape: for the type of relaxation
+            requested.
+
+        It makes sure that isif_, ibrion_, and nsw_ take the right value for the
+        kind of relaxation.
+    """
+
+
+
 
     # sets all known keywords as attributes.
     for key, value in kwargs.iteritems():
