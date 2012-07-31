@@ -14,11 +14,11 @@ class Vasp(AttrBlock):
 
   def __init__(self, copy=None, species=None, kpoints=None, **kwargs):
     """ Initializes vasp class. """
-    from .keywords import BoolKeyword, Magmom, System, Npar, ExtraElectron,    \
-                          NElect, Algo, Ediff, Ediffg, Encut, EncutGW, IStart, \
-                          ICharge, IStruc, UParams, PrecFock, Precision, Nsw,  \
-                          Isif, Ibrion, Relaxation
-    from ..functools import TypedKeyword, from ..functools import ChoiceKeyword
+    from .keyword import BoolKeyword, Magmom, System, Npar, ExtraElectron,     \
+                         NElect, Algo, Ediff, Ediffg, Encut, EncutGW, IStart,  \
+                         ICharge, IStruc, UParams, PrecFock, Precision, Nsw,   \
+                         Isif, IBrion, Relaxation, ISmear, LSorbit, Sigma
+    from ..functools.keyword import TypedKeyword, ChoiceKeyword
     super(Vasp, self).__init__()
 
     # copies values from other functional.
@@ -372,7 +372,7 @@ class Vasp(AttrBlock):
         .. _restart: :py:attr:`~lada.vasp.functional.Functional.restart`
         .. _nonscf: :py:attr:`~lada.vasp.functional.Functional.nonscf`
     """ 
-    self.functional.istruc = IStruc()
+    self.istruc = IStruc()
     """ Initial structure. 
     
         Determines which structure is written to the POSCAR. In practice, it
@@ -438,7 +438,7 @@ class Vasp(AttrBlock):
 
         .. _NSW: http://cms.mpi.univie.ac.at/wiki/index.php/NSW
     """
-    self.ibrion = Ibrion()
+    self.ibrion = IBrion()
     """ Ions/cell-shape/volume optimization method.
     
         Can only take a restricted set of values: -1 | 0 | 1 | 2 | 3 | 5 | 6 | 7 | 8 | 44.
@@ -471,7 +471,7 @@ class Vasp(AttrBlock):
 
         Vasp allows a number of options:
 
-        - metal (-5): Tetrahedron method with Blöchl correction (requires a
+        - metal (-5): Tetrahedron method with Bloechl correction (requires a
           |Gamma|-centered *k*-mesh)
         - tetra (-4): Tetrahedron method (requires a |Gamma|-centered *k*-mesh)
         - dynamic (-3): Performs a loop over smearing parameters supplied in
@@ -483,10 +483,17 @@ class Vasp(AttrBlock):
 
         .. |Gamma|  unicode:: U+00393 .. GREEK CAPITAL LETTER GAMMA
     """
-    self.isigma = ISigma()
-    self.smearings = TypedValue(type=[int])
-    self.ferwe = TypedValue(type=[int])
-    self.ferdo = TypedValue(type=[int])
+    self.isigma = Sigma()
+    self.smearings = TypedKeyword(type=[int])
+    self.ferwe = TypedKeyword(type=[int])
+    self.ferdo = TypedKeyword(type=[int])
+    self.lsorbit = LSorbit()
+    """ Run calculation with spin-orbit coupling. 
+    
+        Accepts None, True, or False.
+        If True, then sets :py:attr:`~lada.vasp.incar.Incar.nonscf` to True and
+        :py:attr:`~lada.vasp.incar.Incar.ispin` to 2.
+    """ 
 
     # sets all known keywords as attributes.
     for key, value in kwargs.iteritems():
@@ -684,141 +691,19 @@ class Vasp(AttrBlock):
       for kpoint in self.kpoints:
         file.write("{0[0]} {0[1]} {0[2]} {1}\n".format(kpoint, 1 if len(kpoint) == 3 else kpoint[3]))
 
-  def __repr__(self, skip=None):
-    """ Returns a python script representing this object. """
-    from .. import verbose_representation
-    if skip is None: skip = not verbose_representation
+  def __repr__(self, defaults=True, name=None):
+    """ Returns representation of this instance """
+    from ..functools.uirepr import uirepr
+    defaults = self.__class__() if defaults else None
+    return uirepr(self, name=name, defaults=defaults)
 
-    # creates a default vasp instance to compare to.
-    compare = self.__class__()
-    params = compare.params.keys()
+  def __ui_repr__(self, imports, name=None, defaults=None, exclude=None):
+    from ..functools.uirepr import template_ui_repr
 
-    # will hold classes from modules.
-    modules = {}
-    modules[self.__class__.__module__] = [self.__class__.__name__]
-    addparam = {}
-    noaddparam = {}
-    special = {}
-    # now gather vasp parameters and check their length.
-    for name, value in self.params.items():
-      if skip and value is None: continue
-      if name in params:
-        if skip and value is None: continue
-        try: # check if is default.
-          if skip and value == compare.params[name]: continue
-        except: pass
-        noaddparam[name] = len(name), value
-      else:
-        if value is None: continue
-        addparam[name] = len(name), value
-        module = value.__class__.__module__ 
-        classname = value.__class__.__name__ 
-        if module in modules: modules[module].append(classname)
-        else: modules[module] = [classname]
-    # if a special parameter, then is non-default.
-    for name, value in self.special.items():
-      if skip and value.value is None: continue
-      try: # check if is default.
-        if skip and value.__class__ is compare.special[name].__class__ \
-           and getattr(self, name) == getattr(compare, name): continue
-      except: pass
-      try: 
-        if value.__class__ is compare.special[name].__class__:
-          noaddparam[name] = len(name), value.value
-          continue
-      except: pass
-      special[name] = len(name), value
-      module = value.__class__.__module__ 
-      classname = value.__class__.__name__ 
-      if module in modules: modules[module].append(classname)
-      else: modules[module] = [classname]
-    # adds kpoints
-    if hasattr(self.kpoints, "__call__"):
-      # checks for user module.
-      module = self.kpoints.__class__.__module__ 
-      classname = self.kpoints.__class__.__name__ 
-      if module in modules: modules[module].append(classname)
-      else: modules[module] = [classname]
-      noaddparam['kpoints'] = len('kpoints'), self.kpoints
-    else:
-      try: 
-        if skip == False or self.kpoints != compare.kpoints:
-          noaddparam['kpoints'] = len('kpoints'), self.kpoints
-      except: noaddparam['kpoints'] = len('kpoints'), self.kpoints
-
-
-    if not self.restart_from_contcar: 
-      noaddparam['restart_from_contcar'] = len('restart_from_contcar'), False
-    # adds objects in __dict__
-    class Dummy: pass
-    for key, value in self.__dict__.iteritems():
-      if key == 'special' or key == 'params' or key == 'species': continue
-      try: 
-        if skip and getattr(compare, key, Dummy) == value: continue
-      except: pass
-      noaddparam[key] = len(key), value
-      module = value.__class__.__module__
-      classname = value.__class__.__name__ 
-      if module == '__builtin__': continue
-      if module in modules: modules[module].append(classname)
-      else: modules[module] = [classname]
-
-    # now write stuff to string.
-    string = "functional = {0.__class__.__name__}()\n".format(self)
-
-    def sortme(a): return a.lower()
-    l = [k for k in noaddparam.iterkeys() if k[0] != '_']
-    if len(l) != 0:
-      length = max([len(k) for k in l])
-      for key in sorted(l, key=sortme):
-        string += 'functional.{0:<{length}} = {1[1]!r}\n'.format(key, noaddparam[key], length=length)
-    l = [k for k in addparam.iterkeys() if k[0] != '_']
-    if len(l) != 0:
-      length = max([len(k) for k in l])
-      for key in sorted(l, key=sortme):
-        string += 'functional.add_param = {0!r: >{length}}, {1[1]!r}\n'\
-                  .format(key, addparam[key], length=length)
-    l = [k for k in noaddparam.iterkeys() if k[0] == '_']
-    if len(l) != 0:
-      length = max([len(k) for k in l])
-      for key in sorted(l, key=sortme):
-        string += 'functional.{0:<{length}} = {1[1]!r}\n'.format(key, noaddparam[key], length=length)
-    l = [k for k in addparam.iterkeys() if k[0] == '_']
-    if len(l) != 0:
-      length = max([len(k) for k in l])
-      for key in sorted(l, key=sortme):
-        string += 'functional.add_param = {0!r: >{length}}, {1[1]!r}\n'\
-                  .format(key, addparam[key], length=length)
-    l = [k for k in special.iterkeys() if k[0] != '_']
-    if len(l) != 0:
-      length = max([len(k) for k in l])
-      for key in sorted(l, key=sortme):
-        string += 'functional.{0:<{length}} = {1[1]!r}\n'.format(key, special[key], length=length)
-    l = [k for k in special.iterkeys() if k[0] == '_']
-    if len(l) != 0:
-      length = max([len(k) for k in l])
-      for key in sorted(l, key=sortme):
-        string += 'functional.add_param = {0!r: >{length}}, {1[1]!r}\n'\
-                  .format(key, special[key], length=length)
-
-    # adds species.
-    if len(self.species) > 0:
-      length = max([len(k) for k in self.species])
-      for name, specie in self.species.items():
-        string += "functional.species[{0!r}] {2:<{3}}= {1!r}\n".format(name, specie, '', length-len(name))
-        module = specie.__class__.__module__ 
-        classname = specie.__class__.__name__ 
-        if module in modules: modules[module].append(classname)
-        else: modules[module] = [classname]
-
-    # adds user modules above repr string.
-    header = ""
-    for name in sorted(modules.keys()):
-      mods = list(set(modules[name]))
-      header += "from {0} import {1}".format(name, mods[0])
-      for v in mods[1:]: header += ", {0}".format(v)
-      header += "\n"
-    return header + string
+    results = template_ui_repr(self, imports, name, defaults, ['add_specie'])
+    if name is None:
+      name = getattr(self, '__ui_name__', self.__class__.__name__.lower())
+    return results
 
   @add_setter
   def add_specie(self, args):

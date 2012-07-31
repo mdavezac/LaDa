@@ -1,4 +1,4 @@
-from keywords import BaseKeyword
+from .keyword import BaseKeyword
 class AttrBlock(BaseKeyword):
   """ Defines block input to CRYSTAL. 
   

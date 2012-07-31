@@ -62,7 +62,7 @@ class ValueKeyword(BaseKeyword):
 
       .. _str: http://docs.python.org/library/functions.html#str
   """
-  def __init__(self, keyword, value=None):
+  def __init__(self, keyword=None, value=None):
     """ Initializes a keyword with a value. """
     super(ValueKeyword, self).__init__(keyword=keyword)
     self.value = value
@@ -453,7 +453,7 @@ class QuantityKeyword(ValueKeyword):
       args.append('units={0.units!r}'.format(self))
     if len(getattr(self, 'shape', ())) > 0: 
       args.append('value={0!r}'.format(self.value.magnitude))
-    else: args.append('value={0}'.format(float(self.value)))
+    elif self.value is not None: args.append('value={0}'.format(float(self.value)))
     return '{0.__class__.__name__}({1})'.format(self, ', '.join(args))
 
 

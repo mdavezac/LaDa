@@ -1,6 +1,7 @@
-from quantity import eV
+from quantities import eV
 from ..functools.keyword import BoolKeyword as BaseBoolKeyword, ValueKeyword,  \
-                                TypedKeyword, AliasKeyword
+                                TypedKeyword, AliasKeyword, ChoiceKeyword,     \
+                                BaseKeyword, QuantityKeyword
 class BoolKeyword(BaseBoolKeyword):
   """ Boolean keyword.
 
@@ -41,6 +42,7 @@ class Magmom(ValueKeyword):
   def __init__(self, value=True):
     super(Magmom, self).__init__(value)
 
+  @property
   def value(self):
     """ MAGMOM value, or whether to compute it. 
 
@@ -101,7 +103,8 @@ class System(ValueKeyword):
   """
   keyword = 'SYSTEM'
   """ VASP keyword """
-  def __init__(self, value): super(System, self).__init__(value=value)
+  def __init__(self, value=None):
+    super(System, self).__init__(value=value)
 
   def output_map(self, **kwargs):
     """ Tries to return sensible title. 
@@ -147,7 +150,7 @@ class Npar(ValueKeyword):
   """
   keyword = 'NPAR'
   """ VASP keyword """
-  def __init__(self, value): super(Npar, self).__init__(value=value)
+  def __init__(self, value=None): super(Npar, self).__init__(value=value)
 
   def output_map(self, **kwargs):
     from math import log, sqrt
@@ -223,7 +226,7 @@ class NElect(TypedKeyword):
   """ Type of this input. """
   keyword = 'NELECT'
   """ VASP keyword. """
-  def __init__(self, value=0): super(ExtraElectron, self).__init__(value=value)
+  def __init__(self, value=0): super(NElect, self).__init__(value=value)
 
   def __set__(self, instance, value):
     if value is not None: instance.extraelectron = None
@@ -706,7 +709,7 @@ class Nsw(TypedKeyword):
 class Isif(ChoiceKeyword):
   keyword = 'ISIF'
   def __init__(self, value=None):
-    super(Ibrion, self).__init__(value=value)
+    super(Isif, self).__init__(value=value)
     self.value = value
   def __get__(self, instance, owner=None): return self.value
   def __set__(self, instance, value):
@@ -722,17 +725,17 @@ class Isif(ChoiceKeyword):
     if self.value is None: return None
     return {self.keyword: str(self.value)}
 
-class Ibrion(Keyword):
+class IBrion(BaseKeyword):
   keyword = 'IBRION'
   """ VASP keyword """
   def __init__(self, value=None):
-    super(Ibrion, self).__init__(value=value)
+    super(IBrion, self).__init__()
     self.value = value
   def __get__(self, instance, owner=None): return self.value
   def __set__(self, instance, value):
     from ..error import ValueError
     try: dummy = int(value)
-    except: raise ValueError('Ibrion accepts only integer values')
+    except: raise ValueError('ibrion accepts only integer values')
     else: value = dummy
     if value < -1 or (value > 8 and value !=44):
       raise ValueError('Unexpected value for IBRION')
@@ -744,7 +747,7 @@ class Ibrion(Keyword):
     if self.value is None: return None
     return {self.keyword: str(self.value)}
 
-class Relaxation(Keyword):
+class Relaxation(BaseKeyword):
   """ Simple relaxation parameter 
 
       It accepts two parameters:
@@ -818,12 +821,30 @@ class Relaxation(Keyword):
 
   def output_map(self, **kwargs): return None
 
-def ISmear(AliasKeyword):
+class ISmear(AliasKeyword):
   keyword = 'ISMEAR'
   aliases = { -5: ['metal', -5], -4: ['tetra', -4], -3: ['dynamic', -3],
               -1: ['fermi', -1], -2: 'fixed', 0: ['gaussian', 0],
                1: ['mp', 'mp1', 'mp 1', 1], 2: ['mp 2', 'mp2', 2],
                3: ['mp3', 'mp 3', 3] }
-def Sigma(QuantityKeyword): 
+class Sigma(QuantityKeyword): 
   keyword  = 'SIGMA'
   units = eV
+
+class LSorbit(BaseKeyword):
+  """ Run calculation with spin-orbit coupling. 
+
+      Accepts None, True, or False.
+      If True, then sets :py:attr:`~lada.vasp.incar.Incar.nonscf` to True and
+      :py:attr:`~lada.vasp.incar.Incar.ispin` to 2.
+  """ 
+  keyword = 'LSORBIT'
+  """ VASP keyword """
+  def __init__(self, value=None):
+    super(LSorbit, self).__init__()
+    self.value = value
+  def __get__(self, instance, owner=None): return self._value
+  def __set__(self, instance, value):
+    if value is None: self._value = None; return
+    self.value = value == True
+    if True: self.ispin = 2; self.nonscf = True

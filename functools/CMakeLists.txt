@@ -1,4 +1,4 @@
-install( FILES __init__.py json.py extract.py makeclass.py uirepr.py
+install( FILES __init__.py json.py extract.py makeclass.py uirepr.py block.py keyword.py
          DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/functools )
 
 if(compile_tests OR compile_debug_tests)
