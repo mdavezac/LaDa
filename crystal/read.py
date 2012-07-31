@@ -88,3 +88,47 @@ def poscar(path="POSCAR", types=None):
             
   return result
     
+
+def castep(file):
+  """ Tries to read a castep structure file. """
+  from numpy import array, dot
+  from ..error import GrepError, IOError
+  from ..misc import RelativePath
+  from . import Structure
+  if isinstance(file, str): 
+    if file.find('\n') == -1:
+      with open(RelativePath(file).path) as file: return castep(file)
+  
+  file = [l for l in file]
+  # Look for BLOCK lattice_cart
+  for i, line in enumerate(file): 
+    line = line.split()
+    if line[0].lower() == '%block' and line[1].lower() == 'lattice_cart': break
+  if i >= len(file) - 1:
+    raise GrepError('Could not find lattice_cart block.')
+
+  cell = array( [ file[i+1].split()[:3], file[i+2].split()[:3],
+                  file[i+3].split()[:3] ], dtype='float64') 
+  result = Structure(cell)
+
+  # now look 
+  for i, line in enumerate(file):
+    line = line.split()
+    if len(line) < 2: continue
+    if line[0].lower() == '%block' and line[1].lower() == 'positions_frac':
+      break
+  if i >= len(file) - 1:
+    raise GrepError('Could not find positions_frac block.')
+  for line in file[i+1:]:
+    line = line.split()
+    if len(line) < 2: 
+      raise IOError( 'Wrong file format: line with less '                      \
+                     'than two items in positions_frac block.')
+    if line[0].lower() == '%endblock' and line[1].lower() == 'positions_frac':
+      break
+    pos = array(line[1:4], dtype='float64')
+    pos = dot(result.cell, pos)
+    result.add_atom(pos=pos, type=line[0])
+  return result
+  
+

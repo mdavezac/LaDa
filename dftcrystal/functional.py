@@ -348,6 +348,8 @@ class Functional(object):
                               comm=comm, overwrite=overwrite, **kwargs ):
       # iterator may yield the result from a prior successfull run. 
       if getattr(program, 'success', False): continue
+      # Or may fail return a failed run.
+      if not hasattr(program, 'start'): return program
       # otherwise, it should yield a Program tuple to execute.
       program.start(comm)
       program.wait()
