@@ -99,7 +99,7 @@ def export(self, event):
 
   # now tar or list files.
   if args.aslist:
-    from IPython.genutils import SList
+    from IPython.utils.text import SList
     directory = getcwd()
     return SList([relpath(file, directory) for file in allfiles])
   else:

@@ -158,7 +158,7 @@ class Functional(object):
       lines = structure.print_input(**kwargs).split('\n')
       while len(lines[-1].rstrip().lstrip()) == 0: lines.pop(-1)
       # insert optgeom inside the geometry bit.
-      if len(optgeom) > 0: lines.insert(-2, optgeom)
+      if len(optgeom) > 0: lines = lines[:-1] + optgeom + [lines[-1]]
       # turn back into string.
       result += '\n'.join(lines)
     else: # no structures. Not a meaningful input, but whatever.
@@ -224,6 +224,7 @@ class Functional(object):
     """
     from os.path import join, samefile
     from shutil import rmtree
+    from glob import iglob
     from ..misc import copyfile, Changedir
     from .. import CRYSTAL_filenames
 
