@@ -14,22 +14,13 @@ class Vasp(AttrBlock):
 
   def __init__(self, copy=None, species=None, kpoints=None, **kwargs):
     """ Initializes vasp class. """
-    from .keyword import BoolKeyword, Magmom, System, Npar, ExtraElectron,     \
-                         NElect, Algo, Ediff, Ediffg, Encut, EncutGW, IStart,  \
-                         ICharge, IStruc, UParams, PrecFock, Precision, Nsw,   \
-                         Isif, IBrion, Relaxation, ISmear, LSorbit, Sigma
-    from ..functools.keyword import TypedKeyword, ChoiceKeyword
+    from .keywords import BoolKeyword, Magmom, System, Npar, ExtraElectron,    \
+                          NElect, Algo, Ediff, Ediffg, Encut, EncutGW, IStart, \
+                          ICharge, IStruc, UParams, PrecFock, Precision, Nsw,  \
+                          Isif, IBrion, Relaxation, ISmear, LSorbit, Sigma,    \
+                          LMaxMix
+    from ..functools.keywords import TypedKeyword, ChoiceKeyword
     super(Vasp, self).__init__()
-
-    # copies values from other functional.
-    if copy is not None: 
-      self.params.update(copy.params)
-      self.special.update(copy.special)
-      for key, value in copy.__dict__.iteritems():
-        if key in kwargs: continue
-        elif key == 'params': continue
-        elif key == 'special': continue
-        elif hasattr(self, key): setattr(self, key, value)
 
     self.species = species if species is not None else {}
     """ Species in the system. """
@@ -95,7 +86,7 @@ class Vasp(AttrBlock):
 
            .. _ISYM: http://cms.mpi.univie.ac.at/vasp/guide/node115.html
     """ 
-    self.lmaxmix   = TypedKeyword(type=int)
+    self.lmaxmix   = LMaxMix()
     """ Cutoff *l*-quantum number of PAW charge densities passed to mixer 
 
         .. seealso:: 
@@ -484,9 +475,9 @@ class Vasp(AttrBlock):
         .. |Gamma|  unicode:: U+00393 .. GREEK CAPITAL LETTER GAMMA
     """
     self.isigma = Sigma()
-    self.smearings = TypedKeyword(type=[int])
-    self.ferwe = TypedKeyword(type=[int])
-    self.ferdo = TypedKeyword(type=[int])
+    self.smearings = TypedKeyword(type=[float])
+    self.ferwe = TypedKeyword(type=[float])
+    self.ferdo = TypedKeyword(type=[float])
     self.lsorbit = LSorbit()
     """ Run calculation with spin-orbit coupling. 
     
@@ -494,6 +485,15 @@ class Vasp(AttrBlock):
         If True, then sets :py:attr:`~lada.vasp.incar.Incar.nonscf` to True and
         :py:attr:`~lada.vasp.incar.Incar.ispin` to 2.
     """ 
+    
+    # copies values from other functional.
+    if copy is not None: 
+      self._input.update(copy._input)
+      for key, value in copy.__dict__.iteritems():
+        if key in kwargs: continue
+        elif key == '_input': continue
+        elif hasattr(self, key): setattr(self, key, value)
+
 
     # sets all known keywords as attributes.
     for key, value in kwargs.iteritems():
@@ -729,4 +729,3 @@ class Vasp(AttrBlock):
     super(Vasp, self).__setstate__(args)
     for key, value in self.__class__().__dict__.iteritems():
        if not hasattr(self, key): setattr(self, key, value)
-

@@ -1,4 +1,4 @@
-from .keyword import BaseKeyword
+from .keywords import BaseKeyword
 class AttrBlock(BaseKeyword):
   """ Defines block input to CRYSTAL. 
   
@@ -158,7 +158,7 @@ class AttrBlock(BaseKeyword):
   def output_map(self, **kwargs):
     """ Map of keyword, value """
     result = {}
-    for key, value in self._crysinput.iteritems():
+    for key, value in self._input.iteritems():
       if value is None: continue
       elif isinstance(value, bool):
         result[key] = '.TRUE.' if value else '.FALSE.'

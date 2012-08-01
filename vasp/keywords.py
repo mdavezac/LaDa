@@ -1,17 +1,17 @@
 from quantities import eV
-from ..functools.keyword import BoolKeyword as BaseBoolKeyword, ValueKeyword,  \
-                                TypedKeyword, AliasKeyword, ChoiceKeyword,     \
-                                BaseKeyword, QuantityKeyword
+from ..functools.keywords import BoolKeyword as BaseBoolKeyword, ValueKeyword, \
+                                 TypedKeyword, AliasKeyword, ChoiceKeyword,    \
+                                 BaseKeyword, QuantityKeyword
 class BoolKeyword(BaseBoolKeyword):
   """ Boolean keyword.
 
       If True, the keyword is present.
       If False, it is not.
   """
-  def __init__(self, keyword=None, value=False):
+  def __init__(self, keyword=None, value=None):
     """ Initializes FullOptG keyword. """
     super(BoolKeyword, self).__init__(keyword=keyword, value=value)
-  def input_map(self, **kwargs):
+  def output_map(self, **kwargs):
     """ Map keyword, value """
     if self.value is None: return None
     if getattr(self, 'keyword', None) is None: return None
@@ -848,3 +848,8 @@ class LSorbit(BaseKeyword):
     if value is None: self._value = None; return
     self.value = value == True
     if True: self.ispin = 2; self.nonscf = True
+
+class LMaxMix(AliasKeyword):
+  keyword = 'lmaxmix'
+  aliases = { 1: ['s', '1', 1], 2: ['p', '2', 2], 3: ['d', '3', 3], 
+              4: ['f', '4', 4], 5: ['e', '5', 5] }

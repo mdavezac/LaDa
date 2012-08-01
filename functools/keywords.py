@@ -230,21 +230,27 @@ class TypedKeyword(ValueKeyword):
     return self._value
   @value.setter
   def value(self, value):
+    from ..error import ValueError
     if value is None: self._value = None; return
     if type(self.type) is list:
+      if isinstance(value, str) and not isinstance(self.type, str):
+        value = value.replace(',', ' ').replace(';', ' ').split()
       if not hasattr(value, '__iter__'): 
         raise ValueError( '{0} expected a sequence on input, got {1!r}.'       \
                           .format(self.keyword, value) ) 
       if len(self.type) == 1: 
         _type = self.type[0]
-        self._value = [_type(u) for u in value]
+        try: self._value = [_type(u) for u in value]
+        except Exception as e: raise ValueError(e)
         if len(self._value) == 0: self._value = None
       else: 
         if len(value) != len(self.type):
           raise ValueError( '{0.keyword} expected a sequence of the '          \
                             'following type: {0.type}'.format(self) )
         self._value = [t(v) for t, v in zip(self.type, value)]
-    else: self._value = self.type(value)
+    else:
+      try: self._value = self.type(value)
+      except Exception as e: raise ValueError(e)
   @property
   def raw(self):
     """ Returns raw value for CRYSTAL input. """
@@ -338,13 +344,15 @@ class BoolKeyword(ValueKeyword):
       Otherwise, it is simpler to use :py:meth:`self.add_keyword('something')
       <lada.dftcrystal.input.AttrBlock.add_keyword>` directly.
   """
-  def __init__(self, keyword=None, value=False):
+  def __init__(self, keyword=None, value=None):
     """ Initializes FullOptG keyword. """
     super(BoolKeyword, self).__init__(keyword=keyword, value=value)
   @property
   def value(self): return self._value
   @value.setter
-  def value(self, value): self._value = (value == True)
+  def value(self, value):
+    if value is None: self._value = None; return
+    self._value = (value == True)
   def output_map(self, **kwargs):
     """ Map keyword, value """
     if self.value == False: return None
@@ -453,7 +461,7 @@ class QuantityKeyword(ValueKeyword):
       args.append('units={0.units!r}'.format(self))
     if len(getattr(self, 'shape', ())) > 0: 
       args.append('value={0!r}'.format(self.value.magnitude))
-    elif self.value is not None: args.append('value={0}'.format(float(self.value)))
+    else: args.append('value={0}'.format(float(self.value)))
     return '{0.__class__.__name__}({1})'.format(self, ', '.join(args))
 
 
@@ -471,21 +479,22 @@ class AliasKeyword(ValueKeyword):
     return self.aliases[self._value][0]
   @value.setter
   def value(self, value):
+    from ..error import ValueError
     if value is None: 
       self._value = None
       return
     for key, items in self.aliases.iteritems():
       for item in items:
         if value == item:
-          self._value = item
+          self._value = key
           return
     raise ValueError( 'Incorrect value ({1}) for keyword {0}'                 \
                        .format(self.keyword, value) )
   def output_map(self, **kwargs):
     """ Returns output map. """
     if self._value is None: return None
-    if getattr(self, 'keyword', None): return None
-    return {self.keyword: self._value}
+    if getattr(self, 'keyword', None) is None: return None
+    return {self.keyword: str(self._value)}
   def __repr__(self):
     args = []
     if 'keyword' not in self.__class__.__dict__ and 'keyword' in self.__dict__:
