@@ -113,6 +113,9 @@ def qdel(self, arg):
    return 
   if len(arg) != 0: 
     result = self.qstat(arg)
+     if len(result) == 0:
+       print 'No jobs in queue'
+       return
     for u, name in zip(result.fields(0), result.fields(-1)):
       print "cancelling %s." % (name)
     message = "Are you sure you want to cancel the jobs listed above? [y/n] "
