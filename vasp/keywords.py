@@ -39,8 +39,8 @@ class Magmom(ValueKeyword):
   """
   keyword = 'MAGMOM'
   'VASP keyword'
-  def __init__(self, value=True):
-    super(Magmom, self).__init__(value)
+  def __init__(self, value=None):
+    super(Magmom, self).__init__(value=value)
 
   @property
   def value(self):
@@ -66,7 +66,7 @@ class Magmom(ValueKeyword):
 
   def output_map(self, **kwargs):
     """ MAGMOM input for VASP. """
-    from ...crystal import specieset
+    from ..crystal import specieset
     if self.value is None or self.value == False: return None
     if kwargs['vasp'].ispin == 1: return None
     if isinstance(self.value, str): return {self.keyword: str(self.value)}
@@ -83,7 +83,7 @@ class Magmom(ValueKeyword):
       for i, m in tupled:
         if i == 1: result += "{0:.2f} ".format(m)
         else:      result += "{0}*{1:.2f} ".format(i, m)
-    return { self.keyword, result.rstrip() }
+    return {self.keyword: result.rstrip()}
 
 class System(ValueKeyword):
   """ System title to use for calculation.
@@ -101,7 +101,7 @@ class System(ValueKeyword):
 
       .. _SYSTEM: http://cms.mpi.univie.ac.at/vasp/guide/node94.html>
   """
-  keyword = 'SYSTEM'
+  keyword = 'system'
   """ VASP keyword """
   def __init__(self, value=None):
     super(System, self).__init__(value=value)
