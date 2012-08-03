@@ -66,3 +66,6 @@ class GrepError(AttributeError):
   pass
 class ConfigError(input):
   """ Could not determine host machines. """
+
+class ExternalRunFailed(root):
+  """ Thrown when an external run has failed. """

@@ -3,11 +3,11 @@ __docformat__ = "restructuredtext en"
 __all__ = [ 'Extract', 'AffineTransform', 'DisplaceAtoms', 'InsertAtoms',
             'Marker', 'ModifySymmetry', 'RemoveAtoms', 'Slabcut', 'read',
             'Slabinfo','Crystal', 'Molecule', 'Slab', 'Functional', 'Shell',
-            'read_gaussian_basisset' ]
+            'read_gaussian_basisset', 'MassExtract' ]
 
 from .basis import Shell
 from .functional import Functional
-from .extract import Extract
+from .extract import Extract, MassExtract
 from .geometry import AffineTransform, DisplaceAtoms, InsertAtoms, Marker,      \
                       ModifySymmetry, RemoveAtoms, Slabcut, Slabinfo, Slab
 from .crystal import Crystal
@@ -77,6 +77,7 @@ def read_gaussian_basisset(path):
       .. _GAUSSIAN94: http://www.gaussian.com/
       .. _open: http://docs.python.org/library/functions.html#open
   """
+  from ..error import GrepError
   from ..misc import RelativePath
   if isinstance(path, str): 
     if path.find('\n') == -1:
@@ -88,7 +89,8 @@ def read_gaussian_basisset(path):
     if set(['*']) == set(line.rstrip().lstrip()): break
 
   # read specie type
-  line = path.next().split()
+  try: line = path.next().split()
+  except StopIteration: raise GrepError('Unexpected end of file')
   specie = line[0]
   result = {specie: []}
   

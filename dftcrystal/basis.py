@@ -277,19 +277,14 @@ class BasisSet(AttrBlock):
     self.ghosts   = Ghosts()
     """ Remove atoms while keeping basis functions. """
 
-  def _print_basis(self, structure=None):
-    """ Prints only atoms in structure. """
-    from ..error import KeyError
+  @property
+  def raw(self):
+    """ Raw basis set input. """
     from .. import periodic_table as pt
     # figure out set of species
-    species = self.iterkeys() if structure is None                             \
-              else set([a.type for a in structure.eval()])
     # Now print them
     result = ''
-    for key in species:
-      if key not in self:
-        raise KeyError('Could not find specie {0} in basis set.'.format(key))
-      value = self[key]
+    for key, value in self.iteritems():
       if len(value) == 0: continue
       if isinstance(key, str): key = getattr(pt, key).atomic_number
       result += '{0} {1}\n'.format(key, len(value))
@@ -298,14 +293,8 @@ class BasisSet(AttrBlock):
         if result[-1] != '\n': result += '\n'
       result = result.rstrip()
       if result[-1] != '\n': result += '\n'
-    result += '99 0 end of basis functions per se\n'
+    result += '99 0\n'
     return result
-
-
-  @property
-  def raw(self):
-    """ Raw basis set input. """
-    return self._print_basis()
   @raw.setter
   def raw(self, value):
     """ Sets basis data from raw CRYSTAL input. """
@@ -389,12 +378,17 @@ class BasisSet(AttrBlock):
 
   def print_input(self, **kwargs):
     """ Dumps CRYSTAL input to string. """
-    post = super(BasisSet, self).print_input(**kwargs).rstrip()
-    post = post[post.find('end of basis functions per se')+1:]
-    post = post[post.find('\n')+1:] if post.find('\n') != -1 else ''
-    result = self._print_basis(kwargs.get('structure', None)) + post
-    if result[-1] != '\n': result += '\n'
-    return result + 'END\n'
+    if kwargs.get('structure', None) is not None:
+      from copy import deepcopy
+      c = deepcopy(self)
+      species = set([a.type for a in kwargs['structure'].eval()])
+      for specie in species:
+        if specie not in c:
+          raise KeyError('No basis set for specie {0}.'.format(specie))
+      for specie in self.keys():
+        if specie not in species: del c[specie]
+    else: c  = self
+    return super(BasisSet, c).print_input(**kwargs).rstrip() + '\nEND\n'
 
   def read_input(self, tree, owner=None):
     """ Parses an input tree. """
@@ -448,5 +442,24 @@ class BasisSet(AttrBlock):
                       .format(alpha, coef1, function)
       result += '****\n'
     return result
+
+  def add_specie(self, string):
+    """ Add specie using CRYSTAL string input.
+    
+        Just a convenience function to quickly add species by copy/pasting
+        crystal input.
+    """
+    a = BasisSet()
+    try: a.raw = string
+    except: 
+      from sys import exc_info
+      type, value, traceback = exc_info()
+      message = string + '\n\n ******* Incorrect input.' 
+      if value is not None: value = value, string
+      else: type.args = tuple(list(type.args) + [message])
+      raise type, value, traceback
+    self.update(a)
+     
+
   
 

@@ -460,6 +460,51 @@ class AffineTransform(Keyword):
       args.append('bondtoz={0!r}'.format(self.bondtoz))
     return "{0.__class__.__name__}(".format(self) + ', '.join(args) + ')'
 
+class Elastic(GeomKeyword):
+  """ Elastic deformation of the lattice """
+  keyword = 'elastic'
+  """ CRYSTAL keyword """
+  def __init__(self, matrix=None, is_epsilon=True, constvol=False, **kwargs):
+    """ Creates cell-shape deformation. """
+    super(Elastic, self).__init__(**kwargs)
+    self.matrix = None
+    self.is_epsilon = True
+    self.const_volume = False
+  @property
+  def raw(self):
+    if self.matrix is None: return ""
+    type = 2 if self.is_epsilon else 1
+    if not self.const_volume: type = -type
+    result = str(type) + '\n'
+    for i in xrange(3):
+      result += ' '.join(str(self.matrix[i,j]) for j in xrange(3)) + '\n'
+    return result
+  @raw.setter
+  def raw(self, value):
+    from numpy import array
+    value = value.split('\n')
+    type = int(value[0].rstrip().lstrip())
+    self.is_epsilon = abs(type) == 2
+    self.const_volume = type > 0
+    self.matrix = array([u.split()[:3] for u in value[1:4]], dtype='float64')
+
+  def __repr__(self):
+    """ Representation of this object. """
+    args = []
+    if self.matrix is not None:
+      args.append(repr(self.matrix.tolist()))
+    if not self.is_epsilon:
+      args.append('is_epsilon=False' if len(args) > 0 else 'False')
+    if self.const_volume:
+      args.append('constvol=True' if len(args) > 0 else 'True')
+    return '{0.__class__.__name__}({1})'.format(self, ', '.join(args))
+
+
+  def print_input(self, **kwargs):
+    if self.matrix is None: return None
+    return super(Elastic, self).print_input()
+
+
 class Marker(Keyword):
   """ Places a marker in the execution list. """
   def __init__(self, name=None):

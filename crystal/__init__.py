@@ -58,7 +58,7 @@ def layer_iterator(structure, direction, tolerance=1e-12):
   if len(structure) <= 1: yield list(structure); return
 
   # orders position with respect to direction.
-  positions = into_cell(array([atom.pos for atom in structure]), structure.cell)
+  positions = array([into_cell(atom.pos, structure.cell) for atom in structure])
   projs = [(i, dot(pos, direction)) for i, pos in enumerate(positions)]
   projs = sorted(projs, key=itemgetter(1))
 
@@ -72,7 +72,9 @@ def layer_iterator(structure, direction, tolerance=1e-12):
   if len(result) == 1: yield structure; return
   # Finds if first and last have atoms in common through periodicity
   first, last = result[0], result[-1]
-  centered = into_voronoi(positions[[i for i, d in last]], structure.cell, positions[first[0][0]])
+  centered                                                                     \
+    = into_voronoi( positions[[i for i, d in last]] - positions[first[0][0]],
+                    structure.cell )
   for j, pos in enumerate(centered[::-1]):
     a0 = dot(pos, direction)
     if any(abs(u[1]-a0) >= tolerance for u in first): continue

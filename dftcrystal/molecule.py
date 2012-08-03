@@ -151,6 +151,7 @@ class Molecule(ListBlock):
     from shutil import rmtree
     from ..misc import Changedir
     from ..process import ProgramProcess as Process
+    from .. error import GrepError
     from .. import crystal_program as program
     from .extract import Extract
     this = deepcopy(self)
@@ -172,7 +173,11 @@ class Molecule(ListBlock):
         process.start()
         process.wait()
 
-        return Extract().input_structure
+        try: return Extract().input_structure
+        except GrepError:
+          message = self.print_input() + '\n\n'
+          with Extract().__stdout__() as file: message += file.read()
+          raise ValueError(message + '\n\nInput tructure is likely incorrect\n')
     finally:
       try: rmtree(tmpdir)
       except: pass

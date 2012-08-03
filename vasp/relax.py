@@ -133,6 +133,7 @@ def iter_relax( vasp, structure, outdir=None, first_trial=None,
   from os.path import join
   from shutil import rmtree
   from ..misc import RelativePath
+  from ..error import ExternalRunFailed
 
   # make this function stateless.
   vasp = deepcopy(vasp)
@@ -174,7 +175,7 @@ def iter_relax( vasp, structure, outdir=None, first_trial=None,
              ): yield u
 
     output = vasp.Extract(join(outdir, join("relax_cellshape", str(nb_steps))))
-    assert output.success, RuntimeError("VASP calculations did not complete.")
+    if not output.success: ExternalRunFailed("VASP calculations did not complete.")
     relaxed_structure = output.structure
     
     nb_steps += 1
@@ -184,7 +185,7 @@ def iter_relax( vasp, structure, outdir=None, first_trial=None,
 
   # Does not perform ionic calculation if convergence not reached.
   if nofail == False and is_converged(output) == False: 
-    raise RuntimeError("Could not converge cell-shape in {0} iterations.".format(maxcalls))
+    raise ExternalRunFailed("Could not converge cell-shape in {0} iterations.".format(maxcalls))
 
   # performs ionic calculation. 
   while (maxcalls <= 0 or nb_steps < maxcalls + 1) and relaxation.find("ionic") != -1:
@@ -198,7 +199,7 @@ def iter_relax( vasp, structure, outdir=None, first_trial=None,
              ): yield u
 
     output = vasp.Extract(join(outdir, join("relax_ions", str(nb_steps))))
-    assert output.success, RuntimeError("VASP calculations did not complete.")
+    if not output.success: ExternalRunFailed("VASP calculations did not complete.")
     relaxed_structure = output.structure
 
     nb_steps += 1
@@ -208,7 +209,7 @@ def iter_relax( vasp, structure, outdir=None, first_trial=None,
 
   # Does not perform static calculation if convergence not reached.
   if nofail == False and is_converged(output) == False: 
-    raise RuntimeError("Could not converge ions in {0} iterations.".format(maxcalls))
+    raise ExternalRunFailed("Could not converge ions in {0} iterations.".format(maxcalls))
 
   # performs final calculation outside relaxation directory. 
   for u in vasp.iter\
@@ -220,7 +221,7 @@ def iter_relax( vasp, structure, outdir=None, first_trial=None,
              **kwargs\
            ): yield u
   output = vasp.Extract(outdir)
-  assert output.success, RuntimeError("VASP calculations did not complete.")
+  if not output.success: ExternalRunFailed("VASP calculations did not complete.")
 
   # replace initial structure with that with which this function was called.
   with output.__outcar__() as file:
@@ -249,6 +250,7 @@ Relax = makeclass( 'Relax', Vasp, iter_relax, None, module='lada.vasp.relax',
 
 def _get_is_converged(vasp, structure, convergence=None, minrelsteps=-1, **kwargs):
   """ Returns convergence function. """
+  from ..error import ExternalRunFailed
   # tries and devine the convergence criteria from the input.
   if convergence is None: convergence = 1e1 * vasp.ediff
   elif hasattr(convergence, "__call__"): pass
@@ -260,14 +262,14 @@ def _get_is_converged(vasp, structure, convergence=None, minrelsteps=-1, **kwarg
   if hasattr(convergence, "__call__"):
     def is_converged(extractor):  
       if extractor is None: return True
-      if not extractor.success: raise RuntimeError("VASP calculation did not succeed.")
+      if not extractor.success: raise ExternalRunFailed("VASP calculation did not succeed.")
       i = int(extractor.directory.split('/')[-1]) + 1
       if minrelsteps > 0 and minrelsteps > i: return False
       return convergence(extractor)
   elif convergence > 0e0:
     def is_converged(extractor):
       if extractor is None: return True
-      if not extractor.success: raise RuntimeError("VASP calculation did not succeed.")
+      if not extractor.success: raise ExternalRunFailed("VASP calculation did not succeed.")
       i = int(extractor.directory.split('/')[-1]) + 1
       if minrelsteps > 0 and minrelsteps > i: return False
       if extractor.total_energies.shape[0] < 2: return True
@@ -276,10 +278,10 @@ def _get_is_converged(vasp, structure, convergence=None, minrelsteps=-1, **kwarg
     def is_converged(extractor):
       from numpy import max, abs, all
       if extractor is None: return True
-      if not extractor.success: raise RuntimeError("VASP calculation did not succeed.")
+      if not extractor.success: raise ExternalRunFailed("VASP calculation did not succeed.")
       i = int(extractor.directory.split('/')[-1]) + 1
       if minrelsteps > 0 and minrelsteps > i: return False
-      return all(max(abs(output.forces)) < abs(convergence))
+      return all(max(abs(extractor.forces)) < abs(convergence))
   return is_converged
 
 def iter_epitaxial(vasp, structure, outdir=None, direction=[0,0,1], epiconv = 1e-4,

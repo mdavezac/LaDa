@@ -1,6 +1,11 @@
-from lada.functools import make_cached
-from lada.functools.extract import search_factory, AbstractExtractBase
-from lada.error import GrepError
+""" Subpackage containing extraction methods for CRYSTAL output. """
+__docformat__  = 'restructuredtext en'
+__all__ = ['Extract', 'MassExtract']
+
+from ..functools import make_cached
+from ..functools.extract import search_factory, AbstractExtractBase
+from ..jobfolder import AbstractMassExtract
+from ..error import GrepError
 OutputSearchMixin = search_factory('OutputSearchMixin', 'stdout', __name__, 'crystal.out')
 
 class ExtractBase(object):
@@ -117,8 +122,9 @@ class ExtractBase(object):
       for line in file: 
         if len(line) <= len(search): continue
         if line[:len(search)] == search: break
-      line = file.next().rstrip().lstrip()
-      return line
+      try: line = file.next().rstrip().lstrip()
+      except StopIteration: return ""
+      else: return line
       
   @property
   @make_cached
@@ -225,36 +231,38 @@ class ExtractBase(object):
     from ..error import GrepError
     from .basis import specie_name
     result = Structure()
-    file.next(); file.next() # move to first line.
-    for line in file:
-      line = line.split()
-      if len(line) != 7: break
-      type = specie_name(int(line[2]))
-      asymmetric = line[1] == 'T' 
-      result.add_atom( pos=array(line[4:7], dtype='float64'),
-                       type=type, label=int(line[0]), asymmetric=asymmetric,
-                       group=line[3] )
-      
-    # If a molecule, set cell to 500.0 as in CRYSTAL
-    if self.is_molecular:
-      self.cell = identity(3, dtype='float64') * 500.0
-    else:
-      # then find cell.
-      header = 'DIRECT LATTICE VECTORS CARTESIAN '                             \
-               'COMPONENTS (ANGSTROM)'.split()
-      for line in file: 
+    try: 
+      file.next(); file.next() # move to first line.
+      for line in file:
         line = line.split()
-        if len(line) != 6: continue
-        if line == header: break
-      try: file.next()
-      except StopIteration: raise GrepError('File is incomplete.')
-      result.cell = array( [file.next().split() for i in xrange(3)],
-                           dtype='float64' )
-  
-      # Then re-reads atoms, but in cartesian coordinates.
-      for i in xrange(6): file.next()
-      for atom in result:
-        atom.pos = array(file.next().split()[3:6], dtype='float64')
+        if len(line) != 7: break
+        type = specie_name(int(line[2]))
+        asymmetric = line[1] == 'T' 
+        result.add_atom( pos=array(line[4:7], dtype='float64'),
+                         type=type, label=int(line[0]), asymmetric=asymmetric,
+                         group=line[3] )
+        
+      # If a molecule, set cell to 500.0 as in CRYSTAL
+      if self.is_molecular:
+        self.cell = identity(3, dtype='float64') * 500.0
+      else:
+        # then find cell.
+        header = 'DIRECT LATTICE VECTORS CARTESIAN '                             \
+                 'COMPONENTS (ANGSTROM)'.split()
+        for line in file: 
+          line = line.split()
+          if len(line) != 6: continue
+          if line == header: break
+        try: file.next()
+        except StopIteration: raise GrepError('File is incomplete.')
+        result.cell = array( [file.next().split() for i in xrange(3)],
+                             dtype='float64' )
+      
+        # Then re-reads atoms, but in cartesian coordinates.
+        for i in xrange(6): file.next()
+        for atom in result:
+          atom.pos = array(file.next().split()[3:6], dtype='float64')
+    except StopIteration: raise GrepError('Unexpected end of file')
 
     # adds more stuff
     try: title = self.title
@@ -283,7 +291,9 @@ class ExtractBase(object):
   def input_structure(self):
     """ Input structure, LaDa format. """
     with self.__stdout__() as file:
-      pos = self._find_structure(file).next()
+      pos = None
+      for pos in self._find_structure(file): break
+      if pos is None: raise GrepError('Could extract structure from file')
       file.seek(pos, 0)
       return self._grep_structure(file)
 
@@ -291,11 +301,78 @@ class ExtractBase(object):
   @property
   @make_cached
   def structure(self):
-    """ Input structure, LaDa format. """
+    """ Output structure, LaDa format. """
     with self.__stdout__() as file:
+      pos = None
       for pos in self._find_structure(file): continue
+      if pos is None: raise GrepError('Could not extract structure from file')
       file.seek(pos, 0)
       return self._grep_structure(file)
+
+  @property
+  @make_cached
+  def crystal(self):
+    """ Output structure, CRYSTAL format. 
+    
+        Creates a structure from the output, including any atomic and
+        cell-shape movements.
+    """
+    from numpy import dot, identity, abs, array, any, all
+    from numpy.linalg import inv, det
+    from ..error import internal 
+    from .geometry import DisplaceAtoms, Elastic
+    
+    # Check whether this is a geometry optimization run.
+    if self._find_first_STDOUT("STARTING GEOMETRY OPTIMIZATION") is None:
+      return self.input_crystal
+
+    # Find last operation which is neither ELASTIC nor ATOMDISP
+    incrys, instruct, i = self.input_crystal, self.input_structure, 0
+    for i, op in enumerate(incrys[::-1]):
+      if op.keyword.lower() not in ['elastic', 'atomdisp']: break
+
+    # deduce structure - last changes in cell-shape or atomic displacements.
+    if i != 0:
+      incrys = incrys.copy()
+      incrys[:] = incrys[:len(incrys)-i]
+      instruct = incrys.eval()
+
+    # create symmetric strain
+    inv_in = inv(instruct.cell)
+    epsilon = dot(self.structure.cell, inv_in) - identity(3, dtype='float64')
+    epsilon = 0.5 * (epsilon + epsilon.T)
+    cell = dot(identity(3) + epsilon, instruct.cell)
+    inv_out = inv(cell)
+    if any(abs(cell - self.structure.cell) > 1e-8):
+      raise internal('Could not create symmetric strain matrix')
+
+    # create field displacement
+    field = [ dot(cell, dot(inv_out, a.pos) - dot(inv_in, b.pos))
+              for a, b in zip(self.structure, self.input_structure)
+              if a.asymmetric ]
+    field = array(field)
+
+    # check if changes:
+    if all(abs(epsilon) < 1e-8) and all(abs(field.flatten()) < 1e-8): 
+      return self.input_crystal
+
+    result = incrys.copy()
+    # add cell shape changes
+    if any(abs(epsilon) > 1e-8): 
+      a = Elastic()
+      a.matrix = epsilon
+      a.is_epsilon = True
+      a.const_volume = abs(det(cell) - det(instruct.cell)) < 1e-8
+      result.append(a)
+    # Add displacements 
+    if any(abs(field.flatten()) > 1e-8):
+      a = DisplaceAtoms(keepsymm=True)
+      atoms = [u for u in instruct if u.asymmetric]
+      for atom, disp in zip(atoms, field):
+        if any(abs(disp) > 1e-8): a.add_atom(type=atom.label, pos=disp)
+      result.append(a)
+    return result
+
 
   @property
   @make_cached
@@ -339,8 +416,6 @@ class ExtractBase(object):
         :param bool structure: Include POSCAR file
     """
     from os.path import exists, join
-    from glob import iglob
-    from itertools import chain
     files = [self.STDOUT]
     if kwargs.get('input', False):   files.append('crystal.d12')
     if kwargs.get('wavefunctions', False): files.append('crystal.f98')
@@ -348,6 +423,22 @@ class ExtractBase(object):
     for file in files:
       file = join(self.directory, file)
       if exists(file): yield file
+
+  @property
+  @make_cached
+  def optgeom_convergence(self): 
+    """ True if optgeom convergence was achieved
+
+        False if it was not achieved, and None in all other cases.
+        Also returns None if this was not a geometry optimization run.
+    """
+    try: 
+      if self._find_first_STDOUT('CONVERGENCE TESTS SATISFIED') is not None:
+        return True
+      if self._find_first_STDOUT('CONVERGENCE TESTS UNSATISFIED') is not None:
+        return False
+    except: pass
+    return None
 
 class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
   """ Extracts DFT data from an OUTCAR. """
@@ -362,7 +453,7 @@ class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
     from os.path import exists, isdir, basename, dirname
     from lada.misc import RelativePath
        
-    self.stdout = 'stdout'
+    self.stdout = 'crystal.out'
     """ Name of file to grep. """
     if directory is not None:
       directory = RelativePath(directory).path
@@ -376,5 +467,74 @@ class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
   @property
   def success(self):
     try: self.end_date
-    except: return False
-    else: return True
+    except: 
+      return self.optgeom_convergence is not None
+    return True
+
+class MassExtract(AbstractMassExtract):
+  """ Extracts all CRYSTAL calculations in directory and sub-directories. 
+    
+      Trolls through all subdirectories for vasp calculations, and organises
+      results as a dictionary where keys are the name of the diretories.
+
+      Usage is simply:
+
+      >>> from lada.dftcrystal import MassExtract
+      >>> a = MassExtract('path') # or nothing if path is current directory.
+      >>> a.success
+      {
+        '/some/path/':      True,
+        '/some/other/path': True
+      }
+  """
+  def __init__(self, path = None, **kwargs):
+    """ Initializes MassExtract.
+    
+    
+        :Parameters:
+          path : str or None
+            Root directory for which to investigate all subdirectories.
+            If None, uses current working directory.
+          kwargs : dict
+            Keyword parameters passed on to AbstractMassExtract.
+
+        :kwarg naked_end: True if should return value rather than dict when only one item.
+        :kwarg unix_re: converts regex patterns from unix-like expression.
+    """
+    from os import getcwd
+    if path is None: path = getcwd()
+    # this will throw on unknown kwargs arguments.
+    super(MassExtract, self).__init__(path=path, **kwargs)
+
+  def __iter_alljobs__(self):
+    """ Goes through all directories with an OUTVAR. """
+    from os import walk
+    from os.path import relpath, join
+    from . import Extract as CrystalExtract
+    from .relax import RelaxExtract
+
+    for dirpath, dirnames, filenames in walk(self.rootpath, topdown=True, followlinks=True):
+      if 'crystal.out' not in filenames: continue
+      if 'relax' in dirnames:
+        dirnames[:] = [u for u in dirnames if u != 'relax']
+        try: result = RelaxExtract(join(self.rootpath, dirpath))
+        except:
+          try: result = CrystalExtract(join(self.rootpath, dirpath))
+          except: continue
+      else: 
+        try: result = CrystalExtract(join(self.rootpath, dirpath))
+        except: continue
+
+      yield join('/', relpath(dirpath, self.rootpath)), result
+
+  def __copy__(self):
+    """ Returns a shallow copy. """
+    result = self.__class__(self.rootpath)
+    result.__dict__.update(self.__dict__)
+    return result
+
+  @property
+  def _attributes(self): 
+    """ Returns __dir__ set special to the extraction itself. """
+    from . import Extract as VaspExtract
+    return list(set([u for u in dir(VaspExtract) if u[0] != '_'] + ['details']))

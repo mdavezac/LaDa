@@ -175,6 +175,29 @@ namespace LaDa
         };
         LADA_PYERROR(ValueError, "Unknown numpy array type.");
       }
+
+      //! Casts data to requested type
+      template<class T> T cast_data(void const * const _data, int const _type) 
+      {
+        switch(_type)
+        {
+          case NPY_FLOAT     : return (T)*((type<npy_float>::np_type const * const)      _data);
+          case NPY_DOUBLE    : return (T)*((type<npy_double>::np_type const * const)     _data);
+          case NPY_LONGDOUBLE: return (T)*((type<npy_longdouble>::np_type const * const) _data);
+          case NPY_INT       : return (T)*((type<npy_int>::np_type const * const)        _data);
+          case NPY_UINT      : return (T)*((type<npy_uint>::np_type const * const)       _data);
+          case NPY_LONG      : return (T)*((type<npy_long>::np_type const * const)       _data);
+          case NPY_ULONG     : return (T)*((type<npy_ulong>::np_type const * const)      _data);
+          case NPY_LONGLONG  : return (T)*((type<npy_longlong>::np_type const * const)   _data);
+          case NPY_ULONGLONG : return (T)*((type<npy_ulonglong>::np_type const * const)  _data);
+          case NPY_BYTE      : return (T)*((type<npy_byte>::np_type const * const)       _data);
+          case NPY_UBYTE     : return (T)*((type<npy_ubyte>::np_type const * const)      _data);
+          case NPY_SHORT     : return (T)*((type<npy_short>::np_type const * const)      _data);
+          case NPY_USHORT    : return (T)*((type<npy_ushort>::np_type const * const)     _data);
+          default: break;
+        };
+        LADA_PYERROR(ValueError, "Unknown numpy array type.");
+      }
      
       //! Returns python object from array.
       template<class T>

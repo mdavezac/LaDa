@@ -75,7 +75,7 @@ def create_initstring(classname, base, method, excludes):
                 .format(avoid)
   return result
 
-def create_iter(iter, excludes):
+def create_iter(iter, excludes, module, classname):
   """ Creates the iterator method. """
   from inspect import getargspec
   # make stateless.
@@ -110,10 +110,12 @@ def create_iter(iter, excludes):
         "  \"\"\"\n"\
         .format(first_line, iter)
   # import iterations method
-  result += "  from lada.functools import SuperCall\n"
-  result += "  from {0.__module__} import {0.func_name}\n".format(iter)
+  result += "  from lada.functools import SuperCall\n"                     \
+            "  from {0.__module__} import {0.func_name}\n"                 \
+            "  from {1} import {2}\n\n".format(iter, module, classname)
   # add iteration line:
-  result += "  for o in {0.func_name}(SuperCall(self.__class__, self)".format(iter)
+  result += "  for o in {0.func_name}(SuperCall({1}, self)"                \
+            .format(iter, classname)
   if args.args is not None and len(args.args) > 1:
     # first add arguments without default (except for first == self).
     nargs = len(args.args) - len(args.defaults)
@@ -137,19 +139,21 @@ def create_call_from_iter(iter, excludes):
   # keywords are deduced from arguments with defaults.
   # others will not be added.
   args = getargspec(iter)
-  result = "def __call__(self"
+  callargs = ['self']
   if args.args is not None and len(args.args) > 1:
     # first add arguments without default (except for first == self).
     nargs = len(args.args) - len(args.defaults)
-    for key in args.args[1:nargs]: result += ", {0}".format(key)
+    for key in args.args[1:nargs]: callargs.append(str(key))
   if args.args is not None and len(args.args) > 1:
     # then add arguments with default
     nargs = len(args.args) - len(args.defaults)
     for key, value in zip(args.args[nargs:], args.defaults):
-      if key in excludes: result += ", {0}={1!r}".format(key, value)
+      if key in excludes: callargs.append("{0}={1!r}".format(key, value))
   
-  # then add kwargs.,
-  result += ", comm=None, **kwargs):\n"
+  # then add kwargs,
+  if args.args is None or 'comm' not in args.args: callargs.append('comm=None')
+  if args.keywords is not None: callargs.append('**' + args.keywords)
+  result = "def __call__({0}):\n".format(', '.join(callargs))
  
   # adds standard doc string.
   doc = iter.__doc__ 
@@ -157,16 +161,15 @@ def create_call_from_iter(iter, excludes):
     first_line = doc[:doc.find('\n')].rstrip().lstrip()
     result +=\
         "  \"\"\"{0}\n\n"                                                  \
-        "     This function is created automagically from "                \
-          ":py:func:`{1.func_name} <{1.__module__}.{1.func_name}>`.\n"     \
+        "     This function is created automagically from iter_.\n"        \
         "     Please see that function for the description of its parameters.\n\n"\
         "     :param comm:\n"\
         "        Additional keyword argument defining how call external programs.\n"\
-        "     :type comm: Dictionary or :py:class:`~lada.process.mpi.Communicator`\n"\
+        "     :type comm: Dictionary or :py:class:`~lada.process.mpi.Communicator`\n\n"\
+        "     .. _iter: :py:func:`{1.func_name} <{1.__module__}.{1.func_name}>`\n"     \
         "  \"\"\"\n"\
         .format(first_line, iter)
   # add iteration line:
-  result += "  result = None\n  for program in self.iter(".format(iter)
   iterargs = []
   if args.args is not None and len(args.args) > 1:
     # first add arguments without default (except for first == self).
@@ -178,14 +181,18 @@ def create_call_from_iter(iter, excludes):
     for key in args.args[nargs:]:
       if key in excludes: iterargs.append("{0}={0}".format(key))
   # adds arguments to overloaded function. 
-  iterargs.append('comm=comm')
-  if args.keywords is not None: iterargs.append("**kwargs")
-  result += "{0}):\n"\
-            "    if getattr(program, 'success', False):\n"\
-            "      result = program\n"\
-            "      continue\n"\
-            "    program.start(comm)\n"\
-            "    program.wait()\n"\
+  if args.args is None or 'comm' not in args.args:
+    iterargs.append('comm=None')
+  if args.keywords is not None: iterargs.append("**" + args.keywords)
+  result += "  result  = None\n"                                               \
+            "  for program in self.iter({0}):\n"                               \
+            "    if getattr(program, 'success', False):\n"                     \
+            "      result = program\n"                                         \
+            "      continue\n"                                                 \
+            "    if not hasattr(program, 'start'):\n"                          \
+            "      return program\n"                                           \
+            "    program.start(comm)\n"                                        \
+            "    program.wait()\n"                                             \
             "  return result".format(', '.join(iterargs))
   return result
 
@@ -217,10 +224,10 @@ def create_call(call, excludes):
   if doc is not None and '\n' in doc:
     first_line = doc[:doc.find('\n')].rstrip().lstrip()
     result +=\
-        "  \"\"\"{0}\n\n"                                                  \
-        "     This function is created automagically from "                \
-          ":py:func:`{1.func_name} <{1.__module__}.{1.func_name}>`.\n"     \
-        "     Please see that function for the description of its parameters.\n"\
+        "  \"\"\"{0}\n\n"                                                       \
+        "     This function is created automagically from iter_"                \
+        "     Please see that function for the description of its parameters.\n\n"\
+        "     .. _iter: :py:func:`{1.func_name} <{1.__module__}.{1.func_name}>`.\n" \
         "  \"\"\"\n"\
         .format(first_line, call)
     # import iterations method
@@ -300,7 +307,8 @@ def makeclass( classname, base, iter=None, call=None,
 
   # creates __init__
   exec create_initstring(classname, base, basemethod, excludes) in funcs
-  if iter is not None: exec create_iter(iter, excludes) in funcs
+  if iter is not None:
+    exec create_iter(iter, excludes, module, classname) in funcs
   if call is not None: exec create_call(call, excludes) in funcs
   elif iter is not None:
     exec create_call_from_iter(iter, excludes) in funcs
@@ -325,18 +333,20 @@ def makefunc(name, iter, module=None):
   # others will not be added.
   args = getargspec(iter)
   funcstring = "def {0}(".format(name)
+  callargs = []
   if args.args is not None and len(args.args) > 0:
     # first add arguments without default (except for first == self).
     nargs = len(args.args) - len(args.defaults)
-    for key in args.args[:nargs]: funcstring += "{0}, ".format(key)
+    for key in args.args[:nargs]: callargs.append(str(key))
   if args.args is not None and len(args.args) > 0:
     # then add arguments with default
     nargs = len(args.args) - len(args.defaults)
     for key, value in zip(args.args[nargs:], args.defaults):
-      funcstring += "{0}={1!r}, ".format(key, value)
-    if len(args.args[nargs:]) > 0: funcstring = funcstring[:-2]
+      callargs.append("{0}={1!r}".format(key, value))
   # adds comm keyword, but only to function def.
-  funcstring += ", comm=None, **kwargs):\n"
+  if args.keywords is not None:
+    callargs.append('**{0}'.format(args.keywords))
+  funcstring = "def {0}({1}):\n".format(name, ', '.join(callargs))
 
   # adds standard doc string.
   doc = iter.__doc__ 
@@ -359,8 +369,9 @@ def makefunc(name, iter, module=None):
   iterargs = []
   if args.args is not None and len(args.args) > 0:
     for key in args.args: iterargs.append("{0}".format(key))
-  iterargs.append('comm=comm')
-  if args.keywords is not None: iterargs.append('**kwargs')
+  if args.args is None or 'comm' not in args.args: 
+    iterargs.append('comm=None')
+  if args.keywords is not None: iterargs.append('**' + args.keywords)
   funcstring += "{0}):\n"\
                 "    if getattr(program, 'success', False):\n"\
                 "      result = program\n"\

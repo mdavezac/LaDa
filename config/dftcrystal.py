@@ -55,3 +55,6 @@ CRYSTAL_propnames = { 'fort.25':      '{0}.f25',      # bands, maps, doss data
                     }
 crystal_program ='crystal'
 """ Path to crystal executable. """
+
+crystal_inplace = True
+""" Wether to perform calculation in-place or in a tmpdir. """

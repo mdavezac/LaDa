@@ -640,22 +640,30 @@ class AttrBlock(Keyword):
     """
     result = getattr(self, 'raw', '')
     for key, value in self._crysinput.iteritems():
-      if value is None: continue
-      elif isinstance(value, bool):
-        if value == True: result += key.upper()
-      elif hasattr(value, 'print_input'):
-        dummy = value.print_input(**kwargs)
-        if dummy is not None: result += dummy
-      elif getattr(value, 'raw', None) is not None:
-        result += getattr(result, 'keyword', key).upper() + '\n'               \
-                  + str(value.raw)
-      elif hasattr(value, '__iter__'):
-        result += getattr(result, 'keyword', key).upper() + '\n'               \
-                  + ' '.join(str(u) for u in value)
-      else:
-        result += getattr(result, 'keyword', key).upper() + '\n' + str(value)
-      result = result.rstrip()
-      if len(result) > 0 and result[-1] != '\n': result += '\n'
+      try: 
+        if value is None: continue
+        elif isinstance(value, bool):
+          if value == True: result += key.upper()
+        elif hasattr(value, 'print_input'):
+          dummy = value.print_input(**kwargs)
+          if dummy is not None: result += dummy
+        elif getattr(value, 'raw', None) is not None:
+          result += getattr(result, 'keyword', key).upper() + '\n'               \
+                    + str(value.raw)
+        elif hasattr(value, '__iter__'):
+          result += getattr(result, 'keyword', key).upper() + '\n'               \
+                    + ' '.join(str(u) for u in value)
+        else:
+          result += getattr(result, 'keyword', key).upper() + '\n' + str(value)
+        result = result.rstrip()
+        if len(result) > 0 and result[-1] != '\n': result += '\n'
+      except:
+        from sys import exc_info
+        type, value, traceback = exc_info()
+        message = 'ERROR in when printing keyword {0}'.format(key)
+        if value is None: type.args = type.args, message
+        else: value = value, message
+        raise type, value, traceback
     if len(result) == 0: return None # nothing printed, return None.
     if result[-1] != '\n': result += '\n'
     if getattr(self, 'keyword', '') != '': 

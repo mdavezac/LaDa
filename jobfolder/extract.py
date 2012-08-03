@@ -198,15 +198,22 @@ class AbstractMassExtract(object):
 
   def _regex_extractors(self):
     """ Loops through jobs in this view. """
+    if self.excludes is not None:
+      excludes = [self._regex_pattern(u) for u in self.excludes]
     if self.view == "/": 
-      for key, value in self._extractors.iteritems(): yield key, value
+      for key, value in self._extractors.iteritems():
+        if self.excludes is not None                                           \
+           and any(u.match(key) is not None for u in excludes):
+          continue
+        yield key, value
       return
 
     regex = self._regex_pattern(self.view)
-    if self.excludes is not None: excludes = [self._regex_pattern(u) for u in self.excludes]
     for key, value in self._extractors.iteritems():
       if regex.match(key) is None: continue
-      if self.excludes is not None and any(u.match(key) is not None for u in excludes): continue
+      if self.excludes is not None                                             \
+         and any(u.match(key) is not None for u in excludes):
+        continue
       yield key, value
 
   @property

@@ -857,7 +857,7 @@ class ExtractBase(object):
   def nbands(self):
     """ Number of bands in calculation. """
     result = self._find_first_OUTCAR("""NBANDS\s*=\s*(\d+)""")
-    if result not None:
+    if result is not None:
       raise GrepError("Could not find NBANDS in OUTCAR.")
     return int(result.group(1))
 

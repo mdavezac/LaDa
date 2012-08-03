@@ -16,34 +16,79 @@ namespace LaDa
         return NULL;                                                                    \
       }                                                                                 \
       math::rMatrix3d cell, invcell;                                                    \
-      math::rVector3d a;                                                                \
-      if(not python::convert_to_vector(PyTuple_GET_ITEM(_args, 0), a)) return false;    \
       if(not python::convert_to_matrix(PyTuple_GET_ITEM(_args, 1), cell)) return false; \
       if(N == 3 and not python::convert_to_matrix(PyTuple_GET_ITEM(_args, 2), invcell)) \
         return false;                                                                   \
       if(N == 2) invcell = cell.inverse();                                              \
-      try                                                                               \
+      PyObject *positions = PyTuple_GET_ITEM(_args, 0);                                 \
+      if(not PyArray_Check(positions))                                                  \
       {                                                                                 \
-        math::rVector3d vector = NAME(a, cell, invcell);                                \
-        npy_intp dim[1] = {3};                                                          \
-        PyObject* result = PyArray_SimpleNew(1, dim,                                    \
-            math::numpy::type<math::rVector3d::Scalar>::value );                        \
-        if(result == NULL) return NULL;                                                 \
-        char * const elem = (char*const) PyArray_DATA(result);                          \
-        npy_intp const stride = PyArray_STRIDE(result, 0);                              \
-        *((math::rVector3d::Scalar*)elem) = vector[0];                                  \
-        *((math::rVector3d::Scalar*)(elem+stride)) = vector[1];                         \
-        *((math::rVector3d::Scalar*)(elem+(stride<<1))) = vector[2];                    \
-        return result;                                                                  \
+        math::rVector3d a;                                                              \
+        if(not python::convert_to_vector(positions, a)) return false;                   \
+        try                                                                             \
+        {                                                                               \
+          math::rVector3d vector = NAME(a, cell, invcell);                              \
+          npy_intp dim[1] = {3};                                                        \
+          PyObject* result = PyArray_SimpleNew(1, dim,                                  \
+              math::numpy::type<math::rVector3d::Scalar>::value );                      \
+          if(result == NULL) return NULL;                                               \
+          char * const elem = (char*const) PyArray_DATA(result);                        \
+          npy_intp const stride = PyArray_STRIDE(result, 0);                            \
+          *((math::rVector3d::Scalar*)elem) = vector[0];                                \
+          *((math::rVector3d::Scalar*)(elem+stride)) = vector[1];                       \
+          *((math::rVector3d::Scalar*)(elem+(stride<<1))) = vector[2];                  \
+          return result;                                                                \
+        }                                                                               \
+        /* catch exceptions. */                                                         \
+        catch(...) { boost::python::handle_exception(); }                               \
       }                                                                                 \
-      /* catch exceptions. */                                                           \
-      catch(...) { boost::python::handle_exception(); }                                 \
+      else                                                                              \
+      {                                                                                 \
+        int const ndim = PyArray_NDIM(positions);                                       \
+        npy_intp *shape = PyArray_DIMS(positions);                                      \
+        if(shape[ndim-1] != 3)                                                          \
+        {                                                                               \
+          LADA_PYERROR( ValueError,                                                     \
+                        "Last dimension of input numpy array is not of length 3.");     \
+          return NULL;                                                                  \
+        }                                                                               \
+        python::Object result(PyArray_SimpleNew(ndim, shape,                            \
+            math::numpy::type<math::rVector3d::Scalar>::value ));                       \
+        if(not result) return NULL;                                                     \
+        python::Object iter_pos( (PyObject*) PyArray_IterNew(positions) );              \
+        python::Object iter_res( (PyObject*) PyArray_IterNew(result.borrowed()) );      \
+        math::rVector3d a;                                                              \
+        int const type = PyArray_MinScalarType((PyArrayObject*)positions)->type_num;    \
+        while(PyArray_ITER_NOTDONE(iter_pos.borrowed()))                                \
+        {                                                                               \
+          /* Shouldn't need to check since last axis is of length == 3 */               \
+          for(size_t i(0); i < 3; ++i)                                                  \
+          {                                                                             \
+            void const * const data = PyArray_ITER_DATA(iter_pos.borrowed());           \
+            a(i) = math::numpy::cast_data<types::t_real>(data, type);                   \
+            PyArray_ITER_NEXT(iter_pos.borrowed());                                     \
+          }                                                                             \
+                                                                                        \
+          /* Perform action */                                                          \
+          math::rVector3d const vector = NAME(a, cell, invcell);                        \
+                                                                                        \
+          /* copies result */                                                           \
+          for(size_t i(0); i < 3; ++i)                                                  \
+          {                                                                             \
+            *( (math::numpy::type<math::rVector3d::Scalar>::np_type*)                   \
+                PyArray_ITER_DATA(iter_res.borrowed()) )                                \
+              = (math::numpy::type<math::rVector3d::Scalar>::np_type) vector(i);        \
+            PyArray_ITER_NEXT(iter_res.borrowed());                                     \
+          }                                                                             \
+        }                                                                               \
+        return result.release();                                                        \
+      }                                                                                 \
       return NULL;                                                                      \
     }
     LADA_MACRO(into_cell)
     LADA_MACRO(into_voronoi)
     LADA_MACRO(zero_centered)
-#   undef into_cell
+#   undef LADA_MACRO
     //! Wrapper around periodic image tester.
     PyObject* are_periodic_images_wrapper(PyObject *_module, PyObject *_args)
     {
@@ -454,7 +499,9 @@ namespace LaDa
          "This may not be the vector with the smallest possible norm "
            "if the cell is very skewed.\n\n"
          ":param a:\n"
-         "    The 3d-vector to fold back into the cell.\n"
+         "    A 3d-vector to fold back into the cell.\n"
+         "    Can also be any numpy array where its last dimension if "
+           "of length 3, ie. ``a.shape[-1] == 3``.\n" 
          ":param cell:\n"
          "    The cell matrix defining the periodicity.\n"
          ":param invcell:\n"
@@ -465,6 +512,8 @@ namespace LaDa
          "This returns the periodic image with the smallest possible norm.\n\n"
          ":param a:\n"
          "    The 3d-vector to fold back into the cell.\n"
+         "    Can also be any numpy array where its last dimension if "
+           "of length 3, ie. ``a.shape[-1] == 3``.\n" 
          ":param cell:\n"
          "    The cell matrix defining the periodicity.\n"
          ":param invcell:\n"
@@ -474,6 +523,8 @@ namespace LaDa
          "Returns Folds vector into periodic the input cell.\n\n"
          ":param a:\n"
          "    The 3d-vector to fold back into the cell.\n"
+         "    Can also be any numpy array where its last dimension if "
+           "of length 3, ie. ``a.shape[-1] == 3``.\n" 
          ":param cell:\n"
          "    The cell matrix defining the periodicity.\n"
          ":param invcell:\n"

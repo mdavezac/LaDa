@@ -128,3 +128,9 @@ class SuperCall(object):
     self.__dict__['_object'] = args[1]
   def __dir__(self): return dir(super(self._class, self._object))
   def __repr__(self): return repr(super(self._class, self._object))
+  def copy(self):
+    """ Performs deepcopy of self. """
+    from copy import deepcopy
+    class_ = deepcopy(self.__dict__['_class'])
+    object_= deepcopy(self.__dict__['_object'])
+    return self.__class__(class_, object_)

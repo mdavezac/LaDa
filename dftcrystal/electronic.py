@@ -239,6 +239,32 @@ class LevShift(Keyword):
     if self.shift is None or self.lock is None: return None
     return super(LevShift, self).print_input(**kwargs)
 
+class GuessP(BoolKeyword):
+  """ Reads density matrix from disk.
+
+      If True (default) *and* restart_ is not None, then copies crystal.f9 to
+      fort.20 in the working directory and adds GUESSP keyword to the input.
+
+      If True but restart_ is None or the file crystal.f9 does not exist, then
+      does nothing. This is not an error, however.
+
+      If False or None, does nothing.
+
+      .. _restart: :py:attr:`~lada.dftcrystal.functional.restart` 
+  """ 
+  keyword = 'guessp'
+  def __init__(self, value=True):
+    super(GuessP, self).__init__(value=value)
+  def print_input(self, **kwargs):
+    from os.path import exists, join
+    from ..misc import copyfile
+    if self.value is None or self.value == False: return None
+    if kwargs['crystal'].restart is None: return None
+    path = join(kwargs['crystal'].restart.directory, 'crystal.f9')
+    if not exists(path): return None
+    copyfile(path, join(kwargs['workdir'], 'fort.20'), nothrow='same')
+    return super(GuessP, self).print_input(**kwargs)
+
 
 class Electronic(AttrBlock):
   """ DFT attribute block. """ 
@@ -283,5 +309,18 @@ class Electronic(AttrBlock):
     """ Whether to reevaluate integrals at each electronic step """
     self.poleordr = ChoiceKeyword(values=range(0, 7))
     """ Coulomb intergrals pole truncation """
+    self.guessp   = GuessP(value=True)
+    """ Reads density matrix from disk.
+    
+        If True (default) *and* restart_ is not None, then copies crystal.f9 to
+        fort.20 in the working directory and adds GUESSP keyword to the input.
+    
+        If True but restart_ is None or the file crystal.f9 does not exist, then
+        does nothing. This is not an error, however.
+    
+        If False or None, does nothing.
+    
+        .. _restart: :py:attr:`~lada.dftcrystal.functional.restart` 
+    """ 
     self.dft      = Dft()
     """ Holds definition of the DFT functional itself """

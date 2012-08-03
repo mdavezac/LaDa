@@ -184,6 +184,8 @@ class Functional(object):
     from os import environ, getpid
     from os.path import join
     from datetime import datetime
+    from .. import crystal_inplace
+    if crystal_inplace: return outdir
     return join( environ.get('PBS_TMPDIR', outdir),
                  '{0!s}.{1}'.format(datetime.today(), getpid())\
                             .replace(' ', '_') )
@@ -213,7 +215,8 @@ class Functional(object):
                     nothrow="never" )
 
       # then creates input file.
-      string = self.print_input(crystal=self, structure=structure)
+      string = self.print_input( crystal=self, structure=structure, 
+                                 workdir=workdir )
       with open('crystal.d12', 'w') as file: file.write(string)
 
   def bringdown(self, structure, workdir, outdir):
@@ -378,7 +381,8 @@ class Functional(object):
   def __deepcopy__(self, memo):
     from copy import deepcopy
     result = self.__class__()
-    result.__dict__ = deepcopy(self.__dict__)
+    d = deepcopy(self.__dict__, memo)
+    result.__dict__.update(d)
     return result
 
   def __getstate__(self): return self.__dict__
