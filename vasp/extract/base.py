@@ -156,8 +156,8 @@ class ExtractBase(object):
     for index, line in enumerate(lines[::-1]):
       if atom_re.search(line) is not None: atom_index = index - 1
       if cell_re.search(line) is not None: cell_index = index; break
-    assert atom_index is not None and cell_index is not None,\
-           GrepError("Could not find structure description in OUTCAR.")
+    if atom_index is None or cell_index is None:
+      raise GrepError("Could not find structure description in OUTCAR.")
     result = Structure()
     try: 
       for i in range(3):
@@ -640,7 +640,8 @@ class ExtractBase(object):
   def ispin(self):
     """ Greps ISPIN from OUTCAR. """
     result = self._find_first_OUTCAR(r"""^\s*ISPIN\s*=\s*(1|2)\s+""")
-    assert result is not None, GrepError("Could not extract ISPIN from OUTCAR.")
+    if result is None:
+      raise GrepError("Could not extract ISPIN from OUTCAR.")
     return int(result.group(1))
 
   @property
@@ -648,7 +649,8 @@ class ExtractBase(object):
   def name(self):
     """ Greps POSCAR title from OUTCAR. """
     result = self._find_first_OUTCAR(r"""^\s*POSCAR\s*=.*$""")
-    assert result is not None, GrepError("Could not extract POSCAR title from OUTCAR.")
+    if result is None:
+      raise GrepError("Could not extract POSCAR title from OUTCAR.")
     result = result.group(0)
     result = result[result.index('=')+1:]
     return result.rstrip().lstrip()
@@ -658,7 +660,8 @@ class ExtractBase(object):
   def system(self):
     """ Greps system title from OUTCAR. """
     result = self._find_first_OUTCAR(r"""^\s*SYSTEM\s*=.*$""")
-    assert result is not None, GrepError("Could not extract SYSTEM title from OUTCAR.")
+    if result is None:
+      raise GrepError("Could not extract SYSTEM title from OUTCAR.")
     result = result.group(0)
     result = result[result.index('=')+1:].rstrip().lstrip()
     if result[0] == '"': result = result[1:]
@@ -677,7 +680,8 @@ class ExtractBase(object):
     for i, line in enumerate(lines[::-1]):
       found = spin_comp1_re.match(line)
       if found is not None: break
-    assert found is not None, GrepError("Could not extract eigenvalues/occupation from OUTCAR.")
+    if found is None:
+      raise GrepError("Could not extract eigenvalues/occupation from OUTCAR.")
 
     # now greps actual results.
     if self.is_dft:
@@ -710,13 +714,13 @@ class ExtractBase(object):
       found = spin_comp1_re.match(line)
       if found is None: continue
       if found.group(1) == '1': 
-        assert spins[1] is not None, \
-               GrepError("Could not find two spin components in OUTCAR.")
+        if spins[1] is None:
+          raise GrepError("Could not find two spin components in OUTCAR.")
         spins[0] = i
         break
       else:  spins[1] = i
-    assert spins[0] is not None and spins[1] is not None,\
-           GrepError("Could not extract eigenvalues/occupation from OUTCAR.")
+    if spins[0] is None or spins[1] is None:
+      raise GrepError("Could not extract eigenvalues/occupation from OUTCAR.")
 
     # now greps actual results.
     if self.is_dft:
@@ -745,7 +749,8 @@ class ExtractBase(object):
     """ Greps ionic_charges from OUTCAR."""
     regex = """^\s*ZVAL\s*=\s*(.*)$"""
     result = self._find_last_OUTCAR(regex) 
-    assert result is not None, GrepError("Could not find ionic_charges in OUTCAR")
+    if result is None:
+      raise GrepError("Could not find ionic_charges in OUTCAR")
     return [float(u) for u in result.group(1).split()]
 
   @property
@@ -765,7 +770,8 @@ class ExtractBase(object):
     """ Greps nelect from OUTCAR."""
     regex = """^\s*NELECT\s*=\s*(\S+)\s+total\s+number\s+of\s+electrons\s*$"""
     result = self._find_last_OUTCAR(regex) 
-    assert result is not None, GrepError("Could not find energy in OUTCAR")
+    if result is None:
+      raise GrepError("Could not find energy in OUTCAR")
     return float(result.group(1)) 
 
   @property
@@ -857,7 +863,7 @@ class ExtractBase(object):
   def nbands(self):
     """ Number of bands in calculation. """
     result = self._find_first_OUTCAR("""NBANDS\s*=\s*(\d+)""")
-    if result is not None:
+    if result is None:
       raise GrepError("Could not find NBANDS in OUTCAR.")
     return int(result.group(1))
 
@@ -916,7 +922,8 @@ class ExtractBase(object):
     from quantities import eV
     regex = """energy\s+without\s+entropy\s*=\s*(\S+)\s+energy\(sigma->0\)\s+=\s+(\S+)"""
     result = self._find_last_OUTCAR(regex) 
-    assert result is not None, GrepError("Could not find sigma0 energy in OUTCAR")
+    if result is None:
+      raise GrepError("Could not find sigma0 energy in OUTCAR")
     return float(result.group(2)) * eV
 
   @property
@@ -929,7 +936,7 @@ class ExtractBase(object):
     regex = """energy\s+without\s+entropy\s*=\s*(\S+)\s+energy\(sigma->0\)\s+=\s+(\S+)"""
     try: result = [float(u.group(2)) for u in self._search_OUTCAR(regex)]
     except TypeError: raise GrepError("Could not find energies in OUTCAR")
-    assert len(result) != 0, GrepError("Could not find energy in OUTCAR")
+    if len(result) == 0: raise GrepError("Could not find energy in OUTCAR")
     return array(result) * eV
 
   @property
@@ -942,7 +949,7 @@ class ExtractBase(object):
     regex = """energy\s+without\s+entropy =\s*(\S+)\s+energy\(sigma->0\)\s+=\s+(\S+)"""
     try: result = [float(u.group(1)) for u in self._search_OUTCAR(regex)]
     except TypeError: raise GrepError("Could not find energies in OUTCAR")
-    assert len(result) != 0, GrepError("Could not find energy in OUTCAR")
+    if len(result) == 0: raise GrepError("Could not find energy in OUTCAR")
     return array(result) * eV
 
   @property
@@ -1007,7 +1014,7 @@ class ExtractBase(object):
     regex = """energy\s+without\s+entropy=\s*(\S+)\s+energy\(sigma->0\)\s+=\s+(\S+)"""
     try: result = [float(u.group(1)) for u in self._search_OUTCAR(regex)]
     except TypeError: raise GrepError("Could not find energies in OUTCAR")
-    assert len(result) != 0, GrepError("Could not find energy in OUTCAR")
+    if len(result) == 0: raise GrepError("Could not find energy in OUTCAR")
     return array(result) * eV
 
   @property
@@ -1018,7 +1025,8 @@ class ExtractBase(object):
     from quantities import eV
     regex = """energy\s+without\s+entropy=\s*(\S+)\s+energy\(sigma->0\)\s+=\s+(\S+)"""
     result = self._find_last_OUTCAR(regex) 
-    assert result is not None, GrepError("Could not find energy in OUTCAR")
+    if result is None:
+      raise GrepError("Could not find energy in OUTCAR")
     return float(result.group(1)) * eV
 
   energy = total_energy
@@ -1032,7 +1040,8 @@ class ExtractBase(object):
     from quantities import eV
     regex = r"""E-fermi\s*:\s*(\S+)"""
     result = self._find_last_OUTCAR(regex) 
-    assert result is not None, GrepError("Could not find fermi energy in OUTCAR")
+    if result is None:
+      raise GrepError("Could not find fermi energy in OUTCAR")
     return float(result.group(1)) * eV
 
   @property
@@ -1042,7 +1051,8 @@ class ExtractBase(object):
     if not self.is_dft: raise AttributeError('not a DFT calculation.')
     regex = r"""^\s*number\s+of\s+electron\s+(\S+)\s+magnetization\s+(\S+)\s*$"""
     result = self._find_last_OUTCAR(regex) 
-    assert result is not None, GrepError("Could not find magnetic moment in OUTCAR")
+    if result is None:
+      raise GrepError("Could not find magnetic moment in OUTCAR")
     return float(result.group(2))
 
   @property
@@ -1054,7 +1064,7 @@ class ExtractBase(object):
     regex = r"""external\s+pressure\s*=\s*(\S+)\s*kB\s+Pullay\s+stress\s*=\s*(\S+)\s*kB"""
     try: result = [float(u.group(1)) for u in self._search_OUTCAR(regex)]
     except TypeError: raise GrepError("Could not find pressures in OUTCAR")
-    assert len(result) != 0, GrepError("Could not find pressures in OUTCAR")
+    if len(result) == 0: raise GrepError("Could not find pressures in OUTCAR")
     return result * kB
 
   @property
@@ -1065,7 +1075,7 @@ class ExtractBase(object):
     from quantities import kbar as kB
     regex = r"""external\s+pressure\s*=\s*(\S+)\s*kB\s+Pullay\s+stress\s*=\s*(\S+)\s*kB"""
     result = self._find_last_OUTCAR(regex) 
-    assert result is not None, GrepError("Could not find pressure in OUTCAR")
+    if result is None: raise GrepError("Could not find pressure in OUTCAR")
     return float(result.group(1)) * kB
 
   @property
@@ -1075,7 +1085,7 @@ class ExtractBase(object):
     if not self.is_dft: raise AttributeError('not a DFT calculation.')
     regex = r"""^\s*E-fermi\s*:\s*(\S+)\s+XC\(G=0\)\s*:\s*(\S+)\s+alpha\+bet\s*:(\S+)\s*$"""
     result = self._find_last_OUTCAR(regex) 
-    assert result is not None, GrepError("Could not find alpha+bet in OUTCAR")
+    if result is None: raise GrepError("Could not find alpha+bet in OUTCAR")
     return float(result.group(3))
 
   @property
@@ -1085,7 +1095,7 @@ class ExtractBase(object):
     if not self.is_dft: raise AttributeError('not a DFT calculation.')
     regex = r"""^\s*E-fermi\s*:\s*(\S+)\s+XC\(G=0\)\s*:\s*(\S+)\s+alpha\+bet\s*:(\S+)\s*$"""
     result = self._find_last_OUTCAR(regex) 
-    assert result is not None, GrepError("Could not find xc(G=0) in OUTCAR")
+    if result is None: raise GrepError("Could not find xc(G=0) in OUTCAR")
     return float(result.group(2))
 
   @property
@@ -1111,7 +1121,7 @@ class ExtractBase(object):
     regex = r"(?!I would recommend the setting:\s*\n)"                         \
              "\s*dimension x,y,z NGX =\s+(\d+)\s+NGY =\s+(\d+)\s+NGZ =\s+(\d+)"
     with self.__outcar__() as file: result = search(regex, file.read(), re_M)
-    assert result is not None, GrepError("Could not FFT grid in OUTCAR.""")
+    if result is None: raise GrepError("Could not FFT grid in OUTCAR.""")
     return array([ int(result.group(1)),
                    int(result.group(2)), 
                    int(result.group(3)) ])

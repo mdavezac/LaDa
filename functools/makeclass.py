@@ -75,7 +75,7 @@ def create_initstring(classname, base, method, excludes):
                 .format(avoid)
   return result
 
-def create_iter(iter, excludes, module, classname):
+def create_iter(iter, excludes):
   """ Creates the iterator method. """
   from inspect import getargspec
   # make stateless.
@@ -111,11 +111,10 @@ def create_iter(iter, excludes, module, classname):
         .format(first_line, iter)
   # import iterations method
   result += "  from lada.functools import SuperCall\n"                     \
-            "  from {0.__module__} import {0.func_name}\n"                 \
-            "  from {1} import {2}\n\n".format(iter, module, classname)
+            "  from {0.__module__} import {0.func_name}\n".format(iter)
   # add iteration line:
-  result += "  for o in {0.func_name}(SuperCall({1}, self)"                \
-            .format(iter, classname)
+  result += "  for o in {0.func_name}(SuperCall(self.__class__, self)"     \
+            .format(iter)
   if args.args is not None and len(args.args) > 1:
     # first add arguments without default (except for first == self).
     nargs = len(args.args) - len(args.defaults)
@@ -182,7 +181,7 @@ def create_call_from_iter(iter, excludes):
       if key in excludes: iterargs.append("{0}={0}".format(key))
   # adds arguments to overloaded function. 
   if args.args is None or 'comm' not in args.args:
-    iterargs.append('comm=None')
+    iterargs.append('comm=comm')
   if args.keywords is not None: iterargs.append("**" + args.keywords)
   result += "  result  = None\n"                                               \
             "  for program in self.iter({0}):\n"                               \
@@ -308,7 +307,7 @@ def makeclass( classname, base, iter=None, call=None,
   # creates __init__
   exec create_initstring(classname, base, basemethod, excludes) in funcs
   if iter is not None:
-    exec create_iter(iter, excludes, module, classname) in funcs
+    exec create_iter(iter, excludes) in funcs
   if call is not None: exec create_call(call, excludes) in funcs
   elif iter is not None:
     exec create_call_from_iter(iter, excludes) in funcs
@@ -343,7 +342,9 @@ def makefunc(name, iter, module=None):
     nargs = len(args.args) - len(args.defaults)
     for key, value in zip(args.args[nargs:], args.defaults):
       callargs.append("{0}={1!r}".format(key, value))
-  # adds comm keyword, but only to function def.
+  # adds comm keyword if does not already exist.
+  if 'comm' not in args.args: callargs.append('comm=None')
+  # adds **kwargs keyword if necessary.
   if args.keywords is not None:
     callargs.append('**{0}'.format(args.keywords))
   funcstring = "def {0}({1}):\n".format(name, ', '.join(callargs))
@@ -353,13 +354,16 @@ def makefunc(name, iter, module=None):
   if doc is not None and '\n' in doc:
     first_line = doc[:doc.find('\n')].rstrip().lstrip()
     funcstring +=\
-        "  \"\"\"{0}\n\n"                                                  \
-        "     This function is created automagically from "                \
-          ":py:func:`{1.func_name} <{1.__module__}.{1.func_name}>`.\n"     \
-        "     Please see that function for the description of its parameters.\n\n"\
-        "     :param comm:\n"\
-        "        Additional keyword argument defining how call external programs.\n"\
-        "     :type comm: Dictionary or :py:class:`~lada.process.mpi.Communicator`\n"\
+        "  \"\"\"{0}\n\n"                                                      \
+        "     This function is created automagically from {1.func_name}_.\n"   \
+        "     Please see that function for the description of its parameters." \
+        "\n\n     :param comm:\n"                                              \
+        "        Additional keyword argument defining "                        \
+                 "how call external programs.\n"                               \
+        "     :type comm: Dictionary or Communicator_\n\n"                     \
+        "     .. _{1.func_name}: "                                             \
+              ":py:func:`{1.func_name} <{1.__module__}.{1.func_name}>`.\n"     \
+        "     .. _Communicator:  :py:class:`~lada.process.mpi.Communicator`\n" \
         "  \"\"\"\n"\
         .format(first_line, iter)
   # create function body...
@@ -370,14 +374,15 @@ def makefunc(name, iter, module=None):
   if args.args is not None and len(args.args) > 0:
     for key in args.args: iterargs.append("{0}".format(key))
   if args.args is None or 'comm' not in args.args: 
-    iterargs.append('comm=None')
+    iterargs.append('comm=comm')
   if args.keywords is not None: iterargs.append('**' + args.keywords)
-  funcstring += "{0}):\n"\
-                "    if getattr(program, 'success', False):\n"\
-                "      result = program\n"\
-                "      continue\n"\
-                "    program.start(comm)\n"\
-                "    program.wait()\n"\
+  funcstring += "{0}):\n"                                                      \
+                "    if getattr(program, 'success', False):\n"                 \
+                "      result = program\n"                                     \
+                "      continue\n"                                             \
+                "    if not hasattr(program, 'start'): return program\n"       \
+                "    program.start(comm)\n"                                    \
+                "    program.wait()\n"                                         \
                 "  return result".format(', '.join(iterargs))
   funcs = {}
   exec funcstring in funcs
