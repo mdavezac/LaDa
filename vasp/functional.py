@@ -18,7 +18,7 @@ class Vasp(AttrBlock):
                           NElect, Algo, Ediff, Ediffg, Encut, EncutGW, IStart, \
                           ICharge, IStruc, LDAU, PrecFock, Precision, Nsw,     \
                           Isif, IBrion, Relaxation, ISmear, LSorbit, Sigma,    \
-                          LMaxMix
+                          LMaxMix, EdiffPerAtom, EdiffgPerAtom
     from ..functools.keywords import TypedKeyword, ChoiceKeyword
     super(Vasp, self).__init__()
 
@@ -238,28 +238,58 @@ class Vasp(AttrBlock):
         .. _ALGO: http://cms.mpi.univie.ac.at/vasp/vasp/ALGO_tag.html
     """ 
     self.ediff = Ediff()
-    """ Sets the convergence criteria (per atom) for electronic minimization.
+    """ Sets the absolute energy convergence criteria for electronic minimization.
     
-        - value > 0e0: the tolerance is multiplied by the number of atoms in
-          the system. This makes tolerance consistent from one system to the
-          next.
-        - value < 0e0: tolerance is given as absolute value, without
-          multiplying by size of system.
+        EDIFF_ is set to this value in the INCAR. 
     
-        .. seealso:: EDIFF_ 
-        .. _EDIFF: http://cms.mpi.univie.ac.at/vasp/guide/node105.html>
+        Sets ediff_per_atom_ to None.
+        If negative or null, defaults to zero.
+    
+        .. seealso:: EDIFF_, ediff_per_atom_
+        .. _EDIFF: http://cms.mpi.univie.ac.at/wiki/index.php/EDIFFG
+        .. _ediff_per_atom: :py:attr:`~lada.vasp.functional.Vasp.ediff_per_atom`
+    """
+    self.ediff_per_atom = EdiffPerAtom()
+    """ Sets the relative energy convergence criteria for electronic minimization.
+    
+        EDIFF_ is set to this value *times* the number of atoms in the structure.
+        This approach is more sensible than straigh-off ediff_ when doing
+        high-throughput over many structures.
+    
+        Sets ediff_ to None.
+        If negative or null, defaults to zero.
+    
+        .. seealso:: EDIFF_, ediff_
+        .. _EDIFF: http://cms.mpi.univie.ac.at/wiki/index.php/EDIFFG
+        .. _ediff: :py:attr:`~lada.vasp.functional.Vasp.ediff`
     """
     self.ediffg = Ediffg()
-    """ Sets the convergence criteria (per atom) for ionic minimization.
+    """ Sets the absolute energy convergence criteria for ionic relaxation.
     
-        - value > 0e0: the tolerance is multiplied by the number of atoms in
-          the system. This makes tolerance consistent from one system to the
-          next.
-        - value < 0e0: tolerance is given as is (negative), and applies to
-          forces.
+        EDIFFG_ is set to this value in the INCAR. 
     
-        .. seealso:: EDIFFG_
-        .. _EDIFF: http://cms.mpi.univie.ac.at/vasp/guide/node107.html
+        Sets ediffg_per_atom_ to None.
+    
+        .. seealso:: EDIFFG_, ediffg_per_atom_
+        .. _EDIFFG: http://cms.mpi.univie.ac.at/vasp/guide/node105.html
+        .. _ediffg_per_atom: :py:attr:`~lada.vasp.functional.Vasp.ediffg_per_atom`
+    """
+    self.ediffg_per_atom = EdiffgPerAtom()
+    """ Sets the relative energy convergence criteria for ionic relaxation.
+  
+        - if positive: EDIFFG_ is set to this value *times* the number of atoms
+          in the structure. This means that the criteria is for the total energy per atom.
+        - if negative: same as a negative EDIFFG_, since that convergence
+          criteria is already per atom.
+        
+        This approach is more sensible than straigh-off ediffg_ when doing
+        high-throughput over many structures.
+  
+        Sets ediffg_ to None.
+  
+        .. seealso:: EDIFFG_, ediff_
+        .. _EDIFFG: http://cms.mpi.univie.ac.at/wiki/index.php/EDIFFG
+        .. _ediffg: :py:attr:`~lada.vasp.functional.Vasp.ediffg`
     """
     self.encut = Encut()
     """ Defines cutoff factor for calculation. 

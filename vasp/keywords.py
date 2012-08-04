@@ -313,14 +313,15 @@ class Algo(ValueKeyword):
     self._value = value
 
 class Ediff(TypedKeyword):
-  """ Sets the convergence criteria (per atom) for electronic minimization.
+  """ Sets the absolute energy convergence criteria for electronic minimization.
 
-      - value > 0e0: the tolerance is multiplied by the number of atoms in the
-        system. This makes tolerance consistent from one system to the next.
-      - value < 0e0: tolerance is given as absolute value, without multiplying
-        by size of system.
+      EDIFF_ is set to this value in the INCAR. 
 
-      .. seealso:: `EDIFF <http://cms.mpi.univie.ac.at/vasp/guide/node105.html>`_
+      Sets ediff_per_atom_ to None.
+
+      .. seealso:: EDIFF_, ediff_per_atom_
+      .. _EDIFF: http://cms.mpi.univie.ac.at/wiki/index.php/EDIFFG
+      .. _ediff_per_atom: :py:attr:`~lada.vasp.functional.Vasp.ediff_per_atom`
   """
   type = float
   """ Type of the value """
@@ -329,28 +330,105 @@ class Ediff(TypedKeyword):
   def __init__(self, value=None):
     """ Creates *per atom* tolerance. """
     super(Ediff, self).__init__(value=value)
-  def output_map(self, **kwargs):
-    if self.value is None: return 
-    if self.value < 0: return {self.keyword: str(-self.value)}
-    return { self.keyword: str(self.value * float(len(kwargs["structure"]))) }
+  def __set__(self, instance, value):
+    if value is None: 
+      self.value = None 
+      return
+    instance.ediff_per_atom = None
+    if value < 0e0: value = 0
+    return super(Ediff, self).__set__(instance, value)
 
-class Ediffg(Ediff):
-  """ Sets the convergence criteria (per atom) for ionic minimization.
+class EdiffPerAtom(TypedKeyword):
+  """ Sets the relative energy convergence criteria for electronic minimization.
 
-      - value > 0e0: the tolerance is multiplied by the number of atoms in the
-        system. This makes tolerance consistent from one system to the next.
-      - value < 0e0: tolerance is given as is (negative), and applies to forces.
+      EDIFF_ is set to this value *times* the number of atoms in the structure.
+      This approach is more sensible than straigh-off ediff_ when doing
+      high-throughput over many structures.
 
-      .. seealso:: `EDIFFG <http://cms.mpi.univie.ac.at/vasp/guide/node107.html>`_
+      Sets ediff_ to None.
+
+      .. seealso:: EDIFF_, ediff_
+      .. _EDIFF: http://cms.mpi.univie.ac.at/wiki/index.php/EDIFFG
+      .. _ediff: :py:attr:`~lada.vasp.functional.Vasp.ediff`
   """
-  keyword = 'ediffg'
+  type = float
+  """ Type of the value """
+  keyword = 'ediff'
+  """ VASP keyword """
   def __init__(self, value=None):
     """ Creates *per atom* tolerance. """
-    super(Ediffg, self).__init__(value)
+    super(EdiffPerAtom, self).__init__(value=value)
+  def __set__(self, instance, value):
+    if value is None: 
+      self.value = None 
+      return
+    instance.ediff = None
+    if value < 0e0: value = 0
+    return super(EdiffPerAtom, self).__set__(instance, value)
   def output_map(self, **kwargs):
     if self.value is None: return 
-    if self.value < 0: return {self.keyword: str(self.value)}
     return { self.keyword: str(self.value * float(len(kwargs["structure"]))) }
+
+class Ediffg(TypedKeyword):
+  """ Sets the absolute energy convergence criteria for ionic relaxation.
+
+      EDIFFG_ is set to this value in the INCAR. 
+
+      Sets ediffg_per_atom_ to None.
+
+      .. seealso:: EDIFFG_, ediffg_per_atom_
+      .. _EDIFFG: http://cms.mpi.univie.ac.at/vasp/guide/node105.html
+      .. _ediffg_per_atom: :py:attr:`~lada.vasp.functional.Vasp.ediffg_per_atom`
+  """
+  type = float
+  """ Type of the value """
+  keyword = 'ediff'
+  """ VASP keyword """
+  def __init__(self, value=None):
+    """ Creates *per atom* tolerance. """
+    super(Ediffg, self).__init__(value=value)
+  def __set__(self, instance, value):
+    if value is None: 
+      self.value = None 
+      return
+    instance.ediffg_per_atom = None
+    return super(Ediffg, self).__set__(instance, value)
+
+class EdiffgPerAtom(TypedKeyword):
+  """ Sets the relative energy convergence criteria for ionic relaxation.
+
+      - if positive: EDIFFG_ is set to this value *times* the number of atoms
+        in the structure. This means that the criteria is for the total energy per atom.
+      - if negative: same as a negative EDIFFG_, since that convergence
+        criteria is already per atom.
+      
+      This approach is more sensible than straigh-off ediffg_ when doing
+      high-throughput over many structures.
+
+      Sets ediffg_ to None.
+
+      .. seealso:: EDIFFG_, ediff_
+      .. _EDIFFG: http://cms.mpi.univie.ac.at/wiki/index.php/EDIFFG
+      .. _ediffg: :py:attr:`~lada.vasp.functional.Vasp.ediffg`
+  """
+  type = float
+  """ Type of the value """
+  keyword = 'ediff'
+  """ VASP keyword """
+  def __init__(self, value=None):
+    """ Creates *per atom* tolerance. """
+    super(EdiffgPerAtom, self).__init__(value=value)
+  def __set__(self, instance, value):
+    if value is None: 
+      self.value = None 
+      return
+    instance.ediffg_per_atom = None
+    return super(EdiffgPerAtom, self).__set__(instance, value)
+  def output_map(self, **kwargs):
+    if self.value is None: return 
+    if self.value > 0e0:
+      return { self.keyword: str(self.value * float(len(kwargs["structure"]))) }
+    else: return { self.keyword: str(self.value) }
 
 class Encut(ValueKeyword):
   """ Defines cutoff factor for calculation. 
