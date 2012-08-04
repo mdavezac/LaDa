@@ -74,8 +74,8 @@ class ValueKeyword(BaseKeyword):
   def raw(self):
     """ Returns raw value for CRYSTAL input. """
     if self.value == None: return '' # otherwise, fails to find attribute.
-    return str(self.value).upper() if not hasattr(self.value, '__iter__')      \
-           else ' '.join(str(u).upper() for u in self.value)
+    return str(self.value) if not hasattr(self.value, '__iter__')              \
+           else ' '.join(str(u) for u in self.value)
   @raw.setter
   def raw(self, value):
     """ Guesses value from raw input. """
@@ -113,23 +113,25 @@ class ValueKeyword(BaseKeyword):
     self.value = value
   def __repr__(self):
     """ Dumps a representation of self. """
+    args = self._addrepr_args()
+    return '{0.__class__.__name__}({1})'.format(self, ', '.join(args))
+
+  def _addrepr_args(self):
     from inspect import getargspec
     args = []
-    if 'keyword' not in self.__class__.__dict__ and 'keyword' in self.__dict__:
+    if 'keyword' in self.__dict__:
       args.append('keyword={0.keyword!r}'.format(self))
-    argspec = getargspec(self.__init__)
-    index = argspec.args.index('value')                                         \
-            - len(argspec.args) + len(argspec.defaults)
-    dovalue = True
-    if index >= 0:
-      default = argspec.defaults[index]
-      if default is None and self.value is None: dovalue = False
+    iargs = getargspec(self.__class__.__init__)
+    doaddval = False
+    if iargs.args is None or 'value' not in iargs.args: doaddval = True
+    else: 
+      i = iargs.args.index('value') - len(iargs.args)
+      if iargs.defaults is None or -(i+1) >= len(iargs.defaults): doaddval = True
       else:
-        try: 
-          if default.__class__(self.value) == default: dovalue = False
-        except: pass
-    if dovalue: args.append('value={0.value!r}'.format(self))
-    return '{0.__class__.__name__}({1})'.format(self, ', '.join(args))
+        default = iargs.defaults[i]
+        if repr(default) != repr(self.value): doaddval = True
+    if doaddval: args.append('value={0.value!r}'.format(self))
+    return args
 
   def output_map(self, **kwargs):
     """ Map keyword, value """
@@ -212,7 +214,7 @@ class TypedKeyword(ValueKeyword):
   def __init__(self, keyword=None, type=None, value=None):
     """ Initializes a keyword with a value. """
     from ..error import ValueError
-    super(TypedKeyword, self).__init__(keyword=keyword)
+    super(TypedKeyword, self).__init__(keyword=keyword, value=value)
     if isinstance(type, list) and len(type) == 0:
       raise ValueError('type must be class or a non-empty list of classes')
 
@@ -256,8 +258,8 @@ class TypedKeyword(ValueKeyword):
     """ Returns raw value for CRYSTAL input. """
     if self._value == None: return '' # otherwise, fails to find attribute.
     if type(self.type) is list:
-      return ' '.join(str(v).upper() for v in self.value)
-    return str(self._value).upper()
+      return ' '.join(str(v) for v in self.value)
+    return str(self._value)
   @raw.setter
   def raw(self, value):
     """ Guesses value from raw input. """
@@ -265,26 +267,12 @@ class TypedKeyword(ValueKeyword):
     self.value = value
   def __repr__(self):
     """ Dumps a representation of self. """
-    from inspect import getargspec
-    args = []
-    if 'keyword' not in self.__class__.__dict__ and 'keyword' in self.__dict__:
-      args.append('keyword={0.keyword!r}'.format(self))
-    if 'type' not in self.__class__.__dict__:
+    args = self._addrepr_args()
+    if 'type' in self.__dict__:
       if isinstance(self.type, list):
         args.append( 'type=[{0}]'                                              \
                      .format(', '.join(u.__name__ for u in self.type)) )
       else: args.append( 'type={0.type.__name__}'.format(self))
-    argspec = getargspec(self.__init__)
-    index = argspec.args.index('value') - 1
-    dovalue = True
-    if len(argspec.defaults) > index:
-      default = argspec.defaults[index]
-      if default is None and self.value is None: dovalue = False
-      else:
-        try: 
-          if default.__class__(self.value) == default: dovalue = False
-        except: pass
-    if dovalue: args.append('value={0.value!r}'.format(self))
     return '{0.__class__.__name__}({1})'.format(self, ', '.join(args))
 
 class VariableListKeyword(TypedKeyword):
@@ -303,7 +291,6 @@ class VariableListKeyword(TypedKeyword):
     """ Initializes a keyword with a value. """
     super(VariableListKeyword, self).__init__( keyword=keyword, type=type,     \
                                                value=value )
-
   @property
   def value(self): 
     """ The value to print to input. 
@@ -325,8 +312,8 @@ class VariableListKeyword(TypedKeyword):
   def raw(self):
     """ Returns raw value for CRYSTAL input. """
     if self._value == None: return '' # otherwise, fails to find attribute.
-    lstr = ' '.join(str(v).upper() for v in self.value) 
-    return '{0}\n{1}'.format(len(self.value), lstr).upper()
+    lstr = ' '.join(str(v) for v in self.value) 
+    return '{0}\n{1}'.format(len(self.value), lstr)
   @raw.setter
   def raw(self, value):
     """ Guesses value from raw input. """
@@ -403,7 +390,30 @@ class ChoiceKeyword(BaseKeyword):
     """ Map keyword, value """
     if self._value is None: return None
     if getattr(self, 'keyword', None) is None: return None
-    return { self.keyword: str(self.value).upper() }
+    return { self.keyword: str(self.value) }
+
+  def _addrepr_args(self):
+    from inspect import getargspec
+    args = []
+    if 'keyword' in self.__dict__:
+      args.append('keyword={0.keyword!r}'.format(self))
+    iargs = getargspec(self.__class__.__init__)
+    doaddval = False
+    if iargs.args is None or 'value' not in iargs.args: doaddval = True
+    else: 
+      i = iargs.args.index('value') - len(iargs.args)
+      if iargs.defaults is None or 1-i < len(iargs.defaults): doaddval = True
+      else:
+        default = iargs.defaults[i]
+        if repr(default) != repr(self.value): doaddval = True
+    if doaddval: args.append('value={0.value!r}'.format(self))
+    return args
+
+  def __repr__(self): 
+    """ Dumps representation to string. """
+    args = self._addrepr_args()
+    if 'values' in self.__dict__: args.append("values={0.values!r}".format(self))
+    return "{0.__class__.__name__}({1})".format(self, ', '.join(args))
     
 class QuantityKeyword(ValueKeyword):
   """ Keyword with a value which is signed by a unit. """
@@ -453,11 +463,11 @@ class QuantityKeyword(ValueKeyword):
   def __repr__(self):
     """ Dumps a representation of self. """
     args = []
-    if 'keyword' not in self.__class__.__dict__ and 'keyword' in self.__dict__:
+    if 'keyword' in self.__dict__:
       args.append('keyword={0.keyword!r}'.format(self))
-    if 'shape' not in self.__class__.__dict__ and 'shape' in self.__dict__: 
+    if 'shape' in self.__dict__: 
       args.append('shape={0.shape!r}'.format(self))
-    if 'units' not in self.__class__.__dict__ and 'units' in self.__dict__: 
+    if 'units' in self.__dict__: 
       args.append('units={0.units!r}'.format(self))
     if len(getattr(self, 'shape', ())) > 0: 
       args.append('value={0!r}'.format(self.value.magnitude))
@@ -496,11 +506,7 @@ class AliasKeyword(ValueKeyword):
     if getattr(self, 'keyword', None) is None: return None
     return {self.keyword: str(self._value)}
   def __repr__(self):
-    args = []
-    if 'keyword' not in self.__class__.__dict__ and 'keyword' in self.__dict__:
-      args.append('keyword={0.keyword!r}'.format(self))
-    if 'aliases' not in self.__class__.__dict__ and 'aliases' in self.__dict__:
+    args = self._addrepr_args()
+    if 'aliases' in self.__dict__:
       args.append('aliases={0.aliases!r}'.format(self))
-    if self.value is not None:
-      args.append('value={0!r}'.format(self.value))
     return '{0.__class__.__name__}({1})'.format(self, ', '.join(args))

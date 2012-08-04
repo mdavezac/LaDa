@@ -16,7 +16,7 @@ class Vasp(AttrBlock):
     """ Initializes vasp class. """
     from .keywords import BoolKeyword, Magmom, System, Npar, ExtraElectron,    \
                           NElect, Algo, Ediff, Ediffg, Encut, EncutGW, IStart, \
-                          ICharge, IStruc, UParams, PrecFock, Precision, Nsw,  \
+                          ICharge, IStruc, LDAU, PrecFock, Precision, Nsw,     \
                           Isif, IBrion, Relaxation, ISmear, LSorbit, Sigma,    \
                           LMaxMix
     from ..functools.keywords import TypedKeyword, ChoiceKeyword
@@ -80,31 +80,22 @@ class Vasp(AttrBlock):
     self.isym      = ChoiceKeyword(values=range(3))
     """ Symmetry scheme.
 
-        .. seealso:: 
-         
-           ISYM_
-
-           .. _ISYM: http://cms.mpi.univie.ac.at/vasp/guide/node115.html
+        .. seealso:: ISYM_
+        .. _ISYM: http://cms.mpi.univie.ac.at/vasp/guide/node115.html
     """ 
     self.lmaxmix   = LMaxMix()
     """ Cutoff *l*-quantum number of PAW charge densities passed to mixer 
 
-        .. seealso:: 
-
-           LMAXMIX_ 
-
-           .. _LMAXMIX: http://cms.mpi.univie.ac.at/wiki/index.php/LMAXMIX
+        .. seealso:: LMAXMIX_ 
+        .. _LMAXMIX: http://cms.mpi.univie.ac.at/wiki/index.php/LMAXMIX
     """
     self.lorbit    = ChoiceKeyword(values=(0, 1, 2, 5, 10, 11, 12))
     """ Decides whether PROOUT and PROOCAR are writtent to disk.
 
         Can be one of 0|1|2|5|10|11|12|None. 
 
-        .. seealso:: 
-
-           LORBIT_ 
-
-           .. _LORBIT: http://cms.mpi.univie.ac.at/wiki/index.php/LORBIT
+        .. seealso:: LORBIT_ 
+        .. _LORBIT: http://cms.mpi.univie.ac.at/wiki/index.php/LORBIT
     """
     self.nbands    = TypedKeyword(type=int)
     self.nomega    = TypedKeyword(type=int)
@@ -138,7 +129,8 @@ class Vasp(AttrBlock):
         - if calculations are not spin-polarized, does nothing.
         - if a string, uses that as for the MAGMOM_ keyword
         - if True and at least one atom in the structure has a non-zero
-          ``magmom`` attribute, then creates the relevant moment input for VASP_
+          ``magmom`` attribute, then creates the relevant moment input for
+          VASP_
     
         If the calculation is **not** spin-polarized, then the magnetic moment
         tag is not set.
@@ -162,7 +154,6 @@ class Vasp(AttrBlock):
            - otherwise, uses the string
     
         .. seealso:: SYSTEM_
-    
         .. _SYSTEM: http://cms.mpi.univie.ac.at/vasp/guide/node94.html>
     """
     self.npar      = Npar()
@@ -175,19 +166,21 @@ class Vasp(AttrBlock):
     
         Or it can be deduced automatically. Different schemes are available:
         
-          - power of two: npar is set to the largest power of 2 which divides the
-            number of processors.
+          - power of two: npar is set to the largest power of 2 which divides
+            the number of processors.
    
             >>> vasp.npar = "power of two"
     
             If the number of processors is not a power of two, prints nothing.
     
-          - square root: npar is set to the square root of the number of processors.
+          - square root: npar is set to the square root of the number of
+            processors.
     
             >>> vasp.npar = "sqrt"
         
     
-        .. seealso: `NPAR <http://cms.mpi.univie.ac.at/vasp/guide/node138.html>`_
+        .. seealso: NPAR_ 
+        .. _NPAR: http://cms.mpi.univie.ac.at/vasp/guide/node138.html>
     """
     self.extraelectron = ExtraElectron()
     """ Number of electrons relative to neutral system.
@@ -199,7 +192,8 @@ class Vasp(AttrBlock):
         >>> vasp.extraelectron =  1  # charge -1 (1 extra electron)
         >>> vasp.extraelectron = -1  # charge +1 (1 extra hole)
     
-        .. seealso:: `NELECT <http://cms.mpi.univie.ac.at/wiki/index.php/NELECT>`_
+        .. seealso:: NELECT_
+        .. _NELECT: http://cms.mpi.univie.ac.at/wiki/index.php/NELECT
     """
     self.nelect = NElect()
     """ Sets the absolute number of electrons.
@@ -240,26 +234,32 @@ class Vasp(AttrBlock):
     
         .. note:: By special request, "fast" is the default algorithm.
     
-        .. seealso:: `ALGO <http://cms.mpi.univie.ac.at/vasp/vasp/ALGO_tag.html>`_
+        .. seealso:: ALGO_
+        .. _ALGO: http://cms.mpi.univie.ac.at/vasp/vasp/ALGO_tag.html
     """ 
     self.ediff = Ediff()
     """ Sets the convergence criteria (per atom) for electronic minimization.
     
-        - value > 0e0: the tolerance is multiplied by the number of atoms in the
-          system. This makes tolerance consistent from one system to the next.
-        - value < 0e0: tolerance is given as absolute value, without multiplying
-          by size of system.
+        - value > 0e0: the tolerance is multiplied by the number of atoms in
+          the system. This makes tolerance consistent from one system to the
+          next.
+        - value < 0e0: tolerance is given as absolute value, without
+          multiplying by size of system.
     
-        .. seealso:: `EDIFF <http://cms.mpi.univie.ac.at/vasp/guide/node105.html>`_
+        .. seealso:: EDIFF_ 
+        .. _EDIFF: http://cms.mpi.univie.ac.at/vasp/guide/node105.html>
     """
     self.ediffg = Ediffg()
     """ Sets the convergence criteria (per atom) for ionic minimization.
     
-        - value > 0e0: the tolerance is multiplied by the number of atoms in the
-          system. This makes tolerance consistent from one system to the next.
-        - value < 0e0: tolerance is given as is (negative), and applies to forces.
+        - value > 0e0: the tolerance is multiplied by the number of atoms in
+          the system. This makes tolerance consistent from one system to the
+          next.
+        - value < 0e0: tolerance is given as is (negative), and applies to
+          forces.
     
-        .. seealso:: `EDIFFG <http://cms.mpi.univie.ac.at/vasp/guide/node107.html>`_
+        .. seealso:: EDIFFG_
+        .. _EDIFF: http://cms.mpi.univie.ac.at/vasp/guide/node107.html
     """
     self.encut = Encut()
     """ Defines cutoff factor for calculation. 
@@ -287,8 +287,8 @@ class Vasp(AttrBlock):
           unit is acceptable.
         - if value < 0 eV or None, does not print anything to INCAR. 
         
-        .. seealso:: `ENCUTGW
-          <http://cms.mpi.univie.ac.at/vasp/vasp/ENCUTGW_energy_cutoff_response_function.html>`_
+        .. seealso:: ENCUTGW_
+        .. _ENCUTGW: http://cms.mpi.univie.ac.at/wiki/index.php/GW_calculations
     """
     self.istart = IStart()
     """ Starting wavefunctions.
@@ -381,7 +381,7 @@ class Vasp(AttrBlock):
 
         .. note:: There is no VASP equivalent to this option.
     """
-    self.ldauprint = UParams()
+    self.ldauprint = LDAU()
     """ Sets U, nlep, and enlep parameters. 
    
         The U, nlep, and enlep parameters of the atomic species are set at the
@@ -391,8 +391,13 @@ class Vasp(AttrBlock):
         However, it does accept one parameter, which can be "off", "on", "occ" or
         "all", and defines the level of verbosity of VASP (with respect to U and nlep).
     
-        .. seealso:: `LDAU, LDAUTYPE, LDAUL, LDAUPRINT
-          <http://cms.mpi.univie.ac.at/vasp/vasp/On_site_Coulomb_interaction_L_S_DA_U.html>`_
+        .. seealso:: LDAU_, LDAUTYPE_, LDAUL_, LDAUJ_
+
+        .. _LDAU: http://cms.mpi.univie.ac.at/wiki/index.php/LDAU
+        .. _LDAUTYPE: http://cms.mpi.univie.ac.at/wiki/index.php/LDAUTYPE
+        .. _LDAUL: http://cms.mpi.univie.ac.at/wiki/index.php/LDAUL
+        .. _LDAUU: http://cms.mpi.univie.ac.at/wiki/index.php/LDAUU
+        .. _LDAUJ: http://cms.mpi.univie.ac.at/wiki/index.php/LDAUJ
     """
     self.precfock = PrecFock()
     """ Sets up FFT grid in hartree-fock related routines.

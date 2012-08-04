@@ -185,13 +185,15 @@ class ExtraElectron(TypedKeyword):
       Disables :py:attr:`lada.vasp.functional.Functional.nelect` if set to
       something other than None.
 
-      .. seealso:: `NELECT <http://cms.mpi.univie.ac.at/wiki/index.php/NELECT>`_
+      .. seealso:: nelect_, NELECT_
+      .. _NELECT: http://cms.mpi.univie.ac.at/wiki/index.php/NELECT
+      .. _nelect: :py:attr:`~lada.vasp.functional.Vasp.nelect`
   """
   type = float
   """ Type of this input. """
-  keyword = 'NELECT'
+  keyword = 'nelect'
   """ VASP keyword. """
-  def __init__(self, value=0): super(ExtraElectron, self).__init__(value=value)
+  def __init__(self, value=None): super(ExtraElectron, self).__init__(value=value)
 
   def __set__(self, instance, value):
     if value is not None: instance.nelect = None
@@ -208,10 +210,11 @@ class ExtraElectron(TypedKeyword):
     return fsum( valence[atom.type] for atom in structure )
     
   def output_map(self, **kwargs):
+    if self.value is None: return None
+    if self.value == 0: return None
     # gets number of electrons.
     charge_neutral = self.nelectrons(kwargs['vasp'], kwargs['structure'])
     # then prints incar string.
-    if self.value == 0: return None
     return {self.keyword: str(charge_neutral + self.value)}
 
 class NElect(TypedKeyword):
@@ -220,13 +223,15 @@ class NElect(TypedKeyword):
       Disables :py:attr:`lada.vasp.functional.Functional.extraelectron` if set to
       something other than None.
 
-      .. seealso:: `NELECT <http://cms.mpi.univie.ac.at/wiki/index.php/NELECT>`_
+      .. seealso:: extraelectron_, NELECT_
+      .. _NELECT: http://cms.mpi.univie.ac.at/wiki/index.php/NELECT
+      .. _extraelectron: :py:attr:`~lada.vasp.functional.Vasp.extraelectron`
   """
   type = float
   """ Type of this input. """
-  keyword = 'NELECT'
+  keyword = 'nelect'
   """ VASP keyword. """
-  def __init__(self, value=0): super(NElect, self).__init__(value=value)
+  def __init__(self, value=None): super(NElect, self).__init__(value=value)
 
   def __set__(self, instance, value):
     if value is not None: instance.extraelectron = None
@@ -265,9 +270,9 @@ class Algo(ValueKeyword):
 
       .. seealso:: `ALGO <http://cms.mpi.univie.ac.at/vasp/vasp/ALGO_tag.html>`_
   """ 
-  keyword = 'ALGO'
+  keyword = 'algo'
   """ VASP keyword. """
-  def __init__(self, value="fast"): super(Algo, self).__init__(value)
+  def __init__(self, value="fast"): super(Algo, self).__init__(value=value)
   @property
   def value(self): return self._value
   @value.setter
@@ -319,9 +324,9 @@ class Ediff(TypedKeyword):
   """
   type = float
   """ Type of the value """
-  keyword = 'EDIFF'
+  keyword = 'ediff'
   """ VASP keyword """
-  def __init__(self, value=1e0):
+  def __init__(self, value=None):
     """ Creates *per atom* tolerance. """
     super(Ediff, self).__init__(value=value)
   def output_map(self, **kwargs):
@@ -338,7 +343,7 @@ class Ediffg(Ediff):
 
       .. seealso:: `EDIFFG <http://cms.mpi.univie.ac.at/vasp/guide/node107.html>`_
   """
-  keyword = 'EDIFFG'
+  keyword = 'ediffg'
   def __init__(self, value=None):
     """ Creates *per atom* tolerance. """
     super(Ediffg, self).__init__(value)
@@ -361,14 +366,14 @@ class Encut(ValueKeyword):
       
       .. seealso:: `ENCUT <http://cms.mpi.univie.ac.at/vasp/vasp/ENCUT_tag.html>`_
   """
-  keyword = "ENCUT"
+  keyword = "encut"
   """ Corresponding VASP key. """
   def __init__(self, value=None): super(Encut, self).__init__(value=value)
 
   def output_map(self, **kwargs):
     from quantities import eV
-    from ...crystal import specieset
-    value = self._value
+    from ..crystal import specieset
+    value = self.value
     if hasattr(self.value, 'units'):
       value = self.value.rescale(eV).magnitude
       return {self.keyword: str(value)} if value > 1e-12 else None
@@ -396,7 +401,7 @@ class EncutGW(Encut):
       .. seealso:: `ENCUTGW
         <http://cms.mpi.univie.ac.at/vasp/vasp/ENCUTGW_energy_cutoff_response_function.html>`_
   """
-  keyword = 'ENCUTGW'
+  keyword = 'encutgw'
 
 class ICharge(ValueKeyword):
   """ Charge from which to start. 
@@ -498,7 +503,7 @@ class ICharge(ValueKeyword):
       if last_pot is not None: copyfile(last_pot, outdir, nothrow='same')
     return {self.keyword: icharge}
 
-class IStart(ValueKeyword):
+class IStart(AliasKeyword):
   """ Starting wavefunctions.
 
       It is best to keep this attribute set to -1, in which case, LaDa takes
@@ -617,28 +622,43 @@ class IStruc(AliasKeyword):
     else: copyfile(last_contcar, join(outdir, files.POSCAR), nothrow='same')
     return None
 
-class UParams(AliasKeyword): 
+class LDAU(BoolKeyword): 
   """ Sets U, nlep, and enlep parameters. 
  
       The U, nlep, and enlep parameters of the atomic species are set at the
       same time as the pseudo-potentials. This object merely sets up the incar
-      with right input.
+      with the right input if the species are defined with U or NLEP_ parameters. 
 
-      However, it does accept one parameter, which can be "off", "on", "occ" or
-      "all", and defines the level of verbosity of VASP (with respect to U and nlep).
+      *If* there are species with NLEP parameters, then:
 
-      .. seealso:: `LDAU, LDAUTYPE, LDAUL, LDAUPRINT
-        <http://cms.mpi.univie.ac.at/vasp/vasp/On_site_Coulomb_interaction_L_S_DA_U.html>`_
+      >>> vasp.ldau = True
+
+      will add the right input to the incar (``vasp.ldau`` is True by default).
+      If there are no such species, then the line above will *not* result in
+      adding anything to the incar. 
+
+      .. note:: NLEP_ requires VASP to be patched for it. Furthermore, it
+         requires vasp_has_nlep_ to set to True (False by default) in your
+         lada configuration file.
+
+      .. seealso:: LDAU_, LDAUTYPE_, LDAUL_, LDAUJ_
+
+      .. _LDAU: http://cms.mpi.univie.ac.at/wiki/index.php/LDAU
+      .. _LDAUTYPE: http://cms.mpi.univie.ac.at/wiki/index.php/LDAUTYPE
+      .. _LDAUL: http://cms.mpi.univie.ac.at/wiki/index.php/LDAUL
+      .. _LDAUU: http://cms.mpi.univie.ac.at/wiki/index.php/LDAUU
+      .. _LDAUJ: http://cms.mpi.univie.ac.at/wiki/index.php/LDAUJ
+      .. _NLEP: http://prb.aps.org/abstract/PRB/v77/i24/e241201
   """
-  aliases = { 0: ['off', 0], 1: ['occupancy', 'occ', 2],
-              2: ['all', 'pot', 'potential', 2] }
-  """ Dictionary of aliases. """
-  keyword = 'LDAUPRINT'
+  keyword = 'LDAU'
   """ VASP keyword corresponding to the value. """
-  def __init__(self, value=None): super(UParams, self).__init__(value=value)
+  def __init__(self, value=True): super(LDAU, self).__init__(value=value)
 
   def output_map(self, **kwargs):
-    from ...crystal import specieset
+    from ..crystal import specieset
+    from ..error import ValueError, ConfigError
+    from .. import vasp_has_nlep
+    if self.value is None or self.value is False: return
     types = specieset(kwargs['structure'])
     species = kwargs['vasp'].species
     # existence and sanity check
@@ -647,44 +667,67 @@ class UParams(AliasKeyword):
       specie = species[type]
       if len(specie.U) == 0: continue
       if len(specie.U) > 4: 
-        raise AssertionError, "More than 4 channels for U/NLEP parameters"
+        raise ValueError("More than 4 channels for U/NLEP parameters")
       has_U = True
+      # check whether running NLEP without NLEP VASP.
+      if not vasp_has_nlep:
+        if len(specie.U) > 1:
+          raise ValueError('vasp_has_nlep is False. There can be only U parameter')
+        if specie.U[0]['func'] != 'U': 
+          raise ConfigError('vasp_has_nlep is False. Cannot use NLEP.')
       # checks consistency.
       which_type = specie.U[0]["type"]
       for l in specie.U[1:]: 
-        assert which_type == l["type"], \
-               AssertionError("LDA+U/NLEP types are not consistent across species.")
+        if which_type != l["type"]:
+          raise ValueError("LDA+U/NLEP types are not consistent across species.")
     if not has_U: return None
 
     # parameters other than U and NLEP themselves.
-    result = super(UParams, self).output_map(**kwargs)
+    result = super(LDAU, self).output_map(**kwargs)
     result['LDAU'] = '.TRUE.'
     result['LDAUTYPE'] = str(which_type)
 
     # U and NLEP themselves.
-    for i in range( max(len(species[type].U) for type in types) ):
-      ldul, lduu, lduj, lduo = [], [], [], []
+    if vasp_has_nlep: 
+      for i in range( max(len(species[type].U) for type in types) ):
+        ldul, lduu, lduj, lduo = [], [], [], []
+        for type in types:
+          specie = species[type]
+          a = -1, 0e0, 0e0, 1
+          if len(specie.U) <= i: pass
+          elif specie.U[i]["func"] == "U":    
+            a = [specie.U[i]["l"], specie.U[i]["U"], specie.U[i]["J"], 1]
+          elif specie.U[i]["func"] == "nlep": 
+            a = [specie.U[i]["l"], specie.U[i]["U0"], 0e0, 2]
+          elif specie.U[i]["func"] == "enlep":
+            a = [specie.U[i]["l"], specie.U[i]["U0"], specie.U[i]["U1"], 3]
+          else: raise RuntimeError, "Debug Error."
+          if hasattr(a[1], "rescale"): a[1] = a[1].rescale("eV")
+          if hasattr(a[2], "rescale"): a[2] = a[2].rescale("eV")
+          ldul.append('{0[0]}'.format(a))
+          lduu.append('{0[1]:18.10e}'.format(a))
+          lduj.append('{0[2]:18.10e}'.format(a))
+          lduo.append('{0[3]}'.format(a))
+        result['LDUL{0}'.format(i+1)] = ' '.join(ldul)
+        result['LDUU{0}'.format(i+1)] = ' '.join(lduu)
+        result['LDUJ{0}'.format(i+1)] = ' '.join(lduj)
+        result['LDUO{0}'.format(i+1)] = ' '.join(lduo)
+    else: 
+      ldul, lduu, lduj = [], [], []
       for type in types:
         specie = species[type]
         a = -1, 0e0, 0e0, 1
-        if len(specie.U) <= i: pass
-        elif specie.U[i]["func"] == "U":    
-          a = [specie.U[i]["l"], specie.U[i]["U"], specie.U[i]["J"], 1]
-        elif specie.U[i]["func"] == "nlep": 
-          a = [specie.U[i]["l"], specie.U[i]["U0"], 0e0, 2]
-        elif specie.U[i]["func"] == "enlep":
-          a = [specie.U[i]["l"], specie.U[i]["U0"], specie.U[i]["U1"], 3]
-        else: raise RuntimeError, "Debug Error."
+        if len(specie.U) <= 0: pass
+        elif specie.U[0]["func"] == "U":    
+          a = [specie.U[0]["l"], specie.U[0]["U"], specie.U[0]["J"], 1]
         if hasattr(a[1], "rescale"): a[1] = a[1].rescale("eV")
         if hasattr(a[2], "rescale"): a[2] = a[2].rescale("eV")
         ldul.append('{0[0]}'.format(a))
         lduu.append('{0[1]:18.10e}'.format(a))
         lduj.append('{0[2]:18.10e}'.format(a))
-        lduo.append('{0[3]}'.format(a))
-      result['LDUL{0}'.format(i+1)] = ' '.join(ldul)
-      result['LDUU{0}'.format(i+1)] = ' '.join(lduu)
-      result['LDUJ{0}'.format(i+1)] = ' '.join(lduj)
-      result['LDUO{0}'.format(i+1)] = ' '.join(lduo)
+      result['LDUL'] = ' '.join(ldul)
+      result['LDUU'] = ' '.join(lduu)
+      result['LDUJ'] = ' '.join(lduj)
     return result
 
 class PrecFock(AliasKeyword):
@@ -768,7 +811,7 @@ class Relaxation(BaseKeyword):
     nsw = instance.nsw if instance.nsw is not None else 0
     ibrion = instance.ibrion if instance.ibrion is not None                    \
              else (-1 if nsw <= 0 else 2)
-    if nsw <= 0 or instance.ibrion == -1: return 'static'
+    if nsw <= 0 or ibrion == -1: return 'static'
     return { None: 'cellshape ions volume',
              0: 'ions', 
              1: 'ions', 
@@ -815,20 +858,20 @@ class Relaxation(BaseKeyword):
     elif (not ionic) and cellshape and (not volume): instance.isif = 5
     elif (not ionic) and (not cellshape) and volume: instance.isif = 7
     elif ionic and (not cellshape) and volume: 
-      raise RuntimeError( "VASP does not allow relaxation of atomic position " \
-                          "and volume at constant cell-shape.\n" )
+      raise ValueError( "VASP does not allow relaxation of atomic position "   \
+                        "and volume at constant cell-shape.\n" )
     else: instance.isif = 2
 
   def output_map(self, **kwargs): return None
 
 class ISmear(AliasKeyword):
-  keyword = 'ISMEAR'
+  keyword = 'ismear'
   aliases = { -5: ['metal', -5], -4: ['tetra', -4], -3: ['dynamic', -3],
               -1: ['fermi', -1], -2: 'fixed', 0: ['gaussian', 0],
                1: ['mp', 'mp1', 'mp 1', 1], 2: ['mp 2', 'mp2', 2],
                3: ['mp3', 'mp 3', 3] }
 class Sigma(QuantityKeyword): 
-  keyword  = 'SIGMA'
+  keyword  = 'sigma'
   units = eV
 
 class LSorbit(BaseKeyword):
@@ -838,7 +881,7 @@ class LSorbit(BaseKeyword):
       If True, then sets :py:attr:`~lada.vasp.incar.Incar.nonscf` to True and
       :py:attr:`~lada.vasp.incar.Incar.ispin` to 2.
   """ 
-  keyword = 'LSORBIT'
+  keyword = 'lsorbit'
   """ VASP keyword """
   def __init__(self, value=None):
     super(LSorbit, self).__init__()

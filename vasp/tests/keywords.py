@@ -1,4 +1,5 @@
 def test_bool():
+  from pickle import loads, dumps
   from lada.vasp import Vasp
   a = Vasp()
 
@@ -19,9 +20,27 @@ def test_bool():
   a.addgrid = 0
   assert a.addgrid is False
 
+  a.addgrid = False
+  o = a._input['addgrid']
+  d = {'BoolKeyword': o.__class__}
+  assert repr(eval(repr(o), d)) == repr(o)
+  assert eval(repr(o), d).output_map()['addgrid'] == '.FALSE.'
+  assert repr(loads(dumps(o))) == repr(o)
+  a.addgrid = True
+  o = a._input['addgrid']
+  assert repr(eval(repr(o), d)) == repr(o)
+  assert eval(repr(o), d).output_map()['addgrid'] == '.TRUE.'
+  assert repr(loads(dumps(o))) == repr(o)
+  a.addgrid = None
+  o = a._input['addgrid']
+  assert repr(eval(repr(o), d)) == repr(o)
+  assert eval(repr(o), d).output_map() is None
+  assert repr(loads(dumps(o))) == repr(o)
+
+
 def test_choice():
+  from pickle import loads, dumps
   from lada.vasp import Vasp
-  from lada.error import ValueError
   a = Vasp()
 
   assert a.ispin is None
@@ -52,6 +71,18 @@ def test_choice():
   try: a.ispin = '3'
   except: pass
   else: raise RuntimeError()
+
+  a.ispin = None
+  o = a._input['ispin']
+  d = {'ChoiceKeyword': o.__class__}
+  assert repr(eval(repr(o), d)) == repr(o)
+  assert eval(repr(o), d).output_map() is None
+  assert repr(loads(dumps(o))) == repr(o)
+  a.ispin = 2
+  o = a._input['ispin']
+  assert repr(eval(repr(o), d)) == repr(o)
+  assert eval(repr(o), d).output_map()['ispin'] == '2'
+  assert repr(loads(dumps(o))) == repr(o)
 
 def test_alias():
   from lada.vasp import Vasp
@@ -134,6 +165,7 @@ def test_typed():
   try: a.smearings = [5.5, 'a']
   except ValueError: pass
   else: raise Exception()
+
 
 if __name__ == '__main__':
   test_bool()
