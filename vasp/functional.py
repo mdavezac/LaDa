@@ -536,7 +536,7 @@ class Vasp(AttrBlock):
 
         .. note:: There is no VASP equivalent to this option.
     """
-    self.ldauprint = LDAU()
+    self.ldau = LDAU()
     """ Sets U, nlep, and enlep parameters. 
    
         The U, nlep, and enlep parameters of the atomic species are set at the
