@@ -26,6 +26,8 @@ def test_U():
 def test_nlep():
   """ Test nlep translation. """
   from lada.vasp.specie import nlep
+  import lada
+  lada.vasp_has_nlep = True
   a = nlep("liechtenstein", 's', -1e0)
   assert a['type'] == 1 and a['l'] == 0 and abs(a['U0'] + 1e0) < 1e-8 \
          and 'U1' not in a and a['func'] == 'nlep'

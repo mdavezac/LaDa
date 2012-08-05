@@ -370,9 +370,9 @@ class Vasp(AttrBlock):
         Sets ediff_per_atom_ to None.
         If negative or null, defaults to zero.
     
-        .. seealso:: EDIFF_, ediff_per_atom_
-        .. _EDIFF: http://cms.mpi.univie.ac.at/wiki/index.php/EDIFFG
-        .. _ediff_per_atom: :py:attr:`~lada.vasp.functional.Vasp.ediff_per_atom`
+        .. seealso:: EDIFF_, :py:attr:`~ediff_per_atom` 
+
+        .. _EDIFF: http://cms.mpi.univie.ac.at/wiki/index.php/EDIFF
     """
     self.ediff_per_atom = EdiffPerAtom()
     """ Sets the relative energy convergence criteria for electronic minimization.
@@ -385,7 +385,6 @@ class Vasp(AttrBlock):
         If negative or null, defaults to zero.
     
         .. seealso:: EDIFF_, ediff_
-        .. _EDIFF: http://cms.mpi.univie.ac.at/wiki/index.php/EDIFFG
         .. _ediff: :py:attr:`~lada.vasp.functional.Vasp.ediff`
     """
     self.ediffg = Ediffg()
@@ -686,10 +685,7 @@ class Vasp(AttrBlock):
         object for the stored results are given.
 
         :param structure:  
-            :py:class:`~lada.crystal.Structure` structure to compute, *unless*
-            a CONTCAR already exists in ``outdir``, in which case this
-            parameter is ignored. (This feature can be disabled with the
-            keyword/attribute ``restart_from_contcar=False``).
+            :py:class:`~lada.crystal.Structure` structure to compute.
         :param outdir:
             Output directory where the results should be stored.  This
             directory will be checked for restart status, eg whether
@@ -715,12 +711,6 @@ class Vasp(AttrBlock):
         :raise RuntimeError: when computations do not complete.
         :raise IOError: when outdir exists but is not a directory.
     """ 
-    from os.path import exists, join
-    from numpy import abs
-    from numpy.linalg import det
-    from ..crystal import specieset
-    from ..crystal import read
-    from .files import CONTCAR
     from .. import vasp_program
     from ..process.program import ProgramProcess
 
@@ -731,26 +721,8 @@ class Vasp(AttrBlock):
         yield extract # in which case, returns extraction object.
         return
     
-    # makes functor stateless/reads structure from CONTCAR if requested and appropriate.
-    if kwargs.pop("restart_from_contcar", self.restart_from_contcar): 
-      path = join(outdir, CONTCAR)
-      if exists(path):
-        try: contstruct = read.poscar(path, list(specieset(structure)))
-        except: pass
-        else:
-          # copies poscar info to structure.
-          # this function should be stateless at this point, so it does not
-          # matter that we change structure.
-          for a, b in zip(structure, contstruct):
-            a.pos, a.type = b.pos, b.type
-          structure.cell = contstruct.cell
-          structure.scale = contstruct.scale
-    if len(structure) == 0: raise ValueError("Structure is empty.")
-    if abs(det(structure.cell)) < 1e-8: raise ValueError("Structure with zero volume.")
-    if abs(structure.scale) < 1e-8: raise ValueError("Structure with null scale.")
-
     # copies/creates file environment for calculation.
-    self.bringup(structure, outdir, comm)
+    self.bringup(structure, outdir, comm=comm, overwrite=overwrite)
     # figures out what program to call.
     program = self.program if self.program is not None else vasp_program
     if hasattr(program, '__call__'): program = program(self)
@@ -763,7 +735,7 @@ class Vasp(AttrBlock):
     # yields final extraction object.
     yield Extract(outdir)
 
-  def bringup(self, structure, outdir, comm):
+  def bringup(self, structure, outdir, **kwargs):
     """ Creates all input files necessary to run results.
 
         Performs the following actions.
@@ -774,14 +746,15 @@ class Vasp(AttrBlock):
         - Creates POTCAR file
         - Saves pickle of self.
     """
-    import cPickle
+    from os.path import join
     from ..crystal import specieset
     from ..misc.changedir import Changedir
     from . import files
 
     with Changedir(outdir) as tmpdir:
-      # creates INCAR file. Note that POSCAR file might be overwritten here by Restart.
-      self.write_incar(structure, comm=comm)
+      # creates INCAR file (and POSCAR via istruc).
+      self.write_incar( structure, path=join(outdir, files.INCAR), 
+                        outdir=outdir, **kwargs )
   
       # creates kpoints file
       with open(files.KPOINTS, "w") as kp_file: 
@@ -792,10 +765,6 @@ class Vasp(AttrBlock):
         for s in specieset(structure):
           potcar.writelines( self.species[s].read_potcar() )
     
-      with open(files.FUNCCAR, 'w') as file:
-        cPickle.dump(self, file)
-    
-
   def bringdown(self, directory, structure):
      """ Copies contcar to outcar. """
      from . import files
@@ -820,9 +789,9 @@ class Vasp(AttrBlock):
          outcar.write('\n################ END FUNCTIONAL ################\n')
 
 
-  def write_incar(self, structure, path=None, comm=None):
+  def write_incar(self, structure, path=None, **kwargs):
     """ Writes incar file. """
-    from lada import default_comm
+    from os.path import dirname
     from ..misc import RelativePath
     from .files import INCAR
 
@@ -831,14 +800,18 @@ class Vasp(AttrBlock):
     if path is None: path = INCAR
     if not hasattr(path, "write"):
       with open(RelativePath(path).path, "w") as file:
-        self.write_incar(structure, path=file, comm=comm)
+        self.write_incar(structure, path=file, **kwargs)
       return
+    if kwargs.get('outdir', None) is None:
+      kwargs['outdir'] = dirname(path.filename)
 
-    if comm is None: comm = default_comm
-    map = self.input_map(structure=structure, vasp=self, comm=comm)
+    self.output_map(structure=structure, vasp=self, **kwargs)
+    # twice, in-case some parameters change others.
+    map = self.output_map(structure=structure, vasp=self, **kwargs)
     length = max(len(u) for u in map)
     for key, value in map.iteritems():
-      path.write('{0: >{length}} = {1}\n'.format(key, value, length=length))
+      path.write( '{0: >{length}} = {1}\n'                                     \
+                  .format(key.upper(), value, length=length) )
 
   def write_kpoints(self, file, structure, kpoints=None):
     """ Writes kpoints to a stream. """
@@ -847,9 +820,11 @@ class Vasp(AttrBlock):
     elif hasattr(self.kpoints, "__call__"):
       self.write_kpoints(file, structure, self.kpoints(self, structure))
     else: # numpy array or such.
-      file.write("Explicit list of kpoints.\n{0}\nCartesian\n".format(len(self.kpoints)))
+      file.write( "Explicit list of kpoints.\n{0}\nCartesian\n"                \
+                  .format(len(self.kpoints)) )
       for kpoint in self.kpoints:
-        file.write("{0[0]} {0[1]} {0[2]} {1}\n".format(kpoint, 1 if len(kpoint) == 3 else kpoint[3]))
+        file.write( "{0[0]} {0[1]} {0[2]} {1}\n"                               \
+                    .format(kpoint, 1 if len(kpoint) == 3 else kpoint[3]) )
 
   def __repr__(self, defaults=True, name=None):
     """ Returns representation of this instance """

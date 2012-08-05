@@ -348,7 +348,9 @@ class EdiffPerAtom(TypedKeyword):
       Sets ediff_ to None.
 
       .. seealso:: EDIFF_, ediff_
+
       .. _EDIFF: http://cms.mpi.univie.ac.at/wiki/index.php/EDIFFG
+
       .. _ediff: :py:attr:`~lada.vasp.functional.Vasp.ediff`
   """
   type = float
@@ -521,6 +523,7 @@ class ICharg(AliasKeyword):
       .. seealso:: ICHARG_, nonscf_, restart_, istruc_, istart_
 
       .. _ICHARG: http://cms.mpi.univie.ac.at/wiki/index.php/ICHARG
+
       .. _nonscf: :py:attr:`~lada.vasp.functional.Functional.nonscf`
       .. _restart: :py:attr:`~lada.vasp.functional.Functional.restart`
       .. _istruc: :py:attr:`~lada.vasp.functional.Functional.istruc`
@@ -743,6 +746,7 @@ class IStruc(AliasKeyword):
             if a.type != type: continue
             a.pos = b.pos
         structure.cell = other.cell
+        structure.scale = other.scale
 
     # Depending on different options and what's available, writes structure or
     # copies contcar.
@@ -868,8 +872,12 @@ class PrecFock(AliasKeyword):
   """ Vasp keyword. """
 
 class Precision(AliasKeyword):
-  aliases = { 'Accurate': ['accurate'], 'Low': ['low'], 'Normal': ['normal'],
-              'Medium': ['medium'], 'High': ['high'], 'Single': ['single'] }
+  aliases = { 'Accurate': ['Accurate', 'accurate'],
+              'Low': ['Low', 'low'],
+              'Normal': ['Normal', 'normal'],
+              'Medium': ['Medium', 'medium'],
+              'High': ['High', 'high'],
+              'Single': ['Single', 'single'] }
   """ Aliases for the values of the VASP keyword. """
   keyword = 'PREC'
   """ Vasp keyword. """
@@ -877,29 +885,14 @@ class Precision(AliasKeyword):
 class Nsw(TypedKeyword):
   type = int
   """ Type of the keyword. """
-  keyword = 'NSW'
+  keyword = 'nsw'
   """ VASP keyword. """
 class Isif(ChoiceKeyword):
-  keyword = 'ISIF'
-  def __init__(self, value=None):
-    super(Isif, self).__init__(value=value)
-    self.value = value
-  def __get__(self, instance, owner=None): return self.value
-  def __set__(self, instance, value):
-    from ..error import ValueError
-    try: dummy = int(value)
-    except: raise ValueError('ISIF accepts only integer values')
-    else: value = dummy
-    if value < 0 or value > 6:
-      raise ValueError('Unexpected value for ISIF')
-    self.value = value
-  def output_map(self, **kwargs):
-    vasp = kwargs['vasp']
-    if self.value is None: return None
-    return {self.keyword: str(self.value)}
+  keyword = 'isif'
+  values = range(8)
 
 class IBrion(BaseKeyword):
-  keyword = 'IBRION'
+  keyword = 'ibrion'
   """ VASP keyword """
   def __init__(self, value=None):
     super(IBrion, self).__init__()
@@ -942,7 +935,7 @@ class Relaxation(BaseKeyword):
     ibrion = instance.ibrion if instance.ibrion is not None                    \
              else (-1 if nsw <= 0 else 2)
     if nsw <= 0 or ibrion == -1: return 'static'
-    return { None: 'cellshape ions volume',
+    return { None: 'ions',
              0: 'ions', 
              1: 'ions', 
              2: 'ions', 
@@ -953,7 +946,15 @@ class Relaxation(BaseKeyword):
              7: 'volume' }[instance.isif]
   def __set__(self, instance, value):
     from ..error import ValueError
+    if value is None: value = 'static'
     if hasattr(value, '__iter__'): value = ' '.join([str(u) for u in value])
+    # try integer value
+    try: dummy = int(value)
+    except: pass
+    else: 
+      value = { 0: 'ions', 1: 'ions', 2: 'ions', 3: 'cellshape ions volume',
+                4: 'cellshape ions', 5: 'cellshape', 6: 'cellshape volume',
+                7: 'volume' }[dummy]
     value = set(value.lower().replace(',', ' ').rstrip().lstrip().split())
     result = []
     if 'all' in value: result = 'ions cellshape volume'.split()
@@ -974,10 +975,8 @@ class Relaxation(BaseKeyword):
       return
     
     # non-static
-    if instance.nsw is not None:
-      if instance.nsw <= 0: instance.nsw = 50
-    if instance.ibrion is not None:
-      if instance.ibrion == -1: instance.ibrion = 2
+    if instance.nsw is None or instance.nsw <= 0: instance.nsw = 50
+    if instance.ibrion is None or instance.ibrion == -1: instance.ibrion = 2
     ionic = 'ions' in value
     cellshape = 'cellshape' in value
     volume = 'volume' in value
@@ -996,10 +995,10 @@ class Relaxation(BaseKeyword):
 
 class ISmear(AliasKeyword):
   keyword = 'ismear'
-  aliases = { -5: ['metal', -5], -4: ['tetra', -4], -3: ['dynamic', -3],
-              -1: ['fermi', -1], -2: 'fixed', 0: ['gaussian', 0],
-               1: ['mp', 'mp1', 'mp 1', 1], 2: ['mp 2', 'mp2', 2],
-               3: ['mp3', 'mp 3', 3] }
+  aliases = { -5: ['metal'], -4: ['tetra'], -3: ['dynamic'],
+              -1: ['fermi'], -2: ['fixed'], 0: ['gaussian'],
+               1: ['mp', 'mp1', 'mp 1'], 2: ['mp 2', 'mp2'],
+               3: ['mp3', 'mp 3'] }
 class Sigma(QuantityKeyword): 
   keyword  = 'sigma'
   units = eV
@@ -1008,8 +1007,9 @@ class LSorbit(BaseKeyword):
   """ Run calculation with spin-orbit coupling. 
 
       Accepts None, True, or False.
-      If True, then sets :py:attr:`~lada.vasp.incar.Incar.nonscf` to True and
-      :py:attr:`~lada.vasp.incar.Incar.ispin` to 2.
+      If True, then sets :py:attr:`~lada.vasp.incar.Incar.nonscf` to True.
+      When printing INCAR stuff, checks for valid prior calculation. And sets
+      lmaxmix to value of prior calculation.
   """ 
   keyword = 'lsorbit'
   """ VASP keyword """
@@ -1020,7 +1020,22 @@ class LSorbit(BaseKeyword):
   def __set__(self, instance, value):
     if value is None: self._value = None; return
     self.value = value == True
-    if True: self.ispin = 2; self.nonscf = True
+    if True:
+      self.ispin = 2
+      self.nonscf = True
+  def output_map(self, **kwargs):
+    if self.value is None or self.value == False: return None
+    if not self.nonscf:
+      raise ValueError( 'Expected non-self-consistent '                        \
+                        'calculation with LSORBIT = True' )
+    vasp = kwargs['vasp']
+    if vasp.restart is None: 
+      raise ValueError( 'Expected to restart from other '                      \
+                        'calculation with LSORBIT = True' )
+    if vasp.restart.success == False:
+      raise ValueError( 'Self-consistent calculation was unsuccessful. '       \
+                        'Cannot perform LSORBIT = True calculation.' )
+    vasp.lmaxmix = vasp.restart.lmaxmix
 
 class LMaxMix(TypedKeyword):
   keyword = 'lmaxmix'

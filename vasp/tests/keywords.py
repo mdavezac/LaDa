@@ -89,18 +89,21 @@ def test_alias():
   from lada.error import ValueError
   a = Vasp()
 
-  assert a.lmaxmix is None
-  assert a._input['lmaxmix'].keyword == 'lmaxmix'
-  assert a._input['lmaxmix'].output_map() is None
-  for i, channel in enumerate(['s', 'p', 'd', 'f', 'e']):
-    a.lmaxmix = channel
-    assert a.lmaxmix == channel
-    assert 'lmaxmix' in a._input['lmaxmix'].output_map()
-    assert a._input['lmaxmix'].output_map()['lmaxmix'] == str(i+1)
-    a.lmaxmix = i+1
-    assert a.lmaxmix == channel
-    a.lmaxmix = str(i+1) 
-    assert a.lmaxmix == channel
+  assert a.ismear is None
+  assert a._input['ismear'].keyword == 'ismear'
+  assert a._input['ismear'].output_map() is None
+  map = a._input['ismear'].aliases
+  assert len(map) != 0
+  for i, items in map.iteritems():
+    for item in items:
+      a.ismear = item
+      assert a.ismear == items[0]
+      assert 'ismear' in a._input['ismear'].output_map()
+      assert a._input['ismear'].output_map()['ismear'] == str(i)
+      a.ismear = i
+      assert a.ismear == items[0]
+    a.ismear = str(i) 
+    assert a.ismear == items[0]
 
   try: a.lmaxmix = 'a'
   except ValueError: pass

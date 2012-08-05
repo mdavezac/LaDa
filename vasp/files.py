@@ -24,8 +24,6 @@ EIGENVALUES = "EIGENVAL"
 """ Name of the file with eigenvalues. """
 OUTCAR = "OUTCAR"
 """ Name of the output file. """
-FUNCCAR = "FUNCCAR"
-""" Name of the pickled functional. """
 WAVEDER = "WAVEDER"
 """ Name of GW-required file. """
 TMPCAR = 'TMPCAR'

@@ -5,7 +5,7 @@ Vasp class
    :show-inheritance:
    :members:
    :inherited-members:
-
-   .. include:: incar-attr.rst 
+   :exclude-members: Extract
 
    This class also exists directly within the :py:mod:`vasp <lada.vasp>` module.
+

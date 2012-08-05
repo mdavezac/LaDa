@@ -489,15 +489,18 @@ class AliasKeyword(ValueKeyword):
     return self.aliases[self._value][0]
   @value.setter
   def value(self, value):
+    from itertools import chain
     from ..error import ValueError
     if value is None: 
       self._value = None
       return
     for key, items in self.aliases.iteritems():
-      for item in items:
-        if value == item:
-          self._value = key
-          return
+      for item in chain(items, [key]):
+        try: 
+          if item.__class__(value) == item:
+            self._value = key
+            return
+        except: continue
     raise ValueError( 'Incorrect value ({1}) for keyword {0}'                 \
                        .format(self.keyword, value) )
   def output_map(self, **kwargs):
