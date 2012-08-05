@@ -92,7 +92,7 @@ class System(ValueKeyword):
          - if the structure has a ``name`` attribute, uses that as the
            calculations title
          - else does not use SYSTEM_ tag
-      - If something else which is convertable to a string,  and ...
+      - If something else which is convertible to a string,  and ...
          - if the structure has a ``name`` attribute, uses 'string: name' as
            the title
          - otherwise, uses the string
@@ -342,7 +342,7 @@ class EdiffPerAtom(TypedKeyword):
   """ Sets the relative energy convergence criteria for electronic minimization.
 
       EDIFF_ is set to this value *times* the number of atoms in the structure.
-      This approach is more sensible than straigh-off ediff_ when doing
+      This approach is more sensible than straight-off ediff_ when doing
       high-throughput over many structures.
 
       Sets ediff_ to None.
@@ -382,7 +382,7 @@ class Ediffg(TypedKeyword):
   """
   type = float
   """ Type of the value """
-  keyword = 'ediff'
+  keyword = 'ediffg'
   """ VASP keyword """
   def __init__(self, value=None):
     """ Creates *per atom* tolerance. """
@@ -402,7 +402,7 @@ class EdiffgPerAtom(TypedKeyword):
       - if negative: same as a negative EDIFFG_, since that convergence
         criteria is already per atom.
       
-      This approach is more sensible than straigh-off ediffg_ when doing
+      This approach is more sensible than straight-off ediffg_ when doing
       high-throughput over many structures.
 
       Sets ediffg_ to None.
@@ -413,7 +413,7 @@ class EdiffgPerAtom(TypedKeyword):
   """
   type = float
   """ Type of the value """
-  keyword = 'ediff'
+  keyword = 'ediffg'
   """ VASP keyword """
   def __init__(self, value=None):
     """ Creates *per atom* tolerance. """
@@ -422,7 +422,7 @@ class EdiffgPerAtom(TypedKeyword):
     if value is None: 
       self.value = None 
       return
-    instance.ediffg_per_atom = None
+    instance.ediffg = None
     return super(EdiffgPerAtom, self).__set__(instance, value)
   def output_map(self, **kwargs):
     if self.value is None: return 
@@ -481,25 +481,25 @@ class EncutGW(Encut):
   """
   keyword = 'encutgw'
 
-class ICharge(ValueKeyword):
+class ICharg(AliasKeyword):
   """ Charge from which to start. 
 
       It is best to keep this attribute set to -1, in which case, LaDa takes
       care of copying the relevant files.
 
-        - -1: Automatically determined by LaDA. Depends on the value of restart_
-              and the existence of the relevant files. Also takes care of non-scf
-              bit.
+        - -1: (Default) Automatically determined by LaDA. Depends on the value
+              of restart_ and the existence of the relevant files. Also takes
+              care of non-scf bit.
   
         - 0: Tries to restart from wavefunctions. Uses the latest WAVECAR file
              between the one currently in the output directory and the one in
-             the restart directory (if speciefied). Sets nonscf_ to False.
+             the restart directory (if specified). Sets nonscf_ to False.
   
              .. note:: CHGCAR is also copied, just in case.
   
         - 1: Tries to restart from wavefunctions. Uses the latest WAVECAR file
              between the one currently in the output directory and the one in
-             the restart directory (if speciefied). Sets nonscf_ to False.
+             the restart directory (if specified). Sets nonscf_ to False.
   
         - 2: Superimposition of atomic charge densities. Sets nonscf_ to False.
   
@@ -518,16 +518,25 @@ class ICharge(ValueKeyword):
       
          Files are copied right before the calculation takes place, not before.
 
-      .. seealso:: ICHARG_
+      .. seealso:: ICHARG_, nonscf_, restart_, istruc_, istart_
 
       .. _ICHARG: http://cms.mpi.univie.ac.at/wiki/index.php/ICHARG
-      .. _restart: :py:attr:`~lada.vasp.functional.Functional.restart`
       .. _nonscf: :py:attr:`~lada.vasp.functional.Functional.nonscf`
+      .. _restart: :py:attr:`~lada.vasp.functional.Functional.restart`
+      .. _istruc: :py:attr:`~lada.vasp.functional.Functional.istruc`
+      .. _istart: :py:attr:`~lada.vasp.functional.Functional.istart`
   """ 
-  keyword = 'ICHARG'
+  keyword = 'icharg'
   """ VASP keyword """
-  def __init__(self, value=-1): 
-    super(ICharge, self).__init__(value)
+  aliases = { -1: ['auto', -1],
+               0: ['wfns', 'wavefunction', 'wavefunctions', 'wfn', 0],
+               1: ['chgcar', 'CHGCAR', 'file', 1],
+               2: ['atomic', 'scratch', 2],
+               4: ['pot', 4],
+               10: [10], 11: [11], 12: [12], 14: [14] }
+  """ Mapping of aliases. """
+  def __init__(self, value='auto'): 
+    super(ICharg, self).__init__(value=value)
   def __set__(self, instance, value):
     """ Sets internal value. 
 
@@ -536,25 +545,22 @@ class ICharge(ValueKeyword):
 
       .. _nonscf: :py:attr:`~lada.vasp.functional.Functional.nonscf`
     """
-    from ..error import ValueError
-    if value is None: 
-      self.value = None
-      return
-    value = int(value)
-    if value not in [-1, 0, 1, 2, 4, 10, 11, 12]: 
-      raise ValueError('Incorrect value for icharg')
-    if value > 9: 
-      value -= 10
-      instance.scf = True
-    elif value != -1: instance.scf = False
-    self.value = value
+    super(ICharg, self).__set__(instance, value)
+    if self._value is None: return
+    if self._value > 10: 
+      self._value -= 10
+      instance.nonscf = True
+    elif self._value >= 0:
+      instance.nonscf = False
 
   def output_map(self, **kwargs):
     from ..misc import latest_file, copyfile
+    from ..error import ValueError
     from . import files
 
-    icharge = self.value
+    icharge = self._value
     if icharge is None: return None
+
     # some files will be copied.
     if icharge not in [2, 12]: 
       # determines directories to look into.
@@ -567,19 +573,26 @@ class ICharge(ValueKeyword):
       last_wfn = None if icharge in [1, 11]                                    \
                  else latest_file(files.WAVECAR, *directories)
       last_chg = latest_file(files.CHGCAR, *directories) 
-      last_pot = None if icharge != 4 else latest_file(files.POT, *directories) 
+      last_pot = None if icharge not in [-1, 4, 14]                            \
+                 else latest_file(files.POT, *directories) 
 
       # determines icharge depending on file. 
-      if last_wfn is not None: icharge = 10 if vasp.nonscf else 0
-      elif last_chg is not None: icharge = 11 if vasp.nonscf else 1
-      if last_pot is not None and not vasp.nonscf: icharge = 4
-      if icharge < 0: return None
+      if icharge < 0:
+        if last_wfn is not None: icharge = 10 if vasp.nonscf else 0
+        elif last_chg is not None: icharge = 11 if vasp.nonscf else 1
+        elif last_pot is not None: icharge = 4 if vasp.nonscf else 14
+        else: icharge = 2
+      elif icharge == 1 and last_chg is None:
+        raise ValueError('CHGCAR could not be found, yet ISTART=1 requested.')
 
       # copies relevant files.
-      if last_wfn is not None: copyfile(last_wfn, outdir, nothrow='same')
-      if last_chg is not None: copyfile(last_chg, outdir, nothrow='same')
-      if last_pot is not None: copyfile(last_pot, outdir, nothrow='same')
-    return {self.keyword: icharge}
+      if icharge in [0, 10] and last_wfn is not None:
+        copyfile(last_wfn, outdir, nothrow='same')
+      if icharge in [0, 1, 10, 11, 4, 14] and last_chg is not None:
+        copyfile(last_chg, outdir, nothrow='same')
+      if icharge in [4, 14] and last_pot is not None:
+        copyfile(last_pot, outdir, nothrow='same')
+    return {self.keyword: str(icharge)}
 
 class IStart(AliasKeyword):
   """ Starting wavefunctions.
@@ -602,25 +615,27 @@ class IStart(AliasKeyword):
       
          Files are copied right before the calculation takes place, not before.
 
-      .. seealso:: ISTART_
-
+      .. seealso:: ISTART_, icharg_, istruc_, restart_
       .. _ISTART: http://cms.mpi.univie.ac.at/wiki/index.php/ISTART
       .. _restart: :py:attr:`~lada.vasp.functional.Functional.restart`
+      .. _icharg: :py:attr:`~lada.vasp.functional.Functional.icharg`
+      .. _istruc: :py:attr:`~lada.vasp.functional.Functional.istruc`
   """ 
-  keyword = 'ISTART'
+  keyword = 'istart'
   """ VASP keyword """
-  aliases = { -1: ['auto', -1], 0: ['scracth', 0],
+  aliases = { -1: ['auto', -1], 0: ['scratch', 0],
                1: ['cutoff', 1], 2: ['basis', 2], 3: ['tmpcar', 'full', 3] }
   """ Mapping of aliases. """
   def __init__(self, value=-1): 
-    super(IStart, self).__init__(value)
+    super(IStart, self).__init__(value=value)
 
   def output_map(self, **kwargs):
+    from os.path import dirname
     from ..misc import latest_file, copyfile
-    from ..error import RuntimeError
+    from ..error import ValueError
     from . import files
 
-    istart = self.value
+    istart = self._value
     if istart is None: return None
     # some files will be copied.
     if istart != 0:
@@ -632,20 +647,24 @@ class IStart(AliasKeyword):
       if hasrestart: directories += [vasp.restart.directory]
       # determines which files exist
       last_wfn = latest_file(files.WAVECAR, *directories)
-      last_tmp = latest_file(files.TMPCAR, *directories) 
+      # Validity of TMPCAR depends on existence of WAVECAR
+      if last_wfn is None: last_tmp = None
+      else: last_tmp = latest_file(files.TMPCAR, dirname(last_wfn))
 
       # determines icharge depending on file. 
-      if last_wfn is not None:
-        if istart < 0: istart = 1
-        else:
-          raise RuntimeError( 'Wavefunction file does not exist and ISTART={0}'\
-                              .format(istart) )
-      if istart == 4 and last_tmp is None:
-        raise RuntimeError( 'TMPCAR file does not exist and ISTART={0}'\
-                            .format(istart) )
+      if last_wfn is None and istart > 0: 
+        raise ValueError( 'Wavefunction does not exist, '                      \
+                          'yet ISTART={0} requested.'.format(istart) )
+      if last_tmp is None and istart == 3:
+        raise ValueError( 'TMPCAR file does not exist and ISTART={0}'          \
+                          .format(istart) )
       if last_wfn is not None: copyfile(last_wfn, outdir, nothrow='same')
       if last_tmp is not None: copyfile(last_tmp, outdir, nothrow='same')
-    return {self.keyword: istart}
+      if istart == -1:
+        if last_wfn is not None and last_tmp is not None: istart = 3
+        elif last_wfn is not None: istart = 1
+        else: istart = 0
+    return {self.keyword: str(istart)}
 
 class IStruc(AliasKeyword):
   """ Initial structure. 
@@ -654,17 +673,33 @@ class IStruc(AliasKeyword):
       makes it possible to restart a crashed job from the latest contcar.
       There are two possible options:
 
-        - auto: LaDa determines automatically what to use. If a CONTCAR exists
-                in either the current directory or in the restart directory (if
-                any), then uses the latest. Otherwise, uses input structure.
-        - scratch: Always uses input structure.
+        - auto: 
+        
+          LaDa determines automatically what to use. The structure can be read
+          from the following files, in order of priority:
 
-      If the run was given the ``overwrite`` option, then always uses the input
-      structure.
+            - CONTCAR of the current
+            - OUTCAR of the restart 
+
+          If ``overwrite==True`` when calling the vasp functional, then never
+          read from CONTCAR.
+
+        - scratch: Always uses input/restart structure.
+        - contcar: Always use contcar structure unless ``overwrite == True``.
+
+      Only positions and cells are used from contcar. All other attributes
+      (magnetization, etc) are those of the input structure. Hence, the atoms
+      of any given specie should be same order in the CONTCAR and in the
+      input/restart.
 
       .. note:: There is no VASP equivalent to this option.
+      .. seealso:: restart_, icharg_, istart_
+
+      .. _restart: :py:attr:`~lada.vasp.functional.Functional.restart`
+      .. _icharg: :py:attr:`~lada.vasp.functional.Functional.icharg`
+      .. _istart: :py:attr:`~lada.vasp.functional.Functional.istart`
   """
-  aliases = { 'auto': ['auto', 0], 'scratch': ['scracth', 1] }
+  aliases = {-1: ['auto', 0], 0: ['scratch', 1], 1: ['contcar', 2] }
   """ Aliases for the same option. """
   keyword = None
   """ Does not correspond to a VASP keyword """
@@ -672,32 +707,49 @@ class IStruc(AliasKeyword):
     super(IStruc, self).__init__(value=value)
   def output_map(self, **kwargs):
     from os.path import join
-    from ..misc import latest_file, copyfile
-    from ..error import RuntimeError, ValueError
-    from ..crystal import write
+    from ..misc import latest_file
+    from ..error import ValueError
+    from ..crystal import write, read, specieset
     from . import files
 
-    istruc = self.istruc
-    if istruc is None: return None
+    istruc = self._value
+    if istruc is None: istruc = 0
+    if kwargs.get('overwrite', False): istruc = 0
+    structure = kwargs['structure']
+    outdir = kwargs['outdir']
+    vasp = kwargs['vasp']
+    has_restart = getattr(vasp, 'restart', None) is not None
+    if has_restart: has_restart = vasp.restart.success
+    if has_restart: structure = vasp.restart.structure
 
     # determines which CONTCAR is the latest, if any exist.
-    vasp = kwargs['vasp']
-    outdir = kwargs['outdir']
-    hasrestart = getattr(vasp.restart, 'success', False)
-    directories = [outdir]
-    if hasrestart: directories += [vasp.restart.directory]
-    last_contcar = latest_file(files.CONTCAR, *directories) 
+    if istruc in [-1, 1]: 
+      last_contcar = latest_file(files.CONTCAR, outdir)
+      # if a contcar exists and we should re-read, then modifies structure
+      # accordingly. It is expected that the structures are equivalent, in the
+      # sense that they have the same atoms in the same order (more
+      # specifically, the order of the atoms of a given specie are the same). 
+      if last_contcar is not None:
+        other = read.poscar(path=last_contcar, types=specieset(structure))
+        if len(other) != len(structure):
+          raise ValueError('CONTCAR and input structure differ in size.')
+        for type in specieset(other):
+          A = [a for a in structure if a.type == type]
+          B = [a for a in other if a.type == type]
+          if len(A) != len(B): 
+            raise ValueError( 'CONTCAR and input structure differ '            \
+                              'in number of {0} atoms'.format(type) )
+          for a, b in zip(A, B):
+            if a.type != type: continue
+            a.pos = b.pos
+        structure.cell = other.cell
 
     # Depending on different options and what's available, writes structure or
     # copies contcar.
-    if istruc == 'scratch' or last_contcar is None                             \
-       or kwargs.get('overwrite') == True:
-      structure = kwargs['structure']
-      if len(structure) == 0: raise ValueError('Structure is empty')
-      if structure.scale < 1e-8: raise ValueError('Structure scale is zero')
-      if structure.volume < 1e-8: raise ValueError('Structure volume is zero')
-      write.poscar(structure)
-    else: copyfile(last_contcar, join(outdir, files.POSCAR), nothrow='same')
+    if len(structure) == 0: raise ValueError('Structure is empty')
+    if structure.scale < 1e-8: raise ValueError('Structure scale is zero')
+    if structure.volume < 1e-8: raise ValueError('Structure volume is zero')
+    write.poscar(structure, join(outdir, 'POSCAR'))
     return None
 
 class LDAU(BoolKeyword): 
@@ -734,7 +786,7 @@ class LDAU(BoolKeyword):
 
   def output_map(self, **kwargs):
     from ..crystal import specieset
-    from ..error import ValueError, ConfigError
+    from ..error import ValueError, ConfigError, internal
     from .. import vasp_has_nlep
     if self.value is None or self.value is False: return
     types = specieset(kwargs['structure'])
@@ -779,7 +831,7 @@ class LDAU(BoolKeyword):
             a = [specie.U[i]["l"], specie.U[i]["U0"], 0e0, 2]
           elif specie.U[i]["func"] == "enlep":
             a = [specie.U[i]["l"], specie.U[i]["U0"], specie.U[i]["U1"], 3]
-          else: raise RuntimeError, "Debug Error."
+          else: raise internal("Debug Error.")
           if hasattr(a[1], "rescale"): a[1] = a[1].rescale("eV")
           if hasattr(a[2], "rescale"): a[2] = a[2].rescale("eV")
           ldul.append('{0[0]}'.format(a))
@@ -970,7 +1022,6 @@ class LSorbit(BaseKeyword):
     self.value = value == True
     if True: self.ispin = 2; self.nonscf = True
 
-class LMaxMix(AliasKeyword):
+class LMaxMix(TypedKeyword):
   keyword = 'lmaxmix'
-  aliases = { 1: ['s', '1', 1], 2: ['p', '2', 2], 3: ['d', '3', 3], 
-              4: ['f', '4', 4], 5: ['e', '5', 5] }
+  type = int

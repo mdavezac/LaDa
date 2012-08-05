@@ -277,7 +277,7 @@ def latest_file(filename, *args):
   from os.path import join, exists, getsize
   from os import stat
   from operator import itemgetter
-  if len(args): return None
+  if len(args) == 0: return None
   dummy = []
   for directory in args: 
     path = join(directory, filename)
@@ -286,4 +286,4 @@ def latest_file(filename, *args):
     dummy.append((path, stat(path).st_mtime))
   if len(dummy) == 0: return None
   dummy = sorted(dummy, key=itemgetter(1))
-  return dummy[-1]
+  return dummy[-1][0]
