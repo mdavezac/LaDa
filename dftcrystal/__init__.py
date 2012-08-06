@@ -3,7 +3,7 @@ __docformat__ = "restructuredtext en"
 __all__ = [ 'Extract', 'AffineTransform', 'DisplaceAtoms', 'InsertAtoms',
             'Marker', 'ModifySymmetry', 'RemoveAtoms', 'Slabcut', 'read',
             'Slabinfo','Crystal', 'Molecule', 'Slab', 'Functional', 'Shell',
-            'read_gaussian_basisset', 'MassExtract' ]
+            'read_gaussian_basisset', 'MassExtract', 'read_input', 'exec_input' ]
 
 from .basis import Shell
 from .functional import Functional
@@ -111,3 +111,37 @@ def read_gaussian_basisset(path):
   except StopIteration: pass
 
   return result
+
+def read_input(filepath="input.py", namespace=None):
+  """ Specialized read_input function for dftcrystal. 
+  
+      :Parameters: 
+        filepath : str
+          A path to the input file.
+        namespace : dict
+          Additional names to include in the local namespace when evaluating
+          the input file.
+
+      It add a few names to the input-file's namespace. 
+  """
+  from ..misc import read_input
+
+  # names we need to create input.
+  input_dict = {}
+  for k in __all__:
+    if k != 'read_input' and k != 'exec_input':
+      input_dict[k] = globals()[k]
+  if namespace is not None: input_dict.update(namespace)
+  return read_input(filepath, input_dict)
+
+def exec_input( script, global_dict=None, local_dict=None,
+                paths=None, name=None ):
+  """ Specialized exec_input function for vasp. """
+  from ..misc import exec_input
+
+  # names we need to create input.
+  if global_dict is None: global_dict = {}
+  for k in __all__:
+    if k != 'read_input' and k != 'exec_input':
+      global_dict[k] = globals()[k]
+  return exec_input(script, global_dict, local_dict, paths, name)
