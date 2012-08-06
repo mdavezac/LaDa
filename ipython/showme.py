@@ -57,7 +57,7 @@ def showme_functional(self):
 
     # lets user edit stuff.
     time0 = stat(filename)[-2]
-    self.magic("edit -x {0}".format(filename))
+    self.shell.magic("edit -x {0}".format(filename))
     if stat(filename)[-2] == time0: return
 
     # change jobparameters.
@@ -105,7 +105,7 @@ def showme_param(self, arg):
       
     # lets user edit stuff.
     time0 = stat(filename)[-2]
-    self.magic("edit -x {0}".format(filename))
+    self.shell.magic("edit -x {0}".format(filename))
     if stat(filename)[-2] == time0: return
   
     # change jobparameters.
@@ -154,7 +154,6 @@ def showme_params(self):
                          string, M )
         else: obre = None
         if obre is None: 
-          othername = arg
           string = string.replace('\n', '\n' + ''.join([' ']*(len(arg)+13)))
           file.write("params['{0}'] = {1}\n".format(arg, string))
         else: 
@@ -163,7 +162,7 @@ def showme_params(self):
       
     # lets user edit stuff.
     time0 = stat(filename)[-2]
-    self.magic("edit -x {0}".format(filename))
+    self.shell.magic("edit -x {0}".format(filename))
     if stat(filename)[-2] == time0: return
   
     # change jobparameters.
