@@ -15,8 +15,6 @@ def test_supercell():
   assert all(abs(result.cell - identity(3)) < 1e-8)
   assert abs(result.scale - 2) < 1e-8
   assert getattr(result, 'm', False) 
-  assert getattr(result, 'lattice', None) != None
-  del result.lattice # makes sure that refcount of lattice was correctly incremented.
   assert all(abs(result[0].pos - [0.00, 0.00, 0.00]) < 1e-8) and result[0].type == "As" \
          and getattr(result[0], 'site', -1) == 0 and api(result[0].pos, lattice[0].pos, inv(lattice.cell))
   assert all(abs(result[1].pos - [0.25, 0.25, 0.25]) < 1e-8) and result[1].type == ["In", "Ga"] \
