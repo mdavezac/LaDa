@@ -257,6 +257,14 @@ class AbstractMassExtract(object):
     if self.unix_re: name = normpath(name)
     return self.shallow_copy(view=name)
 
+  def __delitem__(self, name):
+    """ Removes items from the collection path. 
+
+        This basically adds to the excludes attributes.
+    """ 
+    if self.excludes is None: self._excludes = [name]
+    elif name not in self.excludes: self.excludes.append(name)
+
   def __getstate__(self): 
     d = self.__dict__.copy()
     return d

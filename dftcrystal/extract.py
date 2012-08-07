@@ -435,10 +435,45 @@ class ExtractBase(object):
     try: 
       if self._find_first_STDOUT('CONVERGENCE TESTS SATISFIED') is not None:
         return True
+      if self._find_first_STDOUT('CONVERGENCE ON GRADIENTS SATISFIED') is not None:
+        return True
       if self._find_first_STDOUT('CONVERGENCE TESTS UNSATISFIED') is not None:
         return False
     except: pass
     return None
+
+  @property
+  @make_cached
+  def surface_area(self):
+    """ Surface area of 2d slabs. """
+    from quantities import angstrom
+    from ..error import GrepError
+    result = self._find_last_STDOUT('AREA\s+OF\s+THE\s+2D\s+CELL\s+(\S+)')
+    if result is None: raise GrepError('Likely not a 2D slab')
+    return float(result.group(1)) * angstrom * angstrom 
+
+  @property
+  @make_cached
+  def slab_height(self):
+    """ Height of the slab. """
+    from quantities import angstrom
+    from ..error import GrepError
+    a = self.surface_area.magnitude
+    result = self._find_last_STDOUT('VOLUME\s+OF\s+THE\s+3D\s+CELL\s+(\S+)')
+    if result is None: raise GrepError('Likely not a 2D slab')
+    return float(result.group(1)) / a * angstrom 
+
+
+  @property
+  @make_cached
+  def optgeom_iterations(self):
+    """ Number of geometric iterations. """
+    from ..error import GrepError
+    a = self.optgeom_convergence
+    if a is None: return 0
+    if not a: raise GrepError('Convergence was not achieved')
+    result = self._find_last_STDOUT('POINTS\s+(\d+)\s+\*')
+    return int(result.group(1))
 
 class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
   """ Extracts DFT data from an OUTCAR. """
@@ -487,7 +522,7 @@ class MassExtract(AbstractMassExtract):
         '/some/other/path': True
       }
   """
-  def __init__(self, path = None, **kwargs):
+  def __init__(self, path = None, glob=None, **kwargs):
     """ Initializes MassExtract.
     
     
@@ -505,27 +540,37 @@ class MassExtract(AbstractMassExtract):
     if path is None: path = getcwd()
     # this will throw on unknown kwargs arguments.
     super(MassExtract, self).__init__(path=path, **kwargs)
+    self.glob = glob
+    """ Pattern from which to determine output file. """
 
   def __iter_alljobs__(self):
     """ Goes through all directories with an OUTVAR. """
     from os import walk
     from os.path import relpath, join
+    from glob import iglob
     from . import Extract as CrystalExtract
     from .relax import RelaxExtract
 
-    for dirpath, dirnames, filenames in walk(self.rootpath, topdown=True, followlinks=True):
-      if 'crystal.out' not in filenames: continue
-      if 'relax' in dirnames:
-        dirnames[:] = [u for u in dirnames if u != 'relax']
-        try: result = RelaxExtract(join(self.rootpath, dirpath))
-        except:
+    if self.glob is None:
+      for dirpath, dirnames, filenames in walk(self.rootpath, topdown=True, followlinks=True):
+        if 'crystal.out' not in filenames: continue
+        if 'relax' in dirnames:
+          dirnames[:] = [u for u in dirnames if u != 'relax']
+          try: result = RelaxExtract(join(self.rootpath, dirpath))
+          except:
+            try: result = CrystalExtract(join(self.rootpath, dirpath))
+            except: continue
+        else: 
           try: result = CrystalExtract(join(self.rootpath, dirpath))
           except: continue
-      else: 
-        try: result = CrystalExtract(join(self.rootpath, dirpath))
-        except: continue
-
-      yield join('/', relpath(dirpath, self.rootpath)), result
+        
+        yield join('/', relpath(dirpath, self.rootpath)), result
+    else: 
+      for dirpath, dirnames, filenames in walk(self.rootpath, topdown=True, followlinks=True):
+        for filename in iglob(join(join(self.rootpath, dirpath), self.glob)):
+          try: result = CrystalExtract(filename)
+          except: continue
+          else: yield join('/',relpath(filename, self.rootpath)), result
 
   def __copy__(self):
     """ Returns a shallow copy. """
