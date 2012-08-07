@@ -58,7 +58,7 @@ namespace LaDa
         python::Object iter_pos( (PyObject*) PyArray_IterNew(positions) );              \
         python::Object iter_res( (PyObject*) PyArray_IterNew(result.borrowed()) );      \
         math::rVector3d a;                                                              \
-        int const type = PyArray_MinScalarType((PyArrayObject*)positions)->type_num;    \
+        int const type = ((PyArrayObject*)positions)->descr->type_num;                  \
         while(PyArray_ITER_NOTDONE(iter_pos.borrowed()))                                \
         {                                                                               \
           /* Shouldn't need to check since last axis is of length == 3 */               \

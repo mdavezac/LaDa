@@ -664,10 +664,9 @@ class AttrBlock(Keyword):
         if value is None: type.args = type.args, message
         else: value = value, message
         raise type, value, traceback
-    if len(result) == 0: return None # nothing printed, return None.
-    if result[-1] != '\n': result += '\n'
+    result = result.rstrip()
     if getattr(self, 'keyword', '') != '': 
-      return '{0}\n{1}END {0}\n'.format(self.keyword.upper(), result)
+      return '{0}\n{1}\nEND {0}\n'.format(self.keyword.upper(), result)
     return result
 
   def __repr__(self, defaults=False, name=None):
