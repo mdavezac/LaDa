@@ -17,44 +17,49 @@ class Vasp(AttrBlock):
     """ Initializes vasp class. """
     from .keywords import BoolKeyword, Magmom, System, Npar, ExtraElectron,    \
                           NElect, Algo, Ediff, Ediffg, Encut, EncutGW, IStart, \
-                          ICharg, IStruc, LDAU, PrecFock, Precision, Nsw,     \
+                          ICharg, IStruc, LDAU, PrecFock, Precision, Nsw,      \
                           Isif, IBrion, Relaxation, ISmear, LSorbit, Sigma,    \
                           LMaxMix, EdiffPerAtom, EdiffgPerAtom
     from ..functools.keywords import TypedKeyword, ChoiceKeyword
     super(Vasp, self).__init__()
 
     self.species = species if species is not None else {}
-    """ Species in the system. """
+    """ Species in the system.
+    
+        Defines both POTCAR_, U, and/or NLEP parameters.  This is generally
+        done using the method :py:meth:`add_specie`.
+
+        .. _POTCAR: http://cms.mpi.univie.ac.at/wiki/index.php/POTCAR
+    """
     self.kpoints = kpoints if kpoints is not None \
                    else "\n0\nM\n4 4 4\n0 0 0"
     """ kpoints for which to perform calculations. """
     self.restart = kwargs.get('restart', None)
     """ Calculation from which to restart. 
 
-        Depending on the values of istart_, icharg_, and istruc_, this
-        calculation will copy the charge density, wavefunctions, and structure
-        from this object. It should be either None, or an extraction object
-        returned by a previous calculation::
+        Depending on the values of :py:attr:`istart`, :py:attr:`icharg`, and
+        :py:attr:`istruc`, this calculation will copy the charge density,
+        wavefunctions, and structure from this object. It should be either
+        None, or an extraction object returned by a previous calculation (e.g.
+        :py:class:`~lada.vasp.extract.Extract`):
 
-        .. code-block :: python
+        .. code-block:: python
 
            calc1 = vasp(structure)
            calc2 = vasp(structure, restart=calc2, nonscf=True)
 
         The snippet above performs a non-self-consistent calculation using the
-        first calculation. In this example, it is expected that istart_,
-        icharg_, and istruc_ are all set to 'auto', in which case LaDa knows to
-        do the right thing, e.g. copy whatever is available, and nothing is
-        ``vasp.restart is None``.
+        first calculation. In this example, it is expected that
+        :py:attr:`istart`, :py:attr:`icharg`, and :py:attr:`istruc` are all set
+        to 'auto', in which case LaDa knows to do the right thing, e.g. copy
+        whatever is available, and nothing is ``vasp.restart is None``.
 
-        .. note:: The calculation from which to restart needs be successful,
-        otherwise it is not considered.
+        .. note:: 
+        
+           The calculation from which to restart needs be successful, otherwise
+           it is not considered.
 
-        .. seealso:: istart_, istruc_, icharg_
-
-        .. _istruc: :py:attr:`~lada.vasp.functional.Functional.istruc`
-        .. _istart: :py:attr:`~lada.vasp.functional.Functional.istart`
-        .. _icharg: :py:attr:`~lada.vasp.functional.Functional.icharg`
+        .. seealso:: :py:attr:`istart`, :py:attr:`istruc`, :py:attr:`icharg`
     """
 
     self.program = kwargs.get('program', None)
@@ -68,44 +73,39 @@ class Vasp(AttrBlock):
           - string: Should be the path to the vasp executable. It can be either
             a full path, or an executable within the environment's $PATH
             variable.
-          - callable: The callable is called with a :py:class:`~lada.vasp.Vasp`
-            as sole argument. It should return a string, as described above.
-            In other words, different vasp executables can be used depending on
-            the parameters. 
+          - callable: The callable is called with a :py:class:`Vasp` as sole
+            argument. It should return a string, as described above.  In other
+            words, different vasp executables can be used depending on the
+            parameters. 
     """
     self.addgrid = BoolKeyword()
     """ Adds additional support grid for augmentation charge evaluation. 
 
         Can be only True or False (or None for VASP_ default).
 
-        .. seealso:: 
-
-           ADDGRID_
-
-           .. _ADDGRID: http://cms.mpi.univie.ac.at/wiki/index.php/ADDGRID
+        .. seealso:: ADDGRID_
+        .. _ADDGRID: http://cms.mpi.univie.ac.at/wiki/index.php/ADDGRID
+        .. _VASP: http://cms.mpi.univie.ac.at/wiki/index.php/Main_Page
     """
     self.ispin   = ChoiceKeyword(values=(1, 2))
     """ Whether to perform spin-polarized or spin-unpolarized calculations.
 
         Can be only 1 or 2 (or None for VASP_ default).
 
-        .. seealso:: 
-
-           ISPIN_ 
-
-           .. _ISPIN: http://cms.mpi.univie.ac.at/wiki/index.php/ISPIN
+        .. seealso:: ISPIN_ 
+        .. _ISPIN: http://cms.mpi.univie.ac.at/wiki/index.php/ISPIN
     """
     self.istart    = IStart(value='auto')
     """ Starting wavefunctions.
     
-        This tag is about which wavefunction (WAVECAR) file to read from, if
+        This tag is about which wavefunction (WAVECAR_) file to read from, if
         any.  It is best to keep this attribute set to -1, in which case, LaDa
         takes care of copying the relevant files.
     
           - -1, 'auto': (Default) Automatically determined by LaDA. Depends on
-            the value of restart_ and the existence of the relevant files. If a
-            WAVECAR file exists, then ISTART_ will be set to 1 (constant
-            cutoff).
+            the value of :py:attr:`restart` and the existence of the relevant
+            files. If a WAVECAR_ file exists, then ISTART_ will be set to 1
+            (constant cutoff).
     
           - 0, 'scratch': Start from scratch.
     
@@ -128,11 +128,11 @@ class Vasp(AttrBlock):
            Files are copied right before the calculation takes place, not when
            the attribute is set.
     
-        .. seealso:: ISTART_, icharg_, istruc_, restart_
+        .. seealso::
+           
+           ISTART_, :py:attr:`icharg`, :py:attr:`istruc`, :py:attr:`restart`
+
         .. _ISTART: http://cms.mpi.univie.ac.at/wiki/index.php/ISTART
-        .. _restart: :py:attr:`~lada.vasp.functional.Functional.restart`
-        .. _icharg: :py:attr:`~lada.vasp.functional.Functional.icharg`
-        .. _istruc: :py:attr:`~lada.vasp.functional.Functional.istruc`
     """ 
     self.icharg    = ICharg('auto')
     """ Charge from which to start. 
@@ -142,27 +142,31 @@ class Vasp(AttrBlock):
         case, LaDa takes care of copying the relevant files.
     
           - -1: (Default) Automatically determined by LaDA. Depends on the
-                value of restart_ and the existence of the relevant files. Also
-                takes care of non-scf bit.
+                value of :py:attr:`restart` and the existence of the relevant
+                files. Also takes care of non-scf bit.
     
-          - 0: Tries to restart from wavefunctions. Uses the latest WAVECAR file
-               between the one currently in the output directory and the one in
-               the restart directory (if specified). Sets nonscf_ to False.
+          - 0: Tries to restart from wavefunctions. Uses the latest WAVECAR_
+               file between the one currently in the output directory and the
+               one in the restart directory (if specified). Sets
+               :py:attr:`nonscf` to False.
     
-               .. note:: CHGCAR is also copied, just in case.
+               .. note:: CHGCAR_ is also copied, just in case.
     
-          - 1: Tries to restart from wavefunctions. Uses the latest WAVECAR file
-               between the one currently in the output directory and the one in
-               the restart directory (if specified). Sets nonscf_ to False.
+          - 1: Tries to restart from wavefunctions. Uses the latest WAVECAR_
+               file between the one currently in the output directory and the
+               one in the restart directory (if specified). Sets
+               :py:attr:`nonscf` to False.
     
-          - 2: Superimposition of atomic charge densities. Sets nonscf_ to False.
+          - 2: Superimposition of atomic charge densities. Sets
+               :py:attr:`nonscf` to False.
     
           - 4: Reads potential from POT file (VASP-5.1 only). The POT file is
-               deduced the same way as for CHGAR and WAVECAR above.  Sets nonscf_
-               to False.
+               deduced the same way as for CHGAR and WAVECAR_ above. Sets
+               :py:attr:`nonscf` to False.
     
-          - 10, 11, 12: Same as 0, 1, 2 above, but also sets nonscf_ to True. This
-               is a shortcut. The value is actually kept to 0, 1, or 2:
+          - 10, 11, 12: Same as 0, 1, 2 above, but also sets :py:attr:`nonscf`
+               to True.  This is a shortcut. The value is actually kept to 0,
+               1, or 2:
     
                >>> vasp.icharg = 10
                >>> vasp.nonscf, vasp.icharg
@@ -170,15 +174,15 @@ class Vasp(AttrBlock):
     
         .. note::
         
-           Files are copied right before the calculation takes place, not before.
+           Files are copied right before the calculation takes place, not
+           before.
     
-        .. seealso:: ICHARG_, nonscf_, restart_, istruc_, istart_
+        .. seealso::
+        
+           ICHARG_, :py:attr:`nonscf`, :py:attr:`restart`, :py:attr:`istruc`,
+           :py:attr:`istart`
     
         .. _ICHARG: http://cms.mpi.univie.ac.at/wiki/index.php/ICHARG
-        .. _nonscf: :py:attr:`~lada.vasp.functional.Functional.nonscf`
-        .. _restart: :py:attr:`~lada.vasp.functional.Functional.restart`
-        .. _istruc: :py:attr:`~lada.vasp.functional.Functional.istruc`
-        .. _istart: :py:attr:`~lada.vasp.functional.Functional.istart`
     """ 
     self.istruc    = IStruc('auto')
     """ Initial structure. 
@@ -187,20 +191,18 @@ class Vasp(AttrBlock):
         makes it possible to restart a crashed job from the latest contcar.
         There are two possible options:
     
-          - auto: LaDa determines automatically what to use. If a CONTCAR exists
-                  in either the current directory or in the restart directory (if
-                  any), then uses the latest. Otherwise, uses input structure.
+          - auto: LaDa determines automatically what to use. If a CONTCAR
+                  exists in either the current directory or in the restart
+                  directory (if any), then uses the latest. Otherwise, uses
+                  input structure.
           - scratch: Always uses input structure.
     
-        If the run was given the ``overwrite`` option, then always uses the input
-        structure.
+        If the run was given the ``overwrite`` option, then always uses the
+        input structure.
     
         .. note:: There is no VASP equivalent to this option.
-        .. seealso:: restart_, icharg_, istart_
+        .. seealso:: :py:attr:`restart`, :py:attr:`icharg`, :py:attr:`istart`
     
-        .. _restart: :py:attr:`~lada.vasp.functional.Functional.restart`
-        .. _icharg: :py:attr:`~lada.vasp.functional.Functional.icharg`
-        .. _istart: :py:attr:`~lada.vasp.functional.Functional.istart`
     """
     self.isym      = ChoiceKeyword(values=range(3))
     """ Symmetry scheme.
@@ -223,21 +225,121 @@ class Vasp(AttrBlock):
         .. _LORBIT: http://cms.mpi.univie.ac.at/wiki/index.php/LORBIT
     """
     self.nbands    = TypedKeyword(type=int)
+    """ Number of bands in the calculation.
+
+        Can be any integer.
+
+        .. seealso:: NBANDS_
+        .. _NBANDS: http://cms.mpi.univie.ac.at/wiki/index.php/NBANDS
+    """
     self.nomega    = TypedKeyword(type=int)
+    """ Number of frequency grid points. 
+
+        Can be any integer.
+
+        .. seealso:: NOMEGA_
+        .. _NOMEGA: http://cms.mpi.univie.ac.at/wiki/index.php/NOMEGA
+    """
     self.nupdown   = TypedKeyword(type=int)
     self.symprec   = TypedKeyword(type=float)
     self.lwave     = BoolKeyword(value=False)
+    """ Whether or not to write the wavefunctions to the WAVECAR_.
+
+        Must be a boolean. Defaults to False (unlike VASP_).
+
+        .. seealso:: LWAVE_
+        .. _LWAVE: http://cms.mpi.univie.ac.at/wiki/index.php/LWAVE
+        .. _WAVECAR: http://cms.mpi.univie.ac.at/wiki/index.php/WAVECAR
+    """
     self.lcharg    = BoolKeyword(value=True)
+    """ Whether or not to write the charge density to the CHGCAR_.
+
+        Must be a boolean. Defaults to True.
+
+        .. seealso:: LWAVE_
+        .. _LWAVE: http://cms.mpi.univie.ac.at/wiki/index.php/LWAVE
+        .. _CHGCAR: http://cms.mpi.univie.ac.at/wiki/index.php/CHGCAR
+    """
     self.lvtot     = BoolKeyword(value=False)
+    """ Whether or not to write the local potential to the LOCPOT file. 
+
+        Must be a boolean. Defaults to False.
+
+        .. seealso:: LVTOT_
+        .. _LVTOT: http://cms.mpi.univie.ac.at/wiki/index.php/LVTOT
+    """
     self.lrpa      = BoolKeyword()
+    """ Whether to include local field effects at the Hartree level only.
+
+        Must be a boolean or None (leaves default to VASP_).
+
+        .. seealso:: LRPA_
+        .. _LRPA: http://cms.mpi.univie.ac.at/wiki/index.php/LRPA
+    """ 
     self.loptics   = BoolKeyword()
+    """ Whether to compute the frequency dependent dielectic matrix.
+
+        Must be a boolean or None (leaves default to VASP_).
+
+        .. seealso:: LOPTICS_
+        .. _LOPTICS: http://cms.mpi.univie.ac.at/wiki/index.php/LOPTICS
+    """
     self.lpead     = BoolKeyword()
+    """ Compute the finite-difference k-derivative of the wavefunctions.
+
+        Must be a boolean or None (leaves default to VASP_).
+
+        .. seealso:: LPEAD_
+        .. _LPEAD: http://cms.mpi.univie.ac.at/wiki/index.php/LPEAD
+    """
     self.nelm      = TypedKeyword(type=int)
+    """ Maximum number of self-consistent electronic minimization steps.
+       
+        Must be an integer or None (leaves default to VASP_).
+
+        .. seealso:: NELM_
+        .. _NELM: http://cms.mpi.univie.ac.at/wiki/index.php/NELM
+    """
     self.nelmin    = TypedKeyword(type=int)
+    """ Minimum number of self-consistent electronic minimization steps.
+       
+        Must be an integer or None (leaves default to VASP_).
+
+        .. seealso:: NELMIN_
+        .. _NELMIN: http://cms.mpi.univie.ac.at/wiki/index.php/NELMIN
+    """
     self.nelmdl    = TypedKeyword(type=int)
+    """ Number of non-selfconsistent steps at the beginning. 
+       
+        Must be an integer or None (leaves default to VASP_).
+
+        .. seealso:: NELMDL_
+        .. _NELMDL: http://cms.mpi.univie.ac.at/wiki/index.php/NELMDL
+    """
     self.ngx       = TypedKeyword(type=int)
+    """ number of grid points in the FFT-grid along the first lattice vector.
+
+        Must be an integer or None (leaves default to VASP_).
+
+        .. seealso:: NGX_, :py:attr:`ngy`, :py:attr:`ngz`
+        .. _NGX: http://cms.mpi.univie.ac.at/wiki/index.php/NGX
+    """
     self.ngy       = TypedKeyword(type=int)
+    """ number of grid points in the FFT-grid along the second lattice vector.
+
+        Must be an integer or None (leaves default to VASP_).
+
+        .. seealso:: NGY_, :py:attr:`ngx`, :py:attr:`ngz`
+        .. _NGY: http://cms.mpi.univie.ac.at/wiki/index.php/NGY
+    """
     self.ngz       = TypedKeyword(type=int)
+    """ number of grid points in the FFT-grid along the third lattice vector.
+
+        Must be an integer or None (leaves default to VASP_).
+
+        .. seealso:: NGZ_, :py:attr:`ngx`, :py:attr:`ngy`
+        .. _NGZ: http://cms.mpi.univie.ac.at/wiki/index.php/NGZ
+    """
     self.nonscf    = BoolKeyword()
     """ If True, performs a non-self consistent calculation.
 
@@ -261,9 +363,7 @@ class Vasp(AttrBlock):
         tag is not set.
     
         .. note:: Please set by hand for non-collinear calculations
-
         .. seealso:: MAGMOM_
-
         .. _MAGMOM: http://cms.mpi.univie.ac.at/wiki/index.php/MAGMOM
     """
     self.system    = System()
@@ -316,17 +416,19 @@ class Vasp(AttrBlock):
         >>> vasp.extraelectron =  0  # charge neutral system
         >>> vasp.extraelectron =  1  # charge -1 (1 extra electron)
         >>> vasp.extraelectron = -1  # charge +1 (1 extra hole)
+
+        Disables :py:attr:`nelect` if set to anything but None: these two
+        properties are mutually exclusive.
     
-        .. seealso:: NELECT_
+        .. seealso:: NELECT_, :py:attr:`nelect`
         .. _NELECT: http://cms.mpi.univie.ac.at/wiki/index.php/NELECT
     """
     self.nelect = NElect()
     """ Sets the absolute number of electrons.
         
-        Disables :py:attr:`lada.vasp.functional.Functional.extraelectron` if set to
-        something other than None.
+        Disables :py:attr:`extraelectron` if set to something other than None.
     
-        .. seealso:: `NELECT <http://cms.mpi.univie.ac.at/wiki/index.php/NELECT>`_
+        .. seealso:: NELECT_, :py:attr:`extraelectron`
     """
     self.algo = Algo()
     """ Electronic minimization. 
@@ -349,54 +451,56 @@ class Vasp(AttrBlock):
           - scgw
           - scgw0
     
-        If :py:data:`is_vasp_4 <lada.is_vasp_4>` is an existing configuration
-        variable of :py:mod:`lada` the parameters marked as vasp 5 will fail.
+        If :py:data:`~lada.is_vasp_4` is an existing configuration variable of
+        :py:mod:`lada` the parameters marked as vasp 5 will fail.
     
         .. warning:: The string None is not  allowed, as it would lead to
            confusion with the python object None. Please use "Nothing" instead.
-           The python object None will simply not print the ALGO keyword to the
-           INCAR file.
+           The python object None will simply not print the ALGO_ keyword to
+           the INCAR_ file.
     
         .. note:: By special request, "fast" is the default algorithm.
     
         .. seealso:: ALGO_
         .. _ALGO: http://cms.mpi.univie.ac.at/vasp/vasp/ALGO_tag.html
+        .. _INCAR: http://cms.mpi.univie.ac.at/wiki/index.php/INCAR
     """ 
     self.ediff = Ediff()
     """ Sets the absolute energy convergence criteria for electronic minimization.
     
-        EDIFF_ is set to this value in the INCAR. 
+        EDIFF_ is set to this value in the INCAR_. 
     
-        Sets ediff_per_atom_ to None.
-        If negative or null, defaults to zero.
+        Disables :py:attr:`ediff_per_atom` if set to anything but None. These
+        two properties are mutually exclusive. If negative or null, defaults to
+        zero.
     
-        .. seealso:: EDIFF_, :py:attr:`~ediff_per_atom` 
+        .. seealso:: EDIFF_, :py:attr:`ediff_per_atom` 
 
         .. _EDIFF: http://cms.mpi.univie.ac.at/wiki/index.php/EDIFF
     """
     self.ediff_per_atom = EdiffPerAtom()
     """ Sets the relative energy convergence criteria for electronic minimization.
     
-        EDIFF_ is set to this value *times* the number of atoms in the structure.
-        This approach is more sensible than straight-off ediff_ when doing
-        high-throughput over many structures.
+        EDIFF_ is set to this value *times* the number of atoms in the
+        structure.  This approach is more sensible than straight-off
+        :py:attr:`ediff` when doing high-throughput over many structures.
+        
+        Disables :py:attr:`ediff` if set to anything but None. These two
+        properties are mutually exclusive. If negative or null, defaults to
+        zero.
     
-        Sets ediff_ to None.
-        If negative or null, defaults to zero.
-    
-        .. seealso:: EDIFF_, ediff_
-        .. _ediff: :py:attr:`~lada.vasp.functional.Vasp.ediff`
+        .. seealso:: EDIFF_, :py:attr:`ediff`
     """
     self.ediffg = Ediffg()
     """ Sets the absolute energy convergence criteria for ionic relaxation.
     
-        EDIFFG_ is set to this value in the INCAR. 
+        EDIFFG_ is set to this value in the INCAR_. 
     
-        Sets ediffg_per_atom_ to None.
+        Disables :py:attr:`ediffg_per_atom` if set to anything but None. These
+        two properties are mutually exclusive.
     
-        .. seealso:: EDIFFG_, ediffg_per_atom_
-        .. _EDIFFG: http://cms.mpi.univie.ac.at/vasp/guide/node105.html
-        .. _ediffg_per_atom: :py:attr:`~lada.vasp.functional.Vasp.ediffg_per_atom`
+        .. seealso:: EDIFFG_, :py:attr:`ediffg_per_atom`
+        .. _EDIFFG: http://cms.mpi.univie.ac.at/wiki/index.php/EDIFFG
     """
     self.ediffg_per_atom = EdiffgPerAtom()
     """ Sets the relative energy convergence criteria for ionic relaxation.
@@ -406,14 +510,12 @@ class Vasp(AttrBlock):
         - if negative: same as a negative EDIFFG_, since that convergence
           criteria is already per atom.
         
-        This approach is more sensible than straight-off ediffg_ when doing
-        high-throughput over many structures.
+        This approach is more sensible than straight-off :py:attr:`ediffg` when
+        doing high-throughput over many structures.  Disables :py:attr:`ediffg`
+        if set to anything but None. These two properties are mutually
+        exclusive.
   
-        Sets ediffg_ to None.
-  
-        .. seealso:: EDIFFG_, ediff_
-        .. _EDIFFG: http://cms.mpi.univie.ac.at/wiki/index.php/EDIFFG
-        .. _ediffg: :py:attr:`~lada.vasp.functional.Vasp.ediffg`
+        .. seealso:: EDIFFG_, :py:attr:`ediffg`
     """
     self.encut = Encut()
     """ Defines cutoff factor for calculation. 
@@ -425,9 +527,10 @@ class Vasp(AttrBlock):
           the species in the system.
         - if value > 3 eV, then ENCUT_ is exactly value (in eV). Any energy
           unit is acceptable.
-        - if value < 0 eV or None, does not print anything to INCAR. 
+        - if value < 0 eV or None, does not print anything to INCAR_. 
         
-        .. seealso:: `ENCUT <http://cms.mpi.univie.ac.at/vasp/vasp/ENCUT_tag.html>`_
+        .. seealso:: ENCUT_
+        .. _ENCUT: http://cms.mpi.univie.ac.at/wiki/index.php/ENCUT
     """
     self.encutgw = EncutGW()
     """ Defines cutoff factor for GW calculation. 
@@ -439,113 +542,22 @@ class Vasp(AttrBlock):
           the species in the system.
         - if value > 3 eV, then ENCUTGW_ is exactly value (in eV). Any energy
           unit is acceptable.
-        - if value < 0 eV or None, does not print anything to INCAR. 
+        - if value < 0 eV or None, does not print anything to INCAR_. 
         
         .. seealso:: ENCUTGW_
         .. _ENCUTGW: http://cms.mpi.univie.ac.at/wiki/index.php/GW_calculations
-    """
-    self.istart = IStart()
-    """ Starting wavefunctions.
-    
-        It is best to keep this attribute set to -1, in which case, LaDa takes
-        care of copying the relevant files.
-    
-          - -1: Automatically determined by LaDA. Depends on the value of
-                restart_ and the existence of the relevant files.
-    
-          - 0: Start from scratch.
-    
-          - 1: Restart with constant cutoff.
-    
-          - 2: Restart with constant basis.
-    
-          - 3: Full restart, including TMPCAR.
-    
-        .. note::
-        
-           Files are copied right before the calculation takes place, not
-           before.
-    
-        .. seealso:: ISTART_
-    
-        .. _ISTART: http://cms.mpi.univie.ac.at/wiki/index.php/ISTART
-        .. _restart: :py:attr:`~lada.vasp.functional.Functional.restart`
-    """ 
-    self.icharg = ICharg()
-    """ Charge from which to start. 
-    
-        It is best to keep this attribute set to -1, in which case, LaDa takes
-        care of copying the relevant files.
-    
-          - -1: Automatically determined by LaDA. Depends on the value of
-                restart_ and the existence of the relevant files. Also takes
-                care of non-scf bit.
-    
-          - 0: Tries to restart from wavefunctions. Uses the latest WAVECAR
-               file between the one currently in the output directory and the
-               one in the restart directory (if specified). Sets nonscf_ to
-               False.
-    
-               .. note:: CHGCAR is also copied, just in case.
-    
-          - 1: Tries to restart from wavefunctions. Uses the latest WAVECAR
-               file between the one currently in the output directory and the
-               one in the restart directory (if specified). Sets nonscf_ to
-               False.
-    
-          - 2: Superimposition of atomic charge densities. Sets nonscf_ to
-               False.
-    
-          - 4: Reads potential from POT file (VASP-5.1 only). The POT file is
-               deduced the same way as for CHGAR and WAVECAR above.  Sets
-               nonscf_ to False.
-    
-          - 10, 11, 12: Same as 0, 1, 2 above, but also sets nonscf_ to True.
-               This is a shortcut. The value is actually kept to 0, 1, or 2:
-    
-               >>> vasp.icharg = 10
-               >>> vasp.nonscf, vasp.icharg
-               (True, 0)
-    
-        .. note::
-        
-           Files are copied right before the calculation takes place, not before.
-    
-        .. seealso:: ICHARG_
-    
-        .. _ICHARG: http://cms.mpi.univie.ac.at/wiki/index.php/ICHARG
-        .. _restart: :py:attr:`~lada.vasp.functional.Functional.restart`
-        .. _nonscf: :py:attr:`~lada.vasp.functional.Functional.nonscf`
-    """ 
-    self.istruc = IStruc()
-    """ Initial structure. 
-    
-        Determines which structure is written to the POSCAR. In practice, it
-        makes it possible to restart a crashed job from the latest contcar.
-        There are two possible options:
-  
-          - auto: LaDa determines automatically what to use. If a CONTCAR
-                  exists in either the current directory or in the restart
-                  directory (if any), then uses the latest. Otherwise, uses
-                  input structure.
-          - scratch: Always uses input structure.
-  
-        If the run was given the ``overwrite`` option, then always uses the
-        input structure.
-
-        .. note:: There is no VASP equivalent to this option.
     """
     self.ldau = LDAU()
     """ Sets U, nlep, and enlep parameters. 
    
         The U, nlep, and enlep parameters of the atomic species are set at the
-        same time as the pseudo-potentials. This object merely sets up the incar
+        same time as the pseudo-potentials. This object merely sets up the INCAR_
         with right input.
     
         However, it does accept one parameter, which can be "off", "on", "occ" or
         "all", and defines the level of verbosity of VASP (with respect to U and nlep).
     
-        .. seealso:: LDAU_, LDAUTYPE_, LDAUL_, LDAUJ_
+        .. seealso:: LDAU_, LDAUTYPE_, LDAUL_, LDAUJ_, :py:attr:`species`
 
         .. _LDAU: http://cms.mpi.univie.ac.at/wiki/index.php/LDAU
         .. _LDAUTYPE: http://cms.mpi.univie.ac.at/wiki/index.php/LDAUTYPE
@@ -565,7 +577,6 @@ class Vasp(AttrBlock):
         - accurate
     
         .. seealso:: PRECFOCK_
-        
         .. _PRECFOCK: http://cms.mpi.univie.ac.at/wiki/index.php/PRECFOCK
     """
     self.precision = Precision()
@@ -578,14 +589,12 @@ class Vasp(AttrBlock):
         - single
     
         .. seealso:: PREC_
-        
         .. _PREC: http://cms.mpi.univie.ac.at/wiki/index.php/PREC
     """
     self.nsw = Nsw()
     """ Maxium number of ionic iterations. 
 
         .. seealso:: NSW_
-
         .. _NSW: http://cms.mpi.univie.ac.at/wiki/index.php/NSW
     """
     self.ibrion = IBrion()
@@ -593,14 +602,18 @@ class Vasp(AttrBlock):
     
         Can only take a restricted set of values: -1 | 0 | 1 | 2 | 3 | 5 | 6 | 7 | 8 | 44.
 
-        .. seealso:: IBRION_
+        .. seealso::
+        
+           IBRION_, :py:attr:`relaxation`, :py:attr:`isif`, :py:attr:`nsw`
 
         .. _IBRION: cms.mpi.univie.ac.at/wiki/index.php/IBRIONN
     """
     self.isif = Isif()
     """ Degree of librerty to optimize during geometry optimization
 
-        .. seealso:: ISIF_
+        .. seealso:: 
+        
+           ISIF_, :py:attr:`relaxation`, :py:attr:`ibrion`, :py:attr:`nsw`
 
         .. _ISIF: http://cms.mpi.univie.ac.at/vasp/guide/node112.html
     """
@@ -613,8 +626,11 @@ class Vasp(AttrBlock):
           - combination of ionic, volume, cellshape: for the type of relaxation
             requested.
 
-        It makes sure that isif_, ibrion_, and nsw_ take the right value for the
+        It makes sure that :py:attr:`isif`, :py:attr:`ibrion`, and
+        :py:attr:`nsw` take the right value for the
         kind of relaxation.
+
+        .. seealso:: :py:attr:`isif`, :py:attr:`ibrion`, :py:attr:`nsw`
     """
     self.ismear = ISmear()
     """ Smearing function 
@@ -625,24 +641,67 @@ class Vasp(AttrBlock):
           |Gamma|-centered *k*-mesh)
         - tetra (-4): Tetrahedron method (requires a |Gamma|-centered *k*-mesh)
         - dynamic (-3): Performs a loop over smearing parameters supplied in
-          :py:attr:`~lada.vasp.functional.smearings`
-        - fixed: (-2): Fixed occupation, set *via* FERWE and FERDO
+          :py:attr:`smearings`
+        - fixed: (-2): Fixed occupation, set *via* :py:attr:`ferwe` and
+          :py:attr:`ferdo`
         - fermi (-1): Fermi function
         - gaussian (0): Gaussian function
         - mp n (n>0): Methfessel-Paxton smearing function of order n
 
+        .. seealso::
+        
+          ISMEAR_, :py:attr:`sigma`, :py:attr:`smearings`, :py:attr:`ferwe`,
+          :py:attr:`ferdo`
+        
+        .. _ISMEAR: http://cms.mpi.univie.ac.at/wiki/index.php/ISMEAR
         .. |Gamma|  unicode:: U+00393 .. GREEK CAPITAL LETTER GAMMA
     """
-    self.isigma = Sigma()
+    self.sigma = Sigma()
+    """ Width of the smearing function.
+
+        Accepts floating points which may be signed with an energy unit using
+        the quantities_ package:
+
+          .. code-block:: python
+
+            from quantities import eV, hartree
+
+            vasp.smearing = 0.2           # Defaults to eV.
+            vasp.smearing = 0.2 * eV      # Same as above, but more explicit.
+            vasp.smearing = 0.5 * hartree # if you are so inclined.
+    
+        .. seealso:: SIGMA_, quantities_, :py:attr:`ismear`
+        .. _SIGMA: http://cms.mpi.univie.ac.at/wiki/index.php/SIGMA
+        .. _quantities: http://packages.python.org/quantities/index.html
+    """
     self.smearings = TypedKeyword(type=[float])
+    """ Smearing steps for ``ISMEAR=-3``.
+
+        List of floating points. Does not accept quantities_.
+
+        .. seealso:: ISMEAR_, :py:attr:`ismear`
+    """
     self.ferwe = TypedKeyword(type=[float])
+    """ Occupancy of the states for ``ISMEAR=-2``.
+
+        List of floating points.
+         
+        .. seealso:: FERWE_, :py:attr:`ismear`, :py:attr:`ferdo`
+        .. _FERWE: http://cms.mpi.univie.ac.at/wiki/index.php/FERWE
+    """
     self.ferdo = TypedKeyword(type=[float])
+    """ Occupancy of the down-spin states for ``ISMEAR=-2``.
+
+        List of floating points.
+         
+        .. seealso:: FERDO_, :py:attr:`ismear`, :py:attr:`ferwe`
+        .. _FERDO: http://cms.mpi.univie.ac.at/wiki/index.php/FERDO
+    """
     self.lsorbit = LSorbit()
     """ Run calculation with spin-orbit coupling. 
     
-        Accepts None, True, or False.
-        If True, then sets :py:attr:`~lada.vasp.incar.Incar.nonscf` to True and
-        :py:attr:`~lada.vasp.incar.Incar.ispin` to 2.
+        Accepts None, True, or False. If True, then sets :py:attr:`nonscf` to
+        True and :py:attr:`ispin` to 2.
     """ 
     
     # copies values from other functional.
@@ -680,9 +739,10 @@ class Vasp(AttrBlock):
   def iter(self, structure, outdir=None, comm=None, overwrite=False, **kwargs):
     """ Performs a vasp calculation 
      
-        If successful results (see :py:attr:`extract.Extract.success`) already
-        exist in outdir, calculations are not repeated. Instead, an extraction
-        object for the stored results are given.
+        If successful results (see
+        :py:attr:`lada.vasp.extract.Extract.success`) already exist in outdir,
+        calculations are not repeated. Instead, an extraction object for the
+        stored results are given.
 
         :param structure:  
             :py:class:`~lada.crystal.Structure` structure to compute.
@@ -740,11 +800,13 @@ class Vasp(AttrBlock):
 
         Performs the following actions.
 
-        - Writes POSCAR file.
-        - Writes INCAR file.
-        - Writes KPOINTS file.
-        - Creates POTCAR file
-        - Saves pickle of self.
+        - Writes POSCAR_ file.
+        - Writes INCAR_ file.
+        - Writes KPOINTS_ file.
+        - Creates POTCAR_ file
+
+        .. _POSCAR: http://cms.mpi.univie.ac.at/wiki/index.php/POSCAR
+        .. _KPOINTS: http://cms.mpi.univie.ac.at/wiki/index.php/KPOINTS
     """
     from os.path import join
     from ..crystal import specieset
@@ -847,7 +909,7 @@ class Vasp(AttrBlock):
         The argument is a tuple containing the following.
 
         - Symbol (str).
-        - Directory where POTCAR resides (str).
+        - Directory where POTCAR_ resides (str).
         - List of U parameters (optional, see module vasp.specie).
         - Maximum (or minimum) oxidation state (optional, int).
         - ... Any other argument in order of `vasp.specie.Specie.__init__`.

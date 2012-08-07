@@ -4,8 +4,12 @@ Vasp class
 .. autoclass:: Vasp
    :show-inheritance:
    :members:
-   :inherited-members:
-   :exclude-members: Extract
 
-   This class also exists directly within the :py:mod:`vasp <lada.vasp>` module.
+..  .. autoattribute:: ediff
 
+..  :members:
+..  :inherited-members:
+..  :exclude-members: Extract
+..
+..  This class also exists directly within the :py:mod:`vasp <lada.vasp>` module.
+..

@@ -360,11 +360,13 @@ def makefunc(name, iter, module=None):
     if len(args.args[nargs:]) > 0: funcstring = funcstring[:-2]
   if args.keywords is not None: funcstring += ', **kwargs'
   funcstring += "):\n"\
-                "    if getattr(program, 'success', False):\n"\
-                "      result = program\n"\
-                "      continue\n"\
-                "    program.start(comm)\n"\
-                "    program.wait()\n"\
+                "    if getattr(program, 'success', False):\n"                 \
+                "      result = program\n"                                     \
+                "      continue\n"                                             \
+                "    if not hasattr(program, 'start'):\n"                      \
+                "      return program\n"                                       \
+                "    program.start(comm)\n"                                    \
+                "    program.wait()\n"                                         \
                 "  return result"
   funcs = {}
   exec funcstring in funcs
