@@ -52,8 +52,9 @@ class Cluster(object):
     if sublattice == -1: raise ValueError('Could not find atomic site')
     site = self.lattice[sublattice]
 
-    if flavor <= len(site.type) or flavor >= len(site.type):
-      raise IndexError('Incorrect flavor for given sublattice.')
+    if flavor < 0 or flavor >= len(site.type) - 1:
+      raise IndexError( 'Incorrect flavor for given sublattice.\n'            \
+                        '   0 <= flavor < {0}\n'.format(len(site.type)-1) )
 
     # create spin and adds it to group.
     return spin(position - self.lattice[sublattice].pos, flavor, sublattice)
@@ -84,6 +85,7 @@ class Cluster(object):
     from numpy import concatenate, all
     from numpy.linalg import norm
     from lada.error import ValueError
+    if self.spins is None or len(self.spins) == 0: return
     if all( norm(v) > 1e-8 for v in self.spins['position'] ):
       raise ValueError('Expected at least one spin in the unit cell.')
     self._symmetrized = []
@@ -99,25 +101,35 @@ class Cluster(object):
     """ Map of occupations to cluster function
     
         A mapping which returns the value of a particular spin according to
-        occupation and flavor::
+        occupation and flavor:
           
+        .. code-block::
+
           mapping = cluster.occupation_mapping()
           mapping[atom.site][spin_flavor][atom.type]
 
         where ``atom`` is an element of a structure, ``atom.site`` is likely
-        the index of the atomic site into the backbone lattice, and atom.flavor
-        is the flavor of a spin this particular cluster.
+        the index of the atomic site into the backbone lattice, and atom.
+        ``flavor`` is the flavor of a spin this particular cluster.
+
+        This particular mapping is taken from Ref.[*]_.
+
+        .. [*]: `Multicomponent multisublattice alloys, nonconfigurational
+                 entropy and other additions to the Alloy Theoretic Automated
+                 Toolkit`__, Axel van de Walle, Calpha, *33*, 266-278 (2009)
+        .. __: http://dx.doi.org/10.1016/j.calphad.2008.12.005
     """
     from numpy import cos, sin, pi
     result = []
     for site in self.lattice:
-      if not hasattr(site.type, '__iter__'): result.append(None)
-      if len(site.type) < 2: result.append(None)
+      if not hasattr(site.type, '__iter__'): result.append(None); continue
+      if len(site.type) < 2: result.append(None); continue
       result.append([])
       for flavor in xrange(len(site.type)-1): 
         result[-1].append({})
         for i, type in enumerate(sorted(site.type)):
-          arg = pi*float(flavor) * float(i) / float(len(site.type))
+          arg = 2e0 * pi*float(flavor+1) * int(float(i) * 0.5 + 0.5)           \
+                / float(len(site.type))
           if flavor % 2 == 0: result[-1][-1][type] = -cos(arg)
           else: result[-1][-1][type] = -sin(arg)
     return result
@@ -125,8 +137,10 @@ class Cluster(object):
   def __call__(self, structure, mapping=None, transform=None, fhmapping=None):
     """ Returns PI of a particular structure. """
     from lada.crystal import HFTransform
+    if self.spins is None or len(self.spins) == 0:
+      return float(len(structure))
     if not hasattr(self, '_symmetrized'): self._create_symmetrized()
-    if mapping is None: mapping = self.occupation_mapping
+    if mapping is None: mapping = self.occupation_mapping()
     if transform is None: transform = HFTransform(self.lattice, structure)
     if fhmapping is None: fhmapping = fhmap(self.lattice, structure)
     result = 0e0

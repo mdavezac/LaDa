@@ -207,7 +207,7 @@ namespace LaDa
            
       // lists atoms of same type as atoms.front()
       std::vector<math::rVector3d> translations;
-      python::Object const fronttype(atoms.front()->type);
+      python::Object const fronttype(atoms.front().type());
       Structure::t_Atoms::const_iterator const i_atom_begin = atoms.begin();
       Structure::t_Atoms::const_iterator const i_atom_end = atoms.end();
       for(Structure::t_Atoms::const_iterator i_atom = i_atom_begin; i_atom != i_atom_end; ++i_atom)

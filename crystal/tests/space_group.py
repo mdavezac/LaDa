@@ -1,10 +1,8 @@
 """ Checks that space group is correct. """
 def test_fcc():
   """ Test fcc space-group and equivalents """
-  from numpy import all, abs, identity, dot
-  from numpy.linalg import inv, det
+  from numpy import all, abs, dot
   from lada.crystal.cppwrappers import space_group, Structure, equivalent, transform
-  from lada.math import is_integer
 
   structure = Structure([[0,0.5,0.5],[0.5,0,0.5],[0.5,0.5,0]], m=True).add_atom(0,0,0,"Si", m=True)
   ops = space_group(structure)
@@ -26,10 +24,8 @@ def test_fcc():
 
 def test_b5(u):
   """ Test b5 space-group and equivalents """
-  from numpy import all, abs, identity, dot
-  from numpy.linalg import inv, det
+  from numpy import all, abs, dot
   from lada.crystal.cppwrappers import space_group, Structure, equivalent, transform
-  from lada.math import is_integer
 
   x, y = u, 0.25-u
   structure = Structure([[0,0.5,0.5],[0.5,0,0.5],[0.5,0.5,0]]) \
@@ -61,13 +57,44 @@ def test_b5(u):
     assert equivalent(structure, other, cartesian=False)
     assert equivalent(other, structure, cartesian=False)
     
+def test_zb():
+  from numpy import all, abs, dot
+  from lada.crystal import space_group, transform, binary
+  from lada.crystal.cppwrappers import equivalent
+
+  structure = binary.zinc_blende()
+  ops = space_group(structure)
+  assert len(ops) == 24
+  for op in ops:
+    assert op.shape == (4, 3)
+
+    other = transform(structure, op)
+    assert all(abs(dot(op[:3], structure.cell)-other.cell) < 1e-8)
+    for a, atom in zip(structure, other):
+      assert all(abs(dot(op[:3], a.pos) + op[3] - atom.pos) < 1e-8)
+      assert a.type == atom.type
+
+    assert equivalent(structure, other, cartesian=False)
+    assert equivalent(other, structure, cartesian=False)
      
+  for atom in structure: atom.type = ['A', 'B']
+  ops = space_group(structure)
+  assert len(ops) == 48
+  for op in ops:
+    assert op.shape == (4, 3)
+
+    other = transform(structure, op)
+    assert all(abs(dot(op[:3], structure.cell)-other.cell) < 1e-8)
+ #  for a, atom in zip(structure, other):
+ #    assert all(abs(dot(op[:3], a.pos) + op[3] - atom.pos) < 1e-8)
+ #    assert a.type == atom.type
+
+ #  assert equivalent(structure, other, cartesian=False)
+ #  assert equivalent(other, structure, cartesian=False)
+
 
 if __name__ == "__main__":
-  from sys import argv, path 
-  from numpy import array
-  if len(argv) > 0: path.extend(argv[1:])
-  
   test_fcc()
   test_b5(0.25)
   test_b5(0.36)
+  test_zb()

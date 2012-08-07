@@ -1,12 +1,12 @@
 """ Contains basic data type and methods for crystal structures. """
 __docformat__ = "restructuredtext en"
-__all__ = [ 'Structure', 'Atom', 'SmithTransform', 'zero_centered', 'into_voronoi',
+__all__ = [ 'Structure', 'Atom', 'HFTransform', 'zero_centered', 'into_voronoi',
             'into_cell', 'supercell', 'primitive', 'is_primitive', 'space_group',
             'transform', 'periodic_dnc', 'neighbors', 
             'coordination_shells', 'splitconfigs', 'vasp_ordered', 'layer_iterator',
             'equivalence_iterator', 'shell_iterator', 'specieset', 'map_sites',
             'which_site' ]
-from cppwrappers import Structure, Atom, SmithTransform, zero_centered, into_voronoi, \
+from cppwrappers import Structure, Atom, HFTransform, zero_centered, into_voronoi,    \
                         into_cell, supercell, primitive, is_primitive, space_group,   \
                         transform, periodic_dnc, neighbors, coordination_shells,      \
                         splitconfigs, map_sites
@@ -229,7 +229,7 @@ def which_site(atom, lattice, atoms=None, invcell=None):
       raise ValueError('If atoms is None, then the lattice should a lada.Structure.')
     atoms = [a.pos for a in lattice]
   
-  invcell = inv(lattice)
+  invcell = inv(lattice.cell)
   fracatoms = [dot(invcell, getattr(s, 'pos', s)) for s in atoms]
   fracatom = dot(invcell, getattr(atom, 'pos', atom))
   return which_site_impl(fracatom, fracatoms)

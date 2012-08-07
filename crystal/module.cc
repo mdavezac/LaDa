@@ -43,5 +43,5 @@ PyMODINIT_FUNC initcppwrappers(void)
 
   PyModule_AddObject(module, "Atom", (PyObject *)LaDa::crystal::atom_type());
   PyModule_AddObject(module, "Structure", (PyObject *)LaDa::crystal::structure_type());
-  PyModule_AddObject(module, "SmithTransform", (PyObject *)LaDa::crystal::hftransform_type());
+  PyModule_AddObject(module, "HFTransform", (PyObject *)LaDa::crystal::hftransform_type());
 }
