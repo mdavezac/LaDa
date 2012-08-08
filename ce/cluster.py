@@ -1,4 +1,4 @@
-def spin(position=None, flavor=0, sublattice=0):
+def spin(position=None, sublattice=0, flavor=0):
   """ Returns a spin. 
 
       A spin is a numpy `structured record`_  with fields for the position,
@@ -6,10 +6,10 @@ def spin(position=None, flavor=0, sublattice=0):
   """ 
   from numpy import array
   if position is None: position = 0,0,0
-  return array( [(position, flavor, sublattice)], 
+  return array( [(position, sublattice, flavor)], 
                 dtype=[ ('position', 'f8', 3), 
-                        ('flavor', 'i8', 1), 
-                        ('sublattice', 'i8', 1) ] )
+                        ('sublattice', 'i8', 1), 
+                        ('flavor', 'i8', 1) ] )
 
 class Cluster(object):
   def __init__(self, lattice):
@@ -55,20 +55,30 @@ class Cluster(object):
                         '   0 <= flavor < {0}\n'.format(len(site.type)-1) )
 
     # create spin and adds it to group.
-    return spin(position - self.lattice[sublattice].pos, flavor, sublattice)
+    return spin(position - self.lattice[sublattice].pos, sublattice, flavor)
 
   def add_spin(self, position, flavor=0):
     """ Adds a spin to array. 
     
         Changes array of spins. Hence, one should not keep a reference to a
         cluster's array of spins until it is complete.
+
+        :param position:
+          Atomic site on the back-bone lattice.
+        :type position: 3d-vector
+        :param (int) flavor:
+          Flavor of the function for the particular atomic-site. It should be
+          :math:`0 \leq \text{flavor} < M-1`, where :math:`M` is the number of
+          possible species on the atomic site. This defaults to 0 and can be
+          ignored in the case of binary cluster expansions.
     """
-    from numpy import concatenate
+    from numpy import concatenate, any, all
+    from ..error import ValueError
     # remove symmetrization.
     if hasattr(self, '_symmetrized'): del self._symmetrized
     spin = self._spin(position, flavor)
     if self.spins is None: self.spins = spin
-    elif any(self.spins == spin): 
+    elif any([all(s == spin) for s in self.spins]): 
       raise ValueError('Spin already present in cluster.')
     else: self.spins = concatenate((self.spins, spin), axis=0)
     
@@ -77,12 +87,13 @@ class Cluster(object):
     from numpy import all, any
     if len(spins) != self.order: return False
     for cluster in self._symmetrized: 
-      if all(any(cluster.spins == s) for s in spins): return True
+      if all([any([all(v == s) for s in spins]) for v in cluster]):
+        return True
     return False
 
   def _create_symmetrized(self):
     """ Computes equivalent clusters. """
-    from numpy import concatenate, all, dot, abs
+    from numpy import concatenate, all, dot, abs, any
     from lada.error import ValueError
     if self.spins is None or len(self.spins) == 0: return
     if all(abs(self.spins['position']) > 1e-8):
@@ -143,6 +154,8 @@ class Cluster(object):
     if transform is None: transform = HFTransform(self.lattice, structure)
     if fhmapping is None: fhmapping = fhmap(self.lattice, structure)
     result = 0e0
+    print self._symmetrized
+    raise  Exception()
     # loop over possible origin of cluster
     for origin in structure:
       pos = origin.pos - self.lattice[origin.site].pos

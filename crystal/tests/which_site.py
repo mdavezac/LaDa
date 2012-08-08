@@ -1,8 +1,8 @@
 """ Checks that map_sites is correct. """
 def test_b5(u):
   """ Test b5 space-group and equivalents """
-  from random import randint, random
-  from numpy import array
+  from numpy import array, dot
+  from numpy.random import randint
   from numpy.linalg import det
   from lada.crystal import Structure, which_site
 
@@ -22,9 +22,12 @@ def test_b5(u):
                      .add_atom(    -x,    -y,    -y, "X") \
                      .add_atom(    -y,    -x,    -y, "X") \
                      .add_atom(    -y,    -y,    -x, "X") 
+  assert which_site(lattice[6].pos + [0.5, -0.5, 2], lattice) == 6
   for i, atom in enumerate(lattice):
-    print which_site(atom.pos, lattice)
     assert which_site(atom.pos, lattice) == i
+    for j in xrange(10):
+      newpos = dot(lattice.cell, randint(10, size=(3,)) - 5)
+      assert which_site(atom.pos + newpos, lattice) == i, (atom.pos, newpos, i)
 
 if __name__ == "__main__":
   from sys import argv, path 

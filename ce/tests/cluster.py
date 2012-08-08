@@ -6,6 +6,99 @@ def get_cell(n=5):
     cell = randint(2*n, size=(3,3)) - n
   return cell
 
+def test_addspins():
+  """ Test adding spins to cluster. 
+     
+      Check failure modes.
+  """ 
+  from numpy import all, any, abs
+  from lada.crystal import binary
+  from lada.ce import Cluster
+  from lada.ce.cluster import spin
+  from lada.error import ValueError, IndexError
+
+  lattice = binary.zinc_blende()
+  lattice[0].type = ['Si', 'Ge']
+  lattice[1].type = ['Si', 'Ge', 'C']
+
+  a = Cluster(lattice)
+  
+  # Wrong position
+  try: a.add_spin(lattice[0].pos+0.1)
+  except ValueError: pass
+  else: raise Exception()
+  # Wrong flavor
+  try: a.add_spin(lattice[0].pos, 1)
+  except IndexError: pass
+  else: raise Exception()
+
+  # now add first spin
+  a.add_spin(lattice[0].pos)
+  assert len(a.spins) == 1
+  assert all(a.spins[0] == spin([0, 0, 0], 0, 0))
+
+  # try adding it again
+  try: a.add_spin(lattice[0].pos, 0)
+  except ValueError: pass
+  else: raise Exception()
+
+  # Wrong position
+  try: a.add_spin(lattice[1].pos+[1.1, -0.5, -2.5])
+  except ValueError: pass
+  else: raise Exception()
+  # Wrong flavor
+  try: a.add_spin(lattice[0].pos+[1.0, -0.5, -2.5], 2)
+  except IndexError: pass
+  else: raise Exception()
+
+  # Then add a differrent spin
+  a.add_spin(lattice[1].pos + [1.0, -0.5, -2.5], 1)
+  assert len(a.spins) == 2
+  assert all(a.spins[0] == spin([0, 0, 0], 0, 0))
+  assert all(a.spins[1] == spin([1.0, -0.5, -2.5], 1, 1))
+
+def test_cmp():
+  """ Test Cluster._contains function """
+  from numpy import all, any
+  from lada.crystal import binary
+  from lada.ce import Cluster
+  from lada.ce.cluster import spin
+
+  lattice = binary.zinc_blende()
+  lattice[0].type = ['Si', 'Ge']
+  lattice[1].type = ['Si', 'Ge', 'C']
+
+  def cmp(a,b):
+    if len(a) != len(b): return False
+    return all([any([all(v == s) for s in a]) for v in b])
+
+  a = Cluster(lattice)
+  a.add_spin(lattice[0].pos)
+  assert cmp(a.spins,     [spin([0, 0, 0], 0, 0)])
+  assert not cmp(a.spins, [spin([0.5, 0.5, 0.5], 0, 0)])
+  assert not cmp(a.spins, [spin([0, 0, 0], 0, 1)])
+  assert not cmp(a.spins, [spin([0, 0, 0], 1, 0)])
+  assert not cmp(a.spins, [spin([0, 0, 0], 1, 1)])
+  a = Cluster(lattice)
+  a.add_spin(lattice[1].pos, 1)
+  assert cmp(a.spins,     [spin([0, 0, 0], 1, 1)])
+  assert not cmp(a.spins, [spin([0.5, 0.5, 0.5], 1, 1)])
+  assert not cmp(a.spins, [spin([0, 0, 0], 0, 1)])
+  assert not cmp(a.spins, [spin([0, 0, 0], 1, 0)])
+  assert not cmp(a.spins, [spin([0, 0, 0], 0, 0)])
+  a.add_spin(lattice[0].pos)
+  assert cmp(a.spins,     [spin([0, 0, 0], 1, 1), spin([0, 0, 0])])
+  assert cmp(a.spins,     [spin([0, 0, 0]), spin([0, 0, 0], 1, 1)])
+  assert not cmp(a.spins, [spin([0, 0, 0], 1, 1), spin([0, 0, 0]), spin([1, 0, 0])])
+  assert not cmp(a.spins, [spin([1, 0, 0]), spin([0, 0, 0], 1, 1)])
+  assert not cmp(a.spins, [spin([0, 0, 0], 1), spin([0, 0, 0], 1, 1)])
+  assert not cmp(a.spins, [spin([0, 0, 0]), spin([0, 0, 0], 1, 0)])
+  a.add_spin(lattice[1].pos, 0)
+  assert cmp(a.spins,     [spin([0, 0, 0], 1, 1), spin([0, 0, 0]), spin([0,0,0], 1, 0)])
+  assert cmp(a.spins,     [spin([0, 0, 0]), spin([0,0,0], 1, 0), spin([0, 0, 0], 1, 1)])
+  assert not cmp(a.spins, [spin([0, 1, 0]), spin([0,0,0], 1, 0), spin([0, 0, 0], 1, 1)])
+  assert cmp(a.spins,     [spin([0, 0, 0]), spin([0,0,0], 1, 1), spin([0, 0, 0], 1, 1)])
+  
 def test_occmap():
   from numpy import cos, sin, pi
   from lada.crystal import binary
@@ -90,4 +183,6 @@ def test():
 
 if __name__ == '__main__': 
   test_occmap()
-  test()
+  test_addspins()
+  test_cmp()
+  # test()

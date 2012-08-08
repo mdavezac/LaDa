@@ -194,17 +194,6 @@ def shell_iterator(structure, center, direction, thickness=0.05):
       for index in layer: yield structure[index]
     yield inner_layer_iterator()
 
-def which_site_impl(fracatom, fracatoms, tolerance=1e-6):
-  """ Index of periodically equivalent atom.
-  
-      This version expects normalized input. Avoids recomputing input from what
-      it could be to what it should be.
-  """
-  from numpy import abs, mod
-  for i, site in enumerate(fracatoms):
-    if all(mod(abs(site - fracatom), [1.0, 1.0, 1.0])) < tolerance: return i
-  return -1
-
 def which_site(atom, lattice, atoms=None, invcell=None):
   """ Index of periodically equivalent atom. 
 
@@ -221,15 +210,10 @@ def which_site(atom, lattice, atoms=None, invcell=None):
 
       :return: index in list of atoms, or -1 if not found.
   """
-  from numpy import dot
   from numpy.linalg import inv
-  # normalizes input
-  if atoms is None:
-    if not isinstance(lattice, Structure):
-      raise ValueError('If atoms is None, then the lattice should a lada.Structure.')
-    atoms = [a.pos for a in lattice]
-  
+  from .cppwrappers import are_periodic_images as api
   invcell = inv(lattice.cell)
-  fracatoms = [dot(invcell, getattr(s, 'pos', s)) for s in atoms]
-  fracatom = dot(invcell, getattr(atom, 'pos', atom))
-  return which_site_impl(fracatom, fracatoms)
+  pos = getattr(atom, 'pos', atom)
+  for i, site in enumerate(lattice):
+    if api(pos, site.pos, invcell): return i
+  return -1
