@@ -83,6 +83,7 @@ def test():
         s = 0e0
         for t in site.type:
           s += float(types.count(t)) * mapping[i][flavor][t]
+        print a(superstructure), s, flavor, i
         assert abs(a(superstructure) - s) < 1e-8
         print 'here'
 

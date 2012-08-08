@@ -44,8 +44,6 @@ class Cluster(object):
     """ Returns formatted spin. """
     from lada.crystal import which_site
     from lada.error import IndexError, ValueError
-    # remove symmetrization.
-    if hasattr(self, '_symmetrized'): del self._symmetrized
 
     # find sublattice
     sublattice = which_site(position, self.lattice)
@@ -66,6 +64,8 @@ class Cluster(object):
         cluster's array of spins until it is complete.
     """
     from numpy import concatenate
+    # remove symmetrization.
+    if hasattr(self, '_symmetrized'): del self._symmetrized
     spin = self._spin(position, flavor)
     if self.spins is None: self.spins = spin
     elif any(self.spins == spin): 
@@ -82,16 +82,15 @@ class Cluster(object):
 
   def _create_symmetrized(self):
     """ Computes equivalent clusters. """
-    from numpy import concatenate, all
-    from numpy.linalg import norm
+    from numpy import concatenate, all, dot, abs
     from lada.error import ValueError
     if self.spins is None or len(self.spins) == 0: return
-    if all( norm(v) > 1e-8 for v in self.spins['position'] ):
+    if all(abs(self.spins['position']) > 1e-8):
       raise ValueError('Expected at least one spin in the unit cell.')
     self._symmetrized = []
     for op in self.spacegroup:
       # transform spins
-      spins = [ self._spin(op[:3] * spin['position'] + op[3], spin['flavor'])
+      spins = [ self._spin(dot(op[:3],spin['position'])+op[3], spin['flavor']) \
                 for spin in self.spins ]
       spins = concatenate(spins)
       # check if exists in symmetrized bits.
@@ -145,7 +144,7 @@ class Cluster(object):
     if fhmapping is None: fhmapping = fhmap(self.lattice, structure)
     result = 0e0
     # loop over possible origin of cluster
-    for origin in self.structure:
+    for origin in structure:
       pos = origin.pos - self.lattice[origin.site].pos
       # loop over symmetrically equivalent clusters
       for spins in self._symmetrized:
@@ -154,7 +153,7 @@ class Cluster(object):
         intermediate = 1e0
         # loop over each spin in cluster
         for spin in spins: 
-          index = transform.index(pos + spin['pos'], spin['sublattice'])
+          index = transform.index(pos + spin['position'], spin['sublattice'])
           atom  = structure[ fhmapping[index] ]
           intermediate *= mapping[atom.site][spin['flavor']][atom.type]
         result += intermediate
