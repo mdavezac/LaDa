@@ -1,9 +1,8 @@
 """ Checks that map_sites is correct. """
 def test_b5(u):
   """ Test b5 space-group and equivalents """
-  from numpy import array, dot
+  from numpy import dot
   from numpy.random import randint
-  from numpy.linalg import det
   from lada.crystal import Structure, which_site
 
   x, y = u, 0.25-u

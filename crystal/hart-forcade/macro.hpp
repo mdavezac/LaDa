@@ -26,7 +26,7 @@
        );                                                                  \
        for( size_t i(0); i < 3; ++i )                                      \
        {                                                                   \
-         if( math::neq(pos_(i), types::t_real(int_pos(i))) )               \
+         if( math::neq(pos_(i), types::t_real(int_pos(i)), 1e-4) )         \
          {                                                                 \
            ERROR(ValueError, "Position is not on the lattice.");           \
            RETURN;                                                         \

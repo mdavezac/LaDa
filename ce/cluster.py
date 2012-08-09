@@ -72,15 +72,32 @@ class Cluster(object):
           possible species on the atomic site. This defaults to 0 and can be
           ignored in the case of binary cluster expansions.
     """
-    from numpy import concatenate, any, all
+    from operator import itemgetter
+    from numpy import concatenate, any, all, sum, logical_and
     from ..error import ValueError
     # remove symmetrization.
     if hasattr(self, '_symmetrized'): del self._symmetrized
+    # create spin
     spin = self._spin(position, flavor)
-    if self.spins is None: self.spins = spin
-    elif any([all(s == spin) for s in self.spins]): 
+    # if first spin, easy way out.
+    if self.spins is None:
+      self.spins = spin
+      return 
+    # otherwise, check whether it is already in the cluster
+    positions   = all(self.spins['position'] == spin['position'], axis=1) 
+    sublattices = self.spins['sublattice'] == spin['sublattice']
+    if any(logical_and(positions, sublattices)): 
       raise ValueError('Spin already present in cluster.')
-    else: self.spins = concatenate((self.spins, spin), axis=0)
+    # Sort the spins. Since we also require that at least one spin is in the
+    # unit-cell, this should mean fewer calculations at the  end of the day.
+    self.spins = concatenate((self.spins, spin), axis=0)
+    spins = sum(self.spins['position']* self.spins['position'], axis=1)
+    spins = [ (s, l, f, p[0], p[1], p[2])                                      \
+              for s, l, f, p in zip( spins, self.spins['sublattice'], 
+                                     self.spins['flavor'],
+                                     self.spins['position']) ]
+    spins = [u[0] for u in sorted(enumerate(spins), key=itemgetter(1))]
+    self.spins = self.spins[spins].copy()
     
   def _contains(self, spins):
     """ Compares cluster to those already in _symmetrized """
@@ -93,17 +110,23 @@ class Cluster(object):
 
   def _create_symmetrized(self):
     """ Computes equivalent clusters. """
-    from numpy import concatenate, all, dot, abs, any
-    from lada.error import ValueError
+    from numpy import concatenate, all, dot, abs
+    from ..crystal import into_voronoi as iv
+    from ..error import ValueError
     if self.spins is None or len(self.spins) == 0: return
-    if all(abs(self.spins['position']) > 1e-8):
-      raise ValueError('Expected at least one spin in the unit cell.')
+    if all(abs(self.spins['position'][0]) > 1e-8):
+      raise ValueError('Expected first spin in the unit cell.')
     self._symmetrized = []
+    positions = [ p + self.lattice[s].pos                                      \
+                  for p, s in zip( self.spins['position'], 
+                                   self.spins['sublattice'] ) ]
     for op in self.spacegroup:
       # transform spins
-      spins = [ self._spin(dot(op[:3],spin['position'])+op[3], spin['flavor']) \
-                for spin in self.spins ]
+      spins = [ self._spin(dot(op[:3],p)+op[3], flavor)                        \
+                for p, flavor in zip(positions, self.spins['flavor']) ]
       spins = concatenate(spins)
+      assert all(abs(iv(spins[0]['position'], self.lattice.cell)) < 1e8)
+      spins['position'] -= spins[0]['position']
       # check if exists in symmetrized bits.
       if not self._contains(spins): self._symmetrized.append(spins)
 
@@ -154,8 +177,6 @@ class Cluster(object):
     if transform is None: transform = HFTransform(self.lattice, structure)
     if fhmapping is None: fhmapping = fhmap(self.lattice, structure)
     result = 0e0
-    print self._symmetrized
-    raise  Exception()
     # loop over possible origin of cluster
     for origin in structure:
       pos = origin.pos - self.lattice[origin.site].pos
@@ -184,6 +205,10 @@ def fhmap(lattice, supercell):
       raise ValueError( 'Atoms in supercell were not mapped to lattice. '      \
                         'Please use lada.crystal.map_sites.' )
     site = getattr(atom, 'site', 0)
-    index = transform.index(atom.pos - lattice[site].pos, site)
+    try: index = transform.index(atom.pos - lattice[site].pos, site)
+    except ValueError:
+      print supercell.cell
+      print atom.pos, lattice[site].pos, atom.pos-lattice[site].pos
+      raise
     results[index] = i
   return results
