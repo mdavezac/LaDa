@@ -50,7 +50,8 @@ class Cluster(object):
     if sublattice == -1: raise ValueError('Could not find atomic site')
     site = self.lattice[sublattice]
 
-    if flavor < 0 or flavor >= len(site.type) - 1:
+    # keep negative flavors as markers
+    if flavor >= 0 and flavor >= len(site.type) - 1:
       raise IndexError( 'Incorrect flavor for given sublattice.\n'            \
                         '   0 <= flavor < {0}\n'.format(len(site.type)-1) )
 
@@ -191,6 +192,16 @@ class Cluster(object):
           atom  = structure[ fhmapping[index] ]
           intermediate *= mapping[atom.site][spin['flavor']][atom.type]
         result += intermediate
+    return result
+
+  def __str__(self):
+    if self.order == 0: return 'J0'
+    if self.order == 1:
+      sublat = self.spins['sublattice'][0]
+      flavor = self.spins['flavor'][0]
+      nflavr = -1 if flavor < 0 else len(self.lattice[sublat].type) - 1
+      return 'J1: site {0}, flavor {1}/{2}'.format(sublat, flavor, nflavr)
+    result = 'M{0}:\n{1}\n'.format(self.order, self.spins)
     return result
 
 

@@ -17,7 +17,7 @@ def cluster_factory(lattice, J0=False, J1=False, **mb):
   from numpy import dot
   from re import compile, match
   from .cluster import Cluster
-  from ..crystal import which_site
+  from ..crystal import which_site, space_group
 
   # checks that keywords are well formed.
   key_regex = compile("B(\d+)")
@@ -30,10 +30,11 @@ def cluster_factory(lattice, J0=False, J1=False, **mb):
 
   # sanity check.
   assert len(mb) > 0 or J0 or J1, ValueError("No clusters to create.")
+  lattice.space_group = space_group(lattice)
 
   # computes equivalent sites.
-  nonequiv = set( i for i in range(len(lattice.sites)) ) 
-  for i, site in enumerate(lattice.sites):
+  nonequiv = set( i for i in range(len(lattice)) ) 
+  for i, site in enumerate(lattice):
     if i not in nonequiv: continue
     for op in lattice.space_group:
       j = which_site( dot(op[:3], site.pos) + op[3], lattice )
@@ -50,79 +51,103 @@ def cluster_factory(lattice, J0=False, J1=False, **mb):
   # then creates J1 for these sites.
   if J1: 
     for i in nonequiv: 
-      site = lattice[j]
+      site = lattice[i]
       if not hasattr(site.type, '__iter__'): continue
       for flavor in xrange(len(site.type)-1): 
         cluster = Cluster(lattice)
-        cluster.add_spin(lattice[i].pos, flavor)
+        cluster.add_spin(site.pos, flavor)
         result.append(cluster)
   # creates many bodies.
   for key in sorted(mb.keys()):
     if mb[key] <= 0: continue
     regex = match(key_regex, key)
     order = int(regex.group(1))
-    dummy = _create_clusters(lattice, shell=mb[key], order=order)
+    dummy = _create_clusters(lattice, nshells=mb[key], order=order)
     result.extend(dummy)
   return result
 
 def _create_clusters(lattice, nshells, order):
   """ Creates sets of clusters of given order up to given shell """
-  from itertools import product, combination,                                  \
+  from itertools import product, combinations, chain,                           \
                         combinations_with_replacement as cwr
+  from copy import deepcopy
   from ..crystal import coordination_shells
-  from .cluster import Cluster
-
-  def flatten(*args):
-    """ Flatten arguments """
-    result = []
-    for arg in args:
-      if hasattr(arg, '__iter__'): 
-        for a in flatten(arg): result.append(a)
-      else: result.append(arg)
+  from .cluster import Cluster, spin
 
   def flavor_loop(which_shells, shells):
     """ Flattens loop over positions and flavors """
     ws = set(which_shells)
-    iterable = [ (xrange(len(shells[s])), which_shell.count(s))                \
-                 for s in set(which_shells) ]
-    iterable = [combination(l, c) for l, c in iterable]
+    iterables = [ (xrange(len(shells[s])), which_shells.count(s))              \
+                  for s in set(which_shells) ]
+    iterables = [combinations(l, c) for l, c in iterables]
     for indices in product(*iterables):
-      print indices
-      indices = flatten(*indices)
-      positions = [ shell[which_shell[i]][index] 
+      indices = _flatten(*indices)
+      positions = [ shells[which_shells[i]][index] 
                     for i, index in enumerate(indices) ]
-      iflavors = [xrange(len(atom.type)-1) for atom, vector, distance in positions]
+      iflavors = [xrange(len(atom.type)-1) for atom, v, d in positions]
       for flavors in product(*iflavors):
-        yield [(p[0], p[1], f) for p, f in zip(positions, flavors)]
+        yield ((p[1], f) for p, f in zip(positions, flavors))
 
 
       
   firsts = [atom for atom in lattice if atom.asymmetric]
-  result = []
-  for sublattice, site in enumerate(first): 
+  results = []
+  for sublattice, site in enumerate(firsts): 
     if not hasattr(site.type, '__iter__'): continue
     if len(site.type) < 2: continue
     # compute coordination shells, removing those atoms which do not have the
     # more than one type
     shells = []
     for shell in coordination_shells(lattice, nshells, site.pos):
-      intermediate = [p for p in shell if hasattr(p[0], '__iter__')]
-      intermediate = [p for p in intermediate if len(p[0]) > 1]
+      intermediate = [p for p in shell if hasattr(p[0].type, '__iter__')]
+      intermediate = [p for p in intermediate if len(p[0].type) > 1]
       if len(intermediate) > 0: shells.append(intermediate)
     
     # Loop over combination of shells. 
     # We pick spins explicitely from the coordination shells.
     # Since each shell contains all symmetrically equivalent spins (possibly
     # more than one group of symmetrically equivalent spins, but this is
-    # easier), we need only to check symmetry issues within the combination
-    # loop (eg the one right below this statement).
+    # easier), we need to check symmetry issues within the combination
+    # loop preferentially (eg the one right below this statement). 
     for whichshells in cwr(range(len(shells)), order-1):
       intermediates = []
       # check we are not asking for too many spins from same shell.
       if any( len(shells[s]) < whichshells.count(s) for s in whichshells ): 
         continue
-      a = Cluster(lattice)
-      a.spins = spin([0,0,0], sublattice, flavor)
+      # This loops over blocks of atomic positions and associated flavor.
+      # Within this loop, the clusters can be created and tested.
+      for block in flavor_loop(whichshells, shells):
+        a = Cluster(lattice)
+        a.spins = spin([0,0,0], sublattice, -1)
+        for vector, flavor in block:
+          a.add_spin(site.pos + vector, flavor)
+        if any(b._contains(a.spins) for b in intermediates): continue
+        a._create_symmetrized()
+        intermediates.append(a)
+      # now loop over flavors of first site
+      for cls in intermediates:
+        for flavor in xrange(len(site.type)-1):
+          # just to make sure, there are still issues for clusters involving
+          # different sublattices.
+          spins = cls.spins.copy()
+          for s in spins: 
+            if s['flavor'] == -1: s['flavor'] = flavor
+          if any(b._contains(spins) for b in results): continue
+          # Now change flavor in all and add cls
+          cls = deepcopy(cls)
+          for s in chain(cls.spins, chain(*cls._symmetrized)): 
+            if s['flavor'] == -1: s['flavor'] = flavor
+          results.append(cls)
+  return results
+
+
+def _flatten(*args):
+  """ Flatten arguments """
+  result = []
+  for arg in args:
+    if hasattr(arg, '__iter__'): result.extend(_flatten(*arg))
+    else:                        result.append(arg)
+  return result
 
  
 
