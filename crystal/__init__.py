@@ -194,7 +194,7 @@ def shell_iterator(structure, center, direction, thickness=0.05):
       for index in layer: yield structure[index]
     yield inner_layer_iterator()
 
-def which_site(atom, lattice, atoms=None, invcell=None):
+def which_site(atom, lattice, invcell=None):
   """ Index of periodically equivalent atom. 
 
 
@@ -203,16 +203,12 @@ def which_site(atom, lattice, atoms=None, invcell=None):
       :param lattice:
         :py:class:`~cppwrappers.Structure` defining the periodicity.
       :type lattice: :py:class:`~cppwrappers.Structure` or matrix
-      :param atoms:
-        Subset of :py:class:`~cppwrappers.Atoms` from which to find periodic
-        equivalent,
-      :type lattice: :py:class:`~cppwrappers.Structure` or vector
 
       :return: index in list of atoms, or -1 if not found.
   """
   from numpy.linalg import inv
   from .cppwrappers import are_periodic_images as api
-  invcell = inv(lattice.cell)
+  if invcell is None: invcell = inv(lattice.cell)
   pos = getattr(atom, 'pos', atom)
   for i, site in enumerate(lattice):
     if api(pos, site.pos, invcell): return i

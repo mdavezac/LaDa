@@ -81,22 +81,23 @@ namespace LaDa
                         ":param vec: A 3d-vector in the sublattice of interest.\n"
                         ":returns: The 3-d indices in the cyclic group.\n" ),
           LADA_DECLARE( flatten_indices,   hftransform_flatten_indices, VARARGS | METH_KEYWORDS,
-                       "Flattens cyclic Z-group indices.\n\n"
-                       ":param indices: (3-tuple of integers)\n"
-                       "  Indices in the cyclic Z-group.\n"
-                       ":param site: (integer)\n"
-                       "   Optional site index. If there are more than one sublattice in "
-                          "the structure, then the flattened indices need to take this into "
-                          "account.\n" ),
+                        "Flattens cyclic Z-group indices.\n\n"
+                        ":param indices: (3-tuple of integers)\n"
+                        "  Indices in the cyclic Z-group.\n"
+                        ":param site: (integer)\n"
+                        "   Optional site index. If there are more than one\n"
+                        "   sublattice in the structure, then the flattened\n"
+                        "   indices need to take this into account.\n" ),
           LADA_DECLARE( index,   hftransform_flat_index, VARARGS | METH_KEYWORDS,
-                       "Flat index into cyclic Z-group.\n\n"
-                       ":param pos: (3d-vector)\n"
-                       "    Atomic position with respect to the sublattice of interest. "
-                           "Do not forget to shift the sublattice back to the origin.\n"
-                       ":param site: (integer)\n"
-                       "   Optional site index. If there are more than one sublattice in "
-                          "the structure, then the flattened indices need to take this into "
-                          "account.\n" ),
+                        "Flat index into cyclic Z-group.\n\n"
+                        ":param pos: (3d-vector)\n"
+                        "    Atomic position with respect to the sublattice of\n"
+                        "    interest.  Do not forget to shift the sublattice\n"
+                        "    back to the origin.\n"
+                        ":param site: (integer)\n"
+                        "   Optional site index. If there are more than one\n"
+                        "   sublattice in the structure, then the flattened\n"
+                        "   indices need to take this into account.\n" ),
           {NULL}  /* Sentinel */
       };
 #     undef LADA_DECLARE
@@ -124,12 +125,16 @@ namespace LaDa
           0,                                 /*tp_as_buffer*/
           Py_TPFLAGS_DEFAULT,                /*tp_flags*/
           "Defines a hftransform.\n\n"    /*tp_doc*/
-            "The Hart-Forcade transform computes the cyclic group of supercell "
-            "with respect to its backbone lattice. It can then be used to index "
-            "atoms in the supercell, irrespective of which periodic image is given [HF]_.\n\n"
-            ":param lattice: (:py:func:`Structure` or matrix)\n   Defines the cyclic group.\n"
-            ":param supercell: (:py:func:`Structure` or matrix)\n"
-            "    Supercell for which to compute cyclic group.\n\n",
+          "The Hart-Forcade transform computes the cyclic group of supercell\n"
+          "with respect to its backbone lattice. It can then be used to index\n"
+          "atoms in the supercell, irrespective of which periodic image is given\n"
+          "[HF]_.\n\n"
+          ":param lattice:\n"
+          "   Defines the cyclic group.\n"
+          ":type lattice: :py:func:`Structure` or matrix\n"
+          ":param supercell:\n"
+          "    Supercell for which to compute cyclic group.\n"
+          ":type supercell: :py:func:`Structure` or matrix\n",
           0,                                 /* tp_traverse */
           0,                                 /* tp_clear */
           0,		                     /* tp_richcompare */
