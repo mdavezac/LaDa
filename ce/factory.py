@@ -32,7 +32,7 @@ def cluster_factory(lattice, J0=False, J1=False, **mb):
   assert len(mb) > 0 or J0 or J1, ValueError("No clusters to create.")
   lattice.space_group = space_group(lattice)
 
-  # computes equivalent sites.
+  # computes equivalent sites and add stuff to lattice for later
   nonequiv = set( i for i in range(len(lattice)) ) 
   for i, site in enumerate(lattice):
     if i not in nonequiv: continue
@@ -42,6 +42,7 @@ def cluster_factory(lattice, J0=False, J1=False, **mb):
   lattice = lattice.copy()
   for i, site in enumerate(lattice):
     site.asymmetric = i in nonequiv
+    site.index = i
 
   result = []
   # now creates multi-lattice clusters, along with index bookkeeping.
@@ -68,13 +69,14 @@ def cluster_factory(lattice, J0=False, J1=False, **mb):
 
 def _create_clusters(lattice, nshells, order):
   """ Creates sets of clusters of given order up to given shell """
-  from itertools import product, combinations, chain,                           \
+  from itertools import product, combinations, chain, imap,                     \
                         combinations_with_replacement as cwr
   from copy import deepcopy
+  from numpy import concatenate
   from ..crystal import coordination_shells
   from .cluster import Cluster, spin
 
-  def flavor_loop(which_shells, shells):
+  def pick_loop(which_shells, shells, site):
     """ Flattens loop over positions and flavors """
     ws = set(which_shells)
     iterables = [ (xrange(len(shells[s])), which_shells.count(s))              \
@@ -84,14 +86,13 @@ def _create_clusters(lattice, nshells, order):
       indices = _flatten(*indices)
       positions = [ shells[which_shells[i]][index] 
                     for i, index in enumerate(indices) ]
-      iflavors = [xrange(len(atom.type)-1) for atom, v, d in positions]
-      for flavors in product(*iflavors):
-        yield ((p[1], f) for p, f in zip(positions, flavors))
-
-
+      yield ( ( p[1] if p[0] is site else p[1] - p[0].pos + site.pos,          \
+                p[0].index )                                                   \
+              for p in positions )
+      continue
       
   firsts = [atom for atom in lattice if atom.asymmetric]
-  results = []
+  figures = []
   for sublattice, site in enumerate(firsts): 
     if not hasattr(site.type, '__iter__'): continue
     if len(site.type) < 2: continue
@@ -99,9 +100,9 @@ def _create_clusters(lattice, nshells, order):
     # more than one type
     shells = []
     for shell in coordination_shells(lattice, nshells, site.pos):
-      intermediate = [p for p in shell if hasattr(p[0].type, '__iter__')]
-      intermediate = [p for p in intermediate if len(p[0].type) > 1]
-      if len(intermediate) > 0: shells.append(intermediate)
+      intermediates = [p for p in shell if hasattr(p[0].type, '__iter__')]
+      intermediates = [p for p in intermediates if len(p[0].type) > 1]
+      if len(intermediates) > 0: shells.append(intermediates)
     
     # Loop over combination of shells. 
     # We pick spins explicitely from the coordination shells.
@@ -116,29 +117,31 @@ def _create_clusters(lattice, nshells, order):
         continue
       # This loops over blocks of atomic positions and associated flavor.
       # Within this loop, the clusters can be created and tested.
-      for block in flavor_loop(whichshells, shells):
+      for block in pick_loop(whichshells, shells, site):
+        block = [k for k in block]
+        print site.index, block
         a = Cluster(lattice)
-        a.spins = spin([0,0,0], sublattice, -1)
-        for vector, flavor in block:
-          a.add_spin(site.pos + vector, flavor)
+        iterable = chain([([0,0,0], sublattice)], block) 
+        a.spins  = concatenate([spin(*u) for u in iterable])
         if any(b._contains(a.spins) for b in intermediates): continue
+        if any(b._contains(a.spins) for b in figures): continue
         a._create_symmetrized()
         intermediates.append(a)
-      # now loop over flavors of first site
-      for cls in intermediates:
-        for flavor in xrange(len(site.type)-1):
-          # just to make sure, there are still issues for clusters involving
-          # different sublattices.
-          spins = cls.spins.copy()
-          for s in spins: 
-            if s['flavor'] == -1: s['flavor'] = flavor
-          if any(b._contains(spins) for b in results): continue
-          # Now change flavor in all and add cls
-          cls = deepcopy(cls)
-          for s in chain(cls.spins, chain(*cls._symmetrized)): 
-            if s['flavor'] == -1: s['flavor'] = flavor
-          results.append(cls)
-  return results
+      figures.extend(intermediates)
+
+  results = []
+  for r in figures:
+    spins = r.spins
+    iterable = (range(len(lattice[s].type)-1) for s in spins['sublattice'])
+    intermediates = []
+    for flavors in product(*[k for k in iterable]):
+      spins['flavor'] = flavors
+      if any(b._contains(spins) for b in intermediates): continue
+      a = Cluster(lattice, spins.copy())
+      a._create_symmetrized()
+      intermediates.append(a)
+    results.extend(intermediates)
+  return figures
 
 
 def _flatten(*args):

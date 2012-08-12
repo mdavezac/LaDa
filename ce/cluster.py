@@ -12,7 +12,7 @@ def spin(position=None, sublattice=0, flavor=0):
                         ('flavor', 'i8', 1) ] )
 
 class Cluster(object):
-  def __init__(self, lattice):
+  def __init__(self, lattice, spins=None):
     from lada.crystal import Structure, space_group
     from lada.error import ValueError
 
@@ -26,7 +26,7 @@ class Cluster(object):
         Should be an instance of
         :py:class:`~lada.crystal.cppwrappers.Structure` or derived.
     """
-    self.spins = None
+    self.spins = spins
     """ Holds array of spins. """
     self.spacegroup = space_group(self.lattice)
     """ Symmetry operations. """
