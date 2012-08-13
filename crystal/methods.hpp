@@ -16,15 +16,15 @@ namespace LaDa
         return NULL;                                                                    \
       }                                                                                 \
       math::rMatrix3d cell, invcell;                                                    \
-      if(not python::convert_to_matrix(PyTuple_GET_ITEM(_args, 1), cell)) return false; \
+      if(not python::convert_to_matrix(PyTuple_GET_ITEM(_args, 1), cell)) return NULL;  \
       if(N == 3 and not python::convert_to_matrix(PyTuple_GET_ITEM(_args, 2), invcell)) \
-        return false;                                                                   \
+        return NULL;                                                                    \
       if(N == 2) invcell = cell.inverse();                                              \
       PyObject *positions = PyTuple_GET_ITEM(_args, 0);                                 \
       if(not PyArray_Check(positions))                                                  \
       {                                                                                 \
         math::rVector3d a;                                                              \
-        if(not python::convert_to_vector(positions, a)) return false;                   \
+        if(not python::convert_to_vector(positions, a)) return NULL;                    \
         try                                                                             \
         {                                                                               \
           math::rVector3d vector = NAME(a, cell, invcell);                              \
@@ -100,9 +100,9 @@ namespace LaDa
       }
       math::rMatrix3d invcell;
       math::rVector3d a, b;
-      if(not python::convert_to_vector(PyTuple_GET_ITEM(_args, 0), a)) return false;
-      if(not python::convert_to_vector(PyTuple_GET_ITEM(_args, 1), b)) return false;
-      if(not python::convert_to_matrix(PyTuple_GET_ITEM(_args, 2), invcell)) return false;
+      if(not python::convert_to_vector(PyTuple_GET_ITEM(_args, 0), a)) return NULL;
+      if(not python::convert_to_vector(PyTuple_GET_ITEM(_args, 1), b)) return NULL;
+      if(not python::convert_to_matrix(PyTuple_GET_ITEM(_args, 2), invcell)) return NULL;
       try
       { 
         if(N == 3 and math::are_periodic_images(a, b, invcell) ) Py_RETURN_TRUE;

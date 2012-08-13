@@ -194,7 +194,7 @@ def shell_iterator(structure, center, direction, thickness=0.05):
       for index in layer: yield structure[index]
     yield inner_layer_iterator()
 
-def which_site(atom, lattice, invcell=None):
+def which_site(atom, lattice, invcell=None, tolerance=1e-8):
   """ Index of periodically equivalent atom. 
 
 
@@ -211,5 +211,5 @@ def which_site(atom, lattice, invcell=None):
   if invcell is None: invcell = inv(lattice.cell)
   pos = getattr(atom, 'pos', atom)
   for i, site in enumerate(lattice):
-    if api(pos, site.pos, invcell): return i
+    if api(pos, site.pos, invcell, tolerance): return i
   return -1

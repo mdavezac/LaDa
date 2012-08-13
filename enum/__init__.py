@@ -26,11 +26,11 @@ class Transforms(object):
     self._enhance_lattice()
     self.equivmap = [u.equivto for u in self.lattice]
     """ Site map for label exchange. """
-    self.flavors = [ range(site.nbflavors) for site in self.lattice            \
-                     if site.nbflavors != 0 and site.asymmetric ]
+    self.flavors = [ range(1, site.nbflavors) for site in self.lattice         \
+                     if site.nbflavors != 1 and site.asymmetric ]
     """ List of possible flavors for each asymmetric site. """
     invcell = inv(lattice.cell)
-    sites = [site for site in self.lattice if site.asymmetric]
+    sites = [site for site in self.lattice if site.nbflavors != 1]
     for op in self.space_group[1:]:
       self.dnt.append([])
       for i, site in enumerate(sites):
@@ -43,17 +43,26 @@ class Transforms(object):
     """ Adds stuff to the lattice """
     from numpy import dot
     from ..crystal import which_site
-    nonequiv = set( i for i in range(len(self.lattice)) ) 
+    index = 0
     for i, site in enumerate(self.lattice):
-      site.equivto = i
-      for op in self.space_group:
-        j = which_site( dot(op[:3], site.pos) + op[3], self.lattice )
-        if j > i and j in nonequiv: nonequiv.remove(j)
-        if j < i: site.equivto = j
+      site.equivto = set([i])
+      for op in self.space_group[1:]:
+        j = which_site( dot(op[:3], site.pos) + op[3], self.lattice)
+        if j == -1: print op, site.pos, dot(op[:3], site.pos) + op[3]
+        assert j != -1
+        site.equivto.add(j)
+    for site in self.lattice:
+      intermediate = set()
+      for j in site.equivto: intermediate |= self.lattice[j].equivto
+    for site in self.lattice: site.equivto = min(site.equivto)
+    for i, site in enumerate(self.lattice):
+      if not hasattr(site.type, '__iter__'): site.nbflavors = 1
+      elif len(site.type) < 2:               site.nbflavors = 1
+      else:
+        site.nbflavors = len(site.type)
+        site.index = index
+        index += 1
       site.asymmetric = site.equivto == i
-      if not hasattr(site.type, '__iter__'): site.nbflavors = 0
-      elif len(site.type) > 1:               site.nbflavors = 0
-      else: site.nbflabors = len(site.type) - 1
 
   def translations(self, hft):
     """ Array of permutations arising from pure translations """
@@ -150,6 +159,9 @@ class Transforms(object):
     from numpy import zeros
     result = zeros(len(structure), dtype='int')
     for atom in structure:
-      index = hft.index(atom.pos - self.lattice[atom.site].pos)
-      result[index] = self.lattice[atom.equivto].type.find(atom.type)
+      site = atom.site
+      if self.lattice[site].nbflavors == 1: continue
+      site = self.lattice[atom.site]
+      index = hft.index(atom.pos - site.pos, site.index)
+      result[index] = site.type.index(atom.type) + 1
     return result

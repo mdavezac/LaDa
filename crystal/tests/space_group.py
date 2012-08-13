@@ -56,6 +56,21 @@ def test_b5(u):
 
     assert equivalent(structure, other, cartesian=False)
     assert equivalent(other, structure, cartesian=False)
+
+  structure[0], structure[-1] = structure[-1], structure[0]
+  ops = space_group(structure)
+  assert len(ops) == 48
+  for op in ops:
+    assert op.shape == (4, 3)
+
+    other = transform(structure, op)
+    assert all(abs(dot(op[:3], structure.cell)-other.cell) < 1e-8)
+    for a, atom in zip(structure, other):
+      assert all(abs(dot(op[:3], a.pos) + op[3] - atom.pos) < 1e-8)
+      assert a.type == atom.type
+
+    assert equivalent(structure, other, cartesian=False)
+    assert equivalent(other, structure, cartesian=False)
     
 def test_zb():
   from numpy import all, abs, dot

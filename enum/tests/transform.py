@@ -103,55 +103,96 @@ def test_rotations():
 def test_lattice():
   """ Tests lattice enhancements. """
   from numpy import all
-  from lada.crystal import binary
+  from lada.crystal import binary, A2BX4
+  from lada.enum import Transforms
+
+ #lattice = binary.zinc_blende()
+ #lattice[0].type = ['Si', 'Ge']
+ #lattice[1].type = ['Si', 'Ge']
+ #transforms = Transforms(lattice)
+ #assert len([u for u in transforms.lattice if u.asymmetric]) == 1
+ #assert transforms.lattice[0].asymmetric
+ #assert transforms.lattice[0].equivto == 0
+ #assert transforms.lattice[0].nbflavors == 2
+ #assert transforms.lattice[0].index == 0
+ #assert not transforms.lattice[1].asymmetric
+ #assert transforms.lattice[1].equivto == 0
+ #assert transforms.lattice[1].nbflavors == 2
+ #assert transforms.lattice[1].index == 1
+ #assert all(all(a == b) for a, b in zip(transforms.flavors, (range(1), range(1))))
+ #assert all(not hasattr(atom, 'nbflavors') for atom in lattice)
+
+ #lattice = binary.zinc_blende()
+ #lattice[0].type = ['Si', 'Ge']
+ #lattice[1].type = ['Si', 'Ge', 'C']
+ #transforms = Transforms(lattice)
+ #assert len([u for u in transforms.lattice if u.asymmetric]) == 2
+ #assert transforms.lattice[0].asymmetric
+ #assert transforms.lattice[0].equivto == 0
+ #assert transforms.lattice[0].nbflavors == 2
+ #assert transforms.lattice[0].index == 0
+ #assert transforms.lattice[0].asymmetric
+ #assert transforms.lattice[1].equivto == 1
+ #assert transforms.lattice[1].nbflavors == 3
+ #assert transforms.lattice[1].index == 1
+ #assert all(all(a == b) for a, b in zip(transforms.flavors, (range(1), range(2))))
+
+  lattice = A2BX4.b5() 
+  for atom in lattice: 
+    if atom.type in ['A', 'B']: atom.type = 'A', 'B'
+  transforms = Transforms(lattice)
+  print transforms.lattice
+ #assert len([u for u in transforms.lattice if u.asymmetric]) == 3
+ #assert all([transforms.lattice[i].asymmetric for i in [0, 4, 6]])
+ #assert all([not transforms.lattice[i].asymmetric for i in range(1, 4) + [5] + range(7, 14)])
+ #assert all([transforms.lattice[i].equivto == 0 for i in range(4)])
+ #assert all([transforms.lattice[i].equivto == 4 for i in range(4, 6)])
+ #assert all([transforms.lattice[i].equivto == 6 for i in range(6, 14)])
+ #assert all([transforms.lattice[i].nbflavors == 2 for i in range(4)])
+ #assert all([transforms.lattice[i].nbflavors == 2 for i in range(4, 6)])
+ #assert all([transforms.lattice[i].nbflavors == 1 for i in range(6, 14)])
+ #assert all([transforms.lattice[i].index == i for i in range(6)])
+ #assert all([not hasattr(transforms.lattice[i], 'index') for i in range(6, 14)])
+
+  lattice[0], lattice[-1] = lattice[-1], lattice[0]
+  print lattice
+  transforms = Transforms(lattice)
+  print transforms.lattice
+
+def test_toarray():
+  """ Tests label exchange """
+  from random import choice
+  from numpy import all, dot, zeros
+  from numpy.linalg import inv
+  from lada.crystal import binary, supercell, HFTransform, space_group,        \
+                           which_site
   from lada.enum import Transforms
 
   lattice = binary.zinc_blende()
   lattice[0].type = ['Si', 'Ge']
-  lattice[1].type = ['Si', 'Ge']
-  transforms = Transforms(lattice)
-  assert len([u for u in transforms.lattice if u.asymmetric]) == 1
-  assert transforms.lattice[0].asymmetric
-  assert transforms.lattice[0].equivto == 0
-  assert not transforms.lattice[1].asymmetric
-  assert transforms.lattice[1].equivto == 0
-  assert all(all(a == b) for a, b in zip(transforms.flavors, (range(1), range(1))))
-
-  lattice = binary.zinc_blende()
-  lattice[0].type = ['Si', 'Ge']
   lattice[1].type = ['Si', 'Ge', 'C']
+  sg = space_group(lattice)
+  invcell = inv(lattice.cell)
   transforms = Transforms(lattice)
-  assert len([u for u in transforms.lattice if u.asymmetric]) == 2
-  assert transforms.lattice[0].asymmetric
-  assert transforms.lattice[0].equivto == 0
-  assert transforms.lattice[0].asymmetric
-  assert transforms.lattice[1].equivto == 1
-  assert all(all(a == b) for a, b in zip(transforms.flavors, (range(1), range(2))))
+  lattice = transforms.lattice
 
-# def test_labelexchange():
-#   """ Tests label exchange """
-#   from random import choice
-#   from numpy import all, dot, zeros
-#   from numpy.linalg import inv
-#   from lada.crystal import binary, supercell, HFTransform, space_group,        \
-#                            which_site
-#   from lada.enum import Transforms
+  for u in xrange(11):
+    structure = supercell(lattice, get_cell())
+    for atom in structure: atom.type = choice(atom.type)
+    hft = HFTransform(lattice, structure) 
+    a = transforms.toarray(hft, structure)
+    b = zeros(len(structure), dtype='int')
+    for atom in structure:
+      site = lattice[atom.site]
+      b[hft.index(atom.pos-site.pos, atom.site)]                               \
+        = site.type.index(atom.type) + 1
+    assert all(a == b)
 
-#   lattice = binary.zinc_blende()
-#   lattice[0].type = ['Si', 'Ge']
-#   lattice[1].type = ['Si', 'Ge', 'C']
-#   sg = space_group(lattice)
-#   invcell = inv(lattice.cell)
-
-#   for u in xrange(1):
-#     structure = supercell(lattice, get_cell(u))
-#     transforms = Transforms(lattice)
-#     assert len([u for u in transforms.lattice if u.asymmetric]) == 2
-#     for atom in structure: atom.type = choice(atom.type)
-#     hft = HFTransform(lattice) 
 
 if __name__ == '__main__':
 # test_translations()
 # test_firstisid()
 # test_rotations()
   test_lattice()
+# test_toarray()
+
