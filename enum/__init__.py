@@ -17,71 +17,139 @@ class Transforms(object):
     """
     from numpy import dot
     from numpy.linalg import inv
-    from ..crystal import which_site, Structure, into_voronoi, space_group
-    super(Transform, self).__init__()
+    from ..crystal import which_site, space_group
+    super(Transforms, self).__init__()
     self.lattice = lattice.copy()
     self.space_group = space_group(self.lattice)
-    sites = []
-    for site in lattice:
-      if not hasattr(site.type, '__iter__'): continue
-      if len(site.type) > 1: sites.append(site)
     self.dnt = []
     """ Site permutations and translation vector. """
+    self._enhance_lattice()
+    self.equivmap = [u.equivto for u in self.lattice]
+    """ Site map for label exchange. """
+    self.flavors = [ range(site.nbflavors) for site in self.lattice            \
+                     if site.nbflavors != 0 and site.asymmetric ]
+    """ List of possible flavors for each asymmetric site. """
     invcell = inv(lattice.cell)
-    for op in self.lattice.space_group:
+    sites = [site for site in self.lattice if site.asymmetric]
+    for op in self.space_group[1:]:
       self.dnt.append([])
       for i, site in enumerate(sites):
         newpos = dot(op[:3], site.pos) + op[3]
-        j = which_sites(newpos, sites, invcell)
-        trans = into_voronoi(site.pos - newpos, lattice.cell, invcell)
-        self.dnt[-1].append( (j-i, trans) )
+        j = which_site(newpos, sites, invcell)
+        trans = newpos - site.pos 
+        self.dnt[-1].append( (j, trans) )
+  
+  def _enhance_lattice(self):
+    """ Adds stuff to the lattice """
+    from numpy import dot
+    from ..crystal import which_site
+    nonequiv = set( i for i in range(len(self.lattice)) ) 
+    for i, site in enumerate(self.lattice):
+      site.equivto = i
+      for op in self.space_group:
+        j = which_site( dot(op[:3], site.pos) + op[3], self.lattice )
+        if j > i and j in nonequiv: nonequiv.remove(j)
+        if j < i: site.equivto = j
+      site.asymmetric = site.equivto == i
+      if not hasattr(site.type, '__iter__'): site.nbflavors = 0
+      elif len(site.type) > 1:               site.nbflavors = 0
+      else: site.nbflabors = len(site.type) - 1
+
+  def translations(self, hft):
+    """ Array of permutations arising from pure translations """
+    from itertools import product
+    from numpy import zeros
+    nsites = len(self.dnt[0])
+    itertrans = [ xrange(hft.quotient[0]), 
+                  xrange(hft.quotient[1]), 
+                  xrange(hft.quotient[2]) ] 
+    size = hft.size
+    result = zeros((size-1, nsites * size), dtype='int64')  - 1
+    iterable = product(*itertrans)
+    a = iterable.next() # avoid null translation
+    assert a == (0,0,0) # check that it is null
+    for t, (i,j,k) in enumerate(iterable):
+      iterpos = [ xrange(hft.quotient[0]), 
+                  xrange(hft.quotient[1]), 
+                  xrange(hft.quotient[2]) ] 
+      for l, m, n in product(*iterpos):
+        u = (i+l) % hft.quotient[0]
+        v = (j+m) % hft.quotient[1]
+        w = (k+n) % hft.quotient[2]
+        for s in xrange(nsites):
+          result[t, hft.flatten_indices(l, m, n, s)]                           \
+              = hft.flatten_indices(u, v, w, s)
+    return result
 
   def transformations(self, hft):
     """ Creates permutations for given Hart-Forcade transform. """
     from itertools import product
     from numpy import zeros, dot
     from numpy.linalg import inv
-    result = zeros( (len(self.lattice.space_group), hft.size * len(self.tnd[0])),
-                    dtype='int')
-    for n, op in enumerate(self.lattice.space_group):
-      rotation = dot(hft.transform, dot(op[:3], inv(hft.transform)))
-      iterpos = [ xrange(hft.quotient[0]), 
-                  xrange(hft.quotient[1]), 
-                  xrange(hft.quotient[2]) ] 
-      size = hft.size
-      for siterperm, translation in self.tnd:
-        for i,j,k in enumerate(product(*itertrans)):
-          newpos = dot(rotation, [i, j, k]) + translation
-          k = round(newpos[0]+1e-6)
-          l = round(newpos[1]+1e-6)
-          m = round(newpos[2]+1e-6)
-          result[n, siterpem*site+self.lattice_index(i, j, k, hft)]            \
-              = self.lattice_index(k, l, m, hft)
+    result = zeros( (len(self.space_group)-1, hft.size * len(self.dnt[0])),
+                    dtype='int') - 1
+    invtransform = inv(hft.transform)
+    for nop, (op, dnt) in enumerate(zip(self.space_group[1:], self.dnt)):
+      rotation = dot(hft.transform, dot(op[:3], invtransform))
+      for s, (siteperm, translation) in enumerate(dnt):
+        trans = hft.indices(translation)
+        iterpos = [ xrange(hft.quotient[0]), 
+                    xrange(hft.quotient[1]), 
+                    xrange(hft.quotient[2]) ] 
+        for i,j,k in product(*iterpos):
+          newpos = dot(rotation, [i, j, k])
+          l = (int(round(newpos[0])) + trans[0]) % hft.quotient[0]
+          m = (int(round(newpos[1])) + trans[1]) % hft.quotient[1]
+          n = (int(round(newpos[2])) + trans[2]) % hft.quotient[2]
+          result[nop, hft.flatten_indices(i, j, k, s)]                         \
+              = hft.flatten_indices(l, m, n, siteperm) 
     return result
 
-  def translations(self, hft):
-    """ Array of permutations arising from pure translations """
-    from itertools import product
+  def invariant_ops(self, cell):
+    """ boolean indices into invariant operations. 
+
+        :param cell:
+           Cell for which the operations should be invariant.
+        :type cell:
+           :py:attr:`~lada.crystal.cppwrappers.Structure` or 3x3 matrix
+        :returns:
+           An boolean array with the same length as the numbers of row returned
+           by :py:method:`transformations`.
+    """
+    from numpy import dot, equal, mod, zeros, all
+    from numpy.linalg import inv
+    cell = getattr(cell, 'cell', cell)
+    invcell = inv(cell)
+    result = zeros(shape=(len(self.space_group)-1), dtype='bool')
+    for i, op in enumerate(self.space_group[1:]):
+      matrix = dot(invcell, dot(op[:3], cell))
+      result[i] = all(equal(mod(matrix, 1), 0))
+    return result
+
+  def label_exchange(self, hft):
+    """ List of functions to do label exchange """
+    from itertools import permutations, product
     from numpy import zeros
-    nsites = len(self.tnd[0])
-    itertrans = [ xrange(hft.quotient[0]), 
-                  xrange(hft.quotient[1]), 
-                  xrange(hft.quotient[2]) ] 
+    results = []
     size = hft.size
-    result = zeros((size, nsites * size), dtype='int64') 
-    for n, (i,j,k) in enumerate(product(*itertrans)):
-      iterpos = [ xrange(hft.quotient[0]), 
-                  xrange(hft.quotient[1]), 
-                  xrange(hft.quotient[2]) ] 
-      for l, m, n in product(*iterpos):
-        i = (i+l) % hft.quotient(0)
-        j = (j+m) % hft.quotient(1)
-        k = (k+n) % hft.quotient(2)
-        result[n, self.lattice_index(l, m, n, hft)::nsites]                    \
-            = self.lattice_index(i, j, k, hft)
-    return result
+    iterables = [permutations(flavors) for flavors in self.flavors] 
+    iterables = product(*iterables)
+    a = iterables.next()
+    assert all(all(b == c) for b, c in zip(a, self.flavors))
+    for perms in product(*iterables):
+      def labelexchange(sigma):
+        result = zeros(shape=sigma.shape, dtype=sigma.dtype)
+        for i in xrange(len(sigma)):
+          result[i] = perms[ self.equivmap[i//size] ][sigma[i]]
+        return result
+      results.append(labelexchange)
+    return results
   
-  @staticmethod
-  def lattice_index(i, j, k, hft):
-    return k + (hft.quotient[2] * (j + i * hft.quotient[1])) 
-
+  def toarray(self, hft, structure):        
+    """ Transforms structure into an array """
+    from numpy import zeros
+    result = zeros(len(structure), dtype='int')
+    for atom in structure:
+      index = hft.index(atom.pos - self.lattice[atom.site].pos)
+      result[index] = self.lattice[atom.equivto].type.find(atom.type)
+    return result

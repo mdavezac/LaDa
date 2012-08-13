@@ -82,12 +82,15 @@ namespace LaDa
                         ":returns: The 3-d indices in the cyclic group.\n" ),
           LADA_DECLARE( flatten_indices,   hftransform_flatten_indices, VARARGS | METH_KEYWORDS,
                         "Flattens cyclic Z-group indices.\n\n"
-                        ":param indices: (3-tuple of integers)\n"
-                        "  Indices in the cyclic Z-group.\n"
-                        ":param site: (integer)\n"
-                        "   Optional site index. If there are more than one\n"
-                        "   sublattice in the structure, then the flattened\n"
-                        "   indices need to take this into account.\n" ),
+                        ":param int i: \n"
+                        "  First index into cyclic Z-group.\n"
+                        ":param int j: \n"
+                        "  Second index into cyclic Z-group.\n"
+                        ":param int j: \n"
+                        "  Third index into cyclic Z-group.\n"
+                        ":param int site: \n"
+                        "  Optional site index for multilattices.\n"
+                        ":returns: An integer which can serve as an index into a 1d array.\n"), 
           LADA_DECLARE( index,   hftransform_flat_index, VARARGS | METH_KEYWORDS,
                         "Flat index into cyclic Z-group.\n\n"
                         ":param pos: (3d-vector)\n"

@@ -10,9 +10,9 @@
 # ifdef LADA_HFTRANSFORM_SHARED2
 #   error LADA_HFTRANSFORM_SHARED2 already defined.
 # endif
-# define LADA_HFTRANSFORM_SHARED0(QUOTIENT, INDEX, SITE)                                      \
+# define LADA_HFTRANSFORM_SHARED0(QUOTIENT, INDEX, SITE)                                         \
     int const flat_result = SITE == -1 ?                                                         \
-           INDEX(2) + QUOTIENT(2) * (INDEX(1) + QUOTIENT(1)):                                    \
+           INDEX(2) + QUOTIENT(2) * (INDEX(1) + QUOTIENT(1) * INDEX(0)):                         \
            INDEX(2) + QUOTIENT(2) * (INDEX(1) + QUOTIENT(1) * (INDEX(0) + SITE * QUOTIENT(0))); 
   
 # define LADA_HFTRANSFORM_SHARED1(VECTOR, MATRIX, POS, ERROR, RETURN)   \
@@ -20,9 +20,9 @@
        const math::rVector3d pos_(MATRIX*POS);                             \
        const math::iVector3d int_pos                                       \
        (                                                                   \
-         types::t_int( rint( pos_(0) ) ),                                  \
-         types::t_int( rint( pos_(1) ) ),                                  \
-         types::t_int( rint( pos_(2) ) )                                   \
+         types::t_int( rint( pos_(0) + 1e-8 ) ),                           \
+         types::t_int( rint( pos_(1) + 1e-8 ) ),                           \
+         types::t_int( rint( pos_(2) + 1e-8 ) )                            \
        );                                                                  \
        for( size_t i(0); i < 3; ++i )                                      \
        {                                                                   \

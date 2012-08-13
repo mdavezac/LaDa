@@ -82,17 +82,21 @@ namespace LaDa
 #   include "macro.hpp"
     // Computes flat hf index from non-flat hf index.
     static PyObject* hftransform_flatten_indices( HFTransformData* _self,
-                                                     PyObject* _args, PyObject *_kwargs )
+                                                  PyObject* _args, PyObject *_kwargs )
     {
-      PyObject *posatom = NULL;
-      int site = -1;
-      static char *kwlist[] = { const_cast<char*>("pos"), const_cast<char*>("site"), NULL };
-      if(not PyArg_ParseTupleAndKeywords(_args, _kwargs, "O|i:pos_index", kwlist, &posatom, site) )
+      int site = -1, i = 0, j = 0, k = 0;
+      static char *kwlist[] = { const_cast<char*>("i"), const_cast<char*>("j"),
+                                const_cast<char*>("k"),
+                                const_cast<char*>("site"), NULL };
+      if(not PyArg_ParseTupleAndKeywords( _args, _kwargs, "iii|i:pos_index",
+                                          kwlist, &i, &j, &k, &site) )
         return NULL;
-      math::iVector3d pos;
-      if(not python::convert_to_vector(posatom, pos)) return NULL;
-      LADA_HFTRANSFORM_SHARED0(_self->quotient, pos, site);
-      return PyInt_FromLong(flat_result);
+      return PyInt_FromLong( 
+                site == -1 ? 
+                  k  + _self->quotient(2) * (j + _self->quotient(1) * i):
+                  k  + _self->quotient(2) * (j + _self->quotient(1) 
+                                               * (i + site * _self->quotient(0)) )
+              );
     }
     //! Computes flat hf index from non-flat hf index, including sites.
     static PyObject* hftransform_flat_index( HFTransformData* _self,
