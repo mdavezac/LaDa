@@ -24,8 +24,15 @@ def test_fcc():
 
 def test_b5(u):
   """ Test b5 space-group and equivalents """
-  from numpy import all, abs, dot
-  from lada.crystal.cppwrappers import space_group, Structure, equivalent, transform
+  from random import random, randint
+  from numpy import all, abs, dot, pi
+  from numpy.linalg import inv, norm
+  from numpy.random import random_sample
+  from lada.crystal.cppwrappers import space_group, Structure, equivalent,     \
+                                       transform
+  from lada.math import Rotation
+  from lada.crystal import which_site
+
 
   x, y = u, 0.25-u
   structure = Structure([[0,0.5,0.5],[0.5,0,0.5],[0.5,0.5,0]]) \
@@ -45,6 +52,7 @@ def test_b5(u):
                        .add_atom(    -y,    -y,    -x, "X") 
   ops = space_group(structure)
   assert len(ops) == 48
+  invcell = inv(structure.cell)
   for op in ops:
     assert op.shape == (4, 3)
 
@@ -53,6 +61,13 @@ def test_b5(u):
     for a, atom in zip(structure, other):
       assert all(abs(dot(op[:3], a.pos) + op[3] - atom.pos) < 1e-8)
       assert a.type == atom.type
+    sites = []
+    for i, atom in enumerate(structure):
+      pos = dot(op[:3], atom.pos) + op[3]
+      j = which_site(pos, structure, invcell)
+      assert j != -1
+      sites.append(j)
+    assert len(set(sites)) == len(structure)
 
     assert equivalent(structure, other, cartesian=False)
     assert equivalent(other, structure, cartesian=False)
@@ -68,9 +83,56 @@ def test_b5(u):
     for a, atom in zip(structure, other):
       assert all(abs(dot(op[:3], a.pos) + op[3] - atom.pos) < 1e-8)
       assert a.type == atom.type
+    sites = []
+    for i, atom in enumerate(structure):
+      pos = dot(op[:3], atom.pos) + op[3]
+      j = which_site(pos, structure, invcell)
+      assert j != -1, (i, atom, op)
+      sites.append(j)
+    assert len(set(sites)) == len(structure)
 
     assert equivalent(structure, other, cartesian=False)
     assert equivalent(other, structure, cartesian=False)
+
+  # try random rotation, translations, atom swap
+  structure[0], structure[-1] = structure[-1], structure[0]
+  for u in xrange(10):
+    axis = random_sample((3,))
+    axis /= norm(axis)
+    rotation = Rotation( pi*random(), axis)  
+    rotation[3] = random_sample((3,))
+    other = transform(structure, rotation)
+    for u in xrange(10):
+      l, m = randint(0, len(structure)-1), randint(0, len(structure)-1)
+      a, b = other[l], other[m]
+      other[l], other[m] = b, a
+    invcell = inv(other.cell)
+    ops = space_group(other)
+    for z, op in enumerate(ops):
+      assert op.shape == (4, 3)
+    
+      other2 = transform(other, op)
+      assert all(abs(dot(op[:3], other.cell)-other2.cell) < 1e-8)
+      for a, atom in zip(other, other2):
+        assert all(abs(dot(op[:3], a.pos) + op[3] - atom.pos) < 1e-8)
+        assert a.type == atom.type
+      sites = []
+      for i, atom in enumerate(other):
+        pos = dot(op[:3], atom.pos) + op[3]
+        j = which_site(pos, other, invcell)
+        if j == -1:
+          print i, z
+          print atom 
+          print op
+          print pos
+          print other
+          raise Exception()
+        sites.append(j)
+      assert len(set(sites)) == len(other)
+
+      assert equivalent(other, other2, cartesian=False)
+      assert equivalent(other2, other, cartesian=False)
+
     
 def test_zb():
   from numpy import all, abs, dot

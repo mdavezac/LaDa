@@ -249,7 +249,7 @@ namespace LaDa
         if(i_trial != i_trial_end)
         {
           // set translation of symmetry operator.
-          opmap.block<1, 3>(3, 0) = *i_trial;
+          opmap.block<1, 3>(3, 0) = *i_trial - opmap.block<3,3>(0,0) * translation + translation;
           // append to list.
           if(PyList_Append(result.borrowed(), symop.borrowed()) != 0) return NULL;
         }
