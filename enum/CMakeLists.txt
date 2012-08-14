@@ -1,7 +1,13 @@
-set (PYCE_PY __init__.py)
+set (PYCE_PY __init__.py transforms.py)
 
 install(FILES ${PYCE_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/enum)
 
+include_directories(${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDES})
+add_library (pyenum SHARED module.cc)
+set_target_properties(pyenum PROPERTIES OUTPUT_NAME cppwrappers)
+set_target_properties(pyenum PROPERTIES PREFIX "")
+target_link_libraries(pyenum ${PYTHON_LIBRARY} ${Boost_PYTHON_LIBRARY} mathlib)
+install(TARGETS pyenum DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/enum)
 # set( LIBENUM_HEADERS 
 #      exceptions.h  find_all_cells.h  label_exchange.h  numeric_type.h
 #      remove_smith_equivalents.h  transform.h  translation.h )
