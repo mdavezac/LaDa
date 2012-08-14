@@ -1,9 +1,9 @@
 __docformat__ = "restructuredtext en"
-__all__ = ['Transforms', 'supercells']
+__all__ = ['Transforms', 'supercells', 'hf_groups']
 from .transforms import Transforms
 
 def supercells(lattice, sizerange):
-  """ Generator over supercells for given size range.
+  """ Determines non-equivalent supercells in given size range.
   
       :params lattice: 
          Back-bone lattice
@@ -63,9 +63,6 @@ def supercells(lattice, sizerange):
 
   return results
 
-
-
-
 def hf_groups(lattice, sizerange):
   """ Generator over supercells for given size range.
   
@@ -78,4 +75,14 @@ def hf_groups(lattice, sizerange):
       :type sizerange: integer sequence
       :yields: two tuple where the first 
   """
-  pass
+  from numpy import dot
+  from ..crystal import HFTransform
+  result = {}
+  for n, cells in supercells(lattice, sizerange).iteritems():
+    result = {}
+    for cell in cells:
+      hft = HFTransform(lattice, dot(lattice.cell, cell))
+      key = repr(hft.quotient.tolist())
+      if key in result: result[key].append((hft, cell))
+      else: result[key] = [(hft, cell)]
+    yield result.values()
