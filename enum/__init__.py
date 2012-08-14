@@ -26,7 +26,7 @@ class Transforms(object):
     self._enhance_lattice()
     self.equivmap = [u.equivto for u in self.lattice]
     """ Site map for label exchange. """
-    self.flavors = [ range(1, site.nbflavors) for site in self.lattice         \
+    self.flavors = [ range(1, site.nbflavors+1) for site in self.lattice       \
                      if site.nbflavors != 1 and site.asymmetric ]
     """ List of possible flavors for each asymmetric site. """
     invcell = inv(lattice.cell)
@@ -138,21 +138,18 @@ class Transforms(object):
   def label_exchange(self, hft):
     """ List of functions to do label exchange """
     from itertools import permutations, product
-    from numpy import zeros
-    results = []
+    from numpy import array
     size = hft.size
     iterables = [permutations(flavors) for flavors in self.flavors] 
     iterables = product(*iterables)
     a = iterables.next()
-    assert all(all(b == c) for b, c in zip(a, self.flavors))
-    for perms in product(*iterables):
-      def labelexchange(sigma):
-        result = zeros(shape=sigma.shape, dtype=sigma.dtype)
-        for i in xrange(len(sigma)):
-          result[i] = perms[ self.equivmap[i//size] ][sigma[i]]
-        return result
-      results.append(labelexchange)
-    return results
+    assert all(all(array(b) == array(c)) for b, c in zip(a, self.flavors))
+    def permutations(x):
+      """ Iterator over label exchange """
+      for perms in iterables:
+        yield array([ perms[self.equivmap[i//size]][x[i]-1]                    \
+                      for i in xrange(len(x)) ] )
+    return permutations
   
   def toarray(self, hft, structure):        
     """ Transforms structure into an array """
