@@ -1,4 +1,4 @@
-set (PYCE_PY __init__.py transforms.py)
+set (PYCE_PY __init__.py transforms.py defects.py)
 
 install(FILES ${PYCE_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/enum)
 
