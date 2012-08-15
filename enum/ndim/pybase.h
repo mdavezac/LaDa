@@ -6,10 +6,7 @@
 #define NO_IMPORT_ARRAY
 #include <numpy/arrayobject.h>
 
-
-#include <python/exceptions.h>
-#include <python/wrap_numpy.h>
-#include <python/quantity.h>
+#include <vector>
 
 //! \def PyNDimIterator_Check(object)
 //!      Returns true if an object is a struture or subtype.
@@ -24,7 +21,7 @@ namespace LaDa
   namespace enumeration
   {
     //! Type used internally by the counter.
-    typedef short t_ndim;
+    typedef npy_short t_ndim;
     extern "C" 
     {
       //! \brief Describes basic structure type. 
@@ -39,7 +36,7 @@ namespace LaDa
         //! Holds beginning and end of range.
         std::vector<t_ndim> ends;
         //! Read-only numpy array referencing inner counter.
-        PyArray_Object *yielded;
+        PyArrayObject *yielded;
         //! Inner counter;
         std::vector<t_ndim> counter;
       };
