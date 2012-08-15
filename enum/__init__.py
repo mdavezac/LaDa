@@ -17,7 +17,7 @@ def supercells(lattice, sizerange):
           inequivalent supercells of that size
   """
   from itertools import product
-  from numpy import dot, mod, equal, array, all
+  from numpy import dot, array
   from numpy.linalg import inv
   from ..crystal import space_group
   from .cppwrappers import is_integer
@@ -41,7 +41,7 @@ def supercells(lattice, sizerange):
       if any( is_integer(dot(op2, u)) for u in l): return True
     return False
 
-  supercell = array([[0, 0, 0], [0, 0, 0], [0, 0, 0]], dtype='float64')
+  supercell = array([[0, 0, 0], [0, 0, 0], [0, 0, 0]], dtype='int')
   for a in range(1, maxk+1):
     maxb = maxk // a 
     if maxb % a != 0: maxb += 1 
@@ -73,7 +73,9 @@ def hf_groups(lattice, sizerange):
          List of sizes for which to perform calculations, in number of
          unit-cells per supercell.
       :type sizerange: integer sequence
-      :yields: two tuple where the first 
+      :yields: 
+          yields a list of 2-tuples where the first element is an hft and the
+          second the hermite cell.
   """
   from numpy import dot
   from ..crystal import HFTransform
@@ -88,9 +90,72 @@ def hf_groups(lattice, sizerange):
     yield result.values()
 
 
-# def generate_bistrings(lattice, sizerange):
-#   """ Generator over bitstrings """
-#   for hfgroup in hf_groups(lattice, sizerange):
-#     ingroup = set()
-#     outgroup = set()
-#     for x
+def generate_bitstrings(lattice, sizerange):
+  """ Generator over bitstrings """
+  from numpy import dot, all
+  from .cppwrappers import NDimIterator, _lexcompare
+  transforms = Transforms(lattice)
+  for hfgroups in hf_groups(lattice, sizerange):
+    for hfgroup in hfgroups:
+      # actual results
+      ingroup = []
+      # stuff we do not want to see again
+      outgroup = set()
+  
+      # translation operators
+      translations = transforms.translations(hfgroup[0][0])
+  
+      # Creates argument to ndimensional iterator.
+      args = []
+      size = hfgroup[0][0].size
+      for site in transforms.lattice:
+        if site.nbflavors == 1: continue
+        args += [site.nbflavors] * size
+  
+      # loop over possible structures in this hfgroup
+      for x in NDimIterator(*args):
+        strx = ''.join(str(i) for i in x)
+        if strx in outgroup: continue
+  
+        # check for supercell independent transforms.
+        # SHOULD INSERT LABEL EXCHANGE HERE
+        # loop over translational symmetries.
+        subperiodic = False
+        for translation in translations:
+          t = x[translation]
+          a = _lexcompare(t, x)
+          # if a == t, then smaller exists with this structure.
+          # also add it to outgroup
+          if a >= 0: outgroup.add(''.join(str(i) for i in t))
+          if a == 0: subperiodic = True; continue
+          # SHOULD INSERT LABEL EXCHANGE HERE
+        if not subperiodic: ingroup.append(x.copy())
+  
+      # loop over cell specific transformations.
+      for hft, hermite in hfgroup:
+        # get transformations. Not the best way of doing this.
+        invariants = transforms.invariant_ops(dot(lattice.cell, hermite))
+        transformations = transforms.transformations(hft)
+        for j, (t, i) in enumerate(zip(transformations, invariants)):
+          if not i: continue
+          if all(t == range(t.shape[0])): invariants[i] = False
+        transformations = transformations[invariants]
+  
+        outgroup = set()
+        for x in ingroup:
+          strx = ''.join(str(i) for i in x)
+          if strx in outgroup: continue
+          for transform in transformations: 
+            t = x[transform]
+            a = _lexcompare(t, x)
+            if a == 0: continue
+            if a > 0: outgroup.add(''.join(str(i) for i in t))
+  
+            # SHOULD INSERT LABEL EXCHANGE HERE
+            # loop over translational symmetries.
+            for translation in translations:
+              tt = t[translation]
+              a = _lexcompare(tt, x)
+              if a > 0: outgroup.add(''.join(str(i) for i in tt))
+              # SHOULD INSERT LABEL EXCHANGE HERE
+          yield x, hft, hermite

@@ -37,7 +37,7 @@ class Transforms(object):
       for i, site in enumerate(sites):
         newpos = dot(op[:3], site.pos) + op[3]
         j = which_site(newpos, sites, invcell)
-        trans = newpos - site.pos 
+        trans = newpos - sites[j].pos 
         self.dnt[-1].append( (j, trans) )
   
   def _enhance_lattice(self):
@@ -49,7 +49,6 @@ class Transforms(object):
       site.equivto = set([i])
       for op in self.space_group[1:]:
         j = which_site( dot(op[:3], site.pos) + op[3], self.lattice)
-        if j == -1: print op, site.pos, dot(op[:3], site.pos) + op[3]
         assert j != -1
         site.equivto.add(j)
     for site in self.lattice:

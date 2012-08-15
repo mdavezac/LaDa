@@ -55,6 +55,15 @@ def test_ndimiterator():
   except TypeError: pass
   else: raise Exception()
 
+def test_lexcompare():
+  from lada.enum.cppwrappers import _lexcompare, NDimIterator
+  r = [u.copy() for u in NDimIterator(3, 4, 5)]
+  for i in xrange(len(r)):
+    assert _lexcompare(r[i], r[i]) == 0
+    assert all(_lexcompare(r[i], r[j]) == -1 for j in xrange(i+1, len(r)))
+    assert all(_lexcompare(r[i], r[j]) == 1 for j in xrange(1, i))
+
 if __name__ == '__main__':
   test_isinteger()
   test_ndimiterator()
+  test_lexcompare()

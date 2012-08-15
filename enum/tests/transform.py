@@ -75,6 +75,53 @@ def test_rotations():
       yield [[i, 0, 0], [0, i, 0], [0, 0, 1]]
     for i in xrange(1, n):
       yield [[i, 0, 0], [0, i, 0], [0, 0, i]]
+    yield dot(lattice.cell, [[1, 0, 0], [0, 1, 0], [0, 0, 2]])
+  for cell in get_cells(8):
+    # create random structure
+    structure = supercell(lattice, cell)
+    hft = HFTransform(lattice, structure)
+ 
+    # these are all the translations
+    transforms = Transforms(lattice)
+    permutations = transforms.transformations(hft)
+    assert permutations.shape == (len(sg) - 1, len(structure))
+    operations = transforms.invariant_ops(structure)
+    assert any(operations) 
+
+    # compute each translation and gets decorations
+    for index, (op, isgood) in enumerate(zip(sg[1:], operations)):
+      if not isgood: continue
+      # Create rotation and figure out its index
+      permutation = zeros(len(structure), dtype='int') - 1
+      for atom in structure:
+        pos = dot(op[:3], atom.pos) + op[3]
+        newsite = which_site(pos, lattice, invcell)
+        i = hft.index(atom.pos - lattice[atom.site].pos, atom.site)
+        j = hft.index(pos - lattice[newsite].pos, newsite)
+        permutation[i] = j
+      assert all(permutation == permutations[index])
+
+def test_multilattice():
+  from numpy import all, dot, zeros
+  from numpy.linalg import inv
+  from lada.crystal import binary, supercell, HFTransform, space_group,        \
+                           which_site
+  from lada.enum import Transforms
+
+  lattice = binary.zinc_blende()
+  lattice[0].type = ['Si', 'Ge']
+  lattice[1].type = ['Si', 'Ge']
+  sg = space_group(lattice)
+  invcell = inv(lattice.cell)
+
+  def get_cells(n):
+    for i in xrange(1, n):
+      yield [[i, 0, 0], [0, 0.5, 0.5], [0, -0.5, 0.5]]
+    for i in xrange(1, n):
+      yield [[i, 0, 0], [0, i, 0], [0, 0, 1]]
+    for i in xrange(1, n):
+      yield [[i, 0, 0], [0, i, 0], [0, 0, i]]
+    yield dot(lattice.cell, [[1, 0, 0], [0, 1, 0], [0, 0, 2]])
   for cell in get_cells(8):
     # create random structure
     structure = supercell(lattice, cell)
@@ -233,8 +280,9 @@ def test_labelexchange():
 if __name__ == '__main__':
   test_translations()
   test_firstisid()
-  test_rotations()
   test_lattice()
   test_toarray()
+  test_rotations()
+  test_multilattice()
   test_labelexchange()
 

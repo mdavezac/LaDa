@@ -160,12 +160,12 @@ namespace LaDa
 #     ifdef LADA_DEBUG
         if(_self->ends.size() != _self->counter.size())
         {
-          LADA_PYTHROW(internal, "Counter and Ends have different size.");
+          LADA_PYERROR(internal, "Counter and Ends have different size.");
           return NULL;
         }
 #     endif
       std::vector<t_ndim>::reverse_iterator i_first = _self->counter.rbegin();
-      std::vector<t_ndim>::reverse_iterator i_last = _self->counter.rend();
+      std::vector<t_ndim>::reverse_iterator const i_last = _self->counter.rend();
       std::vector<t_ndim>::const_reverse_iterator i_end = _self->ends.rbegin();
       for(; i_first != i_last; ++i_first, ++i_end)
         if(*i_first == *i_end) *i_first = 1;
@@ -175,12 +175,12 @@ namespace LaDa
 #         ifdef LADA_DEBUG
             if(_self->yielded == NULL)
             {
-              LADA_PYTHROW(internal, "Yielded was not initialized.");
+              LADA_PYERROR(internal, "Yielded was not initialized.");
               return NULL;
             }
             if(_self->yielded->data != &_self->counter[0])
             {
-              LADA_PYTHROW(internal, "Yielded does not reference counter.");
+              LADA_PYERROR(internal, "Yielded does not reference counter.");
               return NULL;
             }
 #         endif
