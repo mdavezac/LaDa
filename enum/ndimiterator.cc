@@ -15,7 +15,7 @@
 #include <python/wrap_numpy.h>
 #include <python/quantity.h>
 
-#include "pybase.h"
+#include "ndimiterator.h"
 
 namespace LaDa
 {
@@ -28,7 +28,7 @@ namespace LaDa
       if(not result) return NULL;
       result->yielded = NULL;
       new(&result->ends) std::vector<t_ndim>;
-      new(&result->vector) std::vector<t_ndim>;
+      new(&result->counter) std::vector<t_ndim>;
       return result;
     }
     //! Creates a new ndimiterator with a given type.
@@ -37,8 +37,8 @@ namespace LaDa
       NDimIterator* result = (NDimIterator*)_type->tp_alloc(_type, 0);
       if(not result) return NULL;
       result->yielded = NULL;
-      new(&result->ranges) std::vector< std::pair<t_ndim, t_ndim> >;
-      new(&result->vector) std::vector<t_ndim>;
+      new(&result->ends) std::vector<t_ndim>;
+      new(&result->counter) std::vector<t_ndim>;
       return result;
     }
 
@@ -50,6 +50,13 @@ namespace LaDa
       if(_type->tp_init((PyObject*)result, _args, _kwargs) < 0) {Py_DECREF(result); return NULL; }
       return result;
     }
+
+    static int gcclear(NDimIterator *self)
+    { 
+      Py_CLEAR(self->yielded);
+      return 0;
+    }
+
 
     // Function to deallocate a string atom.
     static void ndimiterator_dealloc(NDimIterator *_self)
@@ -82,41 +89,38 @@ namespace LaDa
         LADA_PYERROR(TypeError, "NDimIterator does not expect keyword arguments.");
         return -1;
       }
-      _self.ends.clear();
-      _self.ends.reserve(N);
+      _self->ends.clear();
+      _self->ends.reserve(N);
       for(Py_ssize_t i(0); i < N; ++i)
       {
         PyObject *item = PyTuple_GET_ITEM(_args, i);
-        if(PyLong_Check(item)) _self->ends.push_back( PyLong_AS_LONG(item));
+        if(PyLong_Check(item)) _self->ends.push_back( PyLong_AsLong(item));
         else if(PyInt_Check(item)) _self->ends.push_back( PyInt_AS_LONG(item));
         else
         {
           LADA_PYERROR(TypeError, "Unknown type in NDimIterator.");
           return -1;
         }
-        if(_self.ends.back() < 0)
+        if(_self->ends.back() <= 0)
         {
-          LADA_PYERROR(TypeError, "NDimIterator does not expect negative arguments.");
-          return -1;
-        }
-        if(_self.ends.back() > 5)
-        {
-          LADA_PYERROR(TypeError, "Argument larger than 5. "
-                       "Recompile LaDa if that is what you want.");
+          LADA_PYERROR(ValueError, "NDimIterator does not expect negative or null arguments.");
           return -1;
         }
       } 
-      _self->vector.resize(_self->ends.size());
-      std::fill(_self->vector.begin(), _self->vector.end(), 1);
+      _self->counter.resize(_self->ends.size());
+      std::fill(_self->counter.begin(), _self->counter.end()-1, 1);
+      _self->counter.back() = 0;
       if(_self->yielded != NULL)
       {
-        PyObject* dummy = _self.yielded;
-        _self.yielded = NULL;
+        PyArrayObject* dummy = _self->yielded;
+        _self->yielded = NULL;
         Py_DECREF(dummy);
       }
       typedef math::numpy::type<t_ndim> t_type;
-      _self->yielded = (PyArrayObject*) PyArray_SimpleNewFromData(1, &N, t_type::value, &counter[0]);
-      if(not _self.yielded) return -1;
+      npy_intp d[1] = {(npy_intp)N};
+      _self->yielded = (PyArrayObject*)
+          PyArray_SimpleNewFromData(1, d, t_type::value, &_self->counter[0]);
+      if(not _self->yielded) return -1;
 #     ifdef LADA_MACRO
 #       error LADA_MACRO already defined
 #     endif
@@ -132,9 +136,9 @@ namespace LaDa
 #     else 
 #       define LADA_MACRO NPY_C_CONTIGUOUS
 #     endif
-#     undef LADA_MACRO
       if(not (_self->yielded->flags & LADA_MACRO)) _self->yielded->flags += LADA_MACRO;
-      _self->yielded->parent = _self;
+#     undef LADA_MACRO
+      _self->yielded->base = (PyObject*)_self;
       Py_INCREF(_self);
       return 0;
     }
@@ -145,30 +149,24 @@ namespace LaDa
       return 0;
     }
   
-    static int gcclear(NDimIterator *self)
-    { 
-      Py_CLEAR(self->yielded);
-      return 0;
-    }
-
     static PyObject* self(PyObject* _self)
     {
       Py_INCREF(_self);
       return _self;
     }
 
-    static PyObject* iter(NDimIterator* _self)
+    static PyObject* next(NDimIterator* _self)
     {
 #     ifdef LADA_DEBUG
-        if(_self->ends.size() != _self.counter.size())
+        if(_self->ends.size() != _self->counter.size())
         {
           LADA_PYTHROW(internal, "Counter and Ends have different size.");
           return NULL;
         }
 #     endif
-      std::vector<t_ndim>::iterator i_first = _self->counter.begin();
-      std::vector<t_ndim>::iterator i_last = _self->counter.end();
-      std::vector<t_ndim>::const_iterator i_end = _self->ends.begin();
+      std::vector<t_ndim>::reverse_iterator i_first = _self->counter.rbegin();
+      std::vector<t_ndim>::reverse_iterator i_last = _self->counter.rend();
+      std::vector<t_ndim>::const_reverse_iterator i_end = _self->ends.rbegin();
       for(; i_first != i_last; ++i_first, ++i_end)
         if(*i_first == *i_end) *i_first = 1;
         else
@@ -180,20 +178,18 @@ namespace LaDa
               LADA_PYTHROW(internal, "Yielded was not initialized.");
               return NULL;
             }
-            if(_self->yielded->data != &_self.counter[0])
+            if(_self->yielded->data != &_self->counter[0])
             {
               LADA_PYTHROW(internal, "Yielded does not reference counter.");
               return NULL;
             }
 #         endif
           Py_INCREF(_self->yielded);
-          return _self->yielded;
+          return (PyObject*)_self->yielded;
         }
-      PyObject* dummy = (PyObject*) _self->yielded;
+      PyArrayObject* dummy = _self->yielded;
       _self->yielded = NULL;
       Py_DECREF(dummy);
-      _self->ends.clear();
-      _self->counter.clear();
       PyErr_SetNone(PyExc_StopIteration);
       return NULL;
     }
@@ -224,14 +220,48 @@ namespace LaDa
           0,                                 /*tp_setattro*/
           0,                                 /*tp_as_buffer*/
           Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC | Py_TPFLAGS_HAVE_ITER, /*tp_flags*/
-          "Defines a ndimiterator.\n\n"      /*tp_doc*/
+          "Defines an N-dimensional iterator.\n\n"
+          "This iterator holds a numpy array where each element is incremented\n"
+          "between 1 and a specified value. Once an element (starting from the\n"
+          "last) reaches the specified value, it is reset to 1 and the next is\n"
+          "element is incremented. It looks something like this:\n\n"
+          "  >>> for u in NDimIterator(2, 3): print u\n"
+          "  [1 1]\n"
+          "  [1 2]\n"
+          "  [1 3]\n"
+          "  [2 1]\n"
+          "  [2 2]\n"
+          "  [2 3]\n\n"
+          "The last item is incremented up to 3, and the first item up to 2, as\n"
+          "per the input. NDimIterator accepts any number of arguments, as long\n"
+          "as they are integers. The yielded result ``u`` is a read-only numpy\n"
+          "array.\n\n"
+          ".. warning::\n\n"
+          "   The yielded array *always* points to the same address in memory:\n\n"
+          "   .. code-block:: python\n"
+          "      iterator = NDimIterator(2, 3)\n"
+          "      a = iterator.next()\n"
+          "      assert all(a == [1, 1])\n"
+          "      b = iterator.next()\n"
+          "      assert all(b == [1, 2])\n"
+          "      assert all(a == b)\n"
+          "      assert a is b\n\n"
+          "   If you need to keep track of a prior value, use numpy's copy_\n"
+          "   function.\n\n"
+          "   The other effect is that :py:class:`NDimIterator` cannot be used\n"
+          "   with zip_ and similar functions:\n\n"
+          "   .. code-block:: python\n\n"
+          "     for u, v in zip( NDimIterator(5, 5, 5), \n"
+          "                      product(range(1, 6), repeat=3) ):\n"
+          "       assert all(u == 1)\n\n"
+          ".. copy_: http://docs.scipy.org/doc/numpy/reference/generated/numpy.copy.html\n"
+          ".. zip_: http://docs.python.org/library/functions.html#zip\n",
           (traverseproc)traverse,            /* tp_traverse */
           (inquiry)gcclear,                  /* tp_clear */
           0,		                             /* tp_richcompare */
           0,                                 /* tp_weaklistoffset */
           (getiterfunc)self,                 /* tp_iter */
-          (iternextfunc)ndimiteratoriterator_next, /* tp_iternext */
-          0,		                     /* tp_iternext */
+          (iternextfunc)next,                /* tp_iternext */
           0,                                 /* tp_methods */
           0,                                 /* tp_members */
           0,                                 /* tp_getset */

@@ -88,9 +88,9 @@ def hf_groups(lattice, sizerange):
     yield result.values()
 
 
-def generate_bistrings(lattice, sizerange):
-  """ Generator over bitstrings """
-  for hfgroup in hf_groups(lattice, sizerange):
-    ingroup = set()
-    outgroup = set()
-    for x
+# def generate_bistrings(lattice, sizerange):
+#   """ Generator over bitstrings """
+#   for hfgroup in hf_groups(lattice, sizerange):
+#     ingroup = set()
+#     outgroup = set()
+#     for x

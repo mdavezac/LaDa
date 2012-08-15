@@ -8,6 +8,7 @@
 #include <math/fuzzy.h>
 #include <python/numpy_types.h>
 #include <python/object.h>
+#include "ndimiterator.h"
 #ifndef PyMODINIT_FUNC	/* declarations for DLL import/export */
 # define PyMODINIT_FUNC void
 #endif
@@ -63,6 +64,10 @@ PyMODINIT_FUNC initcppwrappers(void)
   import_array(); // needed for NumPy 
   LaDa::error::bp_register();
 
+  if (PyType_Ready(LaDa::enumeration::ndimiterator_type()) < 0) return;
+  Py_INCREF(LaDa::enumeration::ndimiterator_type());
+
   char const doc[] =  "Wrapper around C++ enumeration methods.";
   PyObject* module = Py_InitModule3("cppwrappers", LaDa::enumeration::methods_table, doc);
+  PyModule_AddObject(module, "NDimIterator", (PyObject *)LaDa::enumeration::ndimiterator_type());
 }
