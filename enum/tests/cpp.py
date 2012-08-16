@@ -63,7 +63,30 @@ def test_lexcompare():
     assert all(_lexcompare(r[i], r[j]) == -1 for j in xrange(i+1, len(r)))
     assert all(_lexcompare(r[i], r[j]) == 1 for j in xrange(1, i))
 
+def test_fciterator():
+  from lada.enum.cppwrappers import FCIterator
+  result = [1, 1, 0, 0, 0], \
+           [1, 0, 1, 0, 0], \
+           [1, 0, 0, 1, 0], \
+           [1, 0, 0, 0, 1], \
+           [0, 1, 1, 0, 0], \
+           [0, 1, 0, 1, 0], \
+           [0, 1, 0, 0, 1], \
+           [0, 0, 1, 1, 0], \
+           [0, 0, 1, 0, 1], \
+           [0, 0, 0, 1, 1]
+  iterator = FCIterator(5, 2)
+  for i, u in enumerate(iterator):
+    assert all(u == result[i])
+  iterator.reset()
+  reit = False
+  for i, u in enumerate(iterator):
+    assert all(u == result[i])
+    reit = True
+  assert reit
+
 if __name__ == '__main__':
   test_isinteger()
   test_ndimiterator()
   test_lexcompare()
+  test_fciterator()
