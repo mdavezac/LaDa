@@ -65,16 +65,16 @@ def test_lexcompare():
 
 def test_fciterator():
   from lada.enum.cppwrappers import FCIterator
-  result = [1, 1, 0, 0, 0], \
-           [1, 0, 1, 0, 0], \
-           [1, 0, 0, 1, 0], \
-           [1, 0, 0, 0, 1], \
-           [0, 1, 1, 0, 0], \
-           [0, 1, 0, 1, 0], \
-           [0, 1, 0, 0, 1], \
-           [0, 0, 1, 1, 0], \
-           [0, 0, 1, 0, 1], \
-           [0, 0, 0, 1, 1]
+  result = [False, False, False, True, True], \
+           [False, False, True, False, True], \
+           [False, True, False, False, True], \
+           [True, False, False, False, True], \
+           [False, False, True, True, False], \
+           [False, True, False, True, False], \
+           [True, False, False, True, False], \
+           [False, True, True, False, False], \
+           [True, False, True, False, False], \
+           [True, True, False, False, False]
   iterator = FCIterator(5, 2)
   for i, u in enumerate(iterator):
     assert all(u == result[i])

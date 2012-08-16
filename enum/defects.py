@@ -152,12 +152,9 @@ def defects(lattice, cellsize, defects):
         # with another guy). We can safely ignore those.
         if all(t[firstmask] != firstcolor): continue
         a = _lexcompare(t, x) 
-        # if a == t, then LARGER exists with this structure.
+        # if a == t, then smaller exists with this structure.
         # also add it to outgroup.
-        # (LARGER: yeah, the less specialized counter over all structure in
-        # enum yields the smallest indices. This is because NDimIterator and
-        # FCIterator go in opposite directions. Not very smart.)
-        if a <= 0: outgroup.add(''.join(str(i) for i in t))
+        if a > 0: outgroup.add(''.join(str(i) for i in t))
   
       # loop over cell specific transformations.
       for hft, hermite in hfgroup:
@@ -177,7 +174,7 @@ def defects(lattice, cellsize, defects):
             t = x[transform]
             a = _lexcompare(t, x)
             if a == 0: continue
-            if a < 0: outgroup.add(''.join(str(i) for i in t))
+            if a > 0: outgroup.add(''.join(str(i) for i in t))
   
             # loop over translational symmetries.
             for translation in translations:
@@ -186,5 +183,5 @@ def defects(lattice, cellsize, defects):
               # position. We can ignore those translations.
               if all(t[firstmask] != firstcolor): continue
               a = _lexcompare(tt, x)
-              if a < 0: outgroup.add(''.join(str(i) for i in tt))
+              if a > 0: outgroup.add(''.join(str(i) for i in tt))
           yield x, hft, hermite

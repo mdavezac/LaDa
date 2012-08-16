@@ -100,8 +100,8 @@ namespace LaDa
         return -1;
       }
       _self->counter.resize(length);
-      std::fill(_self->counter.begin(), _self->counter.begin()+_self->ntrue, 1);
-      std::fill(_self->counter.begin()+_self->ntrue, _self->counter.end(), 0);
+      std::fill(_self->counter.rbegin(), _self->counter.rbegin()+_self->ntrue, 1);
+      std::fill(_self->counter.rbegin()+_self->ntrue, _self->counter.rend(), 0);
       _self->is_first = true;
       if(_self->yielded != NULL)
       {
@@ -168,10 +168,10 @@ namespace LaDa
         Py_INCREF(_self->yielded);
         return (PyObject*)_self->yielded;
       }
-      std::vector<t_fc>::reverse_iterator const i_first = _self->counter.rbegin();
-      std::vector<t_fc>::reverse_iterator const i_last = _self->counter.rend();
+      std::vector<t_fc>::iterator const i_first = _self->counter.begin();
+      std::vector<t_fc>::iterator const i_last = _self->counter.end();
       // finds first zero.
-      std::vector<t_fc>::reverse_iterator i_zero = i_first;
+      std::vector<t_fc>::iterator i_zero = i_first;
       bool found_zero = false;
       for(; i_zero != i_last; ++i_zero)
         if(not *i_zero) { found_zero = true; break; }
@@ -188,7 +188,7 @@ namespace LaDa
         return NULL;
       }
       // finds first one preceded by zero.
-      std::vector<t_fc>::reverse_iterator i_one = i_zero + 1;
+      std::vector<t_fc>::iterator i_one = i_zero + 1;
       bool found_one = false;
       for(; i_one != i_last; ++i_one)
         if(*i_one) { found_one = true; break; }
@@ -241,8 +241,8 @@ namespace LaDa
         LADA_PYERROR(internal, "Iterator was never initialized");
         return NULL;
       }
-      std::fill(_self->counter.begin(), _self->counter.begin() + _self->ntrue, 1);
-      std::fill(_self->counter.begin() + _self->ntrue, _self->counter.end(), 0);
+      std::fill(_self->counter.rbegin(), _self->counter.rbegin() + _self->ntrue, 1);
+      std::fill(_self->counter.rbegin() + _self->ntrue, _self->counter.rend(), 0);
 
       typedef math::numpy::type<bool> t_type;
       npy_intp d[1] = {(npy_intp)_self->counter.size()};
