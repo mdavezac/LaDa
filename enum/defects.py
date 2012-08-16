@@ -75,7 +75,6 @@ class Iterator(object):
 def defects(lattice, cellsize, defects):
   """ Generates defects on a lattice """
   from numpy import zeros, dot, all
-  from operator import itemgetter
   from .transforms import Transforms
   from .cppwrappers import _lexcompare
   from . import hf_groups
@@ -91,7 +90,7 @@ def defects(lattice, cellsize, defects):
 
   # creates arguments
   args = []
-  iterator = enumerate(sorted(defects.iteritems(), key=itemgetter(0)))
+  iterator = enumerate(defects.iteritems())
   # first guy is special cos he will be locked in place to avoid unecessary
   # translations
   i, (specie, n) = iterator.next()
@@ -102,7 +101,7 @@ def defects(lattice, cellsize, defects):
     if site.nbflavors == 1: continue
     if not site.asymmetric: continue
     if specie not in site.type: continue
-    firstmask[nsites*site.index:nsites*(site.index+1)] = True
+    firstmask[site.index*cellsize] = True
   args.append((1, firstcolor, firstmask))
   # now add rest of first guys, if any. They may go anywhere their pal could
   # go, including the same site, as there may be more than one he could occupy,
@@ -112,7 +111,7 @@ def defects(lattice, cellsize, defects):
     for site in lattice:
       if site.nbflavors == 1: continue
       if specie not in site.type: continue
-      mask[nsites*site.index:nsites*(site.index+1)] = True
+      mask[cellsize*site.index:cellsize*(site.index+1)] = True
     args.append((n-1, firstcolor, mask))
 
   for i, (specie, n) in iterator:
@@ -122,16 +121,16 @@ def defects(lattice, cellsize, defects):
     for site in lattice:
       if site.nbflavors == 1: continue
       if specie not in site.type: continue
-      mask[nsites*site.index:nsites*(site.index+1)] = True
+      mask[cellsize*site.index:cellsize*(site.index+1)] = True
     args.append((n, color, mask))
 
   # now we can create the template and the iterator.
   xiterator = Iterator(len(mask), *args)
+  print args
 
 
   # loop over groups directly, not sizes
   for hfgroup in hf_groups(lattice, [cellsize]).next():
-    print sum(len(u[1]) for u in hfgroup)
     # actual results
     ingroup = []
     # stuff we do not want to see again

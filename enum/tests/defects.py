@@ -45,11 +45,11 @@ def test_defects():
   from lada.enum.defects import defects
   lattice = fcc()
   lattice[0].type = 'Zr', 'Ti'
-  lattice.add_atom(0.25, 0.25, 0.25, 'O', 'V')
-  lattice.add_atom(0.75, 0.75, 0.75, 'O', 'V')
+  lattice.add_atom(0.25, 0.25, 0.25, 'O', 'A')
+  lattice.add_atom(0.75, 0.75, 0.75, 'O', 'A')
 
 
-  for i, (x, hft, hermite) in enumerate(defects(lattice, 32, {'V': 2, 'Ti': 2})):
+  for i, (x, hft, hermite) in enumerate(defects(lattice, 32, {'A': 2, 'Ti': 2})):
     continue
   print i
 
