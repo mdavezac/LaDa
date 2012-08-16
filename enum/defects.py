@@ -1,9 +1,9 @@
 class Iterator(object):
 
-  def __init__(self, template, *args): 
+  def __init__(self, size, *args): 
     super(Iterator, self).__init__()
-    self.template = template.copy()
     self.others = args
+    self.size = size
     self.reset()
     
   def __iter__(self): return self
@@ -15,7 +15,7 @@ class Iterator(object):
 
     # creates list of color iterators, as per Hart, Nelson, Forcade.
     self.iterators = []
-    current_allowed = ones(len(self.template), dtype='bool')
+    current_allowed = ones(self.size, dtype='bool')
     for n, color, mask in self.others:
       allowed = logical_and(current_allowed, mask)
       length = count_nonzero(allowed)
@@ -28,16 +28,26 @@ class Iterator(object):
     # instance's next.
     for iter in self.iterators[1:]: iter.next()
 
-    self.x = self.template.copy()
+    # allocate memory now so we don't have to do it everytime next is called.
+    self.x = ones(self.size, dtype='int16')
+    self._masks = ones((2, len(self.x)), dtype='bool')
 
   def next(self):
-    from numpy import ones, logical_and
+    from numpy import logical_and
     from ..error import internal
       
-    self.x[:] = self.template
-    mask = ones(len(self.x), dtype='bool')
+    # reset x and mask to default values.
+    self.x[:] = 0
+    self._masks[:] = True
+    mask = self._masks[0]
+    change_color = self._masks[1]
+    # do next determines which sub-iterators to call next on.
     donext = True
+    # we loop over each color in turn
     for iter, (n, color, cmask) in zip(self.iterators, self.others):
+      # as long as donext is True, we call next.
+      # once it is false (eg StopIteration was not raised) we are done
+      # incrementing subiterators.
       if donext: 
         try: bitstring = iter.next()
         except StopIteration:
@@ -47,73 +57,135 @@ class Iterator(object):
             raise internal('Cannot iterate over type {0}'.format(color))
         else: donext = False
       else: bitstring = iter.yielded
-      change_color = logical_and(cmask, mask)
+      # change_color is True for those sites the current bitstring can access
+      logical_and(cmask, mask, change_color)
+      # now only those sites which are on in the relevant bitstring are true
       change_color[change_color] = bitstring
+      # we can set x to the relevant color
       self.x[change_color] = color
+      # and turn off the bits which have just changed color
       mask[change_color] = False
+
+    # if do next is true, then we have reached the end of the loop
     if donext: raise StopIteration
+
+    # otherwise, return a reference to the current x
     return self.x
 
-# def defects(lattice, n, defects):
-#   """ Generates defects on a lattice """
-#   from ..error import ValueError
-#   from .transforms import Transforms
-#   from . import hf_groups
+def defects(lattice, cellsize, defects):
+  """ Generates defects on a lattice """
+  from numpy import zeros, dot, all
+  from operator import itemgetter
+  from .transforms import Transforms
+  from .cppwrappers import _lexcompare
+  from . import hf_groups
 
-#   # sanity checks.
-#   # Sites without defects should be spectating.
-#   # No site with more than two types.
-#   # One defect type per site.
-#   # Sets defect type to second flavor.
-#   lattice = lattice.copy()
-#   if any(len(u.type) > 2 for u in lattice):
-#     raise ValueError('Lattice should be a pseudo-binary.')
-#   transforms = Transforms(lattice)
-#   lattice = Transforms.lattice
-#   for site in lattice:
-#     if lattice.nbflavors == 1: continue
-#     if len(set(defects.keys()).intersection(set(site.type))) > 2:
-#       raise ValueError('More than one defect per site.')
-#     if len(set(site.type) - set(defects.keys())) > 2:
-#       raise ValueError('Multinary site without defects.')
-#     for key in defects.keys():
-#       if key in site.type and site.type == 2 and site.type[1] != key:
-#         a, b = site.type[0], site.type[1]
-#         site.type[0], site.type[1] = b, a
-#     for key in defects.keys():
-#       if key in site.type and site.type == 2 and site.type[1] != key:
-#         raise ValueError('defects are on same lattice site.')
-#   lattice = Transforms.lattice
+  # sanity check
+  if len(defects) == 0: return
 
-#   # Find atom with the minimum number of inequivalent lattice sites.
-#   # Its position will be fixed
-#   fixedways = {}
-#   for key in defects:
-#     fixedways[key] = [ u for u in transforms.lattice                           \
-#                        if u.nbflavors > 1 and key in u.type                    \
-#                           and u.asymmetric ] 
-#   fixedatom = min( (item for item in fixedways.iteritems()),                   \
-#                    key = lambda x: len(x[1]) )
+  transforms = Transforms(lattice)
+  lattice = transforms.lattice.copy()
 
-#   defects = defects.copy()
-#   defects[fixedatom[0]] -= 1
-#   if defects[fixedatom[0]] == 0: del defects[fixedatom[0]]
+  # find the number of active sites.
+  nsites = len([0 for u in lattice if u.nbflavors > 1])
 
-#   # loop over sizes
-#   for hfgroups in hf_groups(lattice, n):
-#     # loop over Hart-Forcade equivalent supercells
-#     for hfgroup in hfgroups:
-#       # actual results
-#       ingroup = []
-#       # stuff we do not want to see again
-#       outgroup = set()
-#   
-#       # translation operators
-#       translations = transforms.translations(hfgroup[0][0])
-#   
-#       # Creates argument to ndimensional iterator.
-#       first = [u.index for u in fixedatom[1]]
-#       args = []
-#       size = hfgroup[0][0].size
-#       for key in defects:
-#         args += [size * len([u for u in lattice if key in u.type])]
+  # creates arguments
+  args = []
+  iterator = enumerate(sorted(defects.iteritems(), key=itemgetter(0)))
+  # first guy is special cos he will be locked in place to avoid unecessary
+  # translations
+  i, (specie, n) = iterator.next()
+  nsize = len([0 for u in lattice if u.nbflavors > 1])*cellsize
+  firstmask = zeros(nsize, dtype='bool' )
+  firstcolor = i+1
+  for site in lattice:
+    if site.nbflavors == 1: continue
+    if not site.asymmetric: continue
+    if specie not in site.type: continue
+    firstmask[nsites*site.index:nsites*(site.index+1)] = True
+  args.append((1, firstcolor, firstmask))
+  # now add rest of first guys, if any. They may go anywhere their pal could
+  # go, including the same site, as there may be more than one he could occupy,
+  # and he is not blessed with  bilocation.
+  if n > 1: 
+    mask = zeros(nsize, dtype='bool')
+    for site in lattice:
+      if site.nbflavors == 1: continue
+      if specie not in site.type: continue
+      mask[nsites*site.index:nsites*(site.index+1)] = True
+    args.append((n-1, firstcolor, mask))
+
+  for i, (specie, n) in iterator:
+    # remove from lattice the reference to this specie
+    mask = zeros(nsize, dtype='bool')
+    color = i+1
+    for site in lattice:
+      if site.nbflavors == 1: continue
+      if specie not in site.type: continue
+      mask[nsites*site.index:nsites*(site.index+1)] = True
+    args.append((n, color, mask))
+
+  # now we can create the template and the iterator.
+  xiterator = Iterator(len(mask), *args)
+
+
+  # loop over groups directly, not sizes
+  for hfgroup in hf_groups(lattice, [cellsize]).next():
+    print sum(len(u[1]) for u in hfgroup)
+    # actual results
+    ingroup = []
+    # stuff we do not want to see again
+    outgroup = set()
+  
+    # translation operators
+    translations = transforms.translations(hfgroup[0][0])
+    # reset iterator
+    xiterator.reset()
+    for x in xiterator:
+      strx = ''.join(str(i) for i in x)
+      if strx in outgroup: continue
+  
+      # check for supercell independent transforms.
+      # loop over translational symmetries.
+      for translation in translations:
+        t = x[translation]
+        # Translation may move the first guy out of position (and not replace
+        # with another guy). We can safely ignore those.
+        if all(t[firstmask] != firstcolor): continue
+        a = _lexcompare(t, x) 
+        # if a == t, then LARGER exists with this structure.
+        # also add it to outgroup.
+        # (LARGER: yeah, the less specialized counter over all structure in
+        # enum yields the smallest indices. This is because NDimIterator and
+        # FCIterator go in opposite directions. Not very smart.)
+        if a <= 0: outgroup.add(''.join(str(i) for i in t))
+  
+      # loop over cell specific transformations.
+      for hft, hermite in hfgroup:
+        # get transformations. Not the best way of doing this.
+        invariants = transforms.invariant_ops(dot(lattice.cell, hermite))
+        transformations = transforms.transformations(hft)
+        for j, (t, i) in enumerate(zip(transformations, invariants)):
+          if not i: continue
+          if all(t == range(t.shape[0])): invariants[i] = False
+        transformations = transformations[invariants]
+  
+        outgroup = set()
+        for x in ingroup:
+          strx = ''.join(str(i) for i in x)
+          if strx in outgroup: continue
+          for transform in transformations: 
+            t = x[transform]
+            a = _lexcompare(t, x)
+            if a == 0: continue
+            if a < 0: outgroup.add(''.join(str(i) for i in t))
+  
+            # loop over translational symmetries.
+            for translation in translations:
+              tt = t[translation]
+              # rotations + translations may move the first guy out of
+              # position. We can ignore those translations.
+              if all(t[firstmask] != firstcolor): continue
+              a = _lexcompare(tt, x)
+              if a < 0: outgroup.add(''.join(str(i) for i in tt))
+          yield x, hft, hermite
