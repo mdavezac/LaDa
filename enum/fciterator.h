@@ -1,3 +1,5 @@
+#ifndef LADA_ENUM_FCITERATOR_H
+#define LADA_ENUM_FCITERATOR_H
 #include "LaDaConfig.h"
 
 #include <Python.h>
@@ -53,3 +55,4 @@ namespace LaDa
     }
   }
 }
+#endif

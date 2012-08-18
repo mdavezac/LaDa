@@ -52,8 +52,9 @@ def test_defects():
   lattice.add_atom(0.75, 0.75, 0.75, 'O', 'A')
 
 
+  i = 0
   for i, (x, hft, hermite) in enumerate(defects(lattice, 32, {'A': 2, 'Ti': 2})):
-    print x
+    continue; print x
   print i
 
 

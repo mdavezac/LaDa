@@ -85,8 +85,26 @@ def test_fciterator():
     reit = True
   assert reit
 
+def test_manipulations():
+  """ Test manipulation iterator. """
+  from numpy import array, arange, all
+  from itertools import permutations
+  from lada.enum.cppwrappers import Manipulations
+  from lada.error import TypeError
+
+  x = arange(5, dtype='int16')
+  perms = array([u for u in permutations(x)])
+  manips = Manipulations(perms)
+  for i, u in enumerate(manips(x)): 
+    assert all(u == perms[i])
+    assert all(x == arange(5))
+  for i, u in enumerate(manips(x)): 
+    assert all(u == perms[i])
+    assert all(x == arange(5))
+
 if __name__ == '__main__':
   test_isinteger()
   test_ndimiterator()
   test_lexcompare()
   test_fciterator()
+  test_manipulations()

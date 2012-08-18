@@ -73,7 +73,7 @@ class Transforms(object):
                   xrange(hft.quotient[1]), 
                   xrange(hft.quotient[2]) ] 
     size = hft.size
-    result = zeros((size-1, nsites * size), dtype='int64')  - 1
+    result = zeros((size-1, nsites * size), dtype='int16')  - 1
     iterable = product(*itertrans)
     a = iterable.next() # avoid null translation
     assert a == (0,0,0) # check that it is null

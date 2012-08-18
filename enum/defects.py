@@ -76,7 +76,7 @@ def defects(lattice, cellsize, defects):
   """ Generates defects on a lattice """
   from numpy import zeros, dot, all
   from .transforms import Transforms
-  from .cppwrappers import _lexcompare
+  from .cppwrappers import _lexcompare, Manipulations
   from . import hf_groups
 
   # sanity check
@@ -126,8 +126,6 @@ def defects(lattice, cellsize, defects):
 
   # now we can create the template and the iterator.
   xiterator = Iterator(len(mask), *args)
-  print args
-
 
   # loop over groups directly, not sizes
   for hfgroup in hf_groups(lattice, [cellsize]).next():
@@ -137,7 +135,7 @@ def defects(lattice, cellsize, defects):
     outgroup = set()
   
     # translation operators
-    translations = transforms.translations(hfgroup[0][0])
+    translations = Manipulations(transforms.translations(hfgroup[0][0]))
     # reset iterator
     xiterator.reset()
     for x in xiterator:
@@ -146,8 +144,7 @@ def defects(lattice, cellsize, defects):
   
       # check for supercell independent transforms.
       # loop over translational symmetries.
-      for translation in translations:
-        t = x[translation]
+      for t in translations(x):
         # Translation may move the first guy out of position (and not replace
         # with another guy). We can safely ignore those.
         if all(t[firstmask] != firstcolor): continue
@@ -155,33 +152,34 @@ def defects(lattice, cellsize, defects):
         # if a == t, then smaller exists with this structure.
         # also add it to outgroup.
         if a > 0: outgroup.add(''.join(str(i) for i in t))
+      ingroup.append(x.copy())
+    print len(ingroup)
   
-      # loop over cell specific transformations.
-      for hft, hermite in hfgroup:
-        # get transformations. Not the best way of doing this.
-        invariants = transforms.invariant_ops(dot(lattice.cell, hermite))
-        transformations = transforms.transformations(hft)
-        for j, (t, i) in enumerate(zip(transformations, invariants)):
-          if not i: continue
-          if all(t == range(t.shape[0])): invariants[i] = False
-        transformations = transformations[invariants]
+    # loop over cell specific transformations.
+    for hft, hermite in hfgroup:
+      # get transformations. Not the best way of doing this.
+      invariants = transforms.invariant_ops(dot(lattice.cell, hermite))
+      transformations = transforms.transformations(hft)
+      for j, (t, i) in enumerate(zip(transformations, invariants)):
+        if not i: continue
+        if all(t == range(t.shape[0])): invariants[i] = False
+      transformations = transformations[invariants]
   
-        outgroup = set()
-        for x in ingroup:
-          strx = ''.join(str(i) for i in x)
-          if strx in outgroup: continue
-          for transform in transformations: 
-            t = x[transform]
-            a = _lexcompare(t, x)
-            if a == 0: continue
-            if a > 0: outgroup.add(''.join(str(i) for i in t))
+      outgroup = set()
+      for x in ingroup:
+        strx = ''.join(str(i) for i in x)
+        if strx in outgroup: continue
+        for transform in transformations: 
+          t = x[transform]
+          a = _lexcompare(t, x)
+          if a == 0: continue
+          if a > 0: outgroup.add(''.join(str(i) for i in t))
   
-            # loop over translational symmetries.
-            for translation in translations:
-              tt = t[translation]
-              # rotations + translations may move the first guy out of
-              # position. We can ignore those translations.
-              if all(t[firstmask] != firstcolor): continue
-              a = _lexcompare(tt, x)
-              if a > 0: outgroup.add(''.join(str(i) for i in tt))
-          yield x, hft, hermite
+          # loop over translational symmetries.
+          for tt in translations(t):
+            # rotations + translations may move the first guy out of
+            # position. We can ignore those translations.
+            if all(t[firstmask] != firstcolor): continue
+            a = _lexcompare(tt, x)
+            if a > 0: outgroup.add(''.join(str(i) for i in tt))
+        yield x, hft, hermite

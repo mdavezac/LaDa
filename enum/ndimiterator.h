@@ -1,3 +1,5 @@
+#ifndef LADA_ENUM_NDIMITERATOR_H
+#define LADA_ENUM_NDIMITERATOR_H
 #include "LaDaConfig.h"
 
 #include <Python.h>
@@ -51,3 +53,4 @@ namespace LaDa
     }
   }
 }
+#endif

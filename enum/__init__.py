@@ -93,7 +93,7 @@ def hf_groups(lattice, sizerange):
 def generate_bitstrings(lattice, sizerange):
   """ Generator over bitstrings """
   from numpy import dot, all
-  from .cppwrappers import NDimIterator, _lexcompare
+  from .cppwrappers import NDimIterator, _lexcompare, Manipulations
   transforms = Transforms(lattice)
   for hfgroups in hf_groups(lattice, sizerange):
     for hfgroup in hfgroups:
@@ -103,7 +103,7 @@ def generate_bitstrings(lattice, sizerange):
       outgroup = set()
   
       # translation operators
-      translations = transforms.translations(hfgroup[0][0])
+      translations = Manipulations(transforms.translations(hfgroup[0][0]))
   
       # Creates argument to ndimensional iterator.
       args = []
@@ -121,8 +121,7 @@ def generate_bitstrings(lattice, sizerange):
         # SHOULD INSERT LABEL EXCHANGE HERE
         # loop over translational symmetries.
         subperiodic = False
-        for translation in translations:
-          t = x[translation]
+        for t in translations(x):
           a = _lexcompare(t, x)
           # if a == t, then smaller exists with this structure.
           # also add it to outgroup
@@ -153,8 +152,7 @@ def generate_bitstrings(lattice, sizerange):
   
             # SHOULD INSERT LABEL EXCHANGE HERE
             # loop over translational symmetries.
-            for translation in translations:
-              tt = t[translation]
+            for tt in translations(t):
               a = _lexcompare(tt, x)
               if a > 0: outgroup.add(''.join(str(i) for i in tt))
               # SHOULD INSERT LABEL EXCHANGE HERE
