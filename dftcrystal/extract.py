@@ -168,6 +168,94 @@ class ExtractBase(object):
 
   @property
   @make_cached
+  def cputime(self):
+    """ Total CPU time. """
+    from datetime import timedelta
+    from ..error import GrepError
+    regex = self._find_first_STDOUT("TOTAL\s+CPU\s+TIME\s+=\s+(\S+)")
+    if regex is None: raise GrepError("Could not grep total cpu time.")
+    return timedelta(seconds=float(regex.group(1)))
+
+  @property
+  @make_cached
+  def moqgad_time(self):
+    """ MOQGAD time. """
+    from datetime import timedelta
+    from re import compile
+    regex = compile('T+\s+MOQGAD\s+TELAPSE\s+(\S+)\s+TCPU\s+(\S+)')
+    with self.__stdout__() as file:
+      results = []
+      for u in regex.finditer(file.read()): 
+        results.append(timedelta(seconds=float(u.group(2))))
+      return results
+
+  @property
+  @make_cached
+  def shellx_time(self):
+    """ SHELLX time. """
+    from datetime import timedelta
+    from re import compile
+    regex = compile('T+\s+SHELLX\s+TELAPSE\s+(\S+)\s+TCPU\s+(\S+)')
+    with self.__stdout__() as file:
+      results = []
+      for u in regex.finditer(file.read()): 
+        results.append(timedelta(seconds=float(u.group(2))))
+      return results
+
+  @property
+  @make_cached
+  def monmo3_time(self):
+    """ MONMO3 time. """
+    from datetime import timedelta
+    from re import compile
+    regex = compile('T+\s+MONMO3\s+TELAPSE\s+(\S+)\s+TCPU\s+(\S+)')
+    with self.__stdout__() as file:
+      results = []
+      for u in regex.finditer(file.read()): 
+        results.append(timedelta(seconds=float(u.group(2))))
+      return results
+
+  @property
+  @make_cached
+  def numdft_time(self):
+    """ NUMDFT time. """
+    from datetime import timedelta
+    from re import compile
+    regex = compile('T+\s+NUMDFT\s+TELAPSE\s+(\S+)\s+TCPU\s+(\S+)')
+    with self.__stdout__() as file:
+      results = []
+      for u in regex.finditer(file.read()): 
+        results.append(timedelta(seconds=float(u.group(2))))
+      return results
+
+  @property
+  @make_cached
+  def fdik_time(self):
+    """ FDIK time. """
+    from datetime import timedelta
+    from re import compile
+    regex = compile('T+\s+FDIK\s+TELAPSE\s+(\S+)\s+TCPU\s+(\S+)')
+    with self.__stdout__() as file:
+      results = []
+      for u in regex.finditer(file.read()): 
+        results.append(timedelta(seconds=float(u.group(2))))
+      return results
+
+  @property
+  @make_cached
+  def pdig_time(self):
+    """ PDIG time. """
+    from datetime import timedelta
+    from re import compile
+    regex = compile('T+\s+PDIG\s+TELAPSE\s+(\S+)\s+TCPU\s+(\S+)')
+    with self.__stdout__() as file:
+      results = []
+      for u in regex.finditer(file.read()): 
+        results.append(timedelta(seconds=float(u.group(2))))
+      return results
+
+  @property
+  @make_cached
   def input_title(self):
     """ Title as given on input. """
     from .parse import parse
@@ -522,19 +610,24 @@ class MassExtract(AbstractMassExtract):
         '/some/other/path': True
       }
   """
+  DefaultExtract = Extract
+  """ Extraction class to use by default. 
+
+      This is mostly to allow for some kind of monkey patching.
+  """
   def __init__(self, path = None, glob=None, **kwargs):
     """ Initializes MassExtract.
     
     
-        :Parameters:
-          path : str or None
+        :param str path:
             Root directory for which to investigate all subdirectories.
             If None, uses current working directory.
-          kwargs : dict
-            Keyword parameters passed on to AbstractMassExtract.
-
-        :kwarg naked_end: True if should return value rather than dict when only one item.
-        :kwarg unix_re: converts regex patterns from unix-like expression.
+        :param str glob:
+            If not None, then uses this glob to find the files to grep. These
+            should be CRYSTAL output files.
+        :param kwargs:
+            Passed on to
+            :py:class:`~lada.jobfolder.extract.AbstractMassExtract`
     """
     from os import getcwd
     if path is None: path = getcwd()
@@ -548,27 +641,28 @@ class MassExtract(AbstractMassExtract):
     from os import walk
     from os.path import relpath, join
     from glob import iglob
-    from . import Extract as CrystalExtract
     from .relax import RelaxExtract
 
     if self.glob is None:
-      for dirpath, dirnames, filenames in walk(self.rootpath, topdown=True, followlinks=True):
+      for dirpath, dirnames, filenames in walk( self.rootpath, topdown=True, 
+                                                followlinks=True ):
         if 'crystal.out' not in filenames: continue
         if 'relax' in dirnames:
           dirnames[:] = [u for u in dirnames if u != 'relax']
           try: result = RelaxExtract(join(self.rootpath, dirpath))
           except:
-            try: result = CrystalExtract(join(self.rootpath, dirpath))
+            try: result = self.__class__.DefaultExtract(join(self.rootpath, dirpath))
             except: continue
         else: 
-          try: result = CrystalExtract(join(self.rootpath, dirpath))
+          try: result = self.__class__.DefaultExtract(join(self.rootpath, dirpath))
           except: continue
         
         yield join('/', relpath(dirpath, self.rootpath)), result
     else: 
-      for dirpath, dirnames, filenames in walk(self.rootpath, topdown=True, followlinks=True):
+      for dirpath, dirnames, filenames in walk( self.rootpath, topdown=True, 
+                                                followlinks=True ):
         for filename in iglob(join(join(self.rootpath, dirpath), self.glob)):
-          try: result = CrystalExtract(filename)
+          try: result = self.__class__.DefaultExtract(filename)
           except: continue
           else: yield join('/',relpath(filename, self.rootpath)), result
 
@@ -581,5 +675,5 @@ class MassExtract(AbstractMassExtract):
   @property
   def _attributes(self): 
     """ Returns __dir__ set special to the extraction itself. """
-    from . import Extract as VaspExtract
-    return list(set([u for u in dir(VaspExtract) if u[0] != '_'] + ['details']))
+    return list(set( [ u for u in dir(self.DefaultExtract) if u[0] != '_' ] 
+                     + ['details'] ))
