@@ -68,9 +68,11 @@ class AbstractExtractBase(object):
           Any keyword argument is set as an attribute of this object.
           The attribute must exist.
     """
+    from ..error import KeyError
     result = self.__copy__()
     for k, v in kwargs.iteritems():
-      if not hasattr(self, k): raise RuntimeError('Attribute {0} does not exist.'.format(k))
+      if not hasattr(self, k):
+        raise KeyError('Attribute {0} does not exist.'.format(k))
       setattr(result, k, v)
     return result
 
@@ -101,8 +103,10 @@ def search_factory(name, methname, module, filename=None):
         :raise IOError: if the OUTCAR file does not exist. 
     """
     from os.path import exists, join
+    from ..error import IOError
     path = join(self.directory, getattr(self, methname.upper()))
-    if not exists(path): raise IOError("Path {0} does not exist.\n".format(path))
+    if not exists(path):
+      raise IOError("Path {0} does not exist.\n".format(path))
     return open(path, 'r')
   __outcar__.__name__ = '__{0}__'.format(methname.lower())
 

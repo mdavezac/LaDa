@@ -51,19 +51,11 @@ class MaxCycle(TypedKeyword):
   """ Maxcycle input.
 
       It is expected to be an integer or None.
-      If changed from None or 0 to an integer greater than zero, and no
-      optimization method has yet been selected, set the optimization method to
-      fulloptg.
   """
   keyword = 'maxcycle'
-  """ CRYSTAL keyword. """
-  def __init__(self, value=None):
-    """ Creates MAXCYCLE keyword. """
-    super(MaxCycle, self).__init__(keyword=None, value=value, type=int)
-  def __set__(self, instance, value):
-    super(MaxCycle, self).__set__(instance, value)
-    if self._value is not None and self._value > 0 and instance.static:
-      instance.fulloptg = True
+  """ CRYSTAL keyword. """ 
+  type = int
+  """ Type of the keyword. """
 
 class ExclAttrBlock(AttrBlock):
   """ An attribute block set up to exclude others. 
@@ -192,42 +184,6 @@ class OptGeom(ExclAttrBlock):
     self.extstress  = QuantityKeyword(units=hartree/bohr**3, shape=(3,3))
     """ External stress in :math:`\\frac{\\text{hartree}}{\\text{bohr}^{3}}` """
 
-  @property
-  def static(self): 
-    """ Sets to static calculation.
-    
-        Calculations are static either if maxcycle is 0 or if no optimization
-        method is given.
-
-        Calculations are set static - if thery already are not - by setting maxcycle to 0.
-        Calculations are made non-static by setting maxcycle to None (e.g.
-        CRYSTAL default) if maxcycle is 0, and by setting the optimization
-        method to fulloptg if none are yet selected.
-    """
-    return (self.maxcycle is not None and self.maxcycle < 1)                   \
-           or ( self.fulloptg == False and self.cellonly == False              \
-                and self.itatocell == False and self.interdun == False )
-  @static.setter
-  def static(self, value):
-    """ If True, makes calculation static. """
-    if value == True:
-      if self.static: return
-      self.maxcycle = 0
-    else:
-      # Makes sure we are doing some cycles.
-      if self.maxcycle is None or self.maxcycle < 1: self.maxcyle = None
-      # Makes sure some optimization method is given.
-      if self.fulloptg == False and self.cellonly == False                     \
-         and self.itatocell == False and self.interdun == False: 
-        self.fullopg = True
-
   def __ui_repr__(self, imports, name=None, defaults=None, exclude=None):
     """ User-friendly output. """
-    return super(OptGeom, self).__ui_repr__( imports, name, 
-                                             defaults, ['static'] )
-  
-
-  def print_input(self, **kwargs):
-    """ Does not print if static. """
-    if self.static: return None
-    return super(OptGeom, self).print_input(**kwargs)
+    return super(OptGeom, self).__ui_repr__(imports, name, defaults)

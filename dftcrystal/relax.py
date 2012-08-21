@@ -23,11 +23,7 @@ class RelaxExtract(Extract):
   def details(self):
     """ Intermediate steps. """
     if '_details' not in self.__dict__:
-      from os.path import exists
-      if not exists(self.directory): return None
-      self.__dict__['_details'] = None
-      self._details = self.IntermediateMassExtract(self.directory)
-      """ List of intermediate calculation extractors. """
+      self.__dict__['_details'] = self.IntermediateMassExtract(self.directory)
     return self._details
   
   def iterfiles(self, **kwargs):
@@ -50,6 +46,11 @@ def iter_relax(self, structure=None, outdir=None, maxiter=30, **kwargs):
     raise ValueError('Maximum number of iteration cannot be less than 0.')
   if outdir is None: outdir = getcwd()
   self.optgeom.enabled = True
+  if self.optgeom.maxcycle is None: 
+    self.optgeom.maxcycle = 10
+  elif self.optgeom.maxcycle < 0: 
+    self.optgeom.maxcycle = 10
+   
   
   iteration, restart = 0, kwargs.pop('restart', None)
 
@@ -71,11 +72,11 @@ def iter_relax(self, structure=None, outdir=None, maxiter=30, **kwargs):
     iteration += 1
 
     # check for convergence
-    if extract.optgeom_convergence is True: break
+    if extract.optgeom_convergence is True                                     \
+       and extract.optgeom_iterations < self.optgeom.maxcycle: break
 
   # perform static calculation
   self.optgeom.enabled = False
-  print outdir
   for extract in self.iter( structure, outdir=outdir, restart=restart, 
                             **kwargs ):
     yield extract
@@ -85,6 +86,8 @@ def iter_relax(self, structure=None, outdir=None, maxiter=30, **kwargs):
 iter_relax.Extract = RelaxExtract
 """ Extraction object for relaxation meta-functional. """
 
-Relax = makeclass( 'Relax', Functional, iter_relax, None, module='lada.dftcrystal.relax',
-                   doc='Functional form of the :py:class:`lada.dftcrystal.relax.iter_relax` method.' )
+Relax = makeclass( 'Relax', Functional, iter_relax, None,
+                   module='lada.dftcrystal.relax',
+		   doc='Functional form of the '                               \
+                       ':py:class:`lada.dftcrystal.relax.iter_relax` method.' )
 relax = makefunc('relax', iter_relax, module='lada.dftcrystal.relax')
