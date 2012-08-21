@@ -57,11 +57,14 @@ def exec_input( script, global_dict=None, local_dict=None,
 
 def parse_incar(path):
   """ Reads INCAR file and returns mapping (keyword, value). """
+  from os.path import isdir, join
   from ..error import ValueError
   from ..misc import RelativePath
   if isinstance(path, str): 
     if path.find('\n') == -1:
-      with open(RelativePath(path).path) as file: return parse_incar(file)
+      dummy = RelativePath(path).path
+      if isdir(dummy): dummy = join(dummy, 'INCAR')
+      with open(dummy) as file: return parse_incar(file)
     else:
       return parse_incar(path.split('\n').__iter__())
   
@@ -83,4 +86,37 @@ def parse_incar(path):
     if len(keyword) == 0: raise ValueError('Found empty keword in INCAR.')
     if keyword in result: raise ValueError('Found duplicate keyword {0} in INCAR'.format(keyword))
     result[keyword] = value
+  return result
+
+
+def read_incar(filename='INCAR'):
+  """ Reads a functional from an INCAR.
+
+      :param filename:
+        It can be one of the following:
+
+          - An iterable object: each iteration should yield a line in the
+            INCAR.
+          - A string (single line): path to a directory containing an INCAR or
+            to an INCAR file itself.
+          - A string (multi-line): should be the content of an INCAR.
+        
+        Defaults to 'INCAR'.
+      :returns: A vasp functional equivalent to the INCAR.
+  """
+  from ..error import internal
+  from .functional import Vasp
+  parsed = parse_incar(filename)
+  result = Vasp()
+  for key, value in parsed.iteritems():
+    if key in result._input:
+      newobject = result._input[key]
+      if hasattr(newobject, 'read_input'):
+        newobject.read_input(value, owner=result)
+      elif hasattr(result._input[key], 'raw'):
+        newobject.raw = value
+      elif hasattr(result._input[key], '__set__'):
+        newobject.__set__(result, value)
+      else: raise internal('Cannot read INCAR for {0}'.format(key))
+    else: result.add_keyword(key.lower(), value)
   return result
