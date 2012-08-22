@@ -673,7 +673,7 @@ class IStruc(AliasKeyword):
   """ Initial structure. 
   
       Determines which structure is written to the POSCAR. In practice, it
-      makes it possible to restart a crashed job from the latest contcar.
+      makes it possible to restart a crashed job from the latest CONTCAR_.
       There are two possible options:
 
         - auto: 
@@ -688,9 +688,10 @@ class IStruc(AliasKeyword):
           read from CONTCAR.
 
         - scratch: Always uses input/restart structure.
-        - contcar: Always use contcar structure unless ``overwrite == True``.
+        - contcar: Always use CONTCAR_ structure unless ``overwrite == True``.
+        - input: Always use input structure, never restart_ or CONTCAR_ structure.
 
-      Only positions and cells are used from contcar. All other attributes
+      Only positions and cells are used from CONTCAR_. All other attributes
       (magnetization, etc) are those of the input structure. Hence, the atoms
       of any given specie should be same order in the CONTCAR and in the
       input/restart.
@@ -701,8 +702,9 @@ class IStruc(AliasKeyword):
       .. _restart: :py:attr:`~lada.vasp.functional.Functional.restart`
       .. _icharg: :py:attr:`~lada.vasp.functional.Functional.icharg`
       .. _istart: :py:attr:`~lada.vasp.functional.Functional.istart`
+      .. _CONTCAR: http://cms.mpi.univie.ac.at/vasp/guide/node60.html
   """
-  aliases = {-1: ['auto', 0], 0: ['scratch', 1], 1: ['contcar', 2] }
+  aliases = {-1: ['auto', 0], 0: ['scratch', 1], 1: ['contcar', 1], 2: ['input', 2] }
   """ Aliases for the same option. """
   keyword = None
   """ Does not correspond to a VASP keyword """
@@ -721,7 +723,7 @@ class IStruc(AliasKeyword):
     structure = kwargs['structure']
     outdir = kwargs['outdir']
     vasp = kwargs['vasp']
-    has_restart = getattr(vasp, 'restart', None) is not None
+    has_restart = getattr(vasp, 'restart', None) is not None and istruc != 2
     if has_restart: has_restart = vasp.restart.success
     if has_restart: structure = vasp.restart.structure
 
@@ -996,7 +998,7 @@ class Relaxation(BaseKeyword):
 class ISmear(AliasKeyword):
   keyword = 'ismear'
   aliases = { -5: ['metal'], -4: ['tetra'], -3: ['dynamic'],
-              -1: ['fermi'], -2: ['fixed'], 0: ['gaussian'],
+              -1: ['fermi'], -2: ['fixresults'], 0: ['gaussian'],
                1: ['mp', 'mp1', 'mp 1'], 2: ['mp 2', 'mp2'],
                3: ['mp3', 'mp 3'] }
 class Sigma(QuantityKeyword): 

@@ -19,11 +19,11 @@ def test(path):
   vasp.precision  = "accurate"
   vasp.ediff      = 1e-5
   vasp.encut      = 1.4
-  vasp.ismear     = "metal"
+  vasp.ismear     = "fermi"
   vasp.sigma      = 0.01
   vasp.relaxation = "volume"
   vasp.add_specie = "Si", "{0}/pseudos/Si".format(path)
-  directory = '/tmp/test' # mkdtemp()
+  directory = mkdtemp()
   if exists(directory) and directory == '/tmp/test': rmtree(directory)
   if not exists(directory): makedirs(directory)
   try: 
@@ -35,6 +35,5 @@ def test(path):
     pass
 
 if __name__ == "__main__":
-  from sys import argv, path 
-  if len(argv) > 2: path.extend(argv[2:])
+  from sys import argv
   test(argv[1])

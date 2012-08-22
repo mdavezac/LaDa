@@ -45,7 +45,6 @@ def test(path=None, dodate=True):
   assert a.precision == "accurate"
   assert abs(a.ediff-2e-5) < 1e-8
   assert abs(a.ediffg-2e-4) < 1e-8
-  assert a.smearing == 'metal'
   assert a.lorbit == 0
   assert abs(a.nupdown + 1.0) < 1e-8
   assert a.lmaxmix == 4

@@ -13,9 +13,8 @@ Contents:
    :maxdepth: 1
 
    Vasp class <vasp/functional>
-..   Incar class <vasp/incar>
-..   Relaxation methods <vasp/relax>
-..   Extraction classes <vasp/extract>
+   Relaxation methods <vasp/relax>
+   Extraction classes <vasp/extract>
 
 .. currentmodule:: lada.vasp
 .. autofunction:: read_input
