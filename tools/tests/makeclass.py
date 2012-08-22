@@ -1,6 +1,6 @@
 
 def test():
-  from lada.functools.makeclass import makeclass
+  from lada.tools.makeclass import makeclass
   import dummy
 
   base = dummy.Base(1, 'b')

@@ -1,9 +1,9 @@
 """ Subpackage containing extraction methods for VASP. """
 __docformat__  = 'restructuredtext en'
-__all__ = ['ExtractBase', 'CouldNotFindProperty']
+__all__ = ['ExtractBase']
 from quantities import g, cm, eV
-from ...functools import make_cached
-from ...functools.extract import search_factory
+from ...tools import make_cached
+from ...tools.extract import search_factory
 from ...error import GrepError
 
 OutcarSearchMixin = search_factory('OutcarSearchMixin', 'OUTCAR', __name__)

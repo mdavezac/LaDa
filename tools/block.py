@@ -37,7 +37,7 @@ class AttrBlock(BaseKeyword):
     """ passes through the input keywords in :py:attr:`_input`. 
     
         If the input value is derived from
-        :py:class:`~lada.functools.keyword.BaseKeyword`, then it is added to
+        :py:class:`~lada.tools.keyword.BaseKeyword`, then it is added to
         :py:attr:`_input`. Otherwise, super is called.
     """
     if isinstance(value, BaseKeyword): 
@@ -100,13 +100,13 @@ class AttrBlock(BaseKeyword):
 
   def __repr__(self, defaults=False, name=None):
     """ Representation of this instance. """
-    from ..functools.uirepr import uirepr
+    from .uirepr import uirepr
     defaults = self.__class__() if defaults else None
     return uirepr(self, name=name, defaults=defaults)
 
   def __ui_repr__(self, imports, name=None, defaults=None, exclude=None):
     """ Creates user friendly representation. """
-    from ..functools.uirepr import template_ui_repr, add_to_imports
+    from .uirepr import template_ui_repr, add_to_imports
 
     results = template_ui_repr(self, imports, name, defaults, exclude)
     if name is None:

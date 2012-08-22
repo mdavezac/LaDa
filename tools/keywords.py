@@ -17,7 +17,7 @@ class BaseKeyword(object):
 
         More precisely, input files  are generally groups of keyword-value
         pairs. The groups are dealt with by
-        :py:class:`~lada.functools.block.AttrBlock`.
+        :py:class:`~lada.tools.block.AttrBlock`.
   """
   def __init__(self, keyword=None, raw=None):
     """ Creates a block. 

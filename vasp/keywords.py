@@ -1,7 +1,7 @@
 from quantities import eV
-from ..functools.keywords import BoolKeyword as BaseBoolKeyword, ValueKeyword, \
-                                 TypedKeyword, AliasKeyword, ChoiceKeyword,    \
-                                 BaseKeyword, QuantityKeyword
+from ..tools.keywords import BoolKeyword as BaseBoolKeyword, ValueKeyword,     \
+                             TypedKeyword, AliasKeyword, ChoiceKeyword,        \
+                             BaseKeyword, QuantityKeyword
 class BoolKeyword(BaseBoolKeyword):
   """ Boolean keyword.
 

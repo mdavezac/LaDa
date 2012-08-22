@@ -11,7 +11,7 @@
 """
 __docformat__ = "restructuredtext en"
 __all__ = ['relax', 'iter_relax', 'Relax', 'epitaxial', 'iter_epitaxial', 'RelaxExtract']
-from ..functools.makeclass import makeclass, makefunc
+from ..tools.makeclass import makeclass, makefunc
 from .functional import Vasp
 from .extract import Extract, MassExtract
 

@@ -2,8 +2,8 @@
 """ Sub-package containing the functional. """
 __docformat__ = "restructuredtext en"
 __all__ = ['Vasp']
-from ..functools import stateless, assign_attributes
-from ..functools.block import AttrBlock
+from ..tools import stateless, assign_attributes
+from ..tools.block import AttrBlock
 from ..misc import add_setter
 from extract import Extract
 
@@ -20,7 +20,7 @@ class Vasp(AttrBlock):
                           ICharg, IStruc, LDAU, PrecFock, Precision, Nsw,      \
                           Isif, IBrion, Relaxation, ISmear, LSorbit, Sigma,    \
                           LMaxMix, EdiffPerAtom, EdiffgPerAtom, NonScf
-    from ..functools.keywords import TypedKeyword, ChoiceKeyword
+    from ..tools.keywords import TypedKeyword, ChoiceKeyword
     super(Vasp, self).__init__()
 
     self.species = species if species is not None else {}
@@ -891,7 +891,7 @@ class Vasp(AttrBlock):
 
   def __repr__(self, defaults=True, name=None):
     """ Returns representation of this instance """
-    from ..functools.uirepr import uirepr
+    from ..tools.uirepr import uirepr
     defaults = self.__class__() if defaults else None
     return uirepr(self, name=name, defaults=defaults)
 
