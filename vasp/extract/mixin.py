@@ -1,6 +1,6 @@
 """ Mixin classes for extraction objects. """
 __docformat__  = 'restructuredtext en'
-from ...functools.extract import search_factory
+from ...tools.extract import search_factory
 OutcarSearchMixin = search_factory('OutcarSearchMixin', 'OUTCAR', __name__)
 
 

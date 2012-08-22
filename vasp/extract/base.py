@@ -1,9 +1,9 @@
 """ Subpackage containing extraction methods for VASP. """
 __docformat__  = 'restructuredtext en'
-__all__ = ['ExtractBase', 'CouldNotFindProperty']
+__all__ = ['ExtractBase']
 from quantities import g, cm, eV
-from ...functools import make_cached
-from ...functools.extract import search_factory
+from ...tools import make_cached
+from ...tools.extract import search_factory
 from ...error import GrepError
 
 OutcarSearchMixin = search_factory('OutcarSearchMixin', 'OUTCAR', __name__)
@@ -387,23 +387,9 @@ class ExtractBase(object):
   @property
   def relaxation(self): 
     """ Returns the kind of relaxation performed in this calculation. """
-    from ..incar import Relaxation
-    result = Relaxation(self.isif)
-    if self.nsw != 50: result.nsw = self.nsw
-    if self.ibrion != 2 or abs(self.potim - 0.5) > 1e-8: result.ibrion = self.ibrion
-    if abs(self.potim - 0.5) > 1e-8: result.potim = self.potim
-    return result.value
+    from ..keywords import Relaxation
+    return Relaxation().__get__(self)
   
-  @property
-  def smearing(self): 
-    """ Returns the kind of smearing performed in this calculation. """
-    from quantities import eV
-    from ..incar import Smearing
-    result = Smearing()
-    result.ismear = self.ismear
-    result.sigma = self.sigma if abs(self.sigma - 0.2*eV) > 1e-8 else None
-    return result.value
-
   @property
   @make_cached
   def ibrion(self):

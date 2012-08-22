@@ -41,10 +41,10 @@ def U(type=1, l=2, U=0e0, J=0e0 ):
 
 def nlep(type = 1, l=2, U0=0e0, U1=None, fitU0=False, fitU1=False, 
          U0_range=5, U1_range=5) :
-  """ Creates `nlep`_ parameters 
+  """ Creates NLEP_ parameters 
 
       Non Local External Potentials attempt to correct in part for the band-gap
-      problem[0]_.
+      problem [*]_.
 
       :param type:
           Should be one of the following: 1|2|"liechtenstein"|"dudarev".
@@ -54,7 +54,7 @@ def nlep(type = 1, l=2, U0=0e0, U1=None, fitU0=False, fitU1=False,
           Channel for which to apply nlep. Defaults to 2.
       :param U0:
           First nlep parameter. Defaults to 0.
-      :param U1: and a['func'] == 
+      :param U1:
           Second (e)nlep parameter. Defaults to 0.
       :param fitU0:
          If True, U1 is a free params w.r.t fitting potentials. 
@@ -71,9 +71,16 @@ def nlep(type = 1, l=2, U0=0e0, U1=None, fitU0=False, fitU1=False,
 
       :note: LDA+U is always LSDA+U here. 
 
-      .. _[0]: `PRB **77**, 241201(R) (2008).`__
-      .. __: http://dx.doi.org/10.1103/PhysRevB.77.241201
+      .. _[*]: `PRB **77**, 241201(R) (2008). <NLEP_>`
+      .. _NLEP: http://dx.doi.org/10.1103/PhysRevB.77.241201
   """
+  from .. import vasp_has_nlep
+  from ..error import ConfigError
+  if not vasp_has_nlep: 
+    raise ConfigError( 'vasp_has_nlep is False. Cannot use NLEP.\n'            \
+                       'If you have VASP compiled for NLEP, '                  \
+                       'please vasp_has_nlep to True in your '                 \
+                       'lada configuration file.\n' )
   if hasattr(type, "lower"):
     type = type.lower()
     if type == "liechtenstein": type = 1
