@@ -19,7 +19,7 @@ class Vasp(AttrBlock):
                           NElect, Algo, Ediff, Ediffg, Encut, EncutGW, IStart, \
                           ICharg, IStruc, LDAU, PrecFock, Precision, Nsw,      \
                           Isif, IBrion, Relaxation, ISmear, LSorbit, Sigma,    \
-                          LMaxMix, EdiffPerAtom, EdiffgPerAtom
+                          LMaxMix, EdiffPerAtom, EdiffgPerAtom, NonScf
     from ..functools.keywords import TypedKeyword, ChoiceKeyword
     super(Vasp, self).__init__()
 
@@ -340,7 +340,7 @@ class Vasp(AttrBlock):
         .. seealso:: NGZ_, :py:attr:`ngx`, :py:attr:`ngy`
         .. _NGZ: http://cms.mpi.univie.ac.at/wiki/index.php/NGZ
     """
-    self.nonscf    = BoolKeyword()
+    self.nonscf    = NonScf()
     """ If True, performs a non-self consistent calculation.
 
         The value of this keyword is checked by :py:attr:`icharg` and used

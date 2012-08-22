@@ -1003,7 +1003,7 @@ class Sigma(QuantityKeyword):
   keyword  = 'sigma'
   units = eV
 
-class LSorbit(BaseKeyword):
+class LSorbit(BoolKeyword):
   """ Run calculation with spin-orbit coupling. 
 
       Accepts None, True, or False.
@@ -1014,21 +1014,20 @@ class LSorbit(BaseKeyword):
   keyword = 'lsorbit'
   """ VASP keyword """
   def __init__(self, value=None):
-    super(LSorbit, self).__init__()
-    self.value = value
-  def __get__(self, instance, owner=None): return self._value
+    super(LSorbit, self).__init__(value=value)
+  def __get__(self, instance, owner=None): return self.value
   def __set__(self, instance, value):
     if value is None: self._value = None; return
     self.value = value == True
-    if True:
-      self.ispin = 2
-      self.nonscf = True
+    if self.value:
+      instance.ispin = 2
+      instance.nonscf = True
   def output_map(self, **kwargs):
     if self.value is None or self.value == False: return None
-    if not self.nonscf:
+    vasp = kwargs['vasp']
+    if not vasp.nonscf:
       raise ValueError( 'Expected non-self-consistent '                        \
                         'calculation with LSORBIT = True' )
-    vasp = kwargs['vasp']
     if vasp.restart is None: 
       raise ValueError( 'Expected to restart from other '                      \
                         'calculation with LSORBIT = True' )
@@ -1036,6 +1035,13 @@ class LSorbit(BaseKeyword):
       raise ValueError( 'Self-consistent calculation was unsuccessful. '       \
                         'Cannot perform LSORBIT = True calculation.' )
     vasp.lmaxmix = vasp.restart.lmaxmix
+    return super(LSorbit, self).output_map(**kwargs)
+
+class NonScf(BoolKeyword):
+  keyword = None
+  """ Does not correspond to a VASP keyword. """
+  def __init__(self, value=False):
+    super(NonScf, self).__init__(value=False)
 
 class LMaxMix(TypedKeyword):
   keyword = 'lmaxmix'
