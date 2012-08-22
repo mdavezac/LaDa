@@ -1,5 +1,24 @@
 class BaseKeyword(object):
-  """ Defines keyword input to CRYSTAL. """
+  """ Defines keyword input to different functionals. 
+  
+      The object is to make functionals act and behave as close as possible to
+      the original input-file based approach, while allowing some automation.
+      We want functional wrappers to both be able to read the original input
+      files meaningfully, while also providing a more pythonic interface.
+      
+
+      At this juncture, it would seem that input files can be in some way
+      understood as pairs of keywords and values. This class is the base of all
+      such keyword-value pairs. The basic class contains little more than the
+      ability to represent itself (:py:method:`__repr__`) and the to emit a
+      dictionary representing the keyword-value pair (:py:method:`output_map`).
+
+      .. note:: 
+
+        More precisely, input files  are generally groups of keyword-value
+        pairs. The groups are dealt with by
+        :py:class:`~lada.functools.block.AttrBlock`.
+  """
   def __init__(self, keyword=None, raw=None):
     """ Creates a block. 
 
@@ -23,22 +42,34 @@ class BaseKeyword(object):
     return "{0.__class__.__name__}(".format(self) + ', '.join(args) + ')'
 
   def output_map(self, **kwargs):
-    """ Map keyword, value """
+    """ Keyword - Value dictionary
+    
+        This function returns a dictionary from which a text input file can be written.
+        For instance, it could emit {'SIGMA': '0.6'}, which the
+        :py:class:`~lada.vasp.functional.Vasp` functional would then print to
+        an INCAR file  as "SIGMA = 0.6", and the :py:class:`Crystal
+        <lada.dftcrystal.functional.Functional>` functional would render as
+        "SIGMA\n0.6\n".
+    """
     if getattr(self, 'keyword', None) is None: return None
     return { self.keyword: getattr(self, 'raw', None) }
 
 class ValueKeyword(BaseKeyword):
   """ Keywords which expect a value of some kind. 
   
-      Instances of this class make it easy to declare and use CRYSTAL keywords
+      Instances of this class make it easy to declare and use CRYSTAL_ keywords
       which define a single value::
 
         functional.keyword = ValueKeyword(value=5)
 
-      The above will print to the Crystal input as follows:
+      The above would print to the CRYSTAL_ input as follows:
 
         | KEYWORD
         | 5
+
+      And by VASP_ as follows:
+
+        | KEYWORD = 5
 
       The keyword can be then be given any value::
 
@@ -61,6 +92,8 @@ class ValueKeyword(BaseKeyword):
       keyword will not appear in the input if its value is None. 
 
       .. _str: http://docs.python.org/library/functions.html#str
+      .. CRYSTAL_: http://www.crystal.unito.it/
+      .. VASP_: http://www.vasp.at/
   """
   def __init__(self, keyword=None, value=None):
     """ Initializes a keyword with a value. """
@@ -170,7 +203,7 @@ class TypedKeyword(ValueKeyword):
       case the keyword will not be printed to the CRYSTAL input file.
 
       In practice, we can create the following mapping from python to the
-      CRYSTAL input::
+      CRYSTAL_ input::
 
          functional.keyword = TypedValue([int, float, int])
          functional.keyword = [5, 6, 3]
@@ -194,7 +227,7 @@ class TypedKeyword(ValueKeyword):
         functional.keyword = [0, 1, 2]
         functional.keyword = [0, 1, 2, 3]
 
-      The last two lines will not raise an exception. The CRYSTAL input would
+      The last two lines will not raise an exception. The CRYSTAL_ input would
       look like this:
 
         | KEYWORD
