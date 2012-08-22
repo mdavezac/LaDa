@@ -28,7 +28,7 @@ class AttrBlock(BaseKeyword):
 
   def __getattr__(self, name):
     """ passes through the input keywords in :py:attr:`_input`. """
-    from ..error import AttributeError
+    from ...error import AttributeError
     if name not in self._input: 
       raise AttributeError('Unknown attribute {0}.'.format(name))
     result = self._input[name]
@@ -100,13 +100,13 @@ class AttrBlock(BaseKeyword):
 
   def __repr__(self, defaults=False, name=None):
     """ Representation of this instance. """
-    from .uirepr import uirepr
+    from ..uirepr import uirepr
     defaults = self.__class__() if defaults else None
     return uirepr(self, name=name, defaults=defaults)
 
   def __ui_repr__(self, imports, name=None, defaults=None, exclude=None):
     """ Creates user friendly representation. """
-    from .uirepr import template_ui_repr, add_to_imports
+    from ..uirepr import template_ui_repr, add_to_imports
 
     results = template_ui_repr(self, imports, name, defaults, exclude)
     if name is None:

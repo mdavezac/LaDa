@@ -3,7 +3,7 @@
 __docformat__ = "restructuredtext en"
 __all__ = ['Vasp']
 from ..tools import stateless, assign_attributes
-from ..tools.block import AttrBlock
+from ..tools.input import AttrBlock
 from ..misc import add_setter
 from extract import Extract
 
@@ -20,7 +20,7 @@ class Vasp(AttrBlock):
                           ICharg, IStruc, LDAU, PrecFock, Precision, Nsw,      \
                           Isif, IBrion, Relaxation, ISmear, LSorbit, Sigma,    \
                           LMaxMix, EdiffPerAtom, EdiffgPerAtom, NonScf
-    from ..tools.keywords import TypedKeyword, ChoiceKeyword
+    from ..tools.input import TypedKeyword, ChoiceKeyword
     super(Vasp, self).__init__()
 
     self.species = species if species is not None else {}

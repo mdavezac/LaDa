@@ -6,7 +6,7 @@
 """
 __docformat__  = 'restructuredtext en'
 __all__ = ['Extract', 'MassExtract']
-from ...functools.extract import AbstractExtractBase
+from ...tools.extract import AbstractExtractBase
 from .base import ExtractBase
 from .mixin import IOMixin
 from ...jobfolder import AbstractMassExtract

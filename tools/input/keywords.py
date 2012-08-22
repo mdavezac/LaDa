@@ -112,7 +112,7 @@ class ValueKeyword(BaseKeyword):
   @raw.setter
   def raw(self, value):
     """ Guesses value from raw input. """
-    from ..error import ValueError
+    from ...error import ValueError
     if not isinstance(value, str):
       raise ValueError( 'Expected a string as input to {0}.raw.'               \
                         .format(self.keyword) )
@@ -248,7 +248,7 @@ class TypedKeyword(ValueKeyword):
   """
   def __init__(self, keyword=None, type=None, value=None):
     """ Initializes a keyword with a value. """
-    from ..error import ValueError
+    from ...error import ValueError
     super(TypedKeyword, self).__init__(keyword=keyword, value=value)
     if isinstance(type, list) and len(type) == 0:
       raise ValueError('type must be class or a non-empty list of classes')
@@ -267,7 +267,7 @@ class TypedKeyword(ValueKeyword):
     return self._value
   @value.setter
   def value(self, value):
-    from ..error import ValueError
+    from ...error import ValueError
     if value is None: self._value = None; return
     if type(self.type) is list:
       if isinstance(value, str) and not isinstance(self.type, str):
@@ -396,7 +396,7 @@ class ChoiceKeyword(BaseKeyword):
     return self._value
   @value.setter
   def value(self, value):
-    from ..error import ValueError
+    from ...error import ValueError
     if value is None: self._value = None; return
     if hasattr(value, 'rstrip'): value = value.rstrip().lstrip()
     if hasattr(value, 'lower'): value = value.lower()
@@ -482,7 +482,7 @@ class QuantityKeyword(ValueKeyword):
     if self._value is None: return ''
     shape = getattr(self, 'shape', ())
     if len(shape) > 2: 
-      from ..error import NotImplementedError
+      from ...error import NotImplementedError
       raise NotImplementedError( 'LaDa does not know how to print n-d arrays ' \
                                  '(n>2) to CRYSTAL input.')
     if len(shape) == 0: return str(float(self.value))
@@ -525,7 +525,7 @@ class AliasKeyword(ValueKeyword):
   @value.setter
   def value(self, value):
     from itertools import chain
-    from ..error import ValueError
+    from ...error import ValueError
     if value is None: 
       self._value = None
       return
