@@ -109,14 +109,23 @@ def read_incar(filename='INCAR'):
   parsed = parse_incar(filename)
   result = Vasp()
   for key, value in parsed.iteritems():
-    if key in result._input:
-      newobject = result._input[key]
-      if hasattr(newobject, 'read_input'):
-        newobject.read_input(value, owner=result)
-      elif hasattr(result._input[key], 'raw'):
-        newobject.raw = value
-      elif hasattr(result._input[key], '__set__'):
-        newobject.__set__(result, value)
-      else: raise internal('Cannot read INCAR for {0}'.format(key))
-    else: result.add_keyword(key.lower(), value)
+    key = key.lower()
+    try: 
+      if key in result._input:
+        newobject = result._input[key]
+        if hasattr(newobject, 'read_input'):
+          newobject.read_input(value, owner=result)
+        elif hasattr(result._input[key], 'raw'):
+          newobject.raw = value
+        elif hasattr(result._input[key], '__set__'):
+          newobject.__set__(result, value)
+        else: raise internal('Cannot read INCAR for {0}'.format(key))
+      else: result.add_keyword(key.lower(), value)
+    except:
+      from sys import exc_info
+      type, value, traceback = exc_info()
+      message = 'ERROR when reading {0}.'.format(key)
+      if value is None: type.args = type.args, message
+      else: value = value, message
+      raise type, value, traceback
   return result

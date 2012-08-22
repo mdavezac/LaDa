@@ -86,6 +86,8 @@ class AttrBlock(BaseKeyword):
             try: v = float(u)
             except: v = u
           n.append(v)
+        # if made up of string, then go back to string.
+        if all(isinstance(u, str) for u in n): n = [lines]
         # if only one element use that rather than list
         if len(n) == 1: n = n[0]
       # if multiple line, keep as such

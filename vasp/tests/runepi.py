@@ -19,7 +19,8 @@ def test(path):
   vasp.precision  = "accurate"
   vasp.ediff      = 1e-5
   vasp.encut      = 1.4
-  vasp.smearing   = "metal", 0.01
+  vasp.ismear     = "metal"
+  vasp.sigma      = 0.01
   vasp.relaxation = "volume"
   vasp.add_specie = "Si", "{0}/pseudos/Si".format(path)
   directory = '/tmp/test' # mkdtemp()

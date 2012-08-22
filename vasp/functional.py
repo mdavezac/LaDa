@@ -344,7 +344,8 @@ class Vasp(AttrBlock):
     """ If True, performs a non-self consistent calculation.
 
         The value of this keyword is checked by :py:attr:`icharg` and used
-        appropriately.
+        appropriately. The attribute :py:attr:`lsorbit` also acts and checks
+        on it. It is False by default.
     """
     
     self.magmom    = Magmom()
@@ -579,7 +580,7 @@ class Vasp(AttrBlock):
         .. seealso:: PRECFOCK_
         .. _PRECFOCK: http://cms.mpi.univie.ac.at/wiki/index.php/PRECFOCK
     """
-    self.precision = Precision()
+    self.prec = Precision()
     """ Sets accuracy of calculation. 
     
         - accurate (default)
@@ -865,7 +866,7 @@ class Vasp(AttrBlock):
         self.write_incar(structure, path=file, **kwargs)
       return
     if kwargs.get('outdir', None) is None:
-      kwargs['outdir'] = dirname(path.filename)
+      kwargs['outdir'] = dirname(path.name)
 
     self.output_map(structure=structure, vasp=self, **kwargs)
     # twice, in-case some parameters change others.
@@ -895,9 +896,7 @@ class Vasp(AttrBlock):
     return uirepr(self, name=name, defaults=defaults)
 
   def __ui_repr__(self, imports, name=None, defaults=None, exclude=None):
-    from ..functools.uirepr import template_ui_repr
-
-    results = template_ui_repr(self, imports, name, defaults, ['add_specie'])
+    results = super(Vasp, self).__ui_repr__(imports, name, defaults, ['add_specie'])
     if name is None:
       name = getattr(self, '__ui_name__', self.__class__.__name__.lower())
     return results
