@@ -697,11 +697,8 @@ class IStruc(AliasKeyword):
       input/restart.
 
       .. note:: There is no VASP equivalent to this option.
-      .. seealso:: restart_, icharg_, istart_
+      .. seealso:: :py:attr:`restart`, :py:attr:`icharg`, :py:attr:`istart`
 
-      .. _restart: :py:attr:`~lada.vasp.functional.Functional.restart`
-      .. _icharg: :py:attr:`~lada.vasp.functional.Functional.icharg`
-      .. _istart: :py:attr:`~lada.vasp.functional.Functional.istart`
       .. _CONTCAR: http://cms.mpi.univie.ac.at/vasp/guide/node60.html
   """
   aliases = {-1: ['auto', 0], 0: ['scratch', 1], 1: ['contcar', 1], 2: ['input', 2] }

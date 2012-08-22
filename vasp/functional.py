@@ -196,6 +196,10 @@ class Vasp(AttrBlock):
                   directory (if any), then uses the latest. Otherwise, uses
                   input structure.
           - scratch: Always uses input structure.
+          - contcar: Always use CONTCAR_ structure unless ``overwrite ==
+            True``.
+          - input: Always use input structure, never :py:attr:`restart` or
+            CONTCAR_ structure.
     
         If the run was given the ``overwrite`` option, then always uses the
         input structure.
@@ -203,6 +207,7 @@ class Vasp(AttrBlock):
         .. note:: There is no VASP equivalent to this option.
         .. seealso:: :py:attr:`restart`, :py:attr:`icharg`, :py:attr:`istart`
     
+        .. _CONTCAR: http://cms.mpi.univie.ac.at/vasp/guide/node60.html
     """
     self.isym      = ChoiceKeyword(values=range(3))
     """ Symmetry scheme.
