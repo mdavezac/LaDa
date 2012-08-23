@@ -1,60 +1,12 @@
 """ Miscellaneous ressources. """
-__all__ = ['Program', 'execute_program', 'copyfile', 'Changedir', \
-           'read_input', 'exec_input', 'load', 'RelativePath', \
-           'LockFile', 'open_exclusive', 'translate_to_regex']
-from collections import namedtuple
+__all__ = ['copyfile', 'Changedir', 'read_input', 'exec_input', 'load',
+           'RelativePath', 'LockFile', 'open_exclusive', 'translate_to_regex']
+
 from types import ModuleType
 
 from changedir import Changedir
 from relativepath import RelativePath
 from lockfile import LockFile, open_exclusive
-
-Program = namedtuple('Program', ['program', 'cmdline', 'directory', 'stdout', 'stderr'])
-""" Holds data about program to launch. """
-
-def execute_program(program, append=False, mpirun_exe=None, comm=None, **kwargs):
-   """ Executes a program.
-   
-       Launches a program, generally using the :py:data:`mpirun_exe
-       <lada.mpirun_exe>` format string.
-
-       :param program:
-          Contains the data relevant to launching an external program.
-       :type program: :py:Class:`Program`
-       :param Boolean append:
-          Whether to create new standard output and error, or whether to
-          append.
-       :param mpirun_exe:
-          String to use as format for the full commandline. If None, uses
-          :py:data:`mpirun_exe <lada.mpirun_exe>` by default.
-       :param comm:
-          Dictionary containing information about launching an mpi program.
-          If None, defaults to :py:data:`default_comm <lada.default_comm>`.
-   """
-   from subprocess import Popen
-   from shlex import split as split_cmd
-   from lada import mpirun_exe as mpirun_exe_global, default_comm
-   
-   d = {}
-   d['program'] = program.program
-   d['cmdline'] = program.cmdline 
-   d.update(comm if comm is not None else default_comm)
-   d.update(kwargs)
-   if mpirun_exe == None: mpirun_exe = mpirun_exe_global
-   cmd = mpirun_exe.format(**d)
-   
-   with Changedir(program.directory) as cwd:
-     file_out = open(program.stdout, "a" if append else "w") \
-                if program.stdout is not None else None 
-     file_err = open(program.stderr, "a" if append else "w") \
-                if program.stderr is not None else None 
-     try:
-       vasp_proc = Popen(split_cmd(cmd), stdout=file_out, stderr=file_err)
-       vasp_proc.wait()
-     finally:
-       file_out.close()
-       file_err.close()
-
 
 def copyfile(src, dest=None, nothrow=None, symlink=False, aslink=False, nocopyempty=False):
   """ Copy ``src`` file onto ``dest`` directory or file.

@@ -1,9 +1,10 @@
 __docformat__ = "restructuredtext en"
 __all__ = ['Electronic']
-from input import AttrBlock, TypedKeyword, BoolKeyword, Keyword
+from .input import AttrBlock
+from ..tools.input import TypedKeyword, BoolKeyword, BaseKeyword
 from quantities import UnitQuantity, hartree
 
-class Shrink(Keyword):
+class Shrink(BaseKeyword):
   """ k-point description -- SHRINK
   
       The IS (or IS1, IS2, IS3) and ISP keywords are mapped to
@@ -141,7 +142,7 @@ class Shrink(Keyword):
 
   def __ui_repr__(self, imports, name=None, defaults=None, exclude=None):
     """ Creates user friendly representation. """
-    from ..functools.uirepr import add_to_imports
+    from ..tools.uirepr import add_to_imports
     if defaults is not None: 
       if type(defaults) is not type(self): 
         add_to_imports(self)
@@ -155,15 +156,15 @@ class Shrink(Keyword):
     add_to_imports(self, imports)
     return {name: self.__repr__()}
 
-  def print_input(self, **kwargs):
+  def output_map(self, **kwargs):
     """ Prints SHRINK keyword """
     from .molecule import Molecule
     # The 'get' piece is to make testing a bit easier
     if type(kwargs.get('structure', None)) is Molecule: return None
-    return super(Shrink, self).print_input(**kwargs)
+    return super(Shrink, self).output_map(**kwargs)
 
 
-class LevShift(Keyword):
+class LevShift(BaseKeyword):
   """ Implements LevShift keyword. """
   keyword = 'levshift'
   """ CRYSTAL input keyword. """
@@ -235,9 +236,16 @@ class LevShift(Keyword):
     """ Sets instance from raw data """
     self.shift = int(value.split()[0])
     self.lock = int(value.split()[1]) != 0
-  def print_input(self, **kwargs):
+  def output_map(self, **kwargs):
     if self.shift is None or self.lock is None: return None
-    return super(LevShift, self).print_input(**kwargs)
+    return super(LevShift, self).output_map(**kwargs)
+  def __repr__(self):
+    args = []
+    if self.shift is not None: args.append(str(float(self.shift)))
+    if self.lock is not None:
+      args.append( 'lock={0}'.format(self.lock) if len(args) == 0              \
+                   else str(self.lock) )
+    return '{0.__class__.__name__}({1})'.format(self, ', '.join(args))
 
 class GuessP(BoolKeyword):
   """ Reads density matrix from disk.
@@ -255,7 +263,7 @@ class GuessP(BoolKeyword):
   keyword = 'guessp'
   def __init__(self, value=True):
     super(GuessP, self).__init__(value=value)
-  def print_input(self, **kwargs):
+  def output_map(self, **kwargs):
     from os.path import exists, join
     from ..misc import copyfile
     if self.value is None or self.value == False: return None
@@ -263,7 +271,7 @@ class GuessP(BoolKeyword):
     path = join(kwargs['crystal'].restart.directory, 'crystal.f9')
     if not exists(path): return None
     copyfile(path, join(kwargs['workdir'], 'fort.20'), nothrow='same')
-    return super(GuessP, self).print_input(**kwargs)
+    return super(GuessP, self).output_map(**kwargs)
 
 
 class Electronic(AttrBlock):
@@ -272,7 +280,7 @@ class Electronic(AttrBlock):
   """ Name used when printing this instance with ui_repr """
   def __init__(self):
     """ Creates the scf attribute block. """
-    from .input import ChoiceKeyword
+    from ..tools.input import ChoiceKeyword
     from .hamiltonian import Dft
     super(Electronic, self).__init__()
     self.maxcycle = TypedKeyword(type=int)

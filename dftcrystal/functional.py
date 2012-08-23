@@ -1,5 +1,5 @@
 __docformat__ = "restructuredtext en"
-from ..functools import stateless, assign_attributes
+from ..tools import stateless, assign_attributes
 from .extract import Extract
 
 class Functional(object):
@@ -83,16 +83,16 @@ class Functional(object):
   def __getattr__(self, name):
     """ Pushes scf stuff into instance namespace. """
     from ..error import ValueError
-    if name in self.scf._crysinput: return getattr(self.scf, name)
+    if name in self.scf._input: return getattr(self.scf, name)
     raise ValueError('Unknown attribute {0}.'.format(name))
   def __setattr__(self, name, value):
     """ Pushes scf stuff into instance namespace. """
-    from .input import Keyword
-    if isinstance(value, Keyword): 
+    from ..tools.input import BaseKeyword
+    if isinstance(value, BaseKeyword): 
       if name in ['scf', 'basis', 'optgeom']:
         return super(Functional, self).__setattr__(name, value)
       setattr(self.scf, name, value)
-    elif name in self.scf._crysinput:
+    elif name in self.scf._input:
       setattr(self.scf, name, value)
     else: super(Functional, self).__setattr__(name, value)
   def __delattr__(self, name):
@@ -100,7 +100,7 @@ class Functional(object):
   def __dir__(self):
     """ List of attributes and members """
     return list( set(self.__dict__.iterkeys()) | set(dir(self.__class__))      \
-                 | set(self.scf._crysinput.iterkeys()) )
+                 | set(self.scf._input.iterkeys()) )
 
   def add_keyword(self, name, value=None):
     """ Passes on to :py:attr:`~Functional.scf` """
@@ -364,12 +364,12 @@ class Functional(object):
  
   def __repr__(self, defaults=True, name=None):
     """ Returns representation of this instance """
-    from ..functools.uirepr import uirepr
+    from ..tools.uirepr import uirepr
     defaults = self.__class__() if defaults else None
     return uirepr(self, name=name, defaults=defaults)
 
   def __ui_repr__(self, imports, name=None, defaults=None, exclude=None):
-    from ..functools.uirepr import template_ui_repr
+    from ..tools.uirepr import template_ui_repr
 
     results = template_ui_repr(self, imports, name, defaults, ['scf'])
     if name is None:

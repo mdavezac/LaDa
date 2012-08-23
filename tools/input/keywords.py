@@ -117,8 +117,7 @@ class ValueKeyword(BaseKeyword):
       raise ValueError( 'Expected a string as input to {0}.raw.'               \
                         .format(self.keyword) )
     # split along line and remove empty lines
-    lines = value.split('\n')
-    while len(lines[-1].rstrip().lstrip()) == 0: lines.pop(-1)
+    lines = value.rstrip().lstrip().split('\n')
     # if only one line left, than split into a list and guess type of each
     # element.
     if len(lines) == 0:
@@ -137,6 +136,8 @@ class ValueKeyword(BaseKeyword):
       if all(isinstance(u, str) for u in n): n = [lines]
       # if only one element use that rather than list
       if len(n) == 1: n = n[0]
+    # if empty string, set to True
+    elif len(lines) == 1: n = True
     # if multiple line, keep as such
     else: n = value
     self.value = n
@@ -249,13 +250,16 @@ class TypedKeyword(ValueKeyword):
   def __init__(self, keyword=None, type=None, value=None):
     """ Initializes a keyword with a value. """
     from ...error import ValueError
-    super(TypedKeyword, self).__init__(keyword=keyword, value=value)
+    super(TypedKeyword, self).__init__(keyword=keyword, value=None)
     if isinstance(type, list) and len(type) == 0:
       raise ValueError('type must be class or a non-empty list of classes')
 
     if type is not None:
       self.type = type
       """ Type to which the value should be cast if the value is not None. """
+
+    self.value = value
+
   @property
   def value(self): 
     """ The value to print to input. 

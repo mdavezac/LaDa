@@ -1,4 +1,5 @@
 def test_shrink():
+  from pickle import loads, dumps
   from numpy import array, all
   from lada.dftcrystal.electronic import Shrink
   from lada.dftcrystal.molecule import Molecule
@@ -6,71 +7,46 @@ def test_shrink():
   a = Shrink()
   assert a.mp == 1
   assert a.gallat is None
-  assert len(a.print_input().split('\n')) == 3
-  assert a.print_input().split('\n')[0] == 'SHRINK'
-  assert len(a.print_input().split('\n')[1].split()) == 2
-  assert a.print_input().split('\n')[1].split()[0] == '1'
-  assert a.print_input().split('\n')[1].split()[1] == '1'
-  assert a.print_input().split('\n')[2] == ''
+  assert 'shrink' in a.output_map()
+  assert a.output_map()['shrink'] == a.raw
+  assert a.output_map()['shrink'] == '1 1\n'
   assert repr(a) == 'Shrink()'
+  assert repr(loads(dumps(a))) == repr(a)
 
   a.mp = 5
   assert a.mp == 5
   assert a.gallat is None
-  assert len(a.print_input().split('\n')) == 3
-  assert a.print_input().split('\n')[0] == 'SHRINK'
-  assert len(a.print_input().split('\n')[1].split()) == 2
-  assert a.print_input().split('\n')[1].split()[0] == '5'
-  assert a.print_input().split('\n')[1].split()[1] == '5'
-  assert a.print_input().split('\n')[2] == ''
+  assert a.output_map()['shrink'] == '5 5\n'
   assert repr(a) == 'Shrink(5)'
+  assert repr(loads(dumps(a))) == repr(a)
 
   a.gallat = 10
   assert a.mp == 5
   assert a.gallat == 10
-  assert len(a.print_input().split('\n')) == 3
-  assert a.print_input().split('\n')[0] == 'SHRINK'
-  assert len(a.print_input().split('\n')[1].split()) == 2
-  assert a.print_input().split('\n')[1].split()[0] == '5'
-  assert a.print_input().split('\n')[1].split()[1] == '10'
-  assert a.print_input().split('\n')[2] == ''
+  assert a.output_map()['shrink'] == '5 10\n'
   assert repr(a) == 'Shrink(5, 10)'
+  assert repr(loads(dumps(a))) == repr(a)
 
   a.mp = 5, 
   assert all(array(a.mp) == [5])
   assert a.gallat == 10
-  assert len(a.print_input().split('\n')) == 4
-  assert a.print_input().split('\n')[0] == 'SHRINK'
-  assert len(a.print_input().split('\n')[1].split()) == 2
-  assert a.print_input().split('\n')[1].split()[0] == '0'
-  assert a.print_input().split('\n')[1].split()[1] == '10'
-  assert all(array(a.print_input().split('\n')[2].split(), dtype='int32') == [5, 1, 1])
-  assert a.print_input().split('\n')[3] == ''
+  assert a.output_map()['shrink'] == '0 10\n5 1 1\n'
   assert repr(a) == 'Shrink([5], 10)'
+  assert repr(loads(dumps(a))) == repr(a)
 
   a.mp = 5, 6
   assert all(array(a.mp) == [5, 6])
   assert a.gallat == 10
-  assert len(a.print_input().split('\n')) == 4
-  assert a.print_input().split('\n')[0] == 'SHRINK'
-  assert len(a.print_input().split('\n')[1].split()) == 2
-  assert a.print_input().split('\n')[1].split()[0] == '0'
-  assert a.print_input().split('\n')[1].split()[1] == '10'
-  assert all(array(a.print_input().split('\n')[2].split(), dtype='int32') == [5, 6, 1])
-  assert a.print_input().split('\n')[3] == ''
+  assert a.output_map()['shrink'] == '0 10\n5 6 1\n'
   assert repr(a) == 'Shrink([5, 6], 10)'
+  assert repr(loads(dumps(a))) == repr(a)
 
   a.mp = 5, 6, 7
   assert all(array(a.mp) == [5, 6, 7])
   assert a.gallat == 10
-  assert len(a.print_input().split('\n')) == 4
-  assert a.print_input().split('\n')[0] == 'SHRINK'
-  assert len(a.print_input().split('\n')[1].split()) == 2
-  assert a.print_input().split('\n')[1].split()[0] == '0'
-  assert a.print_input().split('\n')[1].split()[1] == '10'
-  assert all(array(a.print_input().split('\n')[2].split(), dtype='int32') == [5, 6, 7])
-  assert a.print_input().split('\n')[3] == ''
+  assert a.output_map()['shrink'] == '0 10\n5 6 7\n'
   assert repr(a) == 'Shrink([5, 6, 7], 10)'
+  assert repr(loads(dumps(a))) == repr(a)
 
 
   a.raw = '5 5\n'
@@ -97,40 +73,54 @@ def test_shrink():
   except ValueError: pass
   else: raise Exception()
 
-  assert a.print_input(structure=Molecule()) is None
+  assert a.output_map(structure=Molecule()) is None
 
 def test_levshift():
+  from pickle import loads, dumps
   from quantities import hartree, UnitQuantity, eV, kbar
   from lada.dftcrystal.electronic import LevShift, Electronic
   from lada.error import ValueError
 
   a = LevShift()
-  assert a.print_input() is None
+  assert a.output_map() is None
   assert a.units == UnitQuantity('decihartree', 0.1*hartree)
   assert a.lock is None and a.shift is None
+  assert repr(a) == 'LevShift()'
+  assert repr(loads(dumps(a))) == repr(a)
 
   a.shift = 0.005 * eV
-  assert a.print_input() is None
+  d = {'LevShift': LevShift}
+  assert a.output_map() is None
   assert a.lock is None
   assert abs(a.shift - 0.005 * eV) < 1e-8
   assert abs(a.shift.magnitude - 0.005 * 1./0.1 * eV.rescale(hartree).magnitude) < 1e-8
+  assert abs(eval(repr(a), d).shift - a.shift) < 1e-8
+  assert eval(repr(a), d).lock == a.lock
+  assert repr(loads(dumps(a))) == repr(a)
   
   a.shift = 2
-  assert a.print_input() is None
+  assert a.output_map() is None
   assert a.lock is None
   assert abs(a.shift - 0.2 * hartree) < 1e-8
   assert abs(a.shift.magnitude - 2) < 1e-8
+  assert abs(eval(repr(a), d).shift - a.shift) < 1e-8
+  assert eval(repr(a), d).lock == a.lock
+  assert repr(loads(dumps(a))) == repr(a)
 
   a.lock = True
   assert a.raw == str(2) + ' ' + str(1)
   assert a.lock == True
-  assert len(a.print_input().split('\n')) == 3
-  assert a.print_input().split('\n')[0] == 'LEVSHIFT'
-  assert a.print_input().split('\n')[1] ==  a.raw 
-  assert a.print_input().split('\n')[-1] == ''
+  assert 'levshift' in a.output_map()
+  assert a.output_map()['levshift'] == a.raw
+  assert abs(eval(repr(a), d).shift - a.shift) < 1e-8
+  assert eval(repr(a), d).lock == a.lock
+  assert repr(loads(dumps(a))) == repr(a)
 
   a.lock = False
   assert a.raw == str(2) + ' ' + str(0)
+  assert abs(eval(repr(a), d).shift - a.shift) < 1e-8
+  assert eval(repr(a), d).lock == a.lock
+  assert repr(loads(dumps(a))) == repr(a)
 
   a = Electronic()
   assert a.levshift.raw == ''

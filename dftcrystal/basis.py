@@ -1,7 +1,8 @@
 __docformat__ = "restructuredtext en"
 __all__ = ['BasisSet', 'Shell']
 from quantities import UnitQuantity, angstrom
-from .input import AttrBlock, VariableListKeyword
+from .input import AttrBlock
+from ..tools.input import VariableListKeyword
 
 crystal_bohr = UnitQuantity('crystal_bohr', 0.5291772083*angstrom, symbol='bohr')
 """ Bhor radius as defined by CRYSTAL. """
@@ -260,7 +261,7 @@ class BasisSet(AttrBlock):
   """ Name used when printing user-friendly repr. """
   def __init__(self):
     """ Creates basis set block. """
-    from .input import BoolKeyword
+    from ..tools.input import BoolKeyword
     super(BasisSet, self).__init__()
     self._functions = {}
     """ Dictionary holding basis functions """
@@ -372,7 +373,7 @@ class BasisSet(AttrBlock):
 
   def __repr__(self, defaults=False, name=None):
     """ Returns representation of this instance """
-    from ..functools.uirepr import uirepr
+    from ..tools.uirepr import uirepr
     defaults = self.__class__() if defaults else None
     return uirepr(self, name=name, defaults=defaults)
 
@@ -393,14 +394,14 @@ class BasisSet(AttrBlock):
   def read_input(self, tree, owner=None):
     """ Parses an input tree. """
     self._functions = {}
-    self._crysinput = self.__class__()._crysinput
+    self._input = self.__class__()._input
     super(BasisSet, self).read_input(tree, owner=owner)
 
   def __ui_repr__(self, imports, name=None, defaults=None, exclude=None):
     """ Prettier representation """
     from pprint import pprint
     from StringIO import StringIO
-    from ..functools.uirepr import add_to_imports
+    from ..tools.uirepr import add_to_imports
     results = super(BasisSet, self).__ui_repr__( imports, name, defaults,
                                                  ['raw', 'gaussian94'] )
     if name is None:

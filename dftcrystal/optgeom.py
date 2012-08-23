@@ -1,4 +1,5 @@
-from input import AttrBlock, BoolKeyword, TypedKeyword
+from .input import AttrBlock
+from ..tools.input import BoolKeyword, TypedKeyword
 
 class GeometryOpt(BoolKeyword):
   """ Geometry optimization keyword. 
@@ -40,12 +41,12 @@ class CVolOpt(BoolKeyword):
   """
   keyword = 'cvolopt'
   """ Crystal input keyword """
-  def print_input(self, **kwargs):
+  def output_map(self, **kwargs):
     """ Only prints if FULLOPTG or CELLONLY exist. """
     optgeom = kwargs['crystal'].optgeom
     if optgeom.fulloptg == False and optgeom.cellonly == False:
       return None
-    return super(CVolOpt, self).print_input(**kwargs)
+    return super(CVolOpt, self).output_map(**kwargs)
 
 class MaxCycle(TypedKeyword):
   """ Maxcycle input.
@@ -96,18 +97,18 @@ class ExclAttrBlock(AttrBlock):
     self._parent = ref(instance)
     return self
 
-  def read_input(self, tree, owner=None):
+  def read_input(self, tree, owner=None, **kwargs):
     """ Reads from input. """
     if owner is not None:
       from weakref import ref
       self._parent = ref(owner)
     self.enabled = True
-    return super(ExclAttrBlock, self).read_input(tree, owner)
+    return super(ExclAttrBlock, self).read_input(tree, owner, **kwargs)
 
-  def print_input(self, **kwargs):
+  def output_map(self, **kwargs):
     """ Does not print if disabled. """
     if not self.enabled: return None
-    return super(ExclAttrBlock, self).print_input(**kwargs)
+    return super(ExclAttrBlock, self).output_map(**kwargs)
 
   def __getstate__(self):
     d = self.__dict__.copy()
@@ -152,18 +153,12 @@ class OptGeom(ExclAttrBlock):
   """ CRYSTAL input keyword (class-attribute) """
   def __init__(self): 
     """ Creates an optimization block. """
-    from .input import QuantityKeyword
+    from ..tools.input import QuantityKeyword
     from quantities import UnitQuantity, hartree, angstrom
     super(OptGeom, self).__init__()
  
     self.maxcycle   = MaxCycle()
-    """ Maxium number of iterations in geometry optimization loop.
-    
-        It is expected to be an integer or None.
-        If changed from None or 0 to an integer greater than zero, and no
-        optimization method has yet been selected, set the optimization method
-        to fulloptg.
-    """
+    """ Maxium number of iterations in geometry optimization loop. """
     self.fulloptg   = GeometryOpt('fulloptg')
     """ Full optimization """
     self.cellonly   = GeometryOpt('cellonly')

@@ -2,8 +2,8 @@
 __docformat__  = 'restructuredtext en'
 __all__ = ['Extract', 'MassExtract']
 
-from ..functools import make_cached
-from ..functools.extract import search_factory, AbstractExtractBase
+from ..tools import make_cached
+from ..tools.extract import search_factory, AbstractExtractBase
 from ..jobfolder import AbstractMassExtract
 from ..error import GrepError
 OutputSearchMixin = search_factory('OutputSearchMixin', 'stdout', __name__, 'crystal.out')

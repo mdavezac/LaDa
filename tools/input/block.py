@@ -73,11 +73,10 @@ class AttrBlock(BaseKeyword):
     # if a string, tries to guess what it is.
     elif isinstance(value, str):
       # split along line and remove empty lines
-      lines = value.split('\n')
-      while len(lines[-1].rstrip().lstrip()) == 0: lines.pop(-1)
+      lines = value.rstrip().lstrip().split('\n')
       # if only one line left, than split into a list and guess type of each
       # element.
-      if len(lines) == 1:
+      if len(lines) == 1 and len(lines[0]) > 0:
         lines = lines[0]
         n = []
         for u in lines.split():
@@ -90,6 +89,8 @@ class AttrBlock(BaseKeyword):
         if all(isinstance(u, str) for u in n): n = [lines]
         # if only one element use that rather than list
         if len(n) == 1: n = n[0]
+      # if empty string, set to True
+      elif len(lines) == 1: n = True
       # if multiple line, keep as such
       else: n = value
       self._input[name] = n
@@ -160,7 +161,9 @@ class AttrBlock(BaseKeyword):
   def output_map(self, **kwargs):
     """ Map of keyword, value """
     from .tree import Tree
-    result = Tree()
+    root = Tree()
+    result = root if getattr(self, 'keyword', None) is None                    \
+             else root.descend(self.keyword)
     for key, value in self._input.iteritems():
       if value is None: continue
       elif isinstance(value, bool): result[key] = value 
@@ -172,21 +175,25 @@ class AttrBlock(BaseKeyword):
       elif hasattr(value, '__iter__'):
         result[key] =  ' '.join(str(u) for u in value)
       else: result[key] = str(value)
-    return result
+    if len(result) == 0: return None
+    return root
 
-  def read_input(self, tree):
+  def read_input(self, tree, owner=None, **kwargs):
     """ Sets object from input tree. """
-    from ...error import internal
+    from ...error import internal, IndexError
     from .tree import Tree
     for key, value in tree.iteritems():
       key = key.lower()
       try: 
         if isinstance(value, Tree) and key not in self._input:
-            raise IndexError('Unknown group {0}'.format(key))
+          if hasattr(self, '_read_nested_group'): 
+            dummy = self._read_nested_group(value, owner=self, **kwargs)
+            self.add_keyword(key, dummy)
+          else: raise IndexError('Unknown group {0}'.format(key))
         if key in self._input:
           newobject = self._input[key]
           if hasattr(newobject, 'read_input'):
-            newobject.read_input(value, owner=self)
+            newobject.read_input(value, owner=self, **kwargs)
           elif hasattr(self._input[key], 'raw'):
             newobject.raw = value
           elif hasattr(self._input[key], '__set__'):
