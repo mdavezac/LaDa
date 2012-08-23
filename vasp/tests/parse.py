@@ -33,7 +33,7 @@ def test():
  
   result = parse_incar(string)
   assert len(get_errors(result)) == 0
-  assert parse_incar(string.replace('\n', '\n#')) == {'ALGO': 'Fast'}
+  assert parse_incar(string.replace('\n', '\n#')) == [('ALGO', 'Fast')]
   assert len(get_errors(parse_incar(string.replace('\n', ';', 2)))) == 0
   assert len(get_errors(parse_incar(string.replace('=', '\\\n  =', 2)))) == 0
   assert len(get_errors(parse_incar(string.replace('=', '=  \\\n  ', 2)))) == 0

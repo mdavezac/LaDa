@@ -159,11 +159,11 @@ class AttrBlock(BaseKeyword):
 
   def output_map(self, **kwargs):
     """ Map of keyword, value """
-    result = {}
+    from .tree import Tree
+    result = Tree()
     for key, value in self._input.iteritems():
       if value is None: continue
-      elif isinstance(value, bool):
-        result[key] = '.TRUE.' if value else '.FALSE.'
+      elif isinstance(value, bool): result[key] = value 
       elif hasattr(value, 'output_map'):
         dummy = value.output_map(**kwargs)
         if dummy is not None: result.update(dummy)
@@ -174,3 +174,29 @@ class AttrBlock(BaseKeyword):
       else: result[key] = str(value)
     return result
 
+  def read_input(self, tree):
+    """ Sets object from input tree. """
+    from ...error import internal
+    from .tree import Tree
+    for key, value in tree.iteritems():
+      key = key.lower()
+      try: 
+        if isinstance(value, Tree) and key not in self._input:
+            raise IndexError('Unknown group {0}'.format(key))
+        if key in self._input:
+          newobject = self._input[key]
+          if hasattr(newobject, 'read_input'):
+            newobject.read_input(value, owner=self)
+          elif hasattr(self._input[key], 'raw'):
+            newobject.raw = value
+          elif hasattr(self._input[key], '__set__'):
+            newobject.__set__(self, value)
+          else: raise internal('Cannot read INCAR for {0}'.format(key))
+        else: self.add_keyword(key.lower(), value)
+      except:
+        from sys import exc_info
+        type, value, traceback = exc_info()
+        message = 'ERROR when reading {0}.'.format(key)
+        if value is None: type.args = type.args, message
+        else: value = value, message
+        raise type, value, traceback

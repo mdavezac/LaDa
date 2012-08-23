@@ -52,7 +52,7 @@ class BaseKeyword(object):
         "SIGMA\n0.6\n".
     """
     if getattr(self, 'keyword', None) is None: return None
-    return { self.keyword: getattr(self, 'raw', None) }
+    return {self.keyword: getattr(self, 'raw', None)}
 
 class ValueKeyword(BaseKeyword):
   """ Keywords which expect a value of some kind. 

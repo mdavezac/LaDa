@@ -60,6 +60,7 @@ def parse_incar(path):
   from os.path import isdir, join
   from ..error import ValueError
   from ..misc import RelativePath
+  from ..tools.input import Tree
   if isinstance(path, str): 
     if path.find('\n') == -1:
       dummy = RelativePath(path).path
@@ -79,7 +80,7 @@ def parse_incar(path):
         lines[-1] = lines[-1][:-1] + dummy.pop(-1)
       else: lines.append(dummy.pop(-1))
 
-  result = {}
+  result = Tree()
   for line in lines:
     if line.find('=') == -1: continue
     keyword, value = [u.rstrip().lstrip() for u in line.split('=')]
@@ -104,28 +105,8 @@ def read_incar(filename='INCAR'):
         Defaults to 'INCAR'.
       :returns: A vasp functional equivalent to the INCAR.
   """
-  from ..error import internal
   from .functional import Vasp
   parsed = parse_incar(filename)
   result = Vasp()
-  for key, value in parsed.iteritems():
-    key = key.lower()
-    try: 
-      if key in result._input:
-        newobject = result._input[key]
-        if hasattr(newobject, 'read_input'):
-          newobject.read_input(value, owner=result)
-        elif hasattr(result._input[key], 'raw'):
-          newobject.raw = value
-        elif hasattr(result._input[key], '__set__'):
-          newobject.__set__(result, value)
-        else: raise internal('Cannot read INCAR for {0}'.format(key))
-      else: result.add_keyword(key.lower(), value)
-    except:
-      from sys import exc_info
-      type, value, traceback = exc_info()
-      message = 'ERROR when reading {0}.'.format(key)
-      if value is None: type.args = type.args, message
-      else: value = value, message
-      raise type, value, traceback
+  result.read_input(parsed)
   return result
