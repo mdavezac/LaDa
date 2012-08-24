@@ -21,6 +21,7 @@ def launch(self, event, jobfolders):
 
   pbsargs = deepcopy(dict(default_comm))
   pbsargs.update(default_pbs)
+  pbsargs['ppn'] = event.ppn
 
   mppalloc = get_mppalloc(shell, event)
   if mppalloc is None: return

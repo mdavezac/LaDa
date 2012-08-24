@@ -238,6 +238,13 @@ class LevShift(Keyword):
   def print_input(self, **kwargs):
     if self.shift is None or self.lock is None: return None
     return super(LevShift, self).print_input(**kwargs)
+  def __repr__(self):
+    args = []
+    if self.shift is not None: args.append(str(float(self.shift)))
+    if self.lock is not None:
+      args.append( 'lock={0}'.format(self.lock) if len(args) == 0              \
+                   else str(self.lock) )
+    return '{0.__class__.__name__}({1})'.format(self, ', '.join(args))
 
 class GuessP(BoolKeyword):
   """ Reads density matrix from disk.

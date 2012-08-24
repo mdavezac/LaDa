@@ -29,7 +29,7 @@ class GeometryOpt(BoolKeyword):
       if self.keyword != 'fulloptg':  instance.fulloptg  = False
       if self.keyword != 'cellonly':  instance.cellonly  = False
       if self.keyword != 'itatocell': instance.itatocell = False
-      if self.keyword != 'interdun':  instance.interdun  = False
+      if self.keyword != 'intredun':  instance.intredun  = False
       if self.keyword != 'fulloptg' and self.keyword != 'cellonly':
         instance.cvolopt = False
 
@@ -46,6 +46,18 @@ class CVolOpt(BoolKeyword):
     if optgeom.fulloptg == False and optgeom.cellonly == False:
       return None
     return super(CVolOpt, self).print_input(**kwargs)
+
+class FixCell(BoolKeyword):
+  """ Constant volume optimization keyword. 
+  
+      Only appears for INTREDUN relaxations.
+  """
+  keyword = 'fixcell'
+  """ Crystal input keyword """
+  def print_input(self, **kwargs):
+    optgeom = kwargs['crystal'].optgeom
+    if optgeom.intredun == False: return None
+    return super(FixCell, self).print_input(**kwargs)
 
 class MaxCycle(TypedKeyword):
   """ Maxcycle input.
@@ -170,10 +182,18 @@ class OptGeom(ExclAttrBlock):
     """ Cell-shape optimization only """
     self.itatocell  = GeometryOpt('itatocell')
     """ Iterative cell-shape/atom optimization """
-    self.interdun   = GeometryOpt('interdun')
+    self.intredun   = GeometryOpt('intredun')
     """ Constrained optimization """
     self.cvolopt    = CVolOpt()
-    """ Constant volume optimization """
+    """ Constant volume optimization keyword. 
+    
+        Only appears if FULLOPTG or CELLONLY exist.
+    """
+    self.fixcell    = FixCell()
+    """ Constant volume optimization keyword. 
+    
+        Only appears for INTREDUN relaxations.
+    """
     self.toldee     = TypedKeyword('toldee', int)
     self.toldeg     = TypedKeyword('toldeg', float)
     self.toldex     = TypedKeyword('toldex', float)
