@@ -143,8 +143,6 @@ class Molecule(ListBlock):
     """ Evaluates current structure. 
     
         Runs crystal to evaluate current structure.
-
-        .. note:: Doesn't work yet.
     """
     from copy import deepcopy
     from tempfile import mkdtemp
@@ -174,6 +172,81 @@ class Molecule(ListBlock):
         process.wait()
 
         try: return Extract().input_structure
+        except GrepError:
+          message = self.print_input() + '\n\n'
+          with Extract().__stdout__() as file: message += file.read()
+          raise ValueError(message + '\n\nInput tructure is likely incorrect\n')
+    finally:
+      try: rmtree(tmpdir)
+      except: pass
+
+  @property
+  def crystal_output(self):
+    """ Crystal output for the geometry alone. """
+    from copy import deepcopy
+    from tempfile import mkdtemp
+    from shutil import rmtree
+    from ..misc import Changedir
+    from ..process import ProgramProcess as Process
+    from .. import crystal_program as program
+    this = deepcopy(self)
+    this.append('TESTGEOM')
+    try:
+      tmpdir = mkdtemp()
+
+      with Changedir(tmpdir) as cwd:
+        # writes input file
+        with open('crystal.input', 'w') as file:
+          file.write('{0}\n'.format(getattr(self, 'name', '')))
+          file.write(this.print_input())
+        # creates process and run it.
+        if hasattr(program, '__call__'): program = program(self)
+        process = Process( program, stdin='crystal.input',
+                           outdir=tmpdir, stdout='crystal.out',
+                           stderr='crystal.err', dompi=False )
+
+        process.start()
+        process.wait()
+        with open('crystal.out', 'r') as file: return file.read()
+    finally:
+      try: rmtree(tmpdir)
+      except: pass
+
+  @property
+  def symmetry_operators(self):
+    """ Symmetry operators, as determined by CRYSTAL.
+    
+        Runs crystal to evaluate the symmetry operators on the current
+        structure.
+    """
+    from copy import deepcopy
+    from tempfile import mkdtemp
+    from shutil import rmtree
+    from ..misc import Changedir
+    from ..process import ProgramProcess as Process
+    from .. error import GrepError
+    from .. import crystal_program as program
+    from .extract import Extract
+    this = deepcopy(self)
+    this.append('TESTGEOM')
+    try:
+      tmpdir = mkdtemp()
+
+      with Changedir(tmpdir) as cwd:
+        # writes input file
+        with open('crystal.input', 'w') as file:
+          file.write('{0}\n'.format(getattr(self, 'name', '')))
+          file.write(this.print_input())
+        # creates process and run it.
+        if hasattr(program, '__call__'): program = program(self)
+        process = Process( program, stdin='crystal.input',
+                           outdir=tmpdir, stdout='crystal.out',
+                           stderr='crystal.err', dompi=False )
+
+        process.start()
+        process.wait()
+
+        try: return Extract().symmetry_operators
         except GrepError:
           message = self.print_input() + '\n\n'
           with Extract().__stdout__() as file: message += file.read()

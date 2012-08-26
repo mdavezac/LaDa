@@ -211,14 +211,15 @@ class ModifySymmetry(Keyword):
     super(ModifySymmetry, self).__init__()
     self.groups = []
     """ Atoms for which to modify symmetries. """
-    for o in args: self.groups.append(o if hasattr(o, '__iter__') else [o])
+    for o in args:
+      self.groups.append(list(o) if hasattr(o, '__iter__') else [o])
 
   @property
   def raw(self):
     """ Raw CRYSTAL input. """
     result = '{0}\n'.format(sum(len(o) for o in self.groups))
     for i, labels in enumerate(self.groups):
-      result += ' '.join('{0} {1} '.format(u, i+1) for u in labels) + '\n'
+      result += ' '.join('{0} {1}'.format(u, i+1) for u in labels) + '\n'
     return result
   @raw.setter
   def raw(self, value):

@@ -82,7 +82,7 @@ class ExtractBase(object):
   @make_cached
   def symmetry_operators(self):
     """ Greps symmetry operators from file. """
-    from numpy import array, zeros
+    from numpy import array, zeros, dot
     try:
       file = self.__stdout__()
       for line in file:
@@ -94,7 +94,8 @@ class ExtractBase(object):
         if len(data) != 14: break
         symops.append(zeros((4,3), dtype='float64'))
         symops[-1][:3] = array(data[2:11], dtype='float64').reshape(3,3).T
-        symops[-1][3, :] = array(data[-3:], dtype='float64')
+        symops[-1][3] = array(data[-3:], dtype='float64')
+        symops[-1][3] = dot(self.structure.cell, symops[-1][3])
       return array(symops)
     except Exception as e:
       raise GrepError('Encountered error while grepping for sym ops '          \

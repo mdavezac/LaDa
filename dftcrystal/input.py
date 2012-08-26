@@ -449,6 +449,19 @@ class ListBlock(Keyword, list):
     list.append(self, keyword)
     return self
 
+  def insert(self, index, keyword, raw=None):
+    """ Appends an item.
+
+        :return: self, so calls can be chained. 
+    """
+    from ..error import ValueError
+    if isinstance(keyword, str):
+      keyword = Keyword(keyword=keyword, raw=raw)
+    elif not isinstance(keyword, Keyword):
+      raise ValueError('Wrong argument to {0.keyword}.append().'.format(self))
+    list.insert(self, index, keyword)
+    return self
+
   def __repr__(self, indent=''): 
     """ Dumps representation to string. """
     from inspect import getargspec

@@ -44,6 +44,9 @@ def load_ipython_extension(ip):
       def dummy(*args, **kwargs): return []
       ip.set_hook('complete_command', dummy, str_key = '%qdel')
       ip.set_hook('complete_command', dummy, str_key = '%qstat')
+    if getattr(lada, 'jmol_program', None) is not None:
+      from lada.ipython.jmol import jmol
+      ip.define_magic('jmol', jmol)
 
 def unload_ipython_extension(ip):
   """ Unloads LaDa IPython extension. """
