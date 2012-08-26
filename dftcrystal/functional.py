@@ -336,12 +336,13 @@ class Functional(object):
         else: program = program(self, comm=comm)
 
       # now creates the process, with a callback when finished.
-      def onfinish(process, error): self.bringdown(structure, workdir, outdir)
+      onfinish = self.OnFinish(self, structure, workdir, outdir)
+      onfail   = self.OnFail(self, outdir)
       yield ProgramProcess( program, outdir=workdir, onfinish=onfinish,
                             stdout=None if dompi else 'crystal.out', 
                             stderr='crystal.out' if dompi else 'crystal.err',
                             stdin=None if dompi else 'crystal.d12', 
-                            dompi=dompi )
+                            dompi=dompi, onfail=onfail )
     # yields final extraction object.
     yield Extract(outdir)
 
@@ -392,3 +393,29 @@ class Functional(object):
   def copy(self): 
     from copy import deepcopy
     return deepcopy(self)
+
+  class OnFinish(object):
+    """ Called when a run finishes. 
+       
+	Makes sure files are copied and stuff is pasted at the end of a call to
+        CRYSTAL.
+    """
+    def __init__(self, this, *args):
+      self.this = self
+      self.args = args
+    def __call__(self, *args, **kwargs):
+      self.this.bringdown(*self.args)
+  class OnFail(object):
+    """ Checks whether CRYSTAL run succeeded.
+
+	Crystal reports an error when reaching maximum iteration without
+        converging. This is screws up hwo LaDa does things.
+    """
+    def __init__(self, this, outdir):
+      self.this = this
+      self.outdir = outdir
+    def __call__(self, process, error):
+      from ..process import Fail
+      if not self.Extract(self.outdir).success:
+        raise Fail( 'Crystal failed to run correctly.\n'                       \
+                    'It returned with error {0}.'.format(error) )

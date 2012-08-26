@@ -44,7 +44,7 @@ class ProgramProcess(Process):
   """
   def __init__( self, program, outdir, cmdline=None, stdout=None, 
                 stderr=None, stdin=None, maxtrials=1, dompi=False, 
-                cmdlmodifier=None, onfinish=None, **kwargs ):
+                cmdlmodifier=None, onfinish=None, onfail=None, **kwargs ):
     """ Initializes a process.
     
         :param str program: 
@@ -144,6 +144,15 @@ class ProgramProcess(Process):
         It is called before the :py:meth:`_cleanup` method. In other words, the
         process is passed as it is when the error is found.
     """ 
+    self.onfail = onfail
+    """ Called if program fails. 
+
+	Some program, such as CRYSTAL, return error codes when unconverged.
+	However, does not necessarily mean the program failed to run. This
+	function is called when a failure occurs, to make sure it is real or
+	not. It should raise Fail if an error has occurred and return normally
+        otherwise.
+    """ 
 
   def poll(self): 
     """ Polls current job.
@@ -158,7 +167,7 @@ class ProgramProcess(Process):
     poll = self.process.poll()
     if poll is None: return False
     # call callback.
-    if hasattr(self.onfinish, '__call__'):
+    if self.onfinish is not None:
       try: self.onfinish(process=self, error=(poll!=0))
       except Exception as e: 
         import sys, traceback
@@ -169,10 +178,18 @@ class ProgramProcess(Process):
                     .format(type(e), e, '\n'.join(tb)) )
     # now check possible error.
     if poll != 0:
-      self.nberrors += 1
-      if self.nberrors >= self.maxtrials:
-        self._cleanup()
-        raise Fail(poll)
+      if self.onfail is not None:
+        try: self.onfail(process=self, error=poll)
+        except Fail: 
+          if self.nberrors >= self.maxtrials:
+            self._cleanup()
+            raise
+          else: self.nberrors += 1
+      else:
+        self.nberrors += 1
+        if self.nberrors >= self.maxtrials:
+          self._cleanup()
+          raise Fail(poll)
     else:
       self._cleanup()
       return True
