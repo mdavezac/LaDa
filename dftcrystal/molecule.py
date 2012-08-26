@@ -107,10 +107,10 @@ class Molecule(ListBlock):
 
   def read_input(self, tree, owner=None, **kwargs):
     """ Parses an input tree. """
-    from ..tools.imput import Tree
+    from ..tools.input import Tree
     from . import registered
     self[:] = []
-    self.raw = tree.raw
+    self.raw = tree.prefix
     do_breaksym = False
     has_breakkeep = False
     for key, value in tree:

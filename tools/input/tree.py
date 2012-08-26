@@ -45,9 +45,11 @@ class Tree(list):
     self.append((name, Tree()))
     return self[-1][1].descend(*args)
   def __getitem__(self, name):
+    from ...error import KeyError
     if isinstance(name, str): 
       for key, value in self: 
         if name == key: return value
+      raise KeyError('Unknown key {0}'.format(name))
     return super(Tree, self).__getitem__(name)
   def __setitem__(self, name, value):
     from ...error import ValueError
@@ -75,6 +77,7 @@ class Tree(list):
   def items(self): return self 
   def iteritems(self): return self.__iter__()
   def update(self, value):
+    if value is None: return
     if isinstance(value, dict): value = value.iteritems()
     for key, value in value: self.append((key, value))
   def __contains__(self, index):

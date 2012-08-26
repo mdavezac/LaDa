@@ -358,6 +358,18 @@ class VariableListKeyword(TypedKeyword):
     """ Guesses value from raw input. """
     value = value.split()
     self.value = value[1:int(value[0])+1]
+  def __getitem__(self, index):
+    from ...error import IndexError
+    if self.value is None:
+      return IndexError('{0} is None.'.format(self.keyword))
+    return self.value[index]
+  def __setitem__(self, index, value):
+    from ...error import IndexError
+    if self.value is None:
+      return IndexError('{0} is None.'.format(self.keyword))
+    self.value[index] = value
+  def __len__(self): return len(self.value)
+  def __iter__(self): return self.value.__iter__()
 
 
 class BoolKeyword(ValueKeyword):

@@ -54,7 +54,7 @@ class GeomKeyword(BaseKeyword):
     if raw is not None:
       raw = raw.rstrip().lstrip()
       if len(raw) == 0: raw = None
-    result[self.keywpord] = raw
+    result[self.keyword] = raw
     return result
 
 class AttrBlock(AttrBlockBase):
@@ -84,9 +84,12 @@ class AttrBlock(AttrBlockBase):
           - the 'raw' input, if is exists.
           - each input keyword to CRYSTAL contained by the block.
     """
+    from ..tools.input import Tree
     raw = getattr(self, 'raw', None)
     result = super(AttrBlock, self).output_map(**kwargs)
-    if result is None and raw is None: return None
+    if result is None:
+      if raw is None: return None
+      result = Tree()
     if raw is not None: result.prefix = raw
     return result
 
@@ -136,6 +139,15 @@ class AttrBlock(AttrBlockBase):
       self.add_keyword(key.lower(), newobject)
       has_breakkeep = False
 
+  def _read_nested_group(self, tree, owner=None, **kwargs):
+    """ Creates nested groups.
+
+        It is not easy to guess the type of a yet to be created object.
+        This method is used by derived classes to create default nested groups.
+    """
+    result = self.__class__()
+    result.read_input(tree, owner=self, **kwargs)
+    return result
 
 def print_input(map):
   """ Prints output map to string. """
@@ -145,7 +157,7 @@ def print_input(map):
     if isinstance(item, Tree):
       prefix = getattr(item, 'prefix', None)
       if hasattr(prefix, '__len__') and len(prefix) == 0: prefix = None
-      result += key.upper()  + '\n'
+      if key != 'BASISSET': result += key.upper()  + '\n'
       if prefix is not None: result += prefix.upper().rstrip() + '\n'
       dummy = print_input(item).rstrip().lstrip()
       if len(dummy) > 0: result += dummy.upper() + '\n'
@@ -160,13 +172,3 @@ def print_input(map):
         result += key.upper().rstrip().lstrip() + '\n'                         \
                   + item.upper().rstrip() + '\n'
   return result
-
-  def _read_nested_group(self, tree, owner=None, **kwargs):
-    """ Creates nested groups.
-
-        It is not easy to guess the type of a yet to be created object.
-        This method is used by derived classes to create default nested groups.
-    """
-    result = self.__class__()
-    result.read_input(tree, owner=self, **kwargs)
-    return result

@@ -130,54 +130,51 @@ class Functional(object):
     if 'HAMSCF' in tree.keys():  
       self.scf.read_input(tree['HAMSCF'], owner=self)
 
-  def print_input(self, **kwargs):
+  def output_map(self, **kwargs):
     """ Dumps CRYSTAL input to string. """
+    from ..tools.input import Tree
 
-    # create optgeom part first, since it needs be inserted in the structure
-    # bit. Split along lines and remove empty lines at end.
-    # if empty, then make it empty.
-    optgeom = self.optgeom.print_input(**kwargs)
-    if optgeom is not None:
-      optgeom = optgeom.rstrip().split('\n')
-      while len(optgeom[-1].rstrip().lstrip()) == 0: optgeom.pop(-1)
-      if len(optgeom) == 2: optgeom = []
-    else: optgeom = []
+    if 'crystal' not in kwargs: kwargs['crystal'] = self
+    root = Tree()
+    inner = root
 
-    result = ''
     if 'structure' in kwargs:
       structure = kwargs['structure']
       # insert name of structure as title.
       if hasattr(structure, 'name'):
-        result += str(structure.name).rstrip().lstrip() + '\n'
+        inner = root.descend(structure.name.rstrip().lstrip())
       elif getattr(self, 'title', None) is not None:
-        result += str(self.title).rstrip().lstrip()
-      result = result.rstrip()
-      if len(result) == 0 or result[-1] != '\n': result += '\n'
-       
-      # figure out input of structure. remove empty lines.
-      lines = structure.print_input(**kwargs).split('\n')
-      while len(lines[-1].rstrip().lstrip()) == 0: lines.pop(-1)
-      # insert optgeom inside the geometry bit.
-      if len(optgeom) > 0: lines = lines[:-1] + optgeom + [lines[-1]]
-      # turn back into string.
-      result += '\n'.join(lines)
+        inner = root.descend(self.title.rstrip().lstrip())
+      else: inner = root.descend('')
+      
+      # Output map of the structure
+      smap = structure.output_map(**kwargs)
+      # To which we add the output map of optgeom
+      smap[0][1].update(self.optgeom.output_map(**kwargs))
+      # finally we add that to inner.
+      inner.update(smap)
     else: # no structures. Not a meaningful input, but whatever.
-      result += '\n'.join(optgeom)
+      title = getattr(self, 'title', '')
+      if title is None: title = ''
+      inner = root.descend(title.rstrip().lstrip())
+      inner.update(self.optgeom.output_map(**kwargs))
 
     # now add basis
-    result = result.rstrip()
-    if len(result): result += '\n'
-    result += self.basis.print_input(**kwargs)
+    inner['BASISSET'] = self.basis.output_map(**kwargs)
 
     # add scf block
-    result = result.rstrip()
-    if len(result): result += '\n'
-    result += self.scf.print_input(**kwargs)
-
+    inner.update(self.scf.output_map(**kwargs))
     # end input and return
-    result = result.rstrip()
-    if len(result): result += '\n'
-    return result + 'END\n'
+    return root
+
+  def print_input(self, **kwargs):
+    """ Prints input to string. """
+    from .input import print_input
+    map = self.output_map(**kwargs)
+    # Does not capitalize input.
+    result = map[0][0].rstrip().lstrip() + '\n'
+    # Otherwise, everything is standard.
+    return result + print_input(map[0][1]).rstrip() + '\nEND\n'
 
   def guess_workdir(self, outdir):
     """ Tries and guess working directory. """
