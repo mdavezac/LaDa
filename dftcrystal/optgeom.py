@@ -55,10 +55,10 @@ class FixCell(BoolKeyword):
   """
   keyword = 'fixcell'
   """ Crystal input keyword """
-  def print_input(self, **kwargs):
+  def output_map(self, **kwargs):
     optgeom = kwargs['crystal'].optgeom
     if optgeom.intredun == False: return None
-    return super(FixCell, self).print_input(**kwargs)
+    return super(FixCell, self).output_map(**kwargs)
 
 class MaxCycle(TypedKeyword):
   """ Maxcycle input.
