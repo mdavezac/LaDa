@@ -3,6 +3,7 @@ def test():
   from numpy import array, all, abs
   from shutil import rmtree
   from lada.dftcrystal import Crystal, relax, Shell
+  from lada import default_comm
 
   functional = relax.Relax()
   functional.basis['Si'] = [
@@ -29,9 +30,9 @@ def test():
   functional.maxcycle = 600
 
   crystal = Crystal(227, 5.43).add_atom(0.125, 0.125, 0.125, 'Si')
-  directory = '/tmp/test/' #mkdtemp()
+  directory = mkdtemp()
   try: 
-     results = functional(crystal, outdir=directory, comm=None)
+     results = functional(crystal, outdir=directory, comm=default_comm)
      assert results.success
      # check that final crystals are same as final structures.
      for crystal, structure in zip(results.details.crystal.itervalues(),

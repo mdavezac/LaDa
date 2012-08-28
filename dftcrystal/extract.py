@@ -391,12 +391,65 @@ class ExtractBase(object):
   @make_cached
   def structure(self):
     """ Output structure, LaDa format. """
+    try:
+      with self.__stdout__() as file:
+        pos = None
+        for pos in self._find_structure(file): continue
+        if pos is None: raise GrepError('Could not extract structure from file')
+        file.seek(pos, 0)
+        return self._grep_structure(file)
+    # Pcrystal fails to print structure at end of optimization run if reached
+    # maximum number of iterations. This tries to get the structure in a
+    # different way. 
+    except GrepError: 
+      return self._final_structure
+
+  @property
+  @make_cached
+  def _final_structure(self):
+    """ Bad way to get the final structure.
+    
+        Pcrystal does not necessarily print the geometry when the maximum
+        number of iterations of the geometry is reached without converging. We
+        still try and get the final structure, although it requires some hoop
+        jumping and launching crystal a second time (serially, with TESTGEOM).
+    """
+    from numpy import array, dot
     with self.__stdout__() as file:
-      pos = None
-      for pos in self._find_structure(file): continue
-      if pos is None: raise GrepError('Could not extract structure from file')
-      file.seek(pos, 0)
-      return self._grep_structure(file)
+      lastline = -1
+      pattern = " CRYSTALLOGRAPHIC CELL (VOLUME="
+      N = len(pattern)
+      for i, line in enumerate(file):
+        if len(line) < N: continue
+        if line[:N] == pattern: lastline = i
+    # get cell and atoms.
+    with self.__stdout__() as file:
+      # first, figure out cell.
+      for i, line in enumerate(file):
+        if i == lastline: break
+      try: file.next(); line = file.next()
+      except StopIteration: 
+        raise GrepError('Unexpected end-of-file')
+      a, b, c, alpha, beta, gamma = [float(u) for u in line.split()]
+      crystal = self.input_crystal.copy()
+      crystal[:] = []
+      crystal.params = [a, b, c, alpha, beta, gamma][:len(crystal.params)]
+      # create result with right cell.
+      result = self.input_structure.copy()
+      result.cell = crystal.eval().cell
+      # then add atoms.
+      try: file.next(); file.next(); file.next(); file.next()
+      except StopIteration: 
+        raise GrepError('Unexpected end-of-file')
+      index = 3
+      if abs(result.cell[2,2] - 500.0) < 1e-8: index -= 1
+      if abs(result.cell[1,1] - 500.0) < 1e-8: index -= 1
+      for atom, line in zip(result, file):
+        data = line.split()
+        atom.pos[:index] = dot( result.cell[:index, :index],
+                                array(data[4:4+index], dtype='float64') )
+        atom.pos[index:] = array(data[4+index:4+3], dtype='float64')
+      return result
 
   @property
   @make_cached

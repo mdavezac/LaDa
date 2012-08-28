@@ -10,5 +10,7 @@ if(NOT compile_debug_tests)
   add_test(dftcrystal_inputgeom python ${CMAKE_CURRENT_SOURCE_DIR}/inputgeom.py)
   add_test(dftcrystal_pickles python ${CMAKE_CURRENT_SOURCE_DIR}/pickles.py)
   add_test(dftcrystal_input python ${CMAKE_CURRENT_SOURCE_DIR}/input.py)
+  add_test(dftcrystal_run python ${CMAKE_CURRENT_SOURCE_DIR}/run.py)
+  add_test(dftcrystal_runrelax python ${CMAKE_CURRENT_SOURCE_DIR}/runrelax.py)
 
 endif(NOT compile_debug_tests)

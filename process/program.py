@@ -100,6 +100,7 @@ class ProgramProcess(Process):
 
         .. _str : http://docs.python.org/library/functions.html#str
     """
+    from os.path import getsize
     from ..error import ValueError
     from ..misc import RelativePath
     super(ProgramProcess, self).__init__(maxtrials, **kwargs)
@@ -185,6 +186,9 @@ class ProgramProcess(Process):
             self._cleanup()
             raise
           else: self.nberrors += 1
+        else:
+          self._cleanup()
+          return True
       else:
         self.nberrors += 1
         if self.nberrors >= self.maxtrials:
