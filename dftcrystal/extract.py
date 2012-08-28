@@ -417,11 +417,14 @@ class ExtractBase(object):
 
     # Find last operation which is neither ELASTIC nor ATOMDISP
     incrys, instruct, i = self.input_crystal, self.input_structure, 0
+    looped = False
     for i, op in enumerate(incrys[::-1]):
       if op.keyword.lower() not in ['elastic', 'atomdisp']: break
+      looped = True
 
     # deduce structure - last changes in cell-shape or atomic displacements.
-    if i != 0:
+    if looped:
+      if incrys[-i].keyword.lower() in ['elastic', 'atomdisp']: i += 1
       incrys = incrys.copy()
       incrys[:] = incrys[:len(incrys)-i]
       instruct = incrys.eval()
@@ -437,7 +440,7 @@ class ExtractBase(object):
 
     # create field displacement
     field = [ dot(cell, dot(inv_out, a.pos) - dot(inv_in, b.pos))
-              for a, b in zip(self.structure, self.input_structure)
+              for a, b in zip(self.structure, instruct)
               if a.asymmetric ]
     field = array(field)
 
@@ -557,10 +560,8 @@ class ExtractBase(object):
   @make_cached
   def optgeom_iterations(self):
     """ Number of geometric iterations. """
-    from ..error import GrepError
     a = self.optgeom_convergence
     if a is None: return 0
-    if not a: raise GrepError('Convergence was not achieved')
     result = self._find_last_STDOUT('POINTS\s+(\d+)\s+\*')
     return int(result.group(1))
 

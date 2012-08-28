@@ -401,7 +401,6 @@ class Functional(object):
       self.this = this
       self.args = args
     def __call__(self, *args, **kwargs):
-      print 'bringing down', args[1:]
       self.this.bringdown(*self.args)
   class OnFail(object):
     """ Checks whether CRYSTAL run succeeded.

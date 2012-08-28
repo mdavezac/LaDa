@@ -73,7 +73,7 @@ def iter_relax(self, structure=None, outdir=None, maxiter=30, **kwargs):
 
     # check for convergence
     if extract.optgeom_convergence is True                                     \
-       and extract.optgeom_iterations < self.optgeom.maxcycle: break
+        and extract.optgeom_iterations < self.optgeom.maxcycle: break
 
   # perform static calculation
   self.optgeom.enabled = False

@@ -3,13 +3,15 @@ __docformat__ = "restructuredtext en"
 __all__ = [ 'Extract', 'AffineTransform', 'DisplaceAtoms', 'InsertAtoms',
             'Marker', 'ModifySymmetry', 'RemoveAtoms', 'Slabcut', 'read',
             'Slabinfo','Crystal', 'Molecule', 'Slab', 'Functional', 'Shell',
-            'read_gaussian_basisset', 'MassExtract', 'read_input', 'exec_input' ]
+            'read_gaussian_basisset', 'MassExtract', 'read_input', 'exec_input',
+            'Elastic' ]
 
 from .basis import Shell
 from .functional import Functional
 from .extract import Extract, MassExtract
 from .geometry import AffineTransform, DisplaceAtoms, InsertAtoms, Marker,      \
-                      ModifySymmetry, RemoveAtoms, Slabcut, Slabinfo, Slab
+                      ModifySymmetry, RemoveAtoms, Slabcut, Slabinfo, Slab,     \
+                      Elastic
 from .crystal import Crystal
 from .molecule import Molecule
 registered = { 'atomrot':    AffineTransform,
@@ -21,6 +23,7 @@ registered = { 'atomrot':    AffineTransform,
                'slabcut':    Slabcut,
                'slab':       Slab,
                'slabinfo':   Slabinfo,
+               'elastic':    Elastic,
                'crystal':    Crystal,
                'molecule':   Molecule }
 """ Keywords used in creating the geometry. """

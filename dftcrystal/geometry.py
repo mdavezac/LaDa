@@ -1,7 +1,7 @@
 __docformat__ = "restructuredtext en"
 __all__ = [ 'RemoveAtoms', 'Slabinfo', 'Slabcut', 'Slab',
             'DisplaceAtoms', 'InsertAtoms', 'ModifySymmetry',
-            'AffineTransform', 'Marker' ]
+            'AffineTransform', 'Marker', 'Elastic' ]
 from .input import GeomKeyword
 from ..tools.input import BaseKeyword
 

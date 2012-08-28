@@ -9,31 +9,31 @@ def test():
   assert a.fulloptg is False
   assert a.cellonly is False
   assert a.itatocell is False
-  assert a.interdun is False
+  assert a.intredun is False
   a.maxcycle = 10
   assert a.maxcycle == 10
   assert a.fulloptg is False
   assert a.cellonly is False
   assert a.itatocell is False
-  assert a.interdun is False
+  assert a.intredun is False
   a.maxcycle = None
   assert a.maxcycle is None
   assert a.fulloptg is False
   assert a.cellonly is False
   assert a.itatocell is False
-  assert a.interdun is False
+  assert a.intredun is False
   a.cellonly = True
   assert a.maxcycle is None
   assert a.fulloptg is False
   assert a.cellonly is True
   assert a.itatocell is False
-  assert a.interdun is False
+  assert a.intredun is False
   a.maxcycle = 10
   assert a.maxcycle == 10
   assert a.fulloptg is False
   assert a.cellonly is True
   assert a.itatocell is False
-  assert a.interdun is False
+  assert a.intredun is False
 
   assert a.enabled is False
   assert a.output_map(crystal=Crystal(a)) is None
