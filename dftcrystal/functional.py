@@ -401,9 +401,10 @@ class Functional(object):
         CRYSTAL.
     """
     def __init__(self, this, *args):
-      self.this = self
+      self.this = this
       self.args = args
     def __call__(self, *args, **kwargs):
+      print 'bringing down', args[1:]
       self.this.bringdown(*self.args)
   class OnFail(object):
     """ Checks whether CRYSTAL run succeeded.
@@ -416,6 +417,6 @@ class Functional(object):
       self.outdir = outdir
     def __call__(self, process, error):
       from ..process import Fail
-      if not self.Extract(self.outdir).success:
+      if not self.this.Extract(self.outdir).success:
         raise Fail( 'Crystal failed to run correctly.\n'                       \
                     'It returned with error {0}.'.format(error) )
