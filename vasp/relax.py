@@ -11,7 +11,7 @@
 """
 __docformat__ = "restructuredtext en"
 __all__ = ['relax', 'iter_relax', 'Relax', 'epitaxial', 'iter_epitaxial', 'RelaxExtract']
-from ..functools.makeclass import makeclass, makefunc
+from ..tools.makeclass import makeclass, makefunc
 from .functional import Vasp
 from .extract import Extract, MassExtract
 
@@ -326,7 +326,6 @@ def iter_epitaxial(vasp, structure, outdir=None, direction=[0,0,1], epiconv = 1e
   from re import sub
   from numpy.linalg import norm
   from numpy import array, dot
-  from lada.vasp.incar import PartialRestart
 
   direction = array(direction, dtype='float64') / norm(direction)
   if outdir is None: outdir = getcwd()
@@ -339,9 +338,7 @@ def iter_epitaxial(vasp, structure, outdir=None, direction=[0,0,1], epiconv = 1e
   if 'encut' in kwargs: vasp.encut = kwargs.pop('encut')
   if 'ediff' in kwargs: vasp.ediff = kwargs.pop('ediff')
   if vasp.ediff < epiconv: vasp.ediff = epiconv * 1e-2
-  vasp.restart = PartialRestart(None)
-  if kwargs.get('relaxation', None) is not None:
-    vasp.relaxation = kwargs['relaxation']
+  kwargs['istruc'] = 'input'
   kwargs['relaxation'] = 2
 
   allcalcs = []

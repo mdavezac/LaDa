@@ -1,6 +1,7 @@
 def test():
   from collections import namedtuple
   from lada.dftcrystal.hamiltonian import Dft
+  from lada.dftcrystal.input import print_input
   from lada.dftcrystal.parse import parse
   Crystal = namedtuple('Crystal', ['dft'])
   
@@ -11,12 +12,12 @@ def test():
   assert a.hybrid is None
   assert a.nonlocal.correlation is None
   assert a.nonlocal.exchange is None
-  assert a.spin is False
+  assert a.spin is None
   assert not a.b3lyp
   assert not a.b3pw
   assert not a.pbe0
   assert not a.soggaxc
-  assert a.print_input(crystal=crystal) is None
+  assert a.output_map(crystal=crystal) is None
 
   try: a.exchange = 'none'
   except: pass
@@ -31,6 +32,7 @@ def test():
   assert a.spin == False
 
   a.exchange = 'lda'
+  crystal = Crystal(a)
   assert a.exchange == 'lda'
   assert a.correlat is None
   assert a.hybrid is None
@@ -41,7 +43,11 @@ def test():
   assert not a.b3pw
   assert not a.pbe0
   assert not a.soggaxc
-  assert a.print_input(crystal=crystal) ==  "DFT\nEXCHANGE\nLDA\nEND DFT\n"
+  assert len(a.output_map(crystal=crystal)) == 1
+  assert 'DFT' in a.output_map(crystal=crystal)
+  assert len(a.output_map(crystal=crystal)['DFT']) == 1
+  assert 'EXCHANGE' in a.output_map(crystal=crystal)['DFT']
+  assert a.output_map(crystal=crystal)['DFT']['EXCHANGE'] == 'LDA'
 
   b = parse("DFT\nEXCHANGE\nPBE\nEND DFT\n", needstarters=False)
   a = Dft()
@@ -51,24 +57,29 @@ def test():
   assert a.hybrid is None
   assert a.nonlocal.correlation is None
   assert a.nonlocal.exchange is None
-  assert a.spin is False
+  assert a.spin is None
   assert not a.b3lyp
   assert not a.b3pw
   assert not a.pbe0
   assert not a.soggaxc
 
   a.b3lyp = True
+  crystal = Crystal(a)
   assert a.exchange == 'becke'
   assert a.correlat == 'lyp'
   assert abs(a.hybrid - 20) < 1e-8
   assert abs(a.nonlocal.exchange - 0.9) < 1e-8
   assert abs(a.nonlocal.correlation - 0.81) < 1e-8
-  assert a.spin is False
+  assert a.spin is None
   assert a.b3lyp
   assert not a.b3pw
   assert not a.pbe0
   assert not a.soggaxc
-  assert a.print_input(crystal=Crystal(a)) ==  "DFT\nB3LYP\nEND DFT\n"
+  assert len(a.output_map(crystal=crystal)) == 1
+  assert 'DFT' in a.output_map(crystal=crystal)
+  assert len(a.output_map(crystal=crystal)['DFT']) == 1
+  assert 'B3LYP' in a.output_map(crystal=crystal)['DFT']
+  assert a.output_map(crystal=crystal)['DFT']['B3LYP'] is None
 
   b = parse("DFT\nB3LYP\nEND DFT\n", needstarters=False)
   a = Dft()
@@ -77,17 +88,22 @@ def test():
   b = parse("DFT\nPBE0\nEND DFT\n", needstarters=False)
   a = Dft()
   a.read_input(b['DFT'])
+  crystal = Crystal(a)
   assert a.pbe0
   assert a.exchange == 'pbe'
   assert a.correlat == 'pbe'
   assert a.hybrid is None
   assert a.nonlocal.exchange is None
   assert a.nonlocal.correlation is None
-  assert a.spin is False
+  assert a.spin is None
   assert not a.b3lyp
   assert not a.b3pw
   assert not a.soggaxc
-  assert a.print_input(crystal=Crystal(a)) ==  "DFT\nPBE0\nEND DFT\n"
+  assert len(a.output_map(crystal=crystal)) == 1
+  assert 'DFT' in a.output_map(crystal=crystal)
+  assert len(a.output_map(crystal=crystal)['DFT']) == 1
+  assert 'PBE0' in a.output_map(crystal=crystal)['DFT']
+  assert a.output_map(crystal=crystal)['DFT']['PBE0'] is None
 
   a.b3pw = True
   a.exchange = 'lda'
@@ -96,7 +112,7 @@ def test():
   assert abs(a.hybrid - 20) < 1e-8
   assert abs(a.nonlocal.exchange - 0.9) < 1e-8
   assert abs(a.nonlocal.correlation - 0.81) < 1e-8
-  assert a.spin is False
+  assert a.spin is None
   assert not a.pbe0
   assert not a.b3lyp
   assert not a.b3pw
@@ -105,7 +121,8 @@ def test():
            "HYBRID\n" + str(float(20)) + "\n"     \
            "NONLOCAL\n" + str(float(0.9)) + " "   \
            + str(float(0.81)) + "\n" + "END DFT\n"
-  assert a.print_input(crystal=Crystal(a)) == string
+  assert print_input(a.output_map(crystal=Crystal(a))) == string
+  assert print_input(a.output_map(crystal=Crystal(a))) == string
 
   b = parse(string, needstarters=False)
   a = Dft()
@@ -115,12 +132,12 @@ def test():
   assert abs(a.hybrid - 20) < 1e-8
   assert abs(a.nonlocal.exchange - 0.9) < 1e-8
   assert abs(a.nonlocal.correlation - 0.81) < 1e-8
-  assert a.spin is False
+  assert a.spin is None
   assert not a.pbe0
   assert not a.b3lyp
   assert not a.b3pw
   assert not a.soggaxc
-  assert a.print_input(crystal=Crystal(a)) == string
+  assert print_input(a.output_map(crystal=Crystal(a))) == string
 
   string = "DFT\nCORRELAT\nPWGGA\nEXCHANGE\nLDA\n"\
            "HYBRID\n" + str(float(20)) + "\n"     \
@@ -134,22 +151,22 @@ def test():
   assert abs(a.hybrid - 20) < 1e-8
   assert abs(a.nonlocal.exchange - 0.9) < 1e-8
   assert abs(a.nonlocal.correlation - 0.81) < 1e-8
-  assert a.spin is False
+  assert a.spin is None
   assert not a.pbe0
   assert not a.b3lyp
   assert not a.b3pw
   assert not a.soggaxc
-  assert 'hello' in a._crysinput
-  assert type(a._crysinput['hello']) is bool and a._crysinput['hello'] == True
-  assert 'world' in a._crysinput
-  assert type(a._crysinput['world']) is int and a._crysinput['world'] == 1
-  string = a.print_input(crystal=Crystal(a)).split('\n')
+  assert 'hello' in a._input
+  assert type(a._input['hello']) is bool and a._input['hello'] == True
+  assert 'world' in a._input
+  assert type(a._input['world']) is int and a._input['world'] == 1
+  string = print_input(a.output_map(crystal=Crystal(a))).split('\n')
   assert 'HELLO' in string
   assert 'WORLD' in string 
   assert string[string.index('WORLD')+1] == '1'
   a.hello = False
   a.world = 2
-  string = a.print_input(crystal=Crystal(a)).split('\n')
+  string = print_input(a.output_map(crystal=Crystal(a))).split('\n')
   assert 'HELLO' not in string
   assert 'WORLD' in string 
   assert string[string.index('WORLD')+1] == '2'
@@ -158,13 +175,14 @@ def test_grids():
   from numpy import array, all, abs
   from collections import namedtuple
   from lada.dftcrystal.hamiltonian import Dft
+  from lada.dftcrystal.input import print_input
   Crystal = namedtuple('Crystal', ['dft'])
   a = Dft()
   assert a.radial.intervals is None
   assert a.radial.nbpoints is None
   assert a.angular.intervals is None
   assert a.angular.levels is None
-  assert a.print_input(crystal=Crystal(a)) is None
+  assert a.output_map(crystal=Crystal(a)) is None
   assert not a.lgrid
   assert not a.xlgrid
   assert not a.xxlgrid
@@ -174,7 +192,7 @@ def test_grids():
   assert all(abs(array(a.angular.levels) - [2, 6, 8, 13, 8]) < 1e-8)
   assert all(abs(array(a.radial.intervals) - [4]) < 1e-8)
   assert all(abs(array(a.radial.nbpoints) - [75]) < 1e-8)
-  assert a.print_input(crystal=Crystal(a)) == 'DFT\nLGRID\nEND DFT\n'
+  assert print_input(a.output_map(crystal=Crystal(a))) == 'DFT\nLGRID\nEND DFT\n'
 
 
 if __name__ == '__main__':

@@ -19,7 +19,7 @@ def poscar(path="POSCAR", types=None):
   # if types is not none, converts to a list of strings.
   if types is not None:
     if isinstance(types, str): types = [types] # can't see another way of doing this...
-    elif not hasattr(types, "__getitem__"): types = [str(types)] # single lone vasp.specie.Specie
+    elif not hasattr(types, "__iter__"): types = [str(types)] # single lone vasp.specie.Specie
     else: types = [str(s) for s in types]
       
   if path is None: path = "POSCAR"
@@ -74,12 +74,12 @@ def poscar(path="POSCAR", types=None):
     # Checks whether cartesian or direct.
     is_direct = first_char not in ['c', 'k']
     # reads atoms.
-    for n, type in zip(nb_atoms, types):
+    for n, specie in zip(nb_atoms, types):
       for i in range(n):
         line = poscar.readline().split()
         pos = array([float(u) for u in line[:3]], dtype="float64")
         if is_direct: pos = dot(result.cell, pos)
-        result.add_atom(pos=pos, type=type)
+        result.add_atom(pos=pos, type=specie)
         if selective_dynamics:
           for which, freeze in zip(line[3:], ['x', 'y', 'z']):
             if which.lower()[0] == 't':

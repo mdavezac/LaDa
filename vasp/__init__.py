@@ -54,3 +54,59 @@ def exec_input( script, global_dict=None, local_dict=None,
   for k in __all__:
     if k != 'read_input' and k != 'exec_input': global_dict[k] = globals()[k]
   return exec_input(script, global_dict, local_dict, paths, name)
+
+def parse_incar(path):
+  """ Reads INCAR file and returns mapping (keyword, value). """
+  from os.path import isdir, join
+  from ..error import ValueError
+  from ..misc import RelativePath
+  from ..tools.input import Tree
+  if isinstance(path, str): 
+    if path.find('\n') == -1:
+      dummy = RelativePath(path).path
+      if isdir(dummy): dummy = join(dummy, 'INCAR')
+      with open(dummy) as file: return parse_incar(file)
+    else:
+      return parse_incar(path.split('\n').__iter__())
+  
+  lines = []
+  for line in path:
+    if line.find('#') != -1: line = line[:line.find('#')]
+    dummy = [u.lstrip().rstrip() for u in line.split(';')]
+    dummy = [u for u in dummy if len(u) > 0]
+    if len(dummy) and len(lines) == 0: lines.append(dummy.pop(-1))
+    while len(dummy):
+      if lines[-1][-1] == '\\':
+        lines[-1] = lines[-1][:-1] + dummy.pop(-1)
+      else: lines.append(dummy.pop(-1))
+
+  result = Tree()
+  for line in lines:
+    if line.find('=') == -1: continue
+    keyword, value = [u.rstrip().lstrip() for u in line.split('=')]
+    if len(keyword) == 0: raise ValueError('Found empty keword in INCAR.')
+    if keyword in result: raise ValueError('Found duplicate keyword {0} in INCAR'.format(keyword))
+    result[keyword] = value
+  return result
+
+
+def read_incar(filename='INCAR'):
+  """ Reads a functional from an INCAR.
+
+      :param filename:
+        It can be one of the following:
+
+          - An iterable object: each iteration should yield a line in the
+            INCAR.
+          - A string (single line): path to a directory containing an INCAR or
+            to an INCAR file itself.
+          - A string (multi-line): should be the content of an INCAR.
+        
+        Defaults to 'INCAR'.
+      :returns: A vasp functional equivalent to the INCAR.
+  """
+  from .functional import Vasp
+  parsed = parse_incar(filename)
+  result = Vasp()
+  result.read_input(parsed)
+  return result

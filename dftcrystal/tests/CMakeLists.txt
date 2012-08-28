@@ -9,5 +9,6 @@ if(NOT compile_debug_tests)
   add_test(dftcrystal_geometry python ${CMAKE_CURRENT_SOURCE_DIR}/geometry.py)
   add_test(dftcrystal_inputgeom python ${CMAKE_CURRENT_SOURCE_DIR}/inputgeom.py)
   add_test(dftcrystal_pickles python ${CMAKE_CURRENT_SOURCE_DIR}/pickles.py)
+  add_test(dftcrystal_input python ${CMAKE_CURRENT_SOURCE_DIR}/input.py)
 
 endif(NOT compile_debug_tests)

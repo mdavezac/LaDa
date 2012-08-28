@@ -1,5 +1,5 @@
 __docformat__ = "restructuredtext en"
-from ..functools import stateless, assign_attributes
+from ..tools import stateless, assign_attributes
 from .extract import Extract
 
 class Functional(object):
@@ -83,16 +83,16 @@ class Functional(object):
   def __getattr__(self, name):
     """ Pushes scf stuff into instance namespace. """
     from ..error import ValueError
-    if name in self.scf._crysinput: return getattr(self.scf, name)
+    if name in self.scf._input: return getattr(self.scf, name)
     raise ValueError('Unknown attribute {0}.'.format(name))
   def __setattr__(self, name, value):
     """ Pushes scf stuff into instance namespace. """
-    from .input import Keyword
-    if isinstance(value, Keyword): 
+    from ..tools.input import BaseKeyword
+    if isinstance(value, BaseKeyword): 
       if name in ['scf', 'basis', 'optgeom']:
         return super(Functional, self).__setattr__(name, value)
       setattr(self.scf, name, value)
-    elif name in self.scf._crysinput:
+    elif name in self.scf._input:
       setattr(self.scf, name, value)
     else: super(Functional, self).__setattr__(name, value)
   def __delattr__(self, name):
@@ -100,7 +100,7 @@ class Functional(object):
   def __dir__(self):
     """ List of attributes and members """
     return list( set(self.__dict__.iterkeys()) | set(dir(self.__class__))      \
-                 | set(self.scf._crysinput.iterkeys()) )
+                 | set(self.scf._input.iterkeys()) )
 
   def add_keyword(self, name, value=None):
     """ Passes on to :py:attr:`~Functional.scf` """
@@ -130,54 +130,51 @@ class Functional(object):
     if 'HAMSCF' in tree.keys():  
       self.scf.read_input(tree['HAMSCF'], owner=self)
 
-  def print_input(self, **kwargs):
+  def output_map(self, **kwargs):
     """ Dumps CRYSTAL input to string. """
+    from ..tools.input import Tree
 
-    # create optgeom part first, since it needs be inserted in the structure
-    # bit. Split along lines and remove empty lines at end.
-    # if empty, then make it empty.
-    optgeom = self.optgeom.print_input(**kwargs)
-    if optgeom is not None:
-      optgeom = optgeom.rstrip().split('\n')
-      while len(optgeom[-1].rstrip().lstrip()) == 0: optgeom.pop(-1)
-      if len(optgeom) == 2: optgeom = []
-    else: optgeom = []
+    if 'crystal' not in kwargs: kwargs['crystal'] = self
+    root = Tree()
+    inner = root
 
-    result = ''
     if 'structure' in kwargs:
       structure = kwargs['structure']
       # insert name of structure as title.
       if hasattr(structure, 'name'):
-        result += str(structure.name).rstrip().lstrip() + '\n'
+        inner = root.descend(structure.name.rstrip().lstrip())
       elif getattr(self, 'title', None) is not None:
-        result += str(self.title).rstrip().lstrip()
-      result = result.rstrip()
-      if len(result) == 0 or result[-1] != '\n': result += '\n'
-       
-      # figure out input of structure. remove empty lines.
-      lines = structure.print_input(**kwargs).split('\n')
-      while len(lines[-1].rstrip().lstrip()) == 0: lines.pop(-1)
-      # insert optgeom inside the geometry bit.
-      if len(optgeom) > 0: lines = lines[:-1] + optgeom + [lines[-1]]
-      # turn back into string.
-      result += '\n'.join(lines)
+        inner = root.descend(self.title.rstrip().lstrip())
+      else: inner = root.descend('')
+      
+      # Output map of the structure
+      smap = structure.output_map(**kwargs)
+      # To which we add the output map of optgeom
+      smap[0][1].update(self.optgeom.output_map(**kwargs))
+      # finally we add that to inner.
+      inner.update(smap)
     else: # no structures. Not a meaningful input, but whatever.
-      result += '\n'.join(optgeom)
+      title = getattr(self, 'title', '')
+      if title is None: title = ''
+      inner = root.descend(title.rstrip().lstrip())
+      inner.update(self.optgeom.output_map(**kwargs))
 
     # now add basis
-    result = result.rstrip()
-    if len(result): result += '\n'
-    result += self.basis.print_input(**kwargs)
+    inner['BASISSET'] = self.basis.output_map(**kwargs)
 
     # add scf block
-    result = result.rstrip()
-    if len(result): result += '\n'
-    result += self.scf.print_input(**kwargs)
-
+    inner.update(self.scf.output_map(**kwargs))
     # end input and return
-    result = result.rstrip()
-    if len(result): result += '\n'
-    return result + 'END\n'
+    return root
+
+  def print_input(self, **kwargs):
+    """ Prints input to string. """
+    from .input import print_input
+    map = self.output_map(**kwargs)
+    # Does not capitalize input.
+    result = map[0][0].rstrip().lstrip() + '\n'
+    # Otherwise, everything is standard.
+    return result + print_input(map[0][1]).rstrip() + '\nEND\n'
 
   def guess_workdir(self, outdir):
     """ Tries and guess working directory. """
@@ -365,12 +362,12 @@ class Functional(object):
  
   def __repr__(self, defaults=True, name=None):
     """ Returns representation of this instance """
-    from ..functools.uirepr import uirepr
+    from ..tools.uirepr import uirepr
     defaults = self.__class__() if defaults else None
     return uirepr(self, name=name, defaults=defaults)
 
   def __ui_repr__(self, imports, name=None, defaults=None, exclude=None):
-    from ..functools.uirepr import template_ui_repr
+    from ..tools.uirepr import template_ui_repr
 
     results = template_ui_repr(self, imports, name, defaults, ['scf'])
     if name is None:

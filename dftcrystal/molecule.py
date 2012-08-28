@@ -1,6 +1,7 @@
 __docformat__ = "restructuredtext en"
 __all__ = ['Molecule']
-from .input import ListBlock, Keyword, GeomKeyword
+from .input import GeomKeyword
+from ..tools.input import ListBlock, BaseKeyword
 class Molecule(ListBlock):
   """ Molecule for the CRYSTAL code """
   keyword = 'molecule'
@@ -24,7 +25,11 @@ class Molecule(ListBlock):
     return self
 
   def __repr_header__(self):
-    """ Dumps representation to string. """
+    """ Dumps representation header to string. 
+    
+        Mostly useful to limit how much should be rewritten of repr in derived
+        classes.
+    """
     # prints construction part.
     length = len('{0.__class__.__name__}('.format(self)) + 1
     args = [repr(self.symmgroup)]
@@ -34,24 +39,34 @@ class Molecule(ListBlock):
       args.append('\\\n{2}{0}={1!r}'.format(key, value, indent))
     return '{0.__class__.__name__}({1})'.format(self, ', '.join(args))
 
-  def __repr__(self):
+  def __ui_repr__(self, imports, name=None, defaults=None, exclude=None):
     """ Dumps representation to string. """
-    from inspect import getargspec
+    from ..tools.uirepr import add_to_imports
     result = self.__repr_header__()
-    indent = ''.join([' '] * result.find('('))
+    indent = ' '.join('' for i in xrange(result.find('(')+1))
+    add_to_imports(self, imports)
+
     # prints atoms.
     for o in self.atoms: 
       dummy = repr(o)
       dummy = dummy[dummy.find('(')+1:dummy.rfind(')')].rstrip().lstrip()
       result += '\\\n{0}.add_atom({1})'.format(indent, dummy)
-    # prints inner keywords/blocks
+
     for item in self: 
-      hasindent = getargspec(item.__repr__).args
-      hasindent = False if hasindent is None else 'indent' in hasindent
-      result += '\\\n{0}.append({1!r})'.format(indent, item) if not hasindent  \
-                else '\\\n{0}.append({1})'                                     \
-                     .format(indent, item.__repr__(indent+'        ')) 
-    return result
+      if item.__class__ is BaseKeyword:
+        args = [repr(item.keyword)]
+        if getattr(item, 'raw', None) is not None: args.append(repr(item.raw))
+        result += '\\\n{0}.append({1})\n'.format(indent, ', '.join(args)) 
+      else:
+        add_to_imports(item, imports)
+        item = repr(item).rstrip().lstrip()
+        item = item.replace('\n', indent)
+        result += '\\\n{0}.append({1})\n'.format(indent, item) 
+
+    result = result.rstrip()
+    if name is None:
+      name = getattr(self, '__ui_name__', self.__class__.__name__.lower())
+    return {name: result.rstrip()}
 
   @property 
   def raw(self):
@@ -90,17 +105,17 @@ class Molecule(ListBlock):
       if type < 100: type = find_specie(atomic_number=type).symbol
       self.add_atom(pos=[float(u) for u in line[1:4]], type=type)
 
-  def read_input(self, tree, owner=None):
+  def read_input(self, tree, owner=None, **kwargs):
     """ Parses an input tree. """
-    from parse import InputTree
+    from ..tools.input import Tree
     from . import registered
     self[:] = []
-    self.raw = tree.raw
+    self.raw = tree.prefix
     do_breaksym = False
     has_breakkeep = False
     for key, value in tree:
       # parses sub-block.
-      if isinstance(value, InputTree): continue
+      if isinstance(value, Tree): continue
       # check for special keywords.
       if key.lower() == 'keepsymm':
         do_breaksym = False
@@ -115,7 +130,7 @@ class Molecule(ListBlock):
         newobject = registered[key.lower()]()
         if hasattr(newobject, 'breaksym'): newobject.breaksym = do_breaksym
       elif has_breakkeep: newobject = GeomKeyword(keyword=key, breaksym=do_breaksym)
-      else: newobject = Keyword(keyword=key)
+      else: newobject = BaseKeyword(keyword=key)
       if len(value) > 0: 
         try: newobject.raw = getattr(value, 'raw', value)
         except: pass
@@ -123,20 +138,14 @@ class Molecule(ListBlock):
       do_breaksym = False
       has_breakkeep = False
 
-  def append(self, keyword=None, raw=None, breaksym=None):
+  def append(self, keyword, raw=None, breaksym=None):
     """ Appends an item.
 
         :return: self, so calls can be chained. 
     """
-    from ..error import ValueError
-    if isinstance(keyword, str):
-      if breaksym is None: keyword = Keyword(keyword=keyword, raw=raw)
-      else:
-        breaksym = breaksym == True
-        keyword = Keyword(keyword=keyword, raw=raw, breaksym=breaksym)
-    elif not isinstance(keyword, Keyword):
-      raise ValueError('Wrong argument to append.')
-    list.append(self, keyword)
+    if breaksym is not None:
+      self.append(GeomKeyword(keyword=keyword, raw=raw, breaksym=None))
+    else: super(Molecule, self).append(keyword, raw)
     return self
 
   def eval(self):
@@ -259,3 +268,8 @@ class Molecule(ListBlock):
     """ Returns deep copy of self. """
     from copy import deepcopy
     return deepcopy(self)
+
+  def print_input(self, **kwargs):
+    """ Prints as CRYSTAL output. """
+    from .input import print_input
+    return print_input(self.output_map(**kwargs))

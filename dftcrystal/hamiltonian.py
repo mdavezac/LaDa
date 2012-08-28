@@ -1,7 +1,7 @@
 __docformat__ = "restructuredtext en"
 __all__ = ['Dft']
-from . input import Keyword, AttrBlock, ChoiceKeyword, TypedKeyword,           \
-                    BoolKeyword
+from .input import AttrBlock
+from ..tools.input import BaseKeyword, ChoiceKeyword, TypedKeyword, BoolKeyword
 
 class Exchange(ChoiceKeyword):
   keyword = 'exchange'
@@ -20,7 +20,7 @@ class Exchange(ChoiceKeyword):
     super(Exchange, self).__set__(instance, value)
     for u in self.excludes: 
       if getattr(instance, u, False): setattr(instance, u, False)
-  def print_input(self, **kwargs):
+  def output_map(self, **kwargs):
     """ Print EXCHANGE keyword. 
 
         Also checks whether one of global keywords is set, in which case does
@@ -29,7 +29,7 @@ class Exchange(ChoiceKeyword):
     if self._value is None: return None
     inst = kwargs['crystal'].dft
     if inst.pbe0 or inst.b3lyp or inst.b3pw or inst.soggaxc: return None
-    return '{0}\n{1}\n'.format(self.keyword.upper(), self.value.upper())
+    return {self.keyword.upper(): self.value.upper()}
 
 class Correlation(Exchange):
   keyword = 'correlat'
@@ -40,7 +40,7 @@ class Correlation(Exchange):
   def __init__(self, value=None):
     super(Correlation, self).__init__(value=value)
 
-class GlobalExc(Keyword):
+class GlobalExc(BaseKeyword):
   """ Takes care of global keywords for exchange-correlation. """
   def __init__(self, keyword, values):
     super(GlobalExc, self).__init__(keyword=keyword)
@@ -69,14 +69,14 @@ class GlobalExc(Keyword):
     if value == True:
       inst.exchange, inst.correlat, inst.hybrid,                               \
         inst.nonlocal.exchange, inst.nonlocal.correlation = self.values
-  def print_input(self, **kwargs):
+  def output_map(self, **kwargs):
     if self.__get__(kwargs['crystal'].dft): 
-      return self.keyword.upper() + '\n'
-  def read_input(self, tree, owner=None):
+      return {self.keyword.upper(): None}
+  def read_input(self, tree, owner=None, **kwargs):
     """ True if ever read. """
     self.__set__(owner, True)
 
-class NonLocal(Keyword):
+class NonLocal(BaseKeyword):
   """ Non-local weight parameters. """
   keyword = 'NONLOCAL'
   def __init__(self, xc=None, corr=None):
@@ -97,13 +97,13 @@ class NonLocal(Keyword):
   def disable(self): 
     """ Sets exchange and correlation to None. """
     self.exchange, self.correlation = None, None
-  def print_input(self, **kwargs):
+  def output_map(self, **kwargs):
     inst = kwargs['crystal'].dft
     if inst.pbe0 or inst.b3lyp or inst.b3pw or inst.soggaxc: return None
     x = 0 if self.exchange is None else self.exchange
     c = 0 if self.correlation is None else self.correlation
     if abs(x) < 1e-8 and abs(c) < 1e-8: return None
-    return super(NonLocal, self).print_input(**kwargs)
+    return super(NonLocal, self).output_map(**kwargs)
   def __getitem__(self, index):
     """ list [self.shift, self.lock] """
     from ..error import IndexError
@@ -134,7 +134,7 @@ class NonLocal(Keyword):
       if self.correlation is not None: args.append(repr(self.correlation))
     return '{0.__class__.__name__}({1})'.format(self, ', '.join(args))
   def __ui_repr__(self, imports, name=None, defaults=None, exclude=None):
-    from ..functools.uirepr import add_to_imports
+    from ..tools.uirepr import add_to_imports
     if name is None:
       name = getattr(self, '__ui_name__', self.__class__.__name__.lower())
     if defaults is None or type(defaults) != type(self):
@@ -160,12 +160,12 @@ class Hybrid(TypedKeyword):
   """ Keyword must conform to this type, if not None. """
   def __init__(self, value=None):
     super(Hybrid, self).__init__(value=value)
-  def print_input(self, **kwargs):
+  def output_map(self, **kwargs):
     inst = kwargs['crystal'].dft
     if inst.pbe0 or inst.b3lyp or inst.b3pw or inst.soggaxc: return None
-    return super(Hybrid, self).print_input(**kwargs)
+    return super(Hybrid, self).output_map(**kwargs)
 
-class Radial(Keyword):
+class Radial(BaseKeyword):
   """ Defines radial CRYSTAL keyword. """
   keyword = 'radial'
   def __init__(self, intervals=None, nbpoints=None):
@@ -210,7 +210,7 @@ class Radial(Keyword):
     n = int(value[0])
     self.intervals = value[1:n+1]
     self.nbpoints = value[n+1:]
-  def print_input(self, **kwargs):
+  def output_map(self, **kwargs):
     """ Prints CRYSTAL input """
     from ..error import input
     if self.intervals is None or self.nbpoints is None: return None
@@ -219,7 +219,7 @@ class Radial(Keyword):
     # sanity check
     if len(self.intervals) != len(self.nbpoints):
       raise input('Different number of interval limits and points per interval')
-    return super(Radial, self).print_input()
+    return super(Radial, self).output_map()
   def __repr__(self):
     """ Dumps representation of self. """
     args = []
@@ -232,7 +232,7 @@ class Radial(Keyword):
     return '{0.__class__.__name__}({1})'.format(self, ', '.join(args))
   def __ui_repr__(self, imports, name=None, defaults=None, exclude=None):
     from numpy import array, all, abs
-    from ..functools.uirepr import add_to_imports
+    from ..tools.uirepr import add_to_imports
     if name is None:
       name = getattr(self, '__ui_name__', self.__class__.__name__.lower())
     if defaults is None or type(defaults) != type(self):
@@ -250,7 +250,7 @@ class Radial(Keyword):
     return { '{0}.intervals'.format(name): repr(self.intervals), 
              '{0}.nbpoints'.format(name): repr(self.nbpoints) }
 
-class Angular(Keyword):
+class Angular(BaseKeyword):
   """ Defines angular CRYSTAL keyword. """
   keyword = 'angular'
   def __init__(self, intervals=None, levels=None):
@@ -295,7 +295,7 @@ class Angular(Keyword):
     n = int(value[0])
     self.intervals = value[1:n+1]
     self.levels = value[n+1:]
-  def print_input(self, **kwargs):
+  def output_map(self, **kwargs):
     """ Prints CRYSTAL input """
     from ..error import input
     if self.intervals is None or self.levels is None: return None
@@ -304,7 +304,7 @@ class Angular(Keyword):
     # sanity check
     if len(self.intervals) != len(self.levels):
       raise input('Different number of interval limits and points per interval')
-    return super(Angular, self).print_input()
+    return super(Angular, self).output_map()
   def __repr__(self):
     """ Dumps representation of self. """
     args = []
@@ -317,7 +317,7 @@ class Angular(Keyword):
     return '{0.__class__.__name__}({1})'.format(self, ', '.join(args))
   def __ui_repr__(self, imports, name=None, defaults=None, exclude=None):
     from numpy import array, all, abs
-    from ..functools.uirepr import add_to_imports
+    from ..tools.uirepr import add_to_imports
     if name is None:
       name = getattr(self, '__ui_name__', self.__class__.__name__.lower())
     if defaults is None or type(defaults) != type(self):
@@ -335,7 +335,7 @@ class Angular(Keyword):
     return { '{0}.intervals'.format(name): repr(self.intervals), 
              '{0}.levels'.format(name): repr(self.levels) }
 
-class GlobalGridKeyword(Keyword):
+class GlobalGridKeyword(BaseKeyword):
   """ Defines global grid keywords """
   def __init__(self, values=None, keyword=None):
     from copy import deepcopy
@@ -366,10 +366,10 @@ class GlobalGridKeyword(Keyword):
     if value == True:
       inst.radial.intervals, inst.radial.nbpoints,                             \
         inst.angular.intervals, inst.angular.levels =  self.values
-  def print_input(self, **kwargs):
+  def output_map(self, **kwargs):
     if self.__get__(kwargs['crystal'].dft): 
-      return self.keyword.upper() + '\n'
-  def read_input(self, tree, owner=None):
+      return {self.keyword: True}
+  def read_input(self, tree, owner=None, **kwargs):
     """ True if ever read. """
     self.__set__(owner, True)
 

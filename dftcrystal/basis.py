@@ -1,7 +1,8 @@
 __docformat__ = "restructuredtext en"
 __all__ = ['BasisSet', 'Shell']
 from quantities import UnitQuantity, angstrom
-from .input import AttrBlock, VariableListKeyword
+from .input import AttrBlock
+from ..tools.input import VariableListKeyword
 
 crystal_bohr = UnitQuantity('crystal_bohr', 0.5291772083*angstrom, symbol='bohr')
 """ Bhor radius as defined by CRYSTAL. """
@@ -182,6 +183,7 @@ class Ghosts(VariableListKeyword):
 
         functional.basis.ghosts = [1, 3, 5], False
 
+      The second item means that symmetries are *kept*.
       This results in the following crystal input:
 
         | KEEPSYMM
@@ -197,10 +199,10 @@ class Ghosts(VariableListKeyword):
       The two attributes can also be obtained and set using
       :py:attr:`~Ghosts.value` and :py:attr:`~Ghosts.breaksym':
 
-        >>> functional.basis.breaksym
+        >>> functional.basis.ghosts.breaksym
         True
-        >>> functional.basis.value
-        [1, 3, 5]
+        >>> functional.basis.ghosts.value
+        [1, 3, 5], 
 
   """
   type = int
@@ -240,19 +242,30 @@ class Ghosts(VariableListKeyword):
     if self.value is not None: args.append(repr(self.value))
     if self.breaksym == True: args.append("breaksym=True")
     return "{0.__class__.__name__}(".format(self) + ', '.join(args) + ')'
-  def print_input(self, **kwargs):
+  def output_map(self, **kwargs):
     """ Prints CRYSTAL input """
+    from ..tools.input import Tree
     if self.value is None: return None
     if len(self.value) == 0: return None
-    result = 'KEEPSYMM\n' if self.keepsym else 'BREAKSYM\n'
-    result += self.keyword.upper() + '\n'
-    result += self.raw
-    return result
+    results = Tree() 
+    results['keepsymm' if self.keepsym else 'breaksym'] = True
+    results[self.keyword] = self.raw
+    return results
+  def __get__(self, instance, owner=None):
+    return self
   def __set__(self, instance, value): 
     """ Setting Ghosts made easy. """
-    if not len(value) == 2:
-      raise ValueError('Expected two items when setting ghosts.')
-    self.value, self.breaksym = value
+    if hasattr(value, '__iter__'): 
+      self.value = list(value)
+      return
+    elif value is True or value is False: 
+      self.breaksym = value
+    elif hasattr(value, '__len__'):
+      if len(value) == 2 and value[1] is True or value[1] is False:
+        self.value, self.breaksym = value
+      else: self.value = value
+    else: raise ValueError( 'Ghosts expects a value of the form '              \
+                            '``[integers], True or False``.')
 
 class BasisSet(AttrBlock):
   """ Basis set block. """
@@ -260,7 +273,7 @@ class BasisSet(AttrBlock):
   """ Name used when printing user-friendly repr. """
   def __init__(self):
     """ Creates basis set block. """
-    from .input import BoolKeyword
+    from ..tools.input import BoolKeyword
     super(BasisSet, self).__init__()
     self._functions = {}
     """ Dictionary holding basis functions """
@@ -300,7 +313,7 @@ class BasisSet(AttrBlock):
     """ Sets basis data from raw CRYSTAL input. """
     from ..error import NotImplementedError as NA, IOError
     # clean up all basis functions. 
-    for key in self.iterkeys(): del self[key]
+    for key in self.keys(): del self[key]
     lines = value.split('\n')
     while len(lines):
       line = lines.pop(0).split()
@@ -372,11 +385,11 @@ class BasisSet(AttrBlock):
 
   def __repr__(self, defaults=False, name=None):
     """ Returns representation of this instance """
-    from ..functools.uirepr import uirepr
+    from ..tools.uirepr import uirepr
     defaults = self.__class__() if defaults else None
     return uirepr(self, name=name, defaults=defaults)
 
-  def print_input(self, **kwargs):
+  def output_map(self, **kwargs):
     """ Dumps CRYSTAL input to string. """
     if kwargs.get('structure', None) is not None:
       from copy import deepcopy
@@ -388,19 +401,22 @@ class BasisSet(AttrBlock):
       for specie in self.keys():
         if specie not in species: del c[specie]
     else: c  = self
-    return super(BasisSet, c).print_input(**kwargs).rstrip() + '\nEND\n'
+    results = super(BasisSet, self).output_map(**kwargs)
+    results.prefix = c.raw
+    return results
 
   def read_input(self, tree, owner=None):
     """ Parses an input tree. """
     self._functions = {}
-    self._crysinput = self.__class__()._crysinput
-    super(BasisSet, self).read_input(tree, owner=owner)
+    self._input = self.__class__()._input
+    super(BasisSet, self).read_input(tree, owner=self)
+    if hasattr(tree, 'prefix'): self.raw = tree.prefix
 
   def __ui_repr__(self, imports, name=None, defaults=None, exclude=None):
     """ Prettier representation """
     from pprint import pprint
     from StringIO import StringIO
-    from ..functools.uirepr import add_to_imports
+    from ..tools.uirepr import add_to_imports
     results = super(BasisSet, self).__ui_repr__( imports, name, defaults,
                                                  ['raw', 'gaussian94'] )
     if name is None:

@@ -17,17 +17,18 @@ def test(path):
 
   vasp = Vasp()
   vasp.kpoints    = "Automatic generation\n0\nMonkhorst\n2 2 2\n0 0 0"
-  vasp.precision  = "accurate"
+  vasp.prec       = "accurate"
   vasp.ediff      = 1e-5
   vasp.encut      = 1
-  vasp.set_smearing   = "metal", 0.01
+  vasp.ismear     = "fermi"
+  vasp.sigma      = 0.01
   vasp.relaxation = "volume"
   vasp.add_specie = "Si", "{0}/pseudos/Si".format(path)
   directory = mkdtemp()
   try: 
     functional = Relax(copy=vasp)
     assert abs(functional.ediff - 1e-5) < 1e-8
-    assert functional.precision == 'Accurate'
+    assert functional.prec == 'Accurate'
     result = functional(structure, outdir=directory, comm={'n': 2, 'ppn': 1},
                         relaxation="volume ionic cellshape")
     assert result.success
@@ -45,6 +46,5 @@ def test(path):
     pass
 
 if __name__ == "__main__":
-  from sys import argv, path 
-  if len(argv) > 2: path.extend(argv[2:])
-  if len(argv) > 1: test(argv[1])
+  from sys import argv
+  test(argv[1])
