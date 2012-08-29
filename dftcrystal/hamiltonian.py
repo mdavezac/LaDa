@@ -1,7 +1,7 @@
 __docformat__ = "restructuredtext en"
 __all__ = ['Dft']
-from .input import AttrBlock
-from ..tools.input import BaseKeyword, ChoiceKeyword, TypedKeyword, BoolKeyword
+from .input import AttrBlock, BoolKeyword
+from ..tools.input import BaseKeyword, ChoiceKeyword, TypedKeyword
 
 class Exchange(ChoiceKeyword):
   keyword = 'exchange'

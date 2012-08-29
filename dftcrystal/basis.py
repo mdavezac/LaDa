@@ -273,7 +273,7 @@ class BasisSet(AttrBlock):
   """ Name used when printing user-friendly repr. """
   def __init__(self):
     """ Creates basis set block. """
-    from ..tools.input import BoolKeyword
+    from .input import BoolKeyword
     super(BasisSet, self).__init__()
     self._functions = {}
     """ Dictionary holding basis functions """

@@ -125,6 +125,9 @@ def test():
   structure.read_input(parsed['rutile']['CRYSTAL'])
   a = Functional()
   a.read_input(parsed)
+  assert a.scfdir 
+  assert a.maxcycle == 300
+  assert a.exchsize == 6937578
   # need structure otherwise parse can't find beginning of input.
   otherstring = a.print_input(structure=structure)
   otherparsed = parse(otherstring)

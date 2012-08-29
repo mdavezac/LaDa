@@ -1,7 +1,7 @@
 __docformat__ = "restructuredtext en"
 __all__ = ['Electronic']
-from .input import AttrBlock
-from ..tools.input import TypedKeyword, BoolKeyword, BaseKeyword
+from .input import AttrBlock, BoolKeyword
+from ..tools.input import TypedKeyword, BaseKeyword
 from quantities import UnitQuantity, hartree
 
 class Shrink(BaseKeyword):
@@ -332,3 +332,22 @@ class Electronic(AttrBlock):
     """ 
     self.dft      = Dft()
     """ Holds definition of the DFT functional itself """
+    self.nofwfm   = BoolKeyword()
+    """ Whether to print formatted wavefunctions to disk. """
+    self.nobipola = BoolKeyword()
+    """ Whether to compute bielectronic integrals exactly. """
+    self.nobipcou = BoolKeyword()
+    """ Whether to compute bielectronic Coulomb integrals exactly. """
+    self.nobipexc = BoolKeyword()
+    """ Whether to compute bielectronic exchange integrals exactly. """
+    self.nomondir = BoolKeyword()
+    """ Whether store monoelectronic integrals to disk. 
+    
+        If True, the monoelctronic integrals are computed once at the start of
+        the SCF calculation and re-read from disk at each geometric
+        optimization step.
+    """
+    self.nosymada = BoolKeyword()
+    """ Whether to not use symmetry adapted functions. """
+    self.savewf   = BoolKeyword()
+    """ Whether to save wavefunctions at each step. """

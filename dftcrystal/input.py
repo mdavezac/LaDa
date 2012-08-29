@@ -1,6 +1,7 @@
 __docformat__ = "restructuredtext en"
 __all__ = ['GeomKeyword', 'AttrBlock']
-from ..tools.input import AttrBlock as AttrBlockBase, BaseKeyword
+from ..tools.input import AttrBlock as AttrBlockBase, BaseKeyword,             \
+                          BoolKeyword as BaseBoolKeyword
 
 class GeomKeyword(BaseKeyword):
   """ Keyword with breaksymm attribute. """
@@ -148,6 +149,15 @@ class AttrBlock(AttrBlockBase):
     result = self.__class__()
     result.read_input(tree, owner=self, **kwargs)
     return result
+
+
+class BoolKeyword(BaseBoolKeyword):
+  """ Bool option for CRYSTAL.
+  
+      Makes sure it is set to True from its mere presence in the input file.
+  """
+  def read_input(self, *args, **kwargs): self.value = True
+    
 
 def print_input(map):
   """ Prints output map to string. """

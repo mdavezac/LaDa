@@ -1,7 +1,7 @@
-from .input import AttrBlock
-from ..tools.input import BoolKeyword, TypedKeyword
+from .input import AttrBlock, BoolKeyword
+from ..tools.input import BoolKeyword as BaseBoolKeyword, TypedKeyword
 
-class GeometryOpt(BoolKeyword):
+class GeometryOpt(BaseBoolKeyword):
   """ Geometry optimization keyword. 
 
       When set to True, makes sure that:
