@@ -332,7 +332,7 @@ class Electronic(AttrBlock):
     """ 
     self.dft      = Dft()
     """ Holds definition of the DFT functional itself """
-    self.nofwfm   = BoolKeyword()
+    self.nofmwf   = BoolKeyword()
     """ Whether to print formatted wavefunctions to disk. """
     self.nobipola = BoolKeyword()
     """ Whether to compute bielectronic integrals exactly. """
