@@ -37,7 +37,7 @@ def test2():
     assert index not in all_indices, (index, all_indices )
     assert all(indices >= 0)
     assert all(indices <= a.quotient )
-    assert index == a.flatten_indices(indices)
+    assert index == a.flatten_indices(*indices)
     all_indices.add(index)
     for i in xrange(20):
       vec = dot(supercell.cell, array([randint(-20, 20), randint(-20, 20), randint(-20, 20)], dtype="float64"))

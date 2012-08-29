@@ -3,9 +3,9 @@ if(NOT compile_debug_tests)
   add_test(crystal_atom python ${CMAKE_CURRENT_SOURCE_DIR}/atom.py ${CMAKE_CURRENT_BINARY_DIR})
   add_test(crystal_atom_memory python ${CMAKE_CURRENT_SOURCE_DIR}/atom_memory.py ${CMAKE_CURRENT_BINARY_DIR})
 
-  add_library (crystal_atom_self SHARED "atom_self.cc")
-  target_link_libraries(crystal_atom_self ${PYTHON_LIBRARY} ${Boost_PYTHON_LIBRARY} crystal mathlib)
-  set_target_properties(crystal_atom_self PROPERTIES PREFIX "_")
+  add_library (atom_self SHARED "atom_self.cc")
+  target_link_libraries(atom_self ${PYTHON_LIBRARY} ${Boost_PYTHON_LIBRARY} crystal mathlib)
+  set_target_properties(atom_self PROPERTIES PREFIX "_")
   add_test(crystal_atom_self python ${CMAKE_CURRENT_SOURCE_DIR}/atom_self.py ${CMAKE_CURRENT_BINARY_DIR})
 
 
@@ -29,6 +29,6 @@ if(NOT compile_debug_tests)
            ${CMAKE_CURRENT_BINARY_DIR})
   add_test(crystal_map_sites python ${CMAKE_CURRENT_SOURCE_DIR}/map_sites.py
            ${CMAKE_CURRENT_BINARY_DIR})
-  add_test(crystal_which_site ${CMAKE_CURRENT_SOURCE_DIR}/which_site.py)
+  add_test(crystal_which_site python ${CMAKE_CURRENT_SOURCE_DIR}/which_site.py)
 
 endif(NOT compile_debug_tests)
