@@ -1,5 +1,7 @@
 """ Defines Bravais Lattices. """
 __docformat__ = "restructuredtext en"
+__all__ = ['bcc', 'fcc']
+
 def bcc():
   """ Creates a BCC lattice with a single site. """
   from lada.crystal import Structure

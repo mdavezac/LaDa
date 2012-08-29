@@ -10,7 +10,7 @@ crystal
 .. toctree::
    :maxdepth: 2
 
-   Atom, Structure, and SmithTransform <crystal/classes>
+   Atom, Structure, and HFTransform <crystal/classes>
 
    Methods <crystal/methods>
 

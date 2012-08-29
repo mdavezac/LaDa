@@ -1,4 +1,4 @@
-Atom, Structure, and SmithTransform
+Atom, Structure, and HFTransform
 -----------------------------------
 
 .. currentmodule:: lada.crystal.cppwrappers
@@ -33,7 +33,7 @@ Atom, Structure, and SmithTransform
   .. automethod:: __getitem__()
   .. automethod:: __setitem__()
 
-.. autoclass:: SmithTransform
+.. autoclass:: HFTransform
   :show-inheritance:
 
   This class is also available directly under :py:mod:`lada.crystal`.
@@ -41,7 +41,7 @@ Atom, Structure, and SmithTransform
   .. autoattribute:: quotient
   .. autoattribute:: transform
 
-  .. automethod:: copy()->SmithTransform
+  .. automethod:: copy()->HFTransform
   .. automethod:: indices(position)->numpy.array
   .. automethod:: flatten_indices(indices, index=0)->numpy.array
   .. automethod:: index(position, index=0)->numpy.array

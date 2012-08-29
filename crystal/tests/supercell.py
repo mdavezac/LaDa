@@ -35,9 +35,41 @@ def test_supercell():
   assert all(abs(result[7].pos - [0.25, 0.75, 0.75]) < 1e-8) and result[7].type == ["In", "Ga"] \
          and getattr(result[7], 'm', False) and getattr(result[7], 'site', -1) == 1 \
          and api(result[7].pos, lattice[1].pos, inv(lattice.cell))
+
+def get_cell(n=5):
+  from numpy.random import randint
+  from numpy.linalg import det
+  cell = randint(2*n, size=(3,3)) - n
+  while abs(det(cell)) < 1e-8:
+    cell = randint(2*n, size=(3,3)) - n
+  return cell
+
+def test_manysupercell():
+  from numpy import dot
+  from numpy.linalg import inv, det
+  from lada.crystal import supercell, binary
+  from lada.crystal.cppwrappers import are_periodic_images as api
+  lattice = binary.zinc_blende()
+  invlat = inv(lattice.cell)
+  for i in xrange(100):
+    cell = get_cell()
+    struc = supercell(lattice, dot(lattice.cell, cell))
+    assert len(struc) == len(lattice) * int(abs(det(cell))+0.01)
+    invcell = inv(struc.cell)
+    for i, atom in enumerate(struc):
+      # compare to lattice
+      tolat = [api(atom.pos, site.pos, invlat) for site in lattice]
+      assert tolat.count(True) == 1
+      assert tolat.index(True) == atom.site
+      assert lattice[tolat.index(True)].type == atom.type
+      # compare to self
+      tolat = [api(atom.pos, site.pos, invcell) for site in struc]
+      assert tolat.count(True) == 1
+      assert i == tolat.index(True)
          
 if __name__ == "__main__":
   from sys import argv, path 
   if len(argv) > 0: path.extend(argv[1:])
 
   test_supercell()
+  test_manysupercell()

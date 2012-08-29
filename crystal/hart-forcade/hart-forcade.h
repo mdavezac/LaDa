@@ -1,5 +1,5 @@
-#ifndef LADA_CRYSTAL_SMITH_H
-#define LADA_CRYSTAL_SMITH_H
+#ifndef LADA_CRYSTAL_HF_H
+#define LADA_CRYSTAL_HF_H
 
 #include "LaDaConfig.h"
 
@@ -17,73 +17,73 @@ namespace LaDa
   namespace crystal 
   {
     //! Convenience wrapper around the smuth transform.
-    class SmithTransform : public python::Object
+    class HFTransform : public python::Object
     {
         //! \brief Initializer constructor.
         //! \details private so it cannot be constructed without a call throw
-        //! smith_transform.
-        SmithTransform(PyObject *_in) : python::Object(_in) {}
+        //! hf_transform.
+        HFTransform(PyObject *_in) : python::Object(_in) {}
         //! \brief Initializer constructor.
         //! \details private so it cannot be constructed without a call throw
-        //! smith_transform.
-        SmithTransform() : python::Object() {}
+        //! hf_transform.
+        HFTransform() : python::Object() {}
 
       public:
         //! Copy constructor.
-        SmithTransform(const SmithTransform &_in) : python::Object(_in) {}
+        HFTransform(const HFTransform &_in) : python::Object(_in) {}
         //! Initialization constructor.
         template<class T0, class T1> 
-          SmithTransform( Eigen::DenseBase<T0> const &_lattice,
+          HFTransform( Eigen::DenseBase<T0> const &_lattice,
                           Eigen::DenseBase<T1> const &_supercell )
             { init_(_lattice, _supercell); }
         //! Initialization constructor.
-        SmithTransform(Structure const &_lattice, Structure const &_supercell)
+        HFTransform(Structure const &_lattice, Structure const &_supercell)
           { init_(_lattice->cell, _supercell->cell); }
 
         //! Returns constant reference to transform object.
         math::rMatrix3d const & transform() const 
-          { return ((SmithTransformData* const)object_)->transform; }
+          { return ((HFTransformData* const)object_)->transform; }
         //! Returns reference to transform object.
         math::rMatrix3d & transform() 
-          { return ((SmithTransformData*)object_)->transform; }
+          { return ((HFTransformData*)object_)->transform; }
         //! Returns constant reference to quotient object.
         math::iVector3d const & quotient() const 
-          { return ((SmithTransformData* const)object_)->quotient; }
+          { return ((HFTransformData* const)object_)->quotient; }
         //! Returns reference to quotient object.
         math::iVector3d & quotient() 
-          { return ((SmithTransformData*)object_)->quotient; }
+          { return ((HFTransformData*)object_)->quotient; }
 
 #       include "macro.hpp"
-        //! Computes smith indices of position \a _pos.
+        //! Computes hf indices of position \a _pos.
         inline math::iVector3d indices(math::rVector3d const &_pos) const
         {
-          LADA_SMITHTRANSFORM_SHARED1(quotient(), transform(), _pos, LADA_PYTHROW,);
+          LADA_HFTRANSFORM_SHARED1(quotient(), transform(), _pos, LADA_PYTHROW,);
           return vector_result;
         }
-        //! \brief Computes linear smith index from non-linear smith index.
+        //! \brief Computes linear hf index from non-linear hf index.
         inline size_t flat_index(math::iVector3d const &_index, int _site=-1)
         {
-          LADA_SMITHTRANSFORM_SHARED0(quotient(), _index, _site);
+          LADA_HFTRANSFORM_SHARED0(quotient(), _index, _site);
           return flat_result;
         }
-        //! Computes linear smith index of position \a _pos.
+        //! Computes linear hf index of position \a _pos.
         inline size_t flat_index(math::rVector3d const &_pos, int _site=-1)
         {
-          LADA_SMITHTRANSFORM_SHARED1(quotient(), transform(), _pos, LADA_PYTHROW,);
-          LADA_SMITHTRANSFORM_SHARED0(quotient(), vector_result, _site);
+          LADA_HFTRANSFORM_SHARED1(quotient(), transform(), _pos, LADA_PYTHROW,);
+          LADA_HFTRANSFORM_SHARED0(quotient(), vector_result, _site);
           return flat_result;
         }
         //! Number of unit-cells in the supercell.
-        size_t size() const { return LADA_SMITHTRANSFORM_SHARED2(quotient()); }
+        size_t size() const { return LADA_HFTRANSFORM_SHARED2(quotient()); }
 #       include "macro.hpp"
       private:
-        //! creates a smith transform from scratch.
+        //! creates a hf transform from scratch.
         template<class T0, class T1> 
           void init_(Eigen::DenseBase<T0> const &_lattice, Eigen::DenseBase<T1> const &_supercell);
     };
 
     template<class T0, class T1> 
-      void SmithTransform::init_( Eigen::DenseBase<T0> const &_lattice, 
+      void HFTransform::init_( Eigen::DenseBase<T0> const &_lattice, 
                                   Eigen::DenseBase<T1> const &_supercell )
       {
         BOOST_STATIC_ASSERT((boost::is_same<typename Eigen::DenseBase<T0>::Scalar,
@@ -91,9 +91,9 @@ namespace LaDa
         BOOST_STATIC_ASSERT((boost::is_same<typename Eigen::DenseBase<T1>::Scalar,
                                             types::t_real>::value));
         python::Object dummy(object_);
-        object_ = smithtransform_type()->tp_alloc(smithtransform_type(), 0);
+        object_ = hftransform_type()->tp_alloc(hftransform_type(), 0);
         if(not object_) return;
-        if(not smith_transform_init((SmithTransformData*)object_, _lattice, _supercell)) release();
+        if(not hf_transform_init((HFTransformData*)object_, _lattice, _supercell)) release();
       }
 
   } // namespace Crystal

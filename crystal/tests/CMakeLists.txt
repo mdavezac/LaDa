@@ -17,7 +17,7 @@ if(NOT compile_debug_tests)
   add_test(crystal_supercell python ${CMAKE_CURRENT_SOURCE_DIR}/structure_memory.py ${CMAKE_CURRENT_BINARY_DIR})
   add_test(crystal_primitive python ${CMAKE_CURRENT_SOURCE_DIR}/primitive.py ${CMAKE_CURRENT_BINARY_DIR})
 
-  add_test(crystal_smith python ${CMAKE_CURRENT_SOURCE_DIR}/smith.py ${CMAKE_CURRENT_BINARY_DIR})
+  add_test(crystal_hart-forcade python ${CMAKE_CURRENT_SOURCE_DIR}/hart-forcade.py ${CMAKE_CURRENT_BINARY_DIR})
 
   add_test(crystal_cellinvariants python ${CMAKE_CURRENT_SOURCE_DIR}/cellinvariants.py ${CMAKE_CURRENT_BINARY_DIR})
   add_test(crystal_space_group python ${CMAKE_CURRENT_SOURCE_DIR}/space_group.py ${CMAKE_CURRENT_BINARY_DIR})
@@ -29,5 +29,6 @@ if(NOT compile_debug_tests)
            ${CMAKE_CURRENT_BINARY_DIR})
   add_test(crystal_map_sites python ${CMAKE_CURRENT_SOURCE_DIR}/map_sites.py
            ${CMAKE_CURRENT_BINARY_DIR})
+  add_test(crystal_which_site ${CMAKE_CURRENT_SOURCE_DIR}/which_site.py)
 
 endif(NOT compile_debug_tests)
