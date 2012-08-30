@@ -1,6 +1,16 @@
 set (PYCE_PY cluster.py __init__.py factory.py)
+set (CE_CC module.cc)
 
 install(FILES ${PYCE_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/ce)
+
+include_directories(${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDES})
+add_library (pyce SHARED ${CE_CC})
+set_target_properties(pyce PROPERTIES OUTPUT_NAME cppwrappers)
+set_target_properties(pyce PROPERTIES PREFIX "")
+target_link_libraries(pyce ${PYTHON_LIBRARY} ${Boost_PYTHON_LIBRARY} mathlib)
+install(TARGETS pyce DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/ce)
+
+
 if(compile_tests OR compile_debug_tests)
   add_subdirectory(tests)
 endif(compile_tests OR compile_debug_tests)

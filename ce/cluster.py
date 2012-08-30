@@ -1,15 +1,13 @@
-def spin(position=None, sublattice=0, flavor=0):
+def spin(position=None, sublattice=0):
   """ Returns a spin. 
 
-      A spin is a numpy `structured record`_  with fields for the position,
-      flavor, and sublattice.
+      A spin is a numpy `structured record`_  with fields for the position and
+      sublattice.
   """ 
   from numpy import array
   if position is None: position = 0,0,0
-  return array( [(position, sublattice, flavor)], 
-                dtype=[ ('position', 'f8', 3), 
-                        ('sublattice', 'i8', 1), 
-                        ('flavor', 'i8', 1) ] )
+  return array( [(position, sublattice)], 
+                dtype=[('position', 'f8', 3), ('sublattice', 'i8', 1)] )
 
 class Cluster(object):
   def __init__(self, lattice, spins=None):
@@ -40,25 +38,19 @@ class Cluster(object):
     """ Returns order of figure, eg number of sites involved. """
     return 0 if self.spins is None else len(self.spins)
     
-  def _spin(self, position, flavor=0):
+  def _spin(self, position):
     """ Returns formatted spin. """
     from lada.crystal import which_site
-    from lada.error import IndexError, ValueError
+    from lada.error import ValueError
 
     # find sublattice
     sublattice = which_site(position, self.lattice)
     if sublattice == -1: raise ValueError('Could not find atomic site')
-    site = self.lattice[sublattice]
-
-    # keep negative flavors as markers
-    if flavor >= 0 and flavor >= len(site.type) - 1:
-      raise IndexError( 'Incorrect flavor for given sublattice.\n'            \
-                        '   0 <= flavor < {0}\n'.format(len(site.type)-1) )
 
     # create spin and adds it to group.
-    return spin(position - self.lattice[sublattice].pos, sublattice, flavor)
+    return spin(position - self.lattice[sublattice].pos, sublattice)
 
-  def add_spin(self, position, flavor=0):
+  def add_spin(self, position):
     """ Adds a spin to array. 
     
         Changes array of spins. Hence, one should not keep a reference to a
@@ -67,11 +59,6 @@ class Cluster(object):
         :param position:
           Atomic site on the back-bone lattice.
         :type position: 3d-vector
-        :param (int) flavor:
-          Flavor of the function for the particular atomic-site. It should be
-          :math:`0 \leq \text{flavor} < M-1`, where :math:`M` is the number of
-          possible species on the atomic site. This defaults to 0 and can be
-          ignored in the case of binary cluster expansions.
     """
     from operator import itemgetter
     from numpy import concatenate, any, all, sum, logical_and
@@ -79,7 +66,7 @@ class Cluster(object):
     # remove symmetrization.
     if hasattr(self, '_symmetrized'): del self._symmetrized
     # create spin
-    spin = self._spin(position, flavor)
+    spin = self._spin(position)
     # if first spin, easy way out.
     if self.spins is None:
       self.spins = spin
@@ -93,10 +80,9 @@ class Cluster(object):
     # unit-cell, this should mean fewer calculations at the  end of the day.
     self.spins = concatenate((self.spins, spin), axis=0)
     spins = sum(self.spins['position']* self.spins['position'], axis=1)
-    spins = [ (s, l, f, p[0], p[1], p[2])                                      \
-              for s, l, f, p in zip( spins, self.spins['sublattice'], 
-                                     self.spins['flavor'],
-                                     self.spins['position']) ]
+    spins = [ (s, l, p[0], p[1], p[2])                                      \
+              for s, l, p in zip( spins, self.spins['sublattice'], 
+                                  self.spins['position']) ]
     spins = [u[0] for u in sorted(enumerate(spins), key=itemgetter(1))]
     self.spins = self.spins[spins].copy()
     
@@ -123,8 +109,7 @@ class Cluster(object):
                                    self.spins['sublattice'] ) ]
     for op in self.spacegroup:
       # transform spins
-      spins = [ self._spin(dot(op[:3],p)+op[3], flavor)                        \
-                for p, flavor in zip(positions, self.spins['flavor']) ]
+      spins = [self._spin(dot(op[:3],p)+op[3]) for p in positions]
       spins = concatenate(spins)
       assert all(abs(iv(spins[0]['position'], self.lattice.cell)) < 1e8)
       spins['position'] -= spins[0]['position']
@@ -140,7 +125,7 @@ class Cluster(object):
         .. code-block::
 
           mapping = cluster.occupation_mapping()
-          mapping[atom.site][spin_flavor][atom.type]
+          mapping[atom.site][atom.type][spin_flavor]
 
         where ``atom`` is an element of a structure, ``atom.site`` is likely
         the index of the atomic site into the backbone lattice, and atom.
@@ -153,31 +138,43 @@ class Cluster(object):
                  Toolkit`__, Axel van de Walle, Calpha, *33*, 266-278 (2009)
         .. __: http://dx.doi.org/10.1016/j.calphad.2008.12.005
     """
-    from numpy import cos, sin, pi
+    from numpy import cos, sin, pi, array
     result = []
     for site in self.lattice:
       if not hasattr(site.type, '__iter__'): result.append(None); continue
       if len(site.type) < 2: result.append(None); continue
-      result.append([])
-      for flavor in xrange(len(site.type)-1): 
-        result[-1].append({})
-        for i, type in enumerate(sorted(site.type)):
+      result.append({})
+      for i, type in enumerate(sorted(site.type)):
+        dummy = []
+        for flavor in xrange(len(site.type)-1): 
           arg = 2e0 * pi*float(flavor+1) * int(float(i) * 0.5 + 0.5)           \
                 / float(len(site.type))
-          if flavor % 2 == 0: result[-1][-1][type] = -cos(arg)
-          else: result[-1][-1][type] = -sin(arg)
+          if flavor % 2 == 0: dummy.append(-cos(arg))
+          else: dummy.append(-sin(arg))
+        result[-1][type] = array(dummy, dtype='float64')
     return result
 
   def __call__(self, structure, mapping=None, transform=None, fhmapping=None):
     """ Returns PI of a particular structure. """
-    from lada.crystal import HFTransform
+    from numpy import zeros
+    from .cppwrappers import outer_sum
+    from ..crystal import HFTransform
+
     if self.spins is None or len(self.spins) == 0:
       return float(len(structure))
     if not hasattr(self, '_symmetrized'): self._create_symmetrized()
     if mapping is None: mapping = self.occupation_mapping()
     if transform is None: transform = HFTransform(self.lattice, structure)
     if fhmapping is None: fhmapping = fhmap(self.lattice, structure)
-    result = 0e0
+    
+    
+    # computes shape of the result
+    nsize = []
+    for spin in self.spins:
+      nsize.append(len(self.lattice[spin['sublattice']].type))
+    # creates result and intermediate vectors.
+    result = zeros(nsize, dtype='float64')
+
     # loop over possible origin of cluster
     for origin in structure:
       pos = origin.pos - self.lattice[origin.site].pos
@@ -185,22 +182,20 @@ class Cluster(object):
       for spins in self._symmetrized:
         # no need to double count
         if spins['sublattice'][0] != origin.site: continue
-        intermediate = 1e0
+        args = []
         # loop over each spin in cluster
         for spin in spins: 
           index = transform.index(pos + spin['position'], spin['sublattice'])
           atom  = structure[ fhmapping[index] ]
-          intermediate *= mapping[atom.site][spin['flavor']][atom.type]
-        result += intermediate
+          args.append(mapping[atom.site][atom.type])
+        outer_sum(result, *args)
     return result
 
   def __str__(self):
     if self.order == 0: return 'J0'
     if self.order == 1:
       sublat = self.spins['sublattice'][0]
-      flavor = self.spins['flavor'][0]
-      nflavr = -1 if flavor < 0 else len(self.lattice[sublat].type) - 1
-      return 'J1: site {0}, flavor {1}/{2}'.format(sublat, flavor, nflavr)
+      return 'J1: site {0}'.format(sublat)
     result = 'M{0}:\n{1}\n'.format(self.order, self.spins)
     return result
 
