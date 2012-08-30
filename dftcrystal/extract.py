@@ -406,6 +406,7 @@ class ExtractBase(object):
   @make_cached
   def structure(self):
     """ Output structure, LaDa format. """
+    from ..error import NotImplementedError
     if not self._is_optgeom: return self.input_structure
     elif self.dimensionality == 0: return self._update_pos_only
     try:
@@ -422,6 +423,7 @@ class ExtractBase(object):
     except GrepError: 
       if self.dimensionality == 3: return self._final_structure
       elif self._no_change_in_params: return self._update_pos_only
+      else: raise NotImplementedError('Cannot grep output structure')
 
   @property
   @make_cached
@@ -498,7 +500,7 @@ class ExtractBase(object):
           inabc = False
           if params is None: params = line
           elif params != line: return False
-        elif line[:len(primcellpat)]: inprim = True; continue
+        elif line[:len(primcellpat)] == primcellpat: inprim = True; continue
       return params is not None
   @property
   @make_cached
