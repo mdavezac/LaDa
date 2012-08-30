@@ -84,12 +84,12 @@ class ListBlock(BaseKeyword, list):
       if item.__class__ is BaseKeyword:
         args = [repr(item.keyword)]
         if getattr(item, 'raw', None) is not None: args.append(repr(item.raw))
-        result += '\\\n{0}.append({1})\n'.format(indent, ', '.join(args)) 
+        result += '\\\n{0}.append({1})'.format(indent, ', '.join(args)) 
       else:
         add_to_imports(item, imports)
         item = repr(item).rstrip().lstrip()
-        item = item.replace('\n', indent)
-        result += '\\\n{0}.append({1})\n'.format(indent, item) 
+        item = item.replace('\n', '\n' + indent)
+        result += '\\\n{0}.append({1})'.format(indent, item) 
 
     result = result.rstrip()
     if name is None:
