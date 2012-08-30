@@ -360,6 +360,15 @@ class ExtractBase(object):
      if len(title) > 0: result.name = title
     return result
 
+  @property
+  def dimensionality(self):
+    """ Whether 3d, 2d, 1d or molecule. """
+    pattern = 'DIMENSIONALITY\s+OF\s+THE\s+SYSTEM\s+(\d)'
+    result = self._find_last_STDOUT(pattern)
+    if result is None:
+      raise GrepError('Could not determine dimensionality of the system.')
+    return int(result.group(1))
+
   def _find_structure(self, file):
     """ Yields positions in file where structure starts. """
     # first finds atoms -- the one with whether they are in the asymmetric
@@ -389,20 +398,30 @@ class ExtractBase(object):
 
   @property
   @make_cached
+  def _is_optgeom(self):
+    """ True if a geometry optimization run. """
+    pattern = "STARTING GEOMETRY OPTIMIZATION"
+    return self._find_first_STDOUT(pattern) is not None
+  @property
+  @make_cached
   def structure(self):
     """ Output structure, LaDa format. """
+    if not self._is_optgeom: return self.input_structure
+    elif self.dimensionality == 0: return self._update_pos_only
     try:
       with self.__stdout__() as file:
         pos = None
         for pos in self._find_structure(file): continue
-        if pos is None: raise GrepError('Could not extract structure from file')
+        if pos is None: 
+          raise GrepError('Could not extract structure from file')
         file.seek(pos, 0)
         return self._grep_structure(file)
     # Pcrystal fails to print structure at end of optimization run if reached
     # maximum number of iterations. This tries to get the structure in a
     # different way. 
     except GrepError: 
-      return self._final_structure
+      if self.dimensionality == 3: return self._final_structure
+      elif self._no_change_in_params: return self._update_pos_only
 
   @property
   @make_cached
@@ -453,6 +472,60 @@ class ExtractBase(object):
 
   @property
   @make_cached
+  def _no_change_in_params(self):
+    """ Checks whether the cell parameters change or not. """
+    with self.__stdout__() as file:
+      # first find start of optimization run
+      pattern = ' STARTING GEOMETRY OPT'
+      found = False
+      for line in file:
+        if line[:len(pattern)] == pattern: 
+          found = True; break
+      if not found:
+        raise GrepError('Could not find start of geometry optimization')
+
+      # now find primitive cell parameters.
+      params = None
+      primcellpat = ' PRIMITIVE CELL'
+      abcpat = ['A', 'B', 'C', 'ALPHA']
+      inprim, inabc = False, False
+      for line in file:
+        if inprim == True: 
+          if line.split()[:4] == abcpat: inabc = True
+          inprim = False
+          continue
+        elif inabc == True:
+          inabc = False
+          if params is None: params = line
+          elif params != line: return False
+        elif line[:len(primcellpat)]: inprim = True; continue
+      return params is not None
+  @property
+  @make_cached
+  def _update_pos_only(self):
+    """ Returns structure with updated positions only. """
+    from numpy import dot, array
+    result = self.input_structure.copy()
+    pattern = " ATOMS IN THE ASYMMETRIC UNIT"
+    with self.__stdout__() as file:
+      lastindex = -1;
+      for i, line in enumerate(file): 
+        if line[:len(pattern)] == pattern: lastindex = i
+      if lastindex == -1:
+        raise GrepError('Could not find atomic positions in file.')
+    with self.__stdout__() as file:
+      for j, line in enumerate(file):
+        if j == lastindex + 2: break
+      if j != lastindex + 2: raise GrepError('Unexpected end-of-file.')
+      index = self.dimensionality
+      for line, atom in zip(file, result):
+        pos = array(line.split()[4:7], dtype='float64')
+        atom.pos[:index] = dot(result.cell[:index, :index], pos[:index])
+        atom.pos[index:] = pos[index:]
+    return result
+
+  @property
+  @make_cached
   def crystal(self):
     """ Output structure, CRYSTAL format. 
     
@@ -465,8 +538,7 @@ class ExtractBase(object):
     from .geometry import DisplaceAtoms, Elastic
     
     # Check whether this is a geometry optimization run.
-    if self._find_first_STDOUT("STARTING GEOMETRY OPTIMIZATION") is None:
-      return self.input_crystal
+    if not self._is_optgeom: return self.input_crystal
 
     # Find last operation which is neither ELASTIC nor ATOMDISP
     incrys, instruct, i = self.input_crystal, self.input_structure, 0
