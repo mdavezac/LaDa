@@ -50,5 +50,38 @@ def test_outersum():
   outer_sum(tensor)
   assert all(abs(result - tensor) < 1e-8) # should do nothing
 
+def test_product():
+  from lada.ce.cppwrappers import ProductILJ
+  from lada.crystal import Structure
+  a = [u for u in ProductILJ(xrange(3), 1)]
+  assert len(a) == 3
+  assert a[0] == (0,)
+  assert a[1] == (1,)
+  assert a[2] == (2,)
+
+  a = [u for u in ProductILJ(xrange(3), 2)]
+  assert len(a) == 3
+  assert a[0] == (0, 1)
+  assert a[1] == (0, 2)
+  assert a[2] == (1, 2)
+
+  a = [u for u in ProductILJ(xrange(3), 3)]
+  assert len(a) == 1
+  assert a[0] == (0, 1, 2)
+
+  a = [u for u in ProductILJ(xrange(3), 4)]
+  assert len(a) == 0
+
+  b = ('a', 5, 6j, Structure())
+  a = [tuple([id(v) for v in u]) for u in ProductILJ(b, 2)]
+  assert len(a) == 6
+  assert a[0] == (id(b[0]), id(b[1]))
+  assert a[1] == (id(b[0]), id(b[2]))
+  assert a[2] == (id(b[0]), id(b[3]))
+  assert a[3] == (id(b[1]), id(b[2]))
+  assert a[4] == (id(b[1]), id(b[3]))
+  assert a[5] == (id(b[2]), id(b[3]))
+
 if __name__ == '__main__':
-  test_outersum()
+# test_outersum()
+  test_product()

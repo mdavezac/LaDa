@@ -169,11 +169,11 @@ class Cluster(object):
     
     
     # computes shape of the result
-    nsize = []
+    nshape = []
     for spin in self.spins:
-      nsize.append(len(self.lattice[spin['sublattice']].type))
+      nshape.append(len(self.lattice[spin['sublattice']].type)-1)
     # creates result and intermediate vectors.
-    result = zeros(nsize, dtype='float64')
+    result = zeros(nshape, dtype='float64')
 
     # loop over possible origin of cluster
     for origin in structure:
