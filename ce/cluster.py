@@ -26,7 +26,7 @@ class Cluster(object):
     """
     self.spins = spins
     """ Holds array of spins. """
-    self.spacegroup = space_group(self.lattice)
+    self.spacegroup = getattr(lattice, 'spacegroup', space_group(self.lattice))
     """ Symmetry operations. """
 
   @property

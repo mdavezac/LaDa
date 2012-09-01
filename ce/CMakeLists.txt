@@ -1,4 +1,4 @@
-set (PYCE_PY cluster.py __init__.py factory.py)
+set (PYCE_PY cluster.py __init__.py factory.py _single_site_factory.py)
 set (CE_CC module.cc productilj.cc)
 set (CE_H productilj.h)
 

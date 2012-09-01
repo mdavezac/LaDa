@@ -41,13 +41,13 @@ namespace LaDa
     }
 
     // Function to deallocate a string atom.
-    static void productiljiterator_dealloc(ProductILJIterator *_self)
+    static void dealloc(ProductILJIterator *_self)
     {
       if(_self->sequence != NULL)
       { 
         PyObject *dummy = _self->sequence;
         _self->sequence = NULL;
-        Py_DECREF(_self->sequence);
+        Py_DECREF(dummy);
       }
 
       // calls destructor explicitely.
@@ -58,7 +58,7 @@ namespace LaDa
     }
   
     // Function to initialize an atom.
-    static int productiljiterator_init(ProductILJIterator* _self, PyObject* _args, PyObject *_kwargs)
+    static int init(ProductILJIterator* _self, PyObject* _args, PyObject *_kwargs)
     {
       unsigned long i = 0;
       PyObject *object = NULL;
@@ -165,7 +165,7 @@ namespace LaDa
           "lada.ce.cppwrappers.ProductILJ",  /*tp_name*/
           sizeof(ProductILJIterator),        /*tp_basicsize*/
           0,                                 /*tp_itemsize*/
-          (destructor)productiljiterator_dealloc,  /*tp_dealloc*/
+          (destructor)dealloc,               /*tp_dealloc*/
           0,                                 /*tp_print*/
           0,                                 /*tp_getattr*/
           0,                                 /*tp_setattr*/
@@ -199,7 +199,7 @@ namespace LaDa
           0,                                 /* tp_descr_get */
           0,                                 /* tp_descr_set */
           0,                                 /* tp_dictoffset */
-          (initproc)productiljiterator_init,       /* tp_init */
+          (initproc)init,                    /* tp_init */
           0,                                 /* tp_alloc */
           (newfunc)PyProductILJIterator_NewWithArgs,  /* tp_new */
       };
