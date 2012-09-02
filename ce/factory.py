@@ -14,7 +14,8 @@ def cluster_factory(lattice, J0=False, J1=False, **mb):
           where n is the order of the many-body interaction, and the values is
           the number of shells to look for.
   """
-  from numpy import dot
+  from operator import itemgetter
+  from numpy import dot, concatenate, sum
   from ._single_site_factory import check_keywords, factory as ss_factory
   from .cluster import Cluster, spin
   from ..crystal import which_site, space_group, coordination_shells
@@ -64,7 +65,6 @@ def cluster_factory(lattice, J0=False, J1=False, **mb):
     shells = []
     shellindices = []
     for shell in allshells:
-      shellindices.append(len(shell))
       for atom, vector, distance in shell:
         if not hasattr(atom.type, '__iter__'): continue
         if not hasattr(atom.type, '__len__'): continue
@@ -72,6 +72,14 @@ def cluster_factory(lattice, J0=False, J1=False, **mb):
         pos = vector.copy()
         if atom is not site: pos += site.pos - atom.pos
         shells.append(spin(pos, atom.index))
+      shellindices.append(len(shells))
+    shells = concatenate(shells)
+    norms = sum(shells['position']* shells['position'], axis=1)
+    sortee = [ (s, l, p[0], p[1], p[2])                                        \
+               for s, l, p in zip( norms, shells['sublattice'], 
+                                   shells['position']) ]
+    sortee = [u[0] for u in sorted(enumerate(sortee), key=itemgetter(1))]
+    shells = shells[sortee].copy()
     # loop over manybody figures and creates them.
     for key in sorted(mb.keys()):
       if mb[key] <= 0: continue
@@ -85,7 +93,7 @@ def cluster_factory(lattice, J0=False, J1=False, **mb):
 
 def _create_clusters(lattice, neighbors, site, order):
   """ Creates a set of clusters of given order up to given shell. """
-  from numpy import any, concatenate, not_equal
+  from numpy import any, concatenate, not_equal, array
   from .cluster import Cluster, spin
   from .cppwrappers import ProductILJ
   knowns = set()
@@ -99,8 +107,12 @@ def _create_clusters(lattice, neighbors, site, order):
     if indices in knowns: continue
     # now create cluster
     a = Cluster(lattice)
-    a.spins = concatenate( [spin([0,0,0], site.index)] 
-                           + [neighbors[i] for i in indices] )
+    if order == 2:
+      a.spins = array( [spin([0,0,0], site.index), neighbors[indices]],
+                       dtype=neighbors.dtype )
+    else: 
+      a.spins = concatenate(( spin([0,0,0], site.index),
+                              neighbors[list(indices)]), axis=0 )
     results.append(a)
     
     # now we add to the list of known figures those which are symmetrically
@@ -111,9 +123,11 @@ def _create_clusters(lattice, neighbors, site, order):
       indices = []
       for vector in u[1:]:
         for i, neigh in enumerate(neighbors):
-          if not any(not_equal(vector, neigh[0])):
+          if vector['sublattice'] != neigh['sublattice']: continue
+          if all(abs(vector['position'] - neigh['position']) < 1e-8):
             indices.append(i)
             break;
+      assert len(indices) == order - 1, (u[1:], neighbors)
       indices = tuple(sorted(indices))
       if order == 2 or all(u < v for u, v in zip(indices[:-1], indices[1:])):
         knowns.add(indices)
