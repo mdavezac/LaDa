@@ -72,24 +72,33 @@ VASP
      Signifies which vasp executable to use. It can take the following values:
 
      - string: Should be the path to the vasp executable. It can be either
-       a full path, or an executable within the envirnoment's $PATH
+       a full path, or an executable within the environment's $PATH
        variable.
-     - callable: The callable is called with a
-       :py:class:`~lada.vasp.functional.Vasp` instance as sole argument. It
-       should return a string, as described above.  In other words, different
-       vasp executables can be used depending on the parameters. 
+     - callable: The callable is invoked with a
+       :py:class:`~lada.vasp.functional.Vasp` instance as its first argument
+       and the structure upon which the calculation is performed as its second.
+       It should return a string, as described above.  In other words,
+       different vasp executables can be used depending on the type of
+       calculation and on the system.
 
        For instance, the following function chooses between a *normal* vasp and
        vasp compiled for perturbative spin-orbit calculations::
 
-         def vasp_program(vasp):
-           """ Signifies the vasp executable. 
+         def vasp_program(vasp, structure):
+           """ Path to the vasp executable.
            
-               It is expected that two vasp executable exist, a *normal* vasp, and a one
-               compiled for non-collinear calculations.
-       
+               Returns a vasp compiled for spin-orbit if lsorbit is True.
+               Otherwise, returnthe path to the normal vasp.
            """
            return "vasp-4.6-nc" if getattr(vasp, 'lsorbit', False) == True else "vasp-4.6"
+
+  .. py:data:: vasp_has_nlep 
+
+     Defaults to False. If NLEP [*]_ should be allowed, then this parameter
+     should be set to True.
+
+     .. [*] `Phys. Rev. B 77, 241201(R) (2008)`__
+     .. __: http://link.aps.org/doi/10.1103/PhysRevB.77.241201
 
 .. _mpi-config:
 

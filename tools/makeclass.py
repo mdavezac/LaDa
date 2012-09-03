@@ -17,17 +17,15 @@ def create_initstring(classname, base, method, excludes):
 
   # adds standard doc string.
   result +=\
-      "  \"\"\" Initializes {0} instance.\n\n"                                           \
-      "     This function is created automagically from "                                \
-        ":py:func:`{1.func_name} <{1.__module__}.{1.func_name}>`.\n"                     \
-      "     Please see that function for parameter definitions other than ``copy``.\n"   \
-      "     Other relevant keywords can be found in "                                    \
-        ":py:func:`{2.__name__}.__init__ <{2.__module__}.{2.__name__}>`.\n\n"            \
-      "     :param {2.__name__} copy:\n"                                                 \
-      "         Deep-copies attributes from this instance to the new (derived) object.\n"\
-      "         This parameter makes easy to create meta-functional from the most\n"     \
-      "         basic wrappers.\n"                                                       \
-      "  \"\"\"\n".format(classname, method, base)
+   "  \"\"\" Initializes {0} instance.\n\n"                                     \
+   "     This function is created automagically from\n"                         \
+   "     :py:func:`{1.__module__}.{1.func_name}`. Please see that function\n"   \
+   "     for the description of its parameters.\n\n"                            \
+   "     :param {2.__name__} copy:\n"                                           \
+   "         Deep-copies attributes from this instance to the new (derived)\n"  \
+   "         object. This parameter makes easy to create meta-functional from\n"\
+   "         the most basic wrappers.\n"                                        \
+   "  \"\"\"\n".format(classname, method, base)
 
   # creates line: from copy import deepcopy
   # used by the copy keyword argument below.
@@ -158,16 +156,17 @@ def create_call_from_iter(iter, excludes):
   doc = iter.__doc__ 
   if doc is not None and '\n' in doc:
     first_line = doc[:doc.find('\n')].rstrip().lstrip()
-    result +=\
-        "  \"\"\"{0}\n\n"                                                  \
-        "     This function is created automagically from iter_.\n"        \
-        "     Please see that function for the description of its parameters.\n\n"\
-        "     :param comm:\n"\
-        "        Additional keyword argument defining how call external programs.\n"\
-        "     :type comm: Dictionary or :py:class:`~lada.process.mpi.Communicator`\n\n"\
-        "     .. _iter: :py:func:`{1.func_name} <{1.__module__}.{1.func_name}>`\n"     \
-        "  \"\"\"\n"\
-        .format(first_line, iter)
+    result +=                                                                  \
+      "  \"\"\"{0}\n\n"                                                        \
+      "     This function is created automagically from\n"                     \
+      "     :py:func:`{1.__module__}.{1.func_name}`. Please see that \n"       \
+      "     function for the description of its parameters.\n\n"               \
+      "     :param comm:\n"                                                    \
+      "        Additional keyword argument defining how call external\n"       \
+      "        programs.\n"                                                    \
+      "     :type comm: :py:class:`~lada.process.mpi.Communicator`\n\n"        \
+      "  \"\"\"\n"                                                             \
+      .format(first_line, iter)
   # add iteration line:
   iterargs = []
   if args.args is not None and len(args.args) > 1:
@@ -223,11 +222,11 @@ def create_call(call, excludes):
   if doc is not None and '\n' in doc:
     first_line = doc[:doc.find('\n')].rstrip().lstrip()
     result +=\
-        "  \"\"\"{0}\n\n"                                                       \
-        "     This function is created automagically from iter_"                \
-        "     Please see that function for the description of its parameters.\n\n"\
-        "     .. _iter: :py:func:`{1.func_name} <{1.__module__}.{1.func_name}>`.\n" \
-        "  \"\"\"\n"\
+        "  \"\"\"{0}\n\n"                                                      \
+        "     This function is created automagically from "                    \
+        "     {1.__module__}.{1.func_name}. Please see that function for the\n"\
+        "     description of its parameters.\n\n"                              \
+        "  \"\"\"\n"                                                           \
         .format(first_line, call)
     # import iterations method
   result += "  from lada.tools import SuperCall\n".format(call)
@@ -355,15 +354,13 @@ def makefunc(name, iter, module=None):
     first_line = doc[:doc.find('\n')].rstrip().lstrip()
     funcstring +=\
         "  \"\"\"{0}\n\n"                                                      \
-        "     This function is created automagically from {1.func_name}_.\n"   \
-        "     Please see that function for the description of its parameters." \
-        "\n\n     :param comm:\n"                                              \
-        "        Additional keyword argument defining "                        \
-                 "how call external programs.\n"                               \
-        "     :type comm: Dictionary or Communicator_\n\n"                     \
-        "     .. _{1.func_name}: "                                             \
-              ":py:func:`{1.func_name} <{1.__module__}.{1.func_name}>`.\n"     \
-        "     .. _Communicator:  :py:class:`~lada.process.mpi.Communicator`\n" \
+        "     This function is created automagically from "                    \
+        "     {1.__module__}.{1.func_name}. Please see that function for the\n"\
+        "     description of its parameters.\n\n"                              \
+        "    :param comm:\n"                                                   \
+        "        Additional keyword argument defining how call external\n"     \
+        "        programs.\n"                                                  \
+        "    :type comm: :py:class:`~lada.process.mpi.Communicator`\n\n"       \
         "  \"\"\"\n"\
         .format(first_line, iter)
   # create function body...

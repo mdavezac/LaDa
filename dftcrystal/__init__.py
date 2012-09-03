@@ -148,3 +148,35 @@ def exec_input( script, global_dict=None, local_dict=None,
     if k != 'read_input' and k != 'exec_input':
       global_dict[k] = globals()[k]
   return exec_input(script, global_dict, local_dict, paths, name)
+
+# def read_optc(path):
+#   """ Reads an optc file and creates a structure. """
+#   from numpy import array
+#   from ..crystal import Structure
+#   from ..misc import RelativePath
+#   from ..error import IOError
+#   
+#   # Check whether a path, stream, or string.
+#   if isinstance(path, str): 
+#     if path.find('\n') == -1:
+#       with open(RelativePath(path).path) as file: return read_optc(file)
+#     else:
+#       return read_optc(path.split('\n').__iter__())
+#   try:
+#     # not clear what first line is.
+#     line = file.next()
+#     # 2, 3, 4 are cell vectors.
+#     result = Structure()
+#     result.cell = array([file.next().split() for i in range(3)], dtype='float64')
+#     # now gets space-group
+#     n = int(file.next().rstrip().lstrip())
+#     result.spacegroup = array( [ [file.next().split() for i in xrange(4)] 
+#                                  for j in xrange(n)], dtype='float64' )
+#     # finally, gets asymmetric atoms.
+#     n = int(file.next().rstrip().lstrip())
+
+#   except StopIteration: 
+#     raise IOError('Unexpected end of file in read_optc.')
+
+
+

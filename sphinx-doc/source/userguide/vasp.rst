@@ -14,9 +14,9 @@ powerful building block easier to create complex computational schemes.
 A fast primer
 =============
 
-:py:class:`Vasp <functional.Vasp>` is a python wrapper which hides from the
-user all the dreary file manipulation and grepping that working with scientific
-codes generally imply. It is initialized as follows:
+:py:class:`~functional.Vasp` is a python wrapper which hides from the user all
+the dreary file manipulation and grepping that working with scientific codes
+generally imply. It is initialized as follows:
 
 >>> from lada.vasp import Vasp
 >>> vasp = Vasp()
@@ -50,34 +50,34 @@ the following two lines:
 >>> vasp_program = "/path/to/vasp" 
 >>> is_vasp_4 = True
 
-:py:data:`vasp_program <lada.vasp_program>` can be absolute path, or simply the
-name of the VASP_ binary if it is available in you ``PATH`` environment
-variable.  :py:data:`is_vasp_4 <lada.is_vasp_4>` should be set to True or False
-depending on which version of VASP_ is available. It will prevent some vasp-5
-only parameters from being set and will preferentially write the POSCAR_ in a
-vasp-5 format.
+:py:data:`~lada.vasp_program` can be absolute path, or simply the name of the
+VASP_ binary if it is available in you ``PATH`` environment variable.
+:py:data:`~lada.is_vasp_4` should be set to True or False depending on which
+version of VASP_ is available. It will prevent some vasp-5 only parameters from
+being set and will preferentially write the POSCAR_ in a vasp-5 format.
 
-.. note:: It is also possible to tell the :py:class:`Vasp <functional.Vasp>`
-          object to use a specific version:
+.. note::
 
-          >>> vasp = Vasp(program='/path/to/vasp')
-
-          It will apply only to calculations launched with that particular
-          instance. If vasp does not have a ``program`` attribute, then it uses
-          the global definition.
+   It is also possible to tell the :py:class:`~functional.Vasp` object to use a
+   specific version:
+   
+   >>> vasp = Vasp(program='/path/to/vasp')
+   
+   It will apply only to calculations launched with that particular instance.
+   If vasp does not have a ``program`` attribute, then it uses the global
+   definition.
 
 
 Since VASP_ is a parallel code, LaDa must also know how to launch MPI binaries.
-This is configured for all parallel jobs through :py:data:`mpirun_exe
-<lada.mpirun_exe>`:
+This is configured for all parallel jobs through :py:data:`~lada.mpirun_exe`:
 
->>> mpirun_exe = "mpirun -n {n} -npernode {npernode} {program} {cmdline}"
+>>> mpirun_exe = "mpirun -n {n} -npernode {ppn} {program} {cmdline}"
 
 Any string can be entered as long as it possesses the ``{program}`` and
 ``{cmdline}`` sections. It is a python `format string`_ which is later called
 with as user-defined dictionary. However, some options may well be the same for
 one run to another. As such a default dictionary can be provided
-(:py:data:`default_comm <lada.default_comm>`).
+(:py:data:`~lada.default_comm`).
 
 The last configuration variable is :py:data:`~lada.verbose_representation`. It
 controls whether or not the representation/print-out of the functional should
@@ -93,8 +93,8 @@ Specifying vasp parameters
 --------------------------
 
 As shown in the quick primer above, it is relatively easy to setup a new
-:py:class:`~functional.Vasp`. The parameters to the calculation are
-generally the VASP_ defaults. They can be changed directly in the constructor:
+:py:class:`~functional.Vasp`. The parameters to the calculation are generally
+the VASP_ defaults. They can be changed directly in the constructor:
 
 >>> from lada.vasp import Vasp
 >>> vasp = Vasp(ispin=2)
@@ -134,32 +134,8 @@ one of those. It can be specified:
     In that case, the result will be converted to electron-Volts in the INCAR.
 
 To see the full list of parameters  defined by LaDa, do ``vasp.[TAB]`` on the
-ipython_ command line, or go :py:class:`here <lada.vasp.incar.Incar>`. You may
-want to checkout :py:attr:`~incar.Incar.relaxation` and
-:py:attr:`~incar.Incar.restart`.
+ipython_ command line, or go :py:class:`~lada.vasp.functional.Vasp`.
 
-The following is a (possibly incomplete) list of VASP parameters with no special behaviors:
-
-.. currentmodule:: lada.vasp.incar
-
-=============================== ================================== ========================== ==========================
-:py:attr:`~Incar.addgrid`       :py:attr:`ispin <Incar.ispin>`     :py:attr:`~Incar.istart`   :py:attr:`~Incar.isym`
-:py:attr:`~Incar.lmaxfockae`    :py:attr:`lmaxmix <Incar.lmaxmix>` :py:attr:`~Incar.lorbit`   :py:attr:`~Incar.nbands`
-:py:attr:`~Incar.nomega`        :py:attr:`nupdown <Incar.nupdown>` :py:attr:`~Incar.symprec` 
-=============================== ================================== ========================== ==========================
-
-The following have something special about them:
-
-=================================== ===================================== =================================== =============================== =============================
-:py:attr:`~Incar.U_verbosity`       :py:attr:`~Incar.algo`                :py:attr:`~Incar.ediff`             :py:attr:`~Incar.ediffg`        :py:attr:`~Incar.encut`
-:py:attr:`~Incar.encutgw`           :py:attr:`~Incar.extraelectron`       :py:attr:`~Incar.fftgrid`           :py:attr:`~Incar.lcharg`        :py:attr:`~Incar.loptics`
-:py:attr:`~Incar.lpead`             :py:attr:`~Incar.lrpa`                :py:attr:`~Incar.lsorbit`           :py:attr:`~Incar.lvtot`         :py:attr:`~Incar.lwave`
-:py:attr:`~Incar.magmom`            :py:attr:`~Incar.nelm`                :py:attr:`~Incar.nelmdl`            :py:attr:`~Incar.nelmin`        :py:attr:`~Incar.nonscf`
-:py:attr:`~Incar.npar`              :py:attr:`~Incar.precfock`            :py:attr:`~Incar.precision`         :py:attr:`~Incar.relaxation`    :py:attr:`~Incar.restart`
-:py:attr:`~Incar.smearing`          :py:attr:`~Incar.system`              :py:attr:`~Incar.symmetries`
-=================================== ===================================== =================================== =============================== =============================
-
-.. currentmodule:: lada.vasp
 
 Adding parameters LaDa does not know about
 ------------------------------------------
@@ -167,12 +143,11 @@ Adding parameters LaDa does not know about
 A large number of parameters control VASP_. LaDa only knows about the most
 common. However, it is fairly easy to add parameters which are not there yet.
 
->>> vasp.add_param = 'encut', 300
+>>> vasp.add_keyword('encut', 300)
 
 This will add a parameter to VASP. It will appear in the incar as "ENCUT =
 300", with the tag name in uppercase. The parameter can be later accessed and
-modified just as if it where a pre-existing parameter. Indeed, that is how they
-are defined in the source code in the first place.
+modified just as if it where a pre-existing parameter.
 
 >>> print vasp.encut
 300
@@ -182,15 +157,18 @@ manipulated as any other python integer. Any python object can be given. It
 will appear in the INCAR as it appears above when printed.
 
 If you do *not* want a parameter printed to the INCAR, i.e. you want to use the
-VASP_ default for that parameter, the simply set that parameter to None:
+VASP_ default for that parameter, then simply set that parameter to ``None``:
 
 >>> vasp.encut = None
 
-.. note:: The examples above specifies a parameter which already 
-          exists, :py:attr:`encut <incar.Incar.encut>`.  In this case, when doing
-          ``vasp.add_param``,  the parameter is replaced. Its special behavior
-          described above is simply gone. If you do not like a special behavior, you
-          can always do away with it.
+.. note::
+
+   The examples above specifies a parameter which already exists,
+   :py:attr:`~functional.Vasp.encut`.  In this case, when calling
+   :py:meth:`~lada.functional.Vasp.add_keyword`,  the parameter is replaced
+   with a simple integer (or float, or whatnot).  Its special behavior
+   described above is simply gone.  If you do not like a special behavior, you
+   can always do away with it.
 
 Specifying kpoints
 ------------------
@@ -263,26 +241,28 @@ This is simply the case of calling vasp with a structure as input:
 >>> vasp(structure, outdir='mycalc')
 
 This will execute VASP_ with the current parameters, in the mycalc directory,
-as an mpi process defined by :py:data:`mpirun_exe <lada.mpirun_exe>` and
-:py:data:`default_comm <lada.default_comm>`. The directory can be given using
-the usual unix short-cuts and/or shell environment variables.
+as an mpi process defined by :py:data:`~lada.mpirun_exe` and
+:py:data:`lada.default_comm`. The directory can be given using the usual unix
+short-cuts and/or shell environment variables.
 
 To specify how the mpi process should go, add a dictionary called ``comm``:
 
 >>> vasp(structure, outdir='~/$WORKDIR/mycalc', comm={'n': 8, 'ppn': 2})
 
 Exactly what this dictionary should contain depends on the specific
-supercomputer. The call is formatted by the user-defined :py:data:`mpirun_exe
-<lada.mpirun_exe>`. If the `comm` argument is *not* provided, it defaults to
-:py:data:`default_comm <lada.default_comm>`.
+supercomputer. The call is formatted by the user-defined
+:py:data:`~lada.mpirun_exe`. If the ``comm`` argument is *not* provided, it
+defaults to ``None`` and a serial calculation is performed.
 
 Finally, vasp parameters can be modified on a one-off basis:
 
 >>> vasp(structure, outdir='~/mycalc', ispin=1)
 
-.. note:: LaDa will *not* overwrite a successfull calculation, unless
-          specifically requested, not even one performed without the use of
-          LaDa. 
+.. note::
+  
+   LaDa will *not* overwrite a successfull calculation, unless specifically
+   requested with ``overwrite=True`` in the call, not even one performed
+   without the use of LaDa. 
 
 
 Extracting results from a VASP calculation
@@ -303,9 +283,11 @@ The above checks that the calculation ran to completion, and then multiplies
 the eigenvalues by two. At this point, one could perform any sort of
 post-processing, and then automatically launch a subsequent calculation.
 
-.. warning:: Success means the calculation ran to completion, specifically that
-             the lines giving the elapsed time exist in the OUTCAR. It does not
-             mean that the results are meaningful.
+.. warning::
+
+   Success means the calculation ran to completion, specifically that the lines
+   giving the elapsed time exist in the OUTCAR. It does not mean that the
+   results are meaningful.
              
 
 The extraction object can be obtained without rerunning VASP_. There are to
@@ -347,49 +329,12 @@ also be made to a file with a name other than OUTCAR.
           *via* LaDa or not. Some information that LaDa automatically appends
           to an OUTCAR may not be obtainable, however.
 
-To find out what LaDa can extract, do ``extract.[TAB]`` in the ipython_
-environment. The following is a (possibly incomplete) list of values. Some may
-not be available in all calculations, e.g. quasi-particle energies from a DFT
-run.
-
-.. currentmodule:: lada.vasp.extract.base
-
-====================================================================================== ====================================================================================== ======================================================================================
-:py:attr:`HubbardU_NLEP <ExtractBase.HubbardU_NLEP>`                                   :py:attr:`LDAUType <ExtractBase.LDAUType>`                                             :py:attr:`algo <ExtractBase.algo>`                                                    
-:py:attr:`all_total_energies <ExtractBase.all_total_energies>`                         :py:attr:`alphabet <ExtractBase.alphabet>`                                             :py:attr:`cbm <ExtractBase.cbm>`                                                      
-:py:attr:`datetime <ExtractBase.datetime>`                                             :py:attr:`density <ExtractBase.density>`                                               :py:attr:`dielectric_constant <ExtractBase.dielectric_constant>`                      
-:py:attr:`ediff <ExtractBase.ediff>`                                                   :py:attr:`ediffg <ExtractBase.ediffg>`                                                 :py:attr:`eigenvalues <ExtractBase.eigenvalues>`                                      
-:py:attr:`electronic_dielectric_constant <ExtractBase.electronic_dielectric_constant>` :py:attr:`electropot <ExtractBase.electropot>`                                         :py:attr:`encut <ExtractBase.encut>`                                                  
-:py:attr:`energies_sigma0 <ExtractBase.energies_sigma0>`                               :py:attr:`energy_sigma0 <ExtractBase.energy_sigma0>`                                   :py:attr:`extraelectron <ExtractBase.extraelectron>`                                  
-:py:attr:`fermi0K <ExtractBase.fermi0K>`                                               :py:attr:`fermi_energy <ExtractBase.fermi_energy>`                                     :py:attr:`fft <ExtractBase.fft>`                                                      
-:py:attr:`forces <ExtractBase.forces>`                                                 :py:attr:`functional <ExtractBase.functional>`                                         :py:attr:`halfmetallic <ExtractBase.halfmetallic>`                                    
-:py:attr:`ialgo <ExtractBase.ialgo>`                                                   :py:attr:`ibrion <ExtractBase.ibrion>`                                                 :py:attr:`icharg <ExtractBase.icharg>`                                                
-:py:attr:`initial_structure <ExtractBase.initial_structure>`                           :py:attr:`ionic_charges <ExtractBase.ionic_charges>`                                   :py:attr:`ionic_dielectric_constant <ExtractBase.ionic_dielectric_constant>`          
-:py:attr:`is_dft <ExtractBase.is_dft>`                                                 :py:attr:`is_gw <ExtractBase.is_gw>`                                                   :py:attr:`isif <ExtractBase.isif>`                                                    
-:py:attr:`ismear <ExtractBase.ismear>`                                                 :py:attr:`ispin <ExtractBase.ispin>`                                                   :py:attr:`istart <ExtractBase.istart>`                                                
-:py:attr:`isym <ExtractBase.isym>`                                                     :py:attr:`kpoints <ExtractBase.kpoints>`                                               :py:attr:`lmaxmix <ExtractBase.lmaxmix>`                                              
-:py:attr:`lorbit <ExtractBase.lorbit>`                                                 :py:attr:`lvtot <ExtractBase.lvtot>`                                                   :py:attr:`lwave <ExtractBase.lwave>`                                                  
-:py:attr:`magnetization <ExtractBase.magnetization>`                                   :py:attr:`moment <ExtractBase.moment>`                                                 :py:attr:`multiplicity <ExtractBase.multiplicity>`                                    
-:py:attr:`name <ExtractBase.name>`                                                     :py:attr:`nbands <ExtractBase.nbands>`                                                 :py:attr:`nelmdl <ExtractBase.nelmdl>`                                                
-:py:attr:`nelect <ExtractBase.nelect>`                                                 :py:attr:`nelmin <ExtractBase.nelmin>`                                                 :py:attr:`nonscf <ExtractBase.nonscf>`                                                
-:py:attr:`nsw <ExtractBase.nsw>`                                                       :py:attr:`nupdown <ExtractBase.nupdown>`                                               :py:attr:`occupations <ExtractBase.occupations>`                                      
-:py:attr:`partial_charges <ExtractBase.partial_charges>`                               :py:attr:`potim <ExtractBase.potim>`                                                   :py:attr:`precision <ExtractBase.precision>`                                          
-:py:attr:`pressure <ExtractBase.pressure>`                                             :py:attr:`pressures <ExtractBase.pressures>`                                           :py:attr:`pseudopotential <ExtractBase.pseudopotential>`                              
-:py:attr:`pulay_pressure <ExtractBase.pulay_pressure>`                                 :py:attr:`qp_eigenvalues <ExtractBase.qp_eigenvalues>`                                 :py:attr:`reciprocal_volume <ExtractBase.reciprocal_volume>`                          
-:py:attr:`recommended_fft <ExtractBase.recommended_fft>`                               :py:attr:`relaxation <ExtractBase.relaxation>`                                         :py:attr:`self_energies <ExtractBase.self_energies>`                                  
-:py:attr:`sigma <ExtractBase.sigma>`                                                   :py:attr:`smearing <ExtractBase.smearing>`                                             :py:attr:`species <ExtractBase.species>`                                              
-:py:attr:`stoichiometry <ExtractBase.stoichiometry>`                                   :py:attr:`stress <ExtractBase.stress>`                                                 :py:attr:`stresses <ExtractBase.stresses>`                                            
-:py:attr:`structure <ExtractBase.structure>`                                           :py:attr:`success <ExtractBase.success>`                                               :py:attr:`system <ExtractBase.system>`                                                
-:py:attr:`total_energies <ExtractBase.total_energies>`                                 :py:attr:`total_energy <ExtractBase.total_energy>`                                     :py:attr:`valence <ExtractBase.valence>`                                              
-:py:attr:`vbm <ExtractBase.vbm>`                                                       :py:attr:`volume <ExtractBase.volume>`                                                 :py:attr:`xc_g0 <ExtractBase.xc_g0>`                                                  
-
-====================================================================================== ====================================================================================== ======================================================================================
-
-.. currentmodule:: lada.vasp
+To find out what LaDa can extract, do ``result.[TAB]`` in the ipython_
+environment. Or checkout :py:class:`~lada.vasp.extract.Extract`.
 
 If you know how to use `regular expressions`_, creating a property like those above
-is generally fairly simple. Edit the file vasp/extract/base.py, reinstall, and
-you're golden. Oh, and send your snippet back this way.
+is generally fairly simple. Edit the file "vasp/extract/base.py", reinstall,
+and you're golden. And send your snippet back this way.
 
 .. _vasp_massextract_ug:
 
@@ -465,8 +410,6 @@ The functional is derived from :py:class:`~functional.Vasp`. In practice, this
 means that whatever works for :py:class:`~functional.Vasp` works for
 :py:class:`~relax.Relax`. However, it does accept a few extra attributes,
 described below:
-
-.. glossary::
 
       first_trial
         A dictionary with parameters which are used only for the very first

@@ -9,9 +9,80 @@ from extract import Extract
 
 
 class Vasp(AttrBlock):
-  """ Interface to VASP code. """
+  """ Interface to VASP code.
+  
+      This interface makes it a bit easier to call VASP_ both for
+      high-throughput calculations and for complex calculations involving more
+      that one actual call to the program.
+
+      The main way to use the code is as follows.
+
+      First, one creates the actual functional:
+
+      >>> from lada.vasp import Vasp
+      >>> functional = Vasp()
+
+      The one sets it up, taking care that all the required pseudo-potentials
+      are defined:
+
+      >>> vasp.add_specie = 'H', '$HOME/pseudos/PAWGGA/H'
+      >>> vasp.add_specie = 'C', '$HOME/pseudos/PAWGGA/C'
+      >>> vasp.sigma = 0.2
+      >>> vasp.prec = 'accurate'
+      >>> vasp.lcharg = True
+
+      The parameters of the functional have the same name as the tags in the
+      INCAR_. The syntax is also the same, except that integers, floats, and
+      booleans can be used wherever it makes sense.
+
+      Although a fair number of parameters already exist, some are missing. It
+      is possible to add them with:
+
+      >>> vasp.add_keyword('tagname', value)
+
+      The tagname needs not be given in capital letters. The value can be a
+      string, in which case it will be printed in the INCAR_ as is, basic
+      types, such as integers, floats, and booleans, or list of such types. It
+      is then possible to access the new parameter as with any other:
+
+      >>> vasp.tagname = 5
+      >>> vasp.tagname
+      5
+
+      There are few special parameters with enhanced behaviors, such as
+      :py:attr:`magmom`, :py:attr:`encut`, or :py:attr:`ediff_per_atom`. 
+      Any parameter can be completely disabled with:
+
+      >>> vasp.sigma = None
+
+      In this case, SIGMA_ will simply not appear in the INCAR_. 
+
+      The functional is then called with two or more arguments:
+
+      >>> result = vasp(structure, 'this/directory', sigma=-1)
+
+      The first argument is a :py:class:`lada.crystal.Structure` instance on
+      which to perform the calculation. The species in the structure should all
+      have a pseudo-potential declared vias :py:attr:`add_specie`. The second
+      argument is the directory where the calculations should take place. Other
+      arguments, such as ``sigma`` above will change the appropriate parameter
+      for the duration of the call (the call is stateless). 
+
+      The result is an extraction object capable of grepping different
+      properties from the OUTCAR. The major property is
+      :py:attr:`~lada.vasp.extract.Extract.success`. For more, please see
+      :py:class:`~lada.vasp.extract.Extract`.
+
+      The best way to use this functional is in conjunction with the
+      high-throughput interface :py:mod:`lada.jobfolder`.
+  """
   Extract = staticmethod(Extract)
-  """ Extraction class. """
+  """ Extraction class.
+  
+      This extraction class is used to grep output from an OUTCAR file.
+      This attribute merely describes the type of the extraction object as
+      :py:class:`~lada.vasp.extract.Extract`.
+  """
 
   def __init__(self, copy=None, species=None, kpoints=None, **kwargs):
     """ Initializes vasp class. """
@@ -725,30 +796,65 @@ class Vasp(AttrBlock):
 
   def __call__( self, structure, outdir=None, comm=None, overwrite=False, 
                 **kwargs):
-    """ Calls vasp program. """
-    result = None
+    """ Calls vasp program and waits until completion. 
+    
+        This function makes a blocking call to the VASP_ external program. It
+        will return only once the calculation is complete. To make asynchronous
+        calls to VASP_, please consider using :py:meth:`iter`.
+
+        For a description of the parameters, please see :py:meth:`iter`.
+
+        :returns: An extraction object of type :py:attr:`Extract`.
+    """
     for program in self.iter(structure, outdir=outdir, comm=comm, overwrite=overwrite, **kwargs):
       # iterator may yield the result from a prior successful run. 
-      if getattr(program, 'success', False):
-        result = program
-        continue
-      # otherwise, it should yield a Program tuple to execute.
+      if getattr(program, 'success', False): continue
+      # If the following is True, then the program failed to run correctly.
+      if not hasattr(program, 'start'): break
+      # otherwise, it should yield a Program process to execute.
+      # This next line starts the asynchronous call to the external VASP
+      # program.
       program.start(comm)
+      # This next lines waits until the VASP program is finished.
       program.wait()
     # Last yield should be an extraction object.
-    if not result.success:
+    if not program.success:
       raise RuntimeError("Vasp failed to execute correctly.")
-    return result
+    return program
 
   @assign_attributes(ignore=['overwrite', 'comm'])
   @stateless
   def iter(self, structure, outdir=None, comm=None, overwrite=False, **kwargs):
-    """ Performs a vasp calculation 
+    """ Allows asynchronous vasp calculations
      
-        If successful results (see
-        :py:attr:`lada.vasp.extract.Extract.success`) already exist in outdir,
-        calculations are not repeated. Instead, an extraction object for the
-        stored results are given.
+        This is a generator which yields two types of objects: 
+
+           - :py:class:`~lada.process.program.ProgramProcess`: once started,
+             this process will run an actual VASP_ calculation.
+           - :py:attr:`Extract`: once the program has been runned, and
+             extraction object is yielded, in order that the results of the run
+             can be analyzed. 
+
+        In a new calculation, an instance of each type will be yielded, in the
+        order of their description above. It is expected that program is runned
+        first, using the first object, before looping to the second object. 
+        Thie generator function makes it possible to run different instances of
+        VASP_ simultaneously. It also makes it possible to create more complex
+        calculations which necessitate more than one actual call to VASP_ (see
+        :py:class:`~lada.vasp.relax.iter_relax`), while retaining the ability
+        to run multiple VASP_ programs simultaneously.
+
+        If successful results (see :py:attr:`Extract.success`) already exist in
+        outdir, LaDa defaults to *not* repeating the calculations. In that
+        case, the first object described above is *skipped* and only an
+        extraction object is yielded.
+
+        The :py:meth:`__call__` method loops over this generator and makes
+        actual VASP_ calls. Looking at its code is a good place to start, if
+        you want to understand this looping business. The benefit of this
+        approach can be seen in :py:class:`~lada.vasp.relax.iter_relax` (more
+        complex calculations) and
+        :py:class:`lada.process.jobfolder.JobFolderProcess`. 
 
         :param structure:  
             :py:class:`~lada.crystal.Structure` structure to compute.
@@ -765,17 +871,29 @@ class Vasp(AttrBlock):
             one does, then does not execute. 
         :param kwargs:
             Any attribute of the VASP instance can be overridden for
-            the duration of this call by passing it as keyword argument.  
+            the duration of this call by passing it as keyword argument:
 
-        :return: Yields an extractor object if a prior successful run exists.
-                 Otherwise, yields a tuple object for executing an external
-                 program.
+            >>> for program in vasp.iter(structure, outdir, sigma=0.5):
+            ...
 
-        :note: This functor is stateless as long as self and structure can be
-               deepcopied correctly.  
+            The above would call VASP_ with smearing of 0.5 eV (unless a
+            successfull calculation already exists, in which case the
+            calculations are *not* overwritten). 
+
+        :yields: A process and/or an extraction object, as described above.
 
         :raise RuntimeError: when computations do not complete.
         :raise IOError: when outdir exists but is not a directory.
+
+        .. note::
+        
+            This function is stateless. It expects that self and structure can
+            be deepcopied correctly.  
+
+        .. warning:: 
+           
+            This will never overwrite successfull VASP calculation, even if the
+            parameters to the call are different.
     """ 
     from .. import vasp_program
     from ..process.program import ProgramProcess
@@ -791,7 +909,7 @@ class Vasp(AttrBlock):
     self.bringup(structure, outdir, comm=comm, overwrite=overwrite)
     # figures out what program to call.
     program = self.program if self.program is not None else vasp_program
-    if hasattr(program, '__call__'): program = program(self)
+    if hasattr(program, '__call__'): program = program(self, structure)
     # creates a process with a callback to bring-down environment once it is
     # done.
     def onfinish(process, error):  self.bringdown(outdir, structure)
@@ -912,11 +1030,20 @@ class Vasp(AttrBlock):
      
         The argument is a tuple containing the following.
 
-        - Symbol (str).
+        - Symbol/name (str). 
         - Directory where POTCAR_ resides (str).
         - List of U parameters (optional, see module vasp.specie).
         - Maximum (or minimum) oxidation state (optional, int).
         - ... Any other argument in order of `vasp.specie.Specie.__init__`.
+
+        In practice, adding a specie to the dictionary :py:attr:`specie` can be
+        done as follows:
+
+        >>> vasp.add_specie = 'H', '$HOME/pseudos/PAWGGA/H'
+
+        This would add an 'H' pseudo-potential to the mix. Subsequent calls to
+        the functionals need *not* involve an H atom. It is possible to define
+        more pseudo-potentials than are actually used. 
     """
     from .specie import Specie
     assert len(args) > 1, ValueError("Too few arguments.")
