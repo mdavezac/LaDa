@@ -156,7 +156,6 @@ class Vasp(AttrBlock):
 
         .. seealso:: ADDGRID_
         .. _ADDGRID: http://cms.mpi.univie.ac.at/wiki/index.php/ADDGRID
-        .. _VASP: http://cms.mpi.univie.ac.at/wiki/index.php/Main_Page
     """
     self.ispin   = ChoiceKeyword(values=(1, 2))
     """ Whether to perform spin-polarized or spin-unpolarized calculations.
@@ -540,7 +539,6 @@ class Vasp(AttrBlock):
     
         .. seealso:: ALGO_
         .. _ALGO: http://cms.mpi.univie.ac.at/vasp/vasp/ALGO_tag.html
-        .. _INCAR: http://cms.mpi.univie.ac.at/wiki/index.php/INCAR
     """ 
     self.ediff = Ediff()
     """ Sets the absolute energy convergence criteria for electronic minimization.
@@ -928,9 +926,6 @@ class Vasp(AttrBlock):
         - Writes INCAR_ file.
         - Writes KPOINTS_ file.
         - Creates POTCAR_ file
-
-        .. _POSCAR: http://cms.mpi.univie.ac.at/wiki/index.php/POSCAR
-        .. _KPOINTS: http://cms.mpi.univie.ac.at/wiki/index.php/KPOINTS
     """
     from os.path import join
     from ..crystal import specieset
