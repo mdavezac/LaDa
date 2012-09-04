@@ -98,12 +98,13 @@ def read_incar(filename='INCAR'):
 
           - An iterable object: each iteration should yield a line in the
             INCAR.
-          - A string (single line): path to a directory containing an INCAR or
-            to an INCAR file itself.
-          - A string (multi-line): should be the content of an INCAR.
+          - A string (single line): path to a directory containing an INCAR_ or
+            to an INCAR_ file itself.
+          - A string (multi-line): should be the content of an INCAR_.
         
         Defaults to 'INCAR'.
-      :returns: A vasp functional equivalent to the INCAR.
+      :returns: A vasp functional equivalent to the INCAR_.
+      :rtype: :py:class:`~lada.vasp.functional.Vasp`
   """
   from .functional import Vasp
   parsed = parse_incar(filename)

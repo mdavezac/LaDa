@@ -22,6 +22,8 @@ most usefull, however, in conjunction with the high-throughput :ref:`scheme
 
    Configuring LaDa for VASP <vasp/config>
 
+   Reading from pre-existing VASP files <vasp/reading>
+
    Creating and Setting up the vasp functional <vasp/creating>
 
    Executing a VASP calculation <vasp/running>

@@ -18,5 +18,6 @@ Contents:
 
 .. currentmodule:: lada.vasp
 .. autofunction:: read_input
+.. autofunction:: read_incar
 
 .. _VASP: http://www.vasp.at/

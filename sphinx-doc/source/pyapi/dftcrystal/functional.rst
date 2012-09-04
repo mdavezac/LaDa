@@ -7,9 +7,10 @@ Functional class and attributes
 
 .. autoclass:: Functional
    :show-inheritance:
+   :exclude-members: Extract, iter, bringup, bringdown, print_input,
+                     read_input, output_map, guess_workdir, add_keyword,
+                     OnFail, OnFinish
    :members:
-   :inherited-members:
-   :exclude-members: Extract, iter
 
    .. autoattribute:: Extract
 
@@ -55,11 +56,11 @@ Functional class and attributes
             process.wait()
         print process.some_result # last process should be an extractor
 
-    .. attribute:: dft 
+   .. automethod:: add_keyword
 
-       Interface to the DFT input block of CRYSTAL_.
+   .. attribute:: dft 
 
-       It is an instance of :py:class:`hamiltonian.Dft`.
-  
+      It is an instance of :py:class:`~lada.dftcrystal.hamiltonian.Dft`.
+      Parameters from CRYSTAL_'s sub-block can be set here, for instance as:
 
-.. _CRYSTAL: http://www.crystal.unito.it/
+      >>> functional.dft.b3lyp = True
