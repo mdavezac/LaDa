@@ -406,6 +406,7 @@ class ExtractBase(object):
   @make_cached
   def structure(self):
     """ Output structure, LaDa format. """
+    from ..error import NotImplementedError
     if not self._is_optgeom: return self.input_structure
     elif self.dimensionality == 0: return self._update_pos_only
     try:
@@ -422,6 +423,7 @@ class ExtractBase(object):
     except GrepError: 
       if self.dimensionality == 3: return self._final_structure
       elif self._no_change_in_params: return self._update_pos_only
+      else: raise NotImplementedError('Cannot grep output structure')
 
   @property
   @make_cached
@@ -498,7 +500,7 @@ class ExtractBase(object):
           inabc = False
           if params is None: params = line
           elif params != line: return False
-        elif line[:len(primcellpat)]: inprim = True; continue
+        elif line[:len(primcellpat)] == primcellpat: inprim = True; continue
       return params is not None
   @property
   @make_cached
@@ -508,11 +510,15 @@ class ExtractBase(object):
     result = self.input_structure.copy()
     pattern = " ATOMS IN THE ASYMMETRIC UNIT"
     with self.__stdout__() as file:
-      for line in file: 
-        if line[:len(pattern)] == pattern: break
-      try: file.next(); file.next()
-      except StopIteration: 
-        raise GrepError('Unexpected end-of-file.')
+      lastindex = -1;
+      for i, line in enumerate(file): 
+        if line[:len(pattern)] == pattern: lastindex = i
+      if lastindex == -1:
+        raise GrepError('Could not find atomic positions in file.')
+    with self.__stdout__() as file:
+      for j, line in enumerate(file):
+        if j == lastindex + 2: break
+      if j != lastindex + 2: raise GrepError('Unexpected end-of-file.')
       index = self.dimensionality
       for line, atom in zip(file, result):
         pos = array(line.split()[4:7], dtype='float64')
@@ -545,9 +551,8 @@ class ExtractBase(object):
 
     # deduce structure - last changes in cell-shape or atomic displacements.
     if looped:
-      if incrys[-i].keyword.lower() in ['elastic', 'atomdisp']: i += 1
       incrys = incrys.copy()
-      incrys[:] = incrys[:len(incrys)-i]
+      incrys[:] = incrys[:-i]
       instruct = incrys.eval()
 
     # create symmetric strain
@@ -681,9 +686,8 @@ class ExtractBase(object):
   @make_cached
   def optgeom_iterations(self):
     """ Number of geometric iterations. """
-    a = self.optgeom_convergence
-    if a is None: return 0
-    result = self._find_last_STDOUT('POINTS\s+(\d+)\s+\*')
+    result = self._find_last_STDOUT('\-\s+POINT\s+(\d+)')
+    if result is None: return None
     return int(result.group(1))
 
 class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
@@ -712,9 +716,13 @@ class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
 
   @property
   def success(self):
+    from os.path import exists, join
+    if not exists(join(self.directory, self.STDOUT)): 
+      return False
     try: self.end_date
     except: 
-      return self.optgeom_convergence is not None
+      if self.optgeom_iterations is None: return False
+      return self.optgeom_iterations > 3
     return True
 
 class MassExtract(AbstractMassExtract):

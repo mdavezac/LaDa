@@ -222,11 +222,13 @@ class Functional(object):
         Cats input intO output.
 	Removes workdir if different from outdir **and** run was successfull.
     """
+    from itertools import chain
+    from os import remove
     from os.path import join, samefile
     from shutil import rmtree
     from glob import iglob
     from ..misc import copyfile, Changedir
-    from .. import CRYSTAL_filenames
+    from .. import CRYSTAL_filenames, CRYSTAL_delpatterns
 
     with Changedir(outdir) as cwd:
       for key, value in CRYSTAL_filenames.iteritems():
@@ -250,9 +252,22 @@ class Functional(object):
         with open('crystal.err', 'w') as out:
           for filename in iglob(join(workdir, 'ERROR.*')):
             with open(filename, 'r') as file: out.write(file.read() + '\n')
+        lines = []
+        with open('crystal.err', 'r') as out:
+          for line in out:
+            if line not in lines: lines.append(line.rstrip().lstrip())
+        with open('crystal.out', 'a') as out:
+          file.write('{0} {1} {0}\n'.format(header, 'ERRROR FILE'))
+          file.write('\n'.join(lines))
+          file.write('{0} END {1} {0}\n'.format(header, 'ERRROR FILE'))
     
     if Extract(outdir).success and not samefile(outdir, workdir):
       rmtree(workdir)
+    if samefile(outdir, workdir):
+      with Changedir(workdir) as cwd:
+        for filepath in chain(*[iglob(u) for u in CRYSTAL_delpatterns]):
+          try: remove(filepath)
+          except: pass
       
 
   
@@ -334,7 +349,7 @@ class Functional(object):
 
       # now creates the process, with a callback when finished.
       onfinish = self.OnFinish(self, structure, workdir, outdir)
-      onfail   = self.OnFail(self, outdir)
+      onfail   = self.OnFail(outdir)
       yield ProgramProcess( program, outdir=workdir, onfinish=onfinish,
                             stdout=None if dompi else 'crystal.out', 
                             stderr='crystal.out' if dompi else 'crystal.err',
@@ -408,11 +423,12 @@ class Functional(object):
 	Crystal reports an error when reaching maximum iteration without
         converging. This is screws up hwo LaDa does things.
     """
-    def __init__(self, this, outdir):
-      self.this = this
+    def __init__(self, outdir):
       self.outdir = outdir
     def __call__(self, process, error):
       from ..process import Fail
-      if not self.this.Extract(self.outdir).success:
+      try: success = Extract(self.outdir).success
+      except: success = False
+      if not success:
         raise Fail( 'Crystal failed to run correctly.\n'                       \
                     'It returned with error {0}.'.format(error) )

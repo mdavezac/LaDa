@@ -178,22 +178,16 @@ class ProgramProcess(Process):
         raise Fail( 'Error on call to "onfinish"\n{0}: {1}\n{2}\n'             \
                     .format(type(e), e, '\n'.join(tb)) )
     # now check possible error.
+    if poll != 0 and self.onfail is not None:
+      try: self.onfail(process=self, error=poll)
+      except Fail: pass
+      else: poll = 0
+      # else: poll = 0
     if poll != 0:
-      if self.onfail is not None:
-        try: self.onfail(process=self, error=poll)
-        except Fail: 
-          if self.nberrors >= self.maxtrials:
-            self._cleanup()
-            raise
-          else: self.nberrors += 1
-        else:
-          self._cleanup()
-          return True
-      else:
-        self.nberrors += 1
-        if self.nberrors >= self.maxtrials:
-          self._cleanup()
-          raise Fail(poll)
+      self.nberrors += 1
+      if self.nberrors >= self.maxtrials:
+        self._cleanup()
+        raise Fail(poll)
     else:
       self._cleanup()
       return True
