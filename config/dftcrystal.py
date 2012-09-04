@@ -53,6 +53,14 @@ CRYSTAL_propnames = { 'fort.25':      '{0}.f25',      # bands, maps, doss data
                       'fort.8':       '{0}.localwf',  # wannier function
                       'freqinfo.DAT': '{0}.freqinfo'  # info for freq restart
                     }
+CRYSTAL_delpatterns = ['core', 'ERROR.*']
+""" Delete files with these patterns. 
+
+    CRYSTAL leaves a lot of crap around. The patterns indicates files which
+    should be removed. This is only applied if the working directory is the
+    thesame as the output directory.
+"""
+
 crystal_program ='crystal'
 """ Path to crystal executable. """
 

@@ -551,9 +551,8 @@ class ExtractBase(object):
 
     # deduce structure - last changes in cell-shape or atomic displacements.
     if looped:
-      if incrys[-i].keyword.lower() in ['elastic', 'atomdisp']: i += 1
       incrys = incrys.copy()
-      incrys[:] = incrys[:len(incrys)-i]
+      incrys[:] = incrys[:-i]
       instruct = incrys.eval()
 
     # create symmetric strain
@@ -687,9 +686,8 @@ class ExtractBase(object):
   @make_cached
   def optgeom_iterations(self):
     """ Number of geometric iterations. """
-    a = self.optgeom_convergence
-    if a is None: return 0
-    result = self._find_last_STDOUT('POINTS\s+(\d+)\s+\*')
+    result = self._find_last_STDOUT('\-\s+POINT\s+(\d+)')
+    if result is None: return None
     return int(result.group(1))
 
 class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
@@ -718,9 +716,13 @@ class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
 
   @property
   def success(self):
+    from os.path import exists, join
+    if not exists(join(self.directory, self.STDOUT)): 
+      return False
     try: self.end_date
     except: 
-      return self.optgeom_convergence is not None
+      if self.optgeom_iterations is None: return False
+      return self.optgeom_iterations > 3
     return True
 
 class MassExtract(AbstractMassExtract):

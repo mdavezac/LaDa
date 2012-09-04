@@ -250,13 +250,14 @@ class LevShift(BaseKeyword):
 class GuessP(BoolKeyword):
   """ Reads density matrix from disk.
 
-      If True (default) *and* restart_ is not None, then copies crystal.f9 to
+      If True *and* restart_ is not None, then copies crystal.f9 to
       fort.20 in the working directory and adds GUESSP keyword to the input.
 
       If True but restart_ is None or the file crystal.f9 does not exist, then
       does nothing. This is not an error, however.
 
-      If False or None, does nothing.
+      If False or None, does nothing. Since GuessP can lead to bizarre
+      problems, it is *False* by default.
 
       .. _restart: :py:attr:`~lada.dftcrystal.functional.restart` 
   """ 
@@ -317,16 +318,17 @@ class Electronic(AttrBlock):
     """ Whether to reevaluate integrals at each electronic step """
     self.poleordr = ChoiceKeyword(values=range(0, 7))
     """ Coulomb intergrals pole truncation """
-    self.guessp   = GuessP(value=True)
+    self.guessp   = GuessP(value=False)
     """ Reads density matrix from disk.
     
-        If True (default) *and* restart_ is not None, then copies crystal.f9 to
+        If True *and* restart_ is not None, then copies crystal.f9 to
         fort.20 in the working directory and adds GUESSP keyword to the input.
     
         If True but restart_ is None or the file crystal.f9 does not exist, then
         does nothing. This is not an error, however.
     
-        If False or None, does nothing.
+	If False or None, does nothing. Since GuessP can lead to bizarre
+        problems, it is *False* by default.
     
         .. _restart: :py:attr:`~lada.dftcrystal.functional.restart` 
     """ 
@@ -351,3 +353,5 @@ class Electronic(AttrBlock):
     """ Whether to not use symmetry adapted functions. """
     self.savewf   = BoolKeyword()
     """ Whether to save wavefunctions at each step. """
+    self.mpp      = BoolKeyword(value=False)
+    """ Whether to use MPP or Pcrystal when running mpi. """

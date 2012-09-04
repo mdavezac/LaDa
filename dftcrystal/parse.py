@@ -20,9 +20,11 @@ def parse(path, needstarters=True):
   keyword_re = compile('^(?:[A-Z](?!\s))')
 
   if needstarters: 
+    title = ""
     for i, line in enumerate(path):
       if len(line.split()) > 0 and line.split()[0] in starters: break
       title = line
+    if len(title) == 0: raise IOError('Could not find CRYSTAL input.')
     if len(line) == 0: raise IOError('Could not find CRYSTAL input.')
     elif line.split()[0] not in starters: 
       raise IOError('Could not find CRYSTAL input.')
