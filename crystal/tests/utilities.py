@@ -20,7 +20,7 @@ def test_into_cell():
   from lada.crystal.cppwrappers import are_periodic_images, into_cell
   from numpy import array, dot, all
   from numpy.linalg import inv
-  from random import randint, uniform
+  from random import uniform
   cell = array([ [0, 0.5, 0.5], [0.5, 0, 0.5], [0.5, 0.5, 0] ])
   invcell = inv(cell)
   for i in range(100):
@@ -34,7 +34,7 @@ def test_zero_centered():
   from lada.crystal.cppwrappers import are_periodic_images, zero_centered
   from numpy import array, dot, all
   from numpy.linalg import inv
-  from random import randint, uniform
+  from random import uniform
   cell = array([ [0, 0.5, 0.5], [0.5, 0, 0.5], [0.5, 0.5, 0] ])
   invcell = inv(cell)
   for i in range(100):
@@ -46,9 +46,9 @@ def test_zero_centered():
 def test_into_voronoi():
   """ Test that vector is folded into first Brillouin zone. """
   from lada.crystal.cppwrappers import are_periodic_images, into_voronoi
-  from numpy import array, dot, all
+  from numpy import array, dot
   from numpy.linalg import inv
-  from random import randint, uniform
+  from random import uniform
   cell = array([ [0, 0.5, 0.5], [0.5, 0, 0.5], [0.5, 0.5, 0] ])
   invcell = inv(cell)
   for i in range(100):

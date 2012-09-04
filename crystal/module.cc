@@ -31,17 +31,17 @@ PyMODINIT_FUNC initcppwrappers(void)
   if (PyType_Ready(LaDa::crystal::atom_type()) < 0) return;
   if (PyType_Ready(LaDa::crystal::structure_type()) < 0) return;
   if (PyType_Ready(LaDa::crystal::structureiterator_type()) < 0) return;
-  if (PyType_Ready(LaDa::crystal::smithtransform_type()) < 0) return;
+  if (PyType_Ready(LaDa::crystal::hftransform_type()) < 0) return;
 
   Py_INCREF(LaDa::crystal::atom_type());
   Py_INCREF(LaDa::crystal::structure_type());
   Py_INCREF(LaDa::crystal::structureiterator_type());
-  Py_INCREF(LaDa::crystal::smithtransform_type());
+  Py_INCREF(LaDa::crystal::hftransform_type());
 
   char const doc[] =  "Wrapper around C++ atom/structure class and affiliates.";
   PyObject* module = Py_InitModule3("cppwrappers", LaDa::crystal::methods_table, doc);
 
   PyModule_AddObject(module, "Atom", (PyObject *)LaDa::crystal::atom_type());
   PyModule_AddObject(module, "Structure", (PyObject *)LaDa::crystal::structure_type());
-  PyModule_AddObject(module, "SmithTransform", (PyObject *)LaDa::crystal::smithtransform_type());
+  PyModule_AddObject(module, "HFTransform", (PyObject *)LaDa::crystal::hftransform_type());
 }

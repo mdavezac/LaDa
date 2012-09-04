@@ -16,15 +16,15 @@ namespace LaDa
         return NULL;                                                                    \
       }                                                                                 \
       math::rMatrix3d cell, invcell;                                                    \
-      if(not python::convert_to_matrix(PyTuple_GET_ITEM(_args, 1), cell)) return false; \
+      if(not python::convert_to_matrix(PyTuple_GET_ITEM(_args, 1), cell)) return NULL;  \
       if(N == 3 and not python::convert_to_matrix(PyTuple_GET_ITEM(_args, 2), invcell)) \
-        return false;                                                                   \
+        return NULL;                                                                    \
       if(N == 2) invcell = cell.inverse();                                              \
       PyObject *positions = PyTuple_GET_ITEM(_args, 0);                                 \
       if(not PyArray_Check(positions))                                                  \
       {                                                                                 \
         math::rVector3d a;                                                              \
-        if(not python::convert_to_vector(positions, a)) return false;                   \
+        if(not python::convert_to_vector(positions, a)) return NULL;                    \
         try                                                                             \
         {                                                                               \
           math::rVector3d vector = NAME(a, cell, invcell);                              \
@@ -100,9 +100,9 @@ namespace LaDa
       }
       math::rMatrix3d invcell;
       math::rVector3d a, b;
-      if(not python::convert_to_vector(PyTuple_GET_ITEM(_args, 0), a)) return false;
-      if(not python::convert_to_vector(PyTuple_GET_ITEM(_args, 1), b)) return false;
-      if(not python::convert_to_matrix(PyTuple_GET_ITEM(_args, 2), invcell)) return false;
+      if(not python::convert_to_vector(PyTuple_GET_ITEM(_args, 0), a)) return NULL;
+      if(not python::convert_to_vector(PyTuple_GET_ITEM(_args, 1), b)) return NULL;
+      if(not python::convert_to_matrix(PyTuple_GET_ITEM(_args, 2), invcell)) return NULL;
       try
       { 
         if(N == 3 and math::are_periodic_images(a, b, invcell) ) Py_RETURN_TRUE;
@@ -496,17 +496,16 @@ namespace LaDa
     static PyMethodDef methods_table[] = {
         {"zero_centered",  zero_centered_wrapper, METH_VARARGS,
          "Returns Folds vector back to origin.\n\n"
-         "This may not be the vector with the smallest possible norm "
-           "if the cell is very skewed.\n\n"
+         "This may not be the vector with the smallest possible norm if the cell is\n"
+         "very skewed.\n\n"
          ":param a:\n"
-         "    A 3d-vector to fold back into the cell.\n"
-         "    Can also be any numpy array where its last dimension if "
-           "of length 3, ie. ``a.shape[-1] == 3``.\n" 
+         "    A 3d-vector to fold back into the cell. Can also be any numpy array where\n"
+         "    its last dimension if of length 3, ie. ``a.shape[-1] == 3``.\n"
          ":param cell:\n"
          "    The cell matrix defining the periodicity.\n"
          ":param invcell:\n"
-         "    Optional. The *inverse* of the cell defining the periodicity. "
-              "It is computed if not given on input. \n" },
+         "    Optional. The *inverse* of the cell defining the periodicity. It is\n"
+         "    computed if not given on input. \n"}, 
         {"into_voronoi",  into_voronoi_wrapper, METH_VARARGS,
          "Returns Folds vector into first Brillouin zone of the input cell.\n\n"
          "This returns the periodic image with the smallest possible norm.\n\n"
@@ -517,8 +516,8 @@ namespace LaDa
          ":param cell:\n"
          "    The cell matrix defining the periodicity.\n"
          ":param invcell:\n"
-         "    Optional. The *inverse* of the cell defining the periodicity. "
-              "It is computed if not given on input. \n" },
+         "    Optional. The *inverse* of the cell defining the periodicity.\n"
+         "    It is computed if not given on input. \n" },
         {"into_cell",  into_cell_wrapper, METH_VARARGS,
          "Returns Folds vector into periodic the input cell.\n\n"
          ":param a:\n"
@@ -528,8 +527,8 @@ namespace LaDa
          ":param cell:\n"
          "    The cell matrix defining the periodicity.\n"
          ":param invcell:\n"
-         "    Optional. The *inverse* of the cell defining the periodicity. "
-              "It is computed if not given on input. \n" },
+         "    Optional. The *inverse* of the cell defining the periodicity. It\n"
+         "    is computed if not given on input. \n" },
         {"are_periodic_images",  are_periodic_images_wrapper, METH_VARARGS,
          "Returns True if first two arguments are periodic images according to third.\n\n"
          ":param a:\n"
@@ -543,16 +542,17 @@ namespace LaDa
         {"supercell",  (PyCFunction)supercell_wrapper, METH_VARARGS | METH_KEYWORDS,
          "Creates a supercell of an input lattice.\n\n"
          ":param lattice:\n"
-         "    :class:`Structure` from which to create the supercell. Cannot be empty. Must be deepcopiable. \n"
-         ":param cell:\n"
-         "    Cell in cartesian coordinates of the supercell.\n\n"
-         ":returns: A :class:`Structure` representing the supercell. "
-           "If ``lattice`` contains an attribute ``name``, then the result's is set to "
-           "\"supercell of ...\". " 
-           "All other attributes of the lattice are deep-copied to the supercell. "
-           "The atoms within the result contain an attribute ``index`` which is an index to "
-           "the equivalent site within ``lattice``. Otherwise, the atoms are deep copies of "
-           "the lattice sites. " },
+         "    :py:class:`Structure` from which to create the supercell. Cannot\n"
+         "    be empty. Must be deepcopiable. \n" ":param cell: Cell in\n"
+         "    cartesian coordinates of the supercell.\n\n"
+         ":returns: A :py:class:`Structure` representing the supercell.\n"
+         "          If ``lattice`` contains an attribute ``name``, then the\n"
+         "          result's is set to \"supercell of ...\".  All other\n"
+         "          attributes of the lattice are deep-copied to the supercell.\n"
+         "          The atoms within the result contain an attribute ``index``\n"
+         "          which is an index to the equivalent site within\n"
+         "          ``lattice``. Otherwise, the atoms are deep copies of the\n"
+         "          lattice sites. \n"},
         {"primitive",  primitive_wrapper, METH_VARARGS,
          "Returns the primitive unit-cell lattice of an input lattice.\n\n"
          ":param lattice:\n"
@@ -570,162 +570,176 @@ namespace LaDa
          "    Optional. Tolerance when comparing positions. Defaults to 1e-8.\n\n"},
         {"space_group",  space_group_wrapper, METH_VARARGS,
          "Finds and stores point group operations.\n\n"
-         "Implementation taken from Enum code, PRB 77, 224115 (2008). \n\n"
+         "Implementation taken from ENUM_. \n\n"
          ":param structure:\n"
-         "    The :class:`structure <Structure>` for which to find the point group.\n"
+         "    The :class:`Structure` instance for which to find the point group.\n"
          ":param tolerance:\n"
          "    acceptable tolerance when determining symmetries. Defaults to 1e-8.\n"
-         ":returns: python list of affine symmetry operations for the given structure. "
-           "Each element is a 4x3 numpy array, with the first 3 rows "
-           "forming the rotation, and the last row is the translation. "
-           "The affine transform is applied as rotation * vector + translation.\n"
-         ":raises ValueError: if the input  structure is not primitive. "},
+         ":returns: python list of affine symmetry operations for the given\n"
+         "          structure. Each element is a 4x3 numpy array, with the\n"
+         "          first 3 rows forming the rotation, and the last row is the\n"
+         "          translation.  The affine transform is applied as rotation *\n"
+         "          vector + translation.\n"
+         ":raises ValueError: if the input  structure is not primitive.\n\n"
+         ".. _ENUM: http://enum.sourceforge.net \n\n"},
         {"cell_invariants",  cell_invariants_wrapper, METH_VARARGS,
          "Finds and stores point group operations.\n\n"
-         "Rotations are determined from G-vector triplets with the same "
-           "norm as the unit-cell vectors. "
-           "Implementation taken from Enum code, PRB 77, 224115 (2008). \n\n"
+         "Rotations are determined from G-vector triplets with the same norm as\n"
+         "the unit-cell vectors. Implementation taken from ENUM_.\n\n"
          ":param structure:\n"
-         "    The :class:`structure <Structure>` for which to find the space group. "
-            "Can also be a 3x3 matrix.\n"
+         "    The :py:class:`Structure` instance for which to find the space group.\n"
+         "    Can also be a 3x3 matrix.\n"
          ":param tolerance:\n"
          "    acceptable tolerance when determining symmetries. Defaults to 1e-8.\n"
-         ":returns: python list of affine symmetry operations for the given structure. "
-           "Each element is a 4x3 numpy array, with the first 3 rows "
-           "forming the rotation, and the last row is the translation. "
-           "The affine transform is applied as rotation * vector + translation. "
-           "`cell_invariants` always returns rotations (translation is zero). " }, 
+         ":returns: python list of affine symmetry operations for the given\n"
+         "          structure. Each element is a 4x3 numpy array, with the\n"
+         "          first 3 rows forming the rotation, and the last row is the\n"
+         "          translation.  The affine transform is applied as rotation *\n"
+         "          vector + translation. `cell_invariants` always returns\n"
+         "          rotations (translation is zero).\n\n" 
+         ".. _ENUM: http://enum.sourceforge.net/ \n\n"},
         {"equivalent", (PyCFunction)equivalent_wrapper, METH_VARARGS | METH_KEYWORDS, 
           "Returns true if two structures are equivalent. \n\n"
-          "Two structures are equivalent in a crystallographic sense, "
-          "e.g. without reference to cartesian coordinates or possible "
-          "motif rotations which leave the lattice itself invariant. A "
-          "supercell is *not* equivalent to its lattice, unless it is a "
-          "trivial supercell. An option is provided to allow "
-          "comparison within a single reference frame, i.e. per mathematical "
-          "definition of lattice.\n\n"
+          "Two structures are equivalent in a crystallographic sense, e.g.\n"
+          "without reference to cartesian coordinates or possible motif\n"
+          "rotations which leave the lattice itself invariant. A supercell is\n"
+          "*not* equivalent to its lattice, unless it is a trivial supercell.\n"
+          "An option is provided to allow comparison within a single reference\n"
+          "frame, i.e. per mathematical definition of lattice.\n\n"
           ":param a:\n  :class:`Structure` to compare to b.\n"
           ":param b:\n  :class:`Structure` to compare to a.\n"
           ":param boolean scale:\n"
           "    whether to take the scale into account. Defaults to true.\n"
           ":param cartesian:\n"
-          "    whether to take into account differences in cartesian "
-              "coordinates. Defaults to true. If False, then comparison is "
-              "according to mathematical definition of a lattice. If True, "
-              "comparison is according to crystallographic comparison.\n"
+          "    whether to take into account differences in cartesian\n"
+          "    coordinates. Defaults to true. If False, then comparison is\n"
+          "    according to mathematical definition of a lattice. If True,\n"
+          "    comparison is according to crystallographic comparison.\n"
           ":param float tolerance:\n"
-          "    Tolerance when comparing distances. Defaults to 1e-8.  It is in "
-              "the same units as the structures scales, if that is taken into "
-              "account, otherwise, it is in the same units as ``a.scale``." },
+          "    Tolerance when comparing distances. Defaults to 1e-8.  It is in\n"
+          "    the same units as the structures scales, if that is taken into\n"
+          "    account, otherwise, it is in the same units as ``a.scale``." },
         {"transform", (PyCFunction)transform_wrapper, METH_VARARGS | METH_KEYWORDS, 
           "Returns a copy of the structure transformed according to affine operation. \n\n"
           ":param structure:\n"
-          "   The :class:`structure <Structure>` to transform.\n"
+          "   The :class:`Structure` instance to transform.\n"
           ":param operation:\n"
           "    The rotation (applied first) is contained "
               "in the first three row and the translation (applied second) in the last row." },
         {"periodic_dnc", (PyCFunction)details::pyperiodic_dnc, METH_VARARGS | METH_KEYWORDS, 
           "Creates periodic divide-and-conquer boxes. \n\n"
-          "Creates a list of divide-and-conquer boxes for a periodic system. "
-          "Takes into account periodic images. In order to make sure that a box contains all "
-          "atoms relevant for a given calculation, it allows for an overlap, so that atoms "
-          "which are close (say close enough to form a bond) which are not nominally within the "
-          "are also referenced. In other words, the boxes have fuzzy limits. The return clearly "
-          "indicates whether an atom is truly within a box or merely sitting close by.\n\n"
+          "Creates a list of divide-and-conquer boxes for a periodic system.\n"
+          "Takes into account periodic images. In order to make sure that a box\n"
+          "contains all atoms relevant for a given calculation, it allows for\n"
+          "an overlap, so that atoms which are close (say close enough to form\n"
+          "a bond) which are not nominally within the are also referenced. In\n"
+          "other words, the boxes have fuzzy limits. The return clearly\n"
+          "indicates whether an atom is truly within a box or merely sitting\n"
+          "close by.\n\n"
           ":param structure: \n"
-          "    The :class:`structure <Structure>` to transform.\n"
+          "    The :class:`Structure` instance to transform.\n"
           ":param overlap:\n"
-          "    Size in units of the structure's scale attribute which determine atoms which are "
-              "close but not quite  within a box.\n"
+          "    Size in units of the structure's scale attribute which determine\n"
+          "    atoms which are close but not quite  within a box.\n"
           ":param mesh:\n"
-          "    3d-vector defining the mesh parameters from which to determine box. "
-               "Give either this or nperbox, but not both.\n"
-          ":param nperbox:\n    Integer number of atoms per box. Defaults to 20."
-               "Give either this or mesh, but not both.\n"
+          "    3d-vector defining the mesh parameters from which to determine\n"
+          "    box. Give either this or nperbox, but not both.\n"
+          ":param nperbox:\n"
+          "    Integer number of atoms per box. Defaults to 20.\n"
+          "    Give either this or mesh, but not both.\n"
           ":param return_mesh:\n    If True, returns mesh as first item of a two-tuple.\n"
-          ":returns: If ``return_mesh`` is false, returns a list of lists of 3-tuples "
-          "(atom, translation, insmallbox). Each inner list represents a single "
-          "divide-and-conquer box (+overlapping atoms). Each item within that "
-          "box contains a reference to an atom, a possible translation to push "
-          "the atom from its current position to its periodic image within the box, "
-          "and boolean which is true if the atom truly inside the box as opposed to "
-          "sitting just outside within the specified overlap. If ``return_mesh`` is true, "
-          "then returns a two-tuple consisting of the mesh and the list of lists "
-          "previously described.\n"},
+          ":returns: If ``return_mesh`` is false, returns a list of lists of\n"
+          "          3-tuples (atom, translation, insmallbox). Each inner list\n"
+          "          represents a single divide-and-conquer box (+overlapping\n"
+          "          atoms). Each item within that box contains a reference to\n"
+          "          an atom, a possible translation to push the atom from its\n"
+          "          current position to its periodic image within the box, and\n"
+          "          boolean which is true if the atom truly inside the box as\n"
+          "          opposed to sitting just outside within the specified\n"
+          "          overlap. If ``return_mesh`` is true, then returns a\n"
+          "          two-tuple consisting of the mesh and the list of lists\n"
+          "          previously described.\n"},
         {"neighbors", (PyCFunction)pyneighbors, METH_VARARGS | METH_KEYWORDS, 
           "Returns list of neighbors to input position \n\n"
-          "Creates a list referencing neighbors of a given position in a structure. "
-          "In order to make this function well defined, it may return more atoms that "
-          "actually requested. For instance, in an fcc structure with center at "
-          "the origin, if asked for the 6 first neighbors, actually the first "
-          "twelve are returned since they are equidistant. The input tolerance "
-          "is the judge of equidistance.\n\n"
+          "Creates a list referencing neighbors of a given position in a structure.\n"
+          "In order to make this function well defined, it may return more\n"
+          "atoms that actually requested. For instance, in an fcc structure\n"
+          "with center at the origin, if asked for the 6 first neighbors,\n"
+          "actually the first twelve are returned since they are equidistant.\n"
+          "The input tolerance is the judge of equidistance.\n\n"
           ":param structure:\n"
           "    :class:`Structure` from which to determine neighbors.\n"
           ":param nmax:\n"
-          "    Interger number of first neighbors to search for.\n"
+          "    Integer number of first neighbors to search for.\n"
           ":param center:\n"
           "    Position for which to determine first neighbors.\n"
           ":param tolerance:\n"
           "    Tolerance criteria for judging equidistance.\n\n"
-          ":returns: A list of 3-tuples. The first item is a refence to the neighboring atom, "
-          "the second is the position of its relevant periodic image *relative* to the center, "
-          "the third is its distance from the center."},
+          ":returns: A list of 3-tuples. The first item is a refence to the\n"
+          "          neighboring atom, the second is the position of its\n"
+          "          relevant periodic image *relative* to the center, the\n"
+          "          third is its distance from the center.\n"},
         {"coordination_shells", (PyCFunction)pycoordination_shells, METH_VARARGS | METH_KEYWORDS, 
           "Creates list of coordination shells up to given order.\n\n"
           ":param structure:\n"
           "    :class:`Structure` from which to determine neighbors.\n"
           ":param nshells:\n"
-          "    Interger number of shells to compute.\n"
+          "    Integer number of shells to compute.\n"
           ":param center:\n"
           "    Position for which to determine first neighbors.\n"
           ":param tolerance:\n"
           "    Tolerance criteria for judging equidistance.\n\n"
           ":param natoms:\n"
-          "    Integer number of neighbors to consider. Defaults to fcc + some security.\n\n"
-          ":returns: A list of lists of tuples. The outer list is over coordination shells. "
-                    "The inner list references the atoms in a shell. "
-                    "Each innermost tuple contains a reference to the atom in question, "
-                    "a vector from the center to the relevant periodic image of the atom, "
-                    "and finally, the associated distance." },
+          "    Integer number of neighbors to consider. Defaults to fcc + some\n"
+          "    security.\n\n"
+          ":returns: A list of lists of tuples. The outer list is over\n"
+          "          coordination shells.  The inner list references the atoms\n"
+          "          in a shell.  Each innermost tuple contains a reference to\n"
+          "          the atom in question, a vector from the center to the\n"
+          "          relevant periodic image of the atom, and finally, the\n"
+          "          associated distance." },
         {"splitconfigs", (PyCFunction)pysplitconfigs, METH_VARARGS | METH_KEYWORDS, 
           "Creates a split-configuration for a given structure and atomic origin.\n\n"
           "Split-configurations are a symmetry-agnostic atom-centered "
-            "description of a chemical environment [ABMZ]_.\n\n"
-            ":param structure:\n"
-            "    :class:`Structure` for which to create split-configurations.\n"
-            ":param center:\n"
-            "    :class:`Atom` at the origin of the configuration.\n"
-            ":param nmax:\n"
-            "    Integer number of atoms (cutoff) to consider for inclusion in the split-configuration.\n"
-            ":param configurations:\n"
-            "    Defaults to None. Object where configurations should be stored, eg a list of "
-                "previously returned configurations. There is no error checking, so do not "
-                "mix and match.\n"
-            ":param tolerance:\n"
-            "    Tolerance criteria when comparing distances. \n\n"
-            ":returns: "
-              "A list of splitted configuration. Each item in this list is "
-              "itself a view, e.g. a list with two inner items. The first inner item is an "
-              "ordered list of references to atoms. The second inner item is "
-              "the weight for that configuration. The references to the atoms "
-              "are each a 2-tuple consisting of an actual reference to an "
-              "atom, as well as the coordinates of that atom in the current view.\n\n"
-            ".. [ABMZ] d'Avezac, Botts, Mohlenkamp, Zunger, SIAM J. Comput. 30 (2011) "
-               "http://dx.doi.org/10.1137/100805959. " },
+          "description of a chemical environment [ABMZ]_.\n\n"
+          ":param structure:\n"
+          "    :class:`Structure` for which to create split-configurations.\n"
+          ":param center:\n"
+          "    :class:`Atom` at the origin of the configuration.\n"
+          ":param nmax:\n"
+          "    Integer number of atoms (cutoff) to consider for inclusion in\n"
+          "    the split-configuration.\n"
+          ":param configurations:\n"
+          "    Defaults to None. Object where configurations should be\n"
+          "    stored, eg a list of previously returned configurations. There\n"
+          "    is no error checking, so do not mix and match.\n"
+          ":param tolerance:\n"
+          "    Tolerance criteria when comparing distances. \n\n"
+          ":returns: A list of splitted configuration. Each item in this list\n"
+          "          is itself a view, e.g. a list with two inner items. The\n"
+          "          first inner item is an ordered list of references to\n"
+          "          atoms. The second inner item is the weight for that\n"
+          "          configuration. The references to the atoms are each a\n"
+          "          2-tuple consisting of an actual reference to an atom, as\n"
+          "          well as the coordinates of that atom in the current\n"
+          "          view.\n\n"
+          ".. [ABMZ] `d'Avezac, Botts, Mohlenkamp, Zunger, SIAM J. Comput. 30 (2011)`__\n\n"
+          ".. __: http://dx.doi.org/10.1137/100805959\n" },
         {"map_sites", (PyCFunction)pymapsites, METH_VARARGS | METH_KEYWORDS, 
           "Map sites from a lattice onto a structure.\n\n"
-          "This function finds out which atomic sites in a supercell refer to the sites "
-          "in a parent lattice. ``site`` attribute are added to the atoms in the ``mappee`` "
-          "structure. These attributes hold an index to the relevant sites in the mapper. "
-          "If a particular atom could not be mapped, then ``site`` is None.\n\n" 
+          "This function finds out which atomic sites in a supercell refer to\n"
+          "the sites in a parent lattice. ``site`` attribute are added to the\n"
+          "atoms in the ``mappee`` structure. These attributes hold an index to\n"
+          "the relevant sites in the mapper.  If a particular atom could not be\n"
+          "mapped, then ``site`` is None.\n\n" 
           ":param mapper:\n"
-          "  :class:`Structure` instance acting as the parent lattice.\n"
+          "    :class:`Structure` instance acting as the parent lattice.\n"
           ":param mappee:\n"
-          "  :class:`Structure` instance acting as the supercell.\n"
+          "    :class:`Structure` instance acting as the supercell.\n"
           ":param cmp:\n"
-          "  Can be set to a callable which shall take two atoms as input and return True "
-            "if their occupation (and other attributes) are equivalent.\n"
+          "    Can be set to a callable which shall take two atoms as input and\n"
+          "    return True if their occupation (and other attributes) are\n"
+          "    equivalent.\n"
           ":param tolerance:\n"
           "  Tolerance criteria when comparing distances.\n\n"
           ":returns: True if all sites in mappee where mapped to mapper.\n" },

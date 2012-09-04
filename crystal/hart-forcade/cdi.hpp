@@ -5,12 +5,12 @@ namespace LaDa
     extern "C" 
     { 
       //! Function to initialize a string atom.
-      static int smithtransform_init(SmithTransformData* _self, PyObject* _args, PyObject *_kwargs);
+      static int hftransform_init(HFTransformData* _self, PyObject* _args, PyObject *_kwargs);
     }
 
-    //! \brief Initializes a new smithtransform from input lattice unit-cell and supercell.
+    //! \brief Initializes a new hftransform from input lattice unit-cell and supercell.
     //! \details Performs initialization from c++ arguments.
-    bool smith_transform_init( SmithTransformData* _self, 
+    bool hf_transform_init( HFTransformData* _self, 
                                math::rMatrix3d const &_lattice,
                                math::rMatrix3d const &_supercell )
     {
@@ -24,7 +24,7 @@ namespace LaDa
         LADA_PYERROR(ValueError, "Supercell is singular.");
         return false;
       }
-      math::iMatrix3d left, right, smith;
+      math::iMatrix3d left, right, hf;
       const math::rMatrix3d inv_lat( !_lattice );
       const math::rMatrix3d inv_lat_cell( inv_lat * _supercell );
       math::iMatrix3d int_cell;
@@ -40,33 +40,33 @@ namespace LaDa
         }
       try
       { 
-        math::smith_normal_form( smith, left, int_cell, right );
+        math::smith_normal_form( hf, left, int_cell, right );
         _self->transform = left.cast<types::t_real>() * (!_lattice);
-        _self->quotient = smith.diagonal();
+        _self->quotient = hf.diagonal();
         return true;
       }
       catch(error::internal &_e)
       {
-        LADA_PYERROR(InternalError, "SmithTransform: Could not create smith normal form.");
+        LADA_PYERROR(InternalError, "HFTransform: Could not create smith normal form.");
       }
       catch(std::exception &_e)
       {
-        LADA_PYERROR_FORMAT(InternalError, "SmithTransform: Caught c++ exception %s.", _e.what());
+        LADA_PYERROR_FORMAT(InternalError, "HFTransform: Caught c++ exception %s.", _e.what());
       }
       catch(...)
       {
-        LADA_PYERROR(InternalError, "SmithTransform: Caught unknown c++ exception.");
+        LADA_PYERROR(InternalError, "HFTransform: Caught unknown c++ exception.");
       }
       return false;
     }
   
     // Function to initialize an atom.
-    static int smithtransform_init(SmithTransformData* _self, PyObject* _args, PyObject *_kwargs)
+    static int hftransform_init(HFTransformData* _self, PyObject* _args, PyObject *_kwargs)
     {
       PyObject *lattice = NULL;
       PyObject *supercell = NULL;
       static char *kwlist[] = { const_cast<char*>("unitcell"), const_cast<char*>("supercell"), NULL };
-      if(not PyArg_ParseTupleAndKeywords( _args, _kwargs, "OO:SmithTransfrom", kwlist,
+      if(not PyArg_ParseTupleAndKeywords( _args, _kwargs, "OO:HFTransfrom", kwlist,
                                           &lattice, &supercell ) )
         return -1;
       math::rMatrix3d cell, bigcell;
@@ -75,7 +75,7 @@ namespace LaDa
       if(PyStructure_Check(supercell)) bigcell = ((StructureData*)supercell)->cell;
       else if(not python::convert_to_matrix(supercell, bigcell)){ std::cout << "Err 1\n"; return -1; }
       
-      return smith_transform_init(_self, cell, bigcell) ? 0: -1;
+      return hf_transform_init(_self, cell, bigcell) ? 0: -1;
     }
   }
 }

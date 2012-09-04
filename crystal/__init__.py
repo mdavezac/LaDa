@@ -1,11 +1,12 @@
 """ Contains basic data type and methods for crystal structures. """
 __docformat__ = "restructuredtext en"
-__all__ = [ 'Structure', 'Atom', 'SmithTransform', 'zero_centered', 'into_voronoi',
+__all__ = [ 'Structure', 'Atom', 'HFTransform', 'zero_centered', 'into_voronoi',
             'into_cell', 'supercell', 'primitive', 'is_primitive', 'space_group',
             'transform', 'periodic_dnc', 'neighbors', 
             'coordination_shells', 'splitconfigs', 'vasp_ordered', 'layer_iterator',
-            'equivalence_iterator', 'shell_iterator', 'specieset', 'map_sites' ]
-from cppwrappers import Structure, Atom, SmithTransform, zero_centered, into_voronoi, \
+            'equivalence_iterator', 'shell_iterator', 'specieset', 'map_sites',
+            'which_site' ]
+from cppwrappers import Structure, Atom, HFTransform, zero_centered, into_voronoi,    \
                         into_cell, supercell, primitive, is_primitive, space_group,   \
                         transform, periodic_dnc, neighbors, coordination_shells,      \
                         splitconfigs, map_sites
@@ -92,7 +93,8 @@ def layer_iterator(structure, direction, tolerance=1e-12):
     yield inner_layer_iterator ()
 
 
-def equivalence_iterator(structure, operations = None, tolerance=1e-6):
+def equivalence_iterator( structure, operations=None,                          \
+                          tolerance=1e-6, splitocc=None ):
   """ Yields iterators over atoms equivalent via space group operations.
   
       Only check that the position are equivalent. Does not check that the
@@ -106,8 +108,16 @@ def equivalence_iterator(structure, operations = None, tolerance=1e-6):
           rotation and the lower block a translation. The translation is
           applied *after* the rotation. If None, the operations are obtained
           using:class:`space_group`.
-      :param tolerance:
+      :param float tolerance:
           Two positions closer than ``tolerance`` are considered equivalent.
+      :param callable splitocc:
+          Function to split two sites according to something other than
+          geometry. Generally, this would be occupation and/or magnetic state.
+          It is a callable taking two :py:class:`cppwrappers.Atom` and
+          returning True or False depending on whether they are equivalent.
+          It should be transitive and symmetric, otherwise results will be
+          undetermined.  If None, then splitting occurs only according to
+          geometry.
       
       :returns: Yields iterators over atoms linked by space-group operations.
   """
@@ -123,16 +133,26 @@ def equivalence_iterator(structure, operations = None, tolerance=1e-6):
     equivs = [i]
     if len(atoms): 
       for op in operations:
-        others = into_cell(array([u[1].pos for u in atoms]),     \
+        others = into_cell(array([u[1].pos for u in atoms]),                   \
                  structure.cell, dot(op[:3], atom.pos)) + op[3]
         others = [i for i, pos in enumerate(others) if norm(pos) < tolerance]
         for index in others:
           i, pos = atoms.pop(index)
           equivs.append(i)
-    def inner_equivalence_iterator():
-      """ Iterates over equivalent atoms in a structure. """
-      for i in equivs: yield structure[i]
-    yield inner_equivalence_iterator()
+    if splitocc == None: yield equivs
+    else: 
+      results = []
+      for u in equivs: 
+        if len(results) == 0: results.append(equivs)
+        else:
+          found = False
+          for group in results:
+            if splitocc(group[0], u):
+              group.append(u)
+              found = True
+              break
+          if not found: results.append([u])
+      for u in results: yield u
 
 def shell_iterator(structure, center, direction, thickness=0.05):
   """ Iterates over cylindrical shells of atoms.
@@ -174,3 +194,22 @@ def shell_iterator(structure, center, direction, thickness=0.05):
       for index in layer: yield structure[index]
     yield inner_layer_iterator()
 
+def which_site(atom, lattice, invcell=None, tolerance=1e-8):
+  """ Index of periodically equivalent atom. 
+
+
+      :param atom: 
+        :py:class:`~cppwrappers.Atom` for which to find periodic equivalent.
+      :param lattice:
+        :py:class:`~cppwrappers.Structure` defining the periodicity.
+      :type lattice: :py:class:`~cppwrappers.Structure` or matrix
+
+      :return: index in list of atoms, or -1 if not found.
+  """
+  from numpy.linalg import inv
+  from .cppwrappers import are_periodic_images as api
+  if invcell is None: invcell = inv(lattice.cell)
+  pos = getattr(atom, 'pos', atom)
+  for i, site in enumerate(lattice):
+    if api(pos, site.pos, invcell, tolerance): return i
+  return -1
