@@ -32,7 +32,41 @@ def specie_name(specie):
   return specie
 
 class Shell(object):
-  """ Defines a gaussian basis set for a specific orbital shell. """
+  """ Defines a general gaussian basis set for a specific orbital shell. 
+  
+      This class encodes a set of basis functions as follows.
+
+      .. code-block:: python
+        
+         Shell('s', a0=[16120.0,  0.001959],
+                    a1=[ 2426.0,  0.01493], 
+                    a2=[  553.9,  0.07285],
+                    a3=[  156.3,  0.2461], 
+                    a4=[   50.07, 0.4859],
+                    a5=[   17.02, 0.325], charge=0.0) 
+      
+      :param str type: 
+         The first argument can be 's', 'p', 'd', or 'sp' and defines the
+         channel for the set of orbitals. 
+      
+      :param float charge:
+          Number of electrons assigned to this orbital at the start of the
+          calculation. It should not be greater than the number of electrons
+          that particular orbital channel can accomodate. For 's' it defaults
+          to 2.0, for 'p' to 6, for 'd' to 10, and for 'sp' to 8.
+
+      :param a0:
+          First set of paramaters. For 's', 'p', 'd' channels, this should be a
+          sequence of two floats, where the first float is the exponent of the
+          gaussian and the second the contraction coefficient.
+          In the case of 'sp' orbitals, it should be a sequence of three
+          floats, where the first is the common exponent, and the second and
+          third are the contraction coefficients for 's' and 'p' orbitals
+          respectively.
+
+      :param aN: 
+          N-th set of orbital parameters.
+  """
   def __init__(self, type='s', charge=None, **kwargs):
     """ Creates a gaussian basis set. 
     
@@ -268,7 +302,57 @@ class Ghosts(VariableListKeyword):
                             '``[integers], True or False``.')
 
 class BasisSet(AttrBlock):
-  """ Basis set block. """
+  """ Basis set block.
+  
+  
+      Sub-block defining the basis set of the CRYSTAL_ calculation. In
+      practice, it is composed of a dictionary which holds the description of
+      each specie-dependent sets of guassians, and of keyword parameters, such
+      as :py:attr:`ghosts`.
+
+      Currently, only the general basis sets have been implemented, via the
+      :py:class:`Shell`. The input looks as follows:
+
+      .. code-block:: python
+
+        functional.basis['Si'] = [ Shell('s', a0=[16120.0,  0.001959],
+                                              a1=[ 2426.0,  0.01493], 
+                                              a2=[  553.9,  0.07285],
+                                              a3=[  156.3,  0.2461], 
+                                              a4=[   50.07, 0.4859],
+                                              a5=[   17.02, 0.325]),
+                                   Shell('sp', a0=[292.7,   -0.002781, 0.004438],
+                                               a1=[ 69.87,  -0.03571,  0.03267],
+                                               a2=[ 22.34,  -0.115,    0.1347],
+                                               a3=[  8.15,   0.09356,  0.3287],
+                                               a4=[  3.135,  0.603,    0.4496]), 
+                                   Shell('sp', 4.0, a0=[1.22, 1.0, 1.0]),
+                                   Shell('sp', 0.0, a0=[0.55, 1.0, 1.0]),
+                                   Shell('sp', 0.0, a0=[0.27, 1.0, 1.0]) ]
+
+         functional.basis.atomsymm = True
+
+      There are few moving parts to the code above.
+      
+      *Indexing*: The basis set of each atomic function can be accessed
+      *equivalently* via its atomic symbol ('Si'), its name ('Silicon', first
+      letter capitalized), or its atomic number. To create basis-sets with
+      numbers greater than 100, then one should use the integer format only
+      (e.g.  201, 301, ...) In practice, the indexing codes for same
+      information as the first record of a basis set description.
+
+      *List  of orbitals*: Each item of the list is a single set of orbitals.
+      At present, only the general basis set has been implemented. The full
+      description is given in :py:class:`Shell`.
+
+      *Usage and keywords*:Unlike CRYSTAL_, any number of species can be
+      defined. Which should actually enter the input is determined at run-time.
+      This makes it somewhat easier to define functionals for a whole set of
+      calculations.  Finally, other parameters from the basis-block are defined
+      simply as attributes (see last line of code above). As with other
+      input-blocks, additional keywords can be defined via
+      :py:meth:`add_keyword`.
+  """
   __ui_name__ = 'basis'
   """ Name used when printing user-friendly repr. """
   def __init__(self):
@@ -276,19 +360,47 @@ class BasisSet(AttrBlock):
     from .input import BoolKeyword
     super(BasisSet, self).__init__()
     self._functions = {}
-    """ Dictionary holding basis functions """
+    """ Dictionary holding basis functions. """
     self.atomsymm = BoolKeyword()
-    """ Prints point symmetry for each atomic position """
+    """ Prints point symmetry for each atomic position. """
     self.symmops  = BoolKeyword()
-    """ Prints point symmetry operators """
+    """ Prints point symmetry operators/ """
     self.charged  = BoolKeyword()
-    """ Allow charged system """
+    """ Allows charged system. """
     self.noprint  = BoolKeyword()
-    """ Disable basis set printing """
+    """ Disable basis set printing. """
     self.paramprt = BoolKeyword()
-    """ Print code dimensions parameters """
+    """ Print code dimensions parameters. """
     self.ghosts   = Ghosts()
-    """ Remove atoms while keeping basis functions. """
+    """ Removes atoms but keeps basis functions. 
+    
+        This keyword should be in the basis subsection of the input.
+        In practice, it can be set as follows:
+    
+        >>> functional.basis.ghosts = [1, 3, 5], False
+    
+        The second item means that symmetries are *kept*.
+        This results in the following crystal input:
+    
+          | KEEPSYMM
+          | GHOSTS
+          | 3
+          | 1 3 5
+    
+        The first item in the tuple is a sequence of atomic lables (e.g.
+        integers). The second is whether or not to break symmetries. It is True
+        by default. In the above, symmetries are kept. Hence atoms equivalent
+        those explicitely given are also removed.
+    
+        The two attributes can also be obtained and set using
+        :py:attr:`~Ghosts.value` and :py:attr:`~Ghosts.breaksym`:
+    
+        >>> functional.basis.ghosts.breaksym
+        True
+        >>> functional.basis.ghosts.value
+        [1, 3, 5], 
+    
+    """
 
   @property
   def raw(self):
@@ -463,7 +575,10 @@ class BasisSet(AttrBlock):
     """ Add specie using CRYSTAL string input.
     
         Just a convenience function to quickly add species by copy/pasting
-        crystal input.
+        crystal input. 
+
+        :param str string: 
+           Full CRYSTAL_ input for an atomic specie.
     """
     a = BasisSet()
     try: a.raw = string

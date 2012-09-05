@@ -64,5 +64,21 @@ CRYSTAL_delpatterns = ['core', 'ERROR.*']
 crystal_program ='crystal'
 """ Path to crystal executable. """
 
+def crystal_program(self, structure, comm=None):
+  """ Path to serial or mpi or MPP crystal program version. 
+  
+      If comm is None, then returns the path to the serial CRYSTAL_ program.
+      Otherwise, if :py:attr:`dftcrystal.Functional.mpp
+      <lada.dftcrystal.electronic.Electronic.mpp>` is
+      True, then returns the path to the MPP version. If that is False, then
+      returns the path to the MPI version.
+  """
+  ser = 'crystal'
+  mpi = 'Pcrystal'
+  mpp = 'MPPcrystal'
+  if comm is None: return ser
+  if self.mpp is True: return mpp
+  return mpi
+
 crystal_inplace = True
 """ Wether to perform calculation in-place or in a tmpdir. """

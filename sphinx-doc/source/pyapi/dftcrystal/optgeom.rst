@@ -1,12 +1,54 @@
 Geometry optimization block
-***************************
+---------------------------
 .. currentmodule:: lada.dftcrystal.optgeom
 
 .. autoclass:: OptGeom
    :show-inheritance:
    :members:
    :inherited-members:
-   :exclude-members: fulloptg, cellonly, itatocell, interdun
+   :exclude-members: fulloptg, cellonly, itatocell, interdun, add_keyword,
+                     read_input, output_map, bhor
+
+   .. method:: add_keyword(name, value=None)
+
+      Creates a new parameter. The parameter will appear in the input within
+      the ``OPTGEOM`` block. If ``value`` is ``None`` or True, then it will
+      result in the following input:
+
+        | OPTGEOM
+        | NAME
+        | END OPTGEOM
+      
+      The name is automatically in capital letters. Other keywords from the
+      block were removed for clarity.
+      If `value` is a string, then it is printed as is:
+
+      >>> functional.optgeom.add_keyword('hello')
+      >>> functional.optgeom.hello = "This\nis\na string"
+
+      The above will create the formatted output:
+
+        | OPTGEOM
+        | HELLO
+        | THIS
+        | IS
+        | A STRING
+        | END OPTGEOM
+
+      By formatting a string, any input, however complex, can be given.
+      However, simple cases such as an integer, are handled sensibly:
+
+      >>> functional.optgeom.hello = 2*5
+
+        | OPTGEOM
+        | HELLO
+        | 10
+        | END OPTGEOM
+
+      Floating point numbers, and mixed lists of integers, floating points, and
+      strings are also handled sensibly. 
+
+      This function makes it easy to add new keywords to the ``OPTGEOM`` block.
 
    .. attribute:: fulloptg
 
@@ -66,21 +108,7 @@ Geometry optimization block
   
       Bhor radius, defined as in CRYSTAL_, 0.5291772083 angstrom.
 
-
-.. autoclass:: GeometryOpt
-   :show-inheritance:
-   :members:
-   :exclude-members: keyword
-
-   .. attribute:: keyword
-
-      CRYSTAL_ keyword this instance corresponds to.
-
 .. autoclass:: ExclAttrBlock
    :show-inheritance:
    :members:
    :exclude-members: keyword
-   
-
-
-.. _CRYSTAL: http://www.crystal.unito.it/

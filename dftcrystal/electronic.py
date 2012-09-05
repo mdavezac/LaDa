@@ -5,57 +5,7 @@ from ..tools.input import TypedKeyword, BaseKeyword
 from quantities import UnitQuantity, hartree
 
 class Shrink(BaseKeyword):
-  """ k-point description -- SHRINK
-  
-      The IS (or IS1, IS2, IS3) and ISP keywords are mapped to
-      :py:attr:`~Shrink.mp` and :py:att:`~Shrink.gallat`. 
-
-      They can be used as follows::
-
-        functional.shrink.mp = 5
-        functional.shrink.gallat = 10
-
-      This will map IS to 5 and ISP to 10.
-      ISP automatically set to equal IS (or IS1) when :py:attr:`~Shrink.gallat`
-      is set to None::
-
-        functional.shrink.mp = 10
-        functional.shrink.gallat = None
-
-      This will print in the CRYSTAL input:
-
-        | SHRINK
-        | 5 5
-
-      Finally, setting :py:attr:`~Shrink.mp` to a sequence of at most three
-      integers will set IS to 0 and IS1, IS2 (defaults to 1), and IS3 (defaults
-      to 1) to the relevant values::
-
-        functional.shrink.mp = [5, 6]
-        functional.shrink.gallat = None
-        
-      This will lead to the following input, where ISP defaulted automatically
-      to IS1:
-
-        | SHRINK
-        | 0 5
-        | 5 6 1
-
-
-      Another option it to set :py:attr:`~Shrink.mp` and
-      :py:attr:`~Shrink.gallat` directly::
-
-        functional.shrink = 8, 8
-
-      would result in the following ouput
-
-        | SHRINK
-        | 8 8
-
-      :py:attr:`~Shrink.mp` will be set to the first item. and
-      :py:attr:`~Shrink.gallat` to the second. There should always be two
-      items, unless setting to None.
-  """
+  """ Implements SHRINK parameter. """
   keyword = 'shrink'
   """ Crystal keyword. """
   def __init__(self, mp=1, gallat=None):
@@ -248,19 +198,7 @@ class LevShift(BaseKeyword):
     return '{0.__class__.__name__}({1})'.format(self, ', '.join(args))
 
 class GuessP(BoolKeyword):
-  """ Reads density matrix from disk.
-
-      If True *and* restart_ is not None, then copies crystal.f9 to
-      fort.20 in the working directory and adds GUESSP keyword to the input.
-
-      If True but restart_ is None or the file crystal.f9 does not exist, then
-      does nothing. This is not an error, however.
-
-      If False or None, does nothing. Since GuessP can lead to bizarre
-      problems, it is *False* by default.
-
-      .. _restart: :py:attr:`~lada.dftcrystal.functional.restart` 
-  """ 
+  """ Implements GuessP parameter. """
   keyword = 'guessp'
   def __init__(self, value=True):
     super(GuessP, self).__init__(value=value)
@@ -285,73 +223,207 @@ class Electronic(AttrBlock):
     from .hamiltonian import Dft
     super(Electronic, self).__init__()
     self.maxcycle = TypedKeyword(type=int)
-    """ Maximum number of electronic minimization steps """
+    """ Maximum number of electronic minimization steps.
+    
+        Should be None(default) or an integer. 
+    """
     self.tolinteg = TypedKeyword(type=[int]*5)
-    """ Integration truncation criteria """
+    """ Integration truncation criteria.
+    
+        Should be None(default) or a sequence of 5 integers.
+    """
     self.toldep   = TypedKeyword(type=int)
-    """ Density matrix convergence criteria """
+    """ Density matrix convergence criteria.
+    
+        Should be None(default) or an integer.
+    """
     self.tolpseud = TypedKeyword(type=int)
-    """ Pseudopotential truncation criteria """
+    """ Pseudopotential truncation criteria.
+    
+        Should be None(default) or an integer.
+    """
     self.toldee   = TypedKeyword(type=int)
-    """ Total energy convergence criteria """
+    """ Total energy convergence criteria.
+    
+        Should be None(default) or an integer.
+    """
     self.testpdim = BoolKeyword()
-    """ Stop after processing input and performin symmetry analysis """
+    """ Stop after processing input and performing symmetry analysis.
+    
+        Should be None(default), True, or False.
+    """
     self.test     = BoolKeyword()
-    """ Stop after printing ressource requirement """
+    """ Stop after printing ressource requirement.
+    
+        Should be None(default), True, or False.
+    """
     self.symadapt = BoolKeyword()
-    """ Symmetry adapted bloch wavefunctions """
+    """ Symmetry adapted bloch wavefunctions.
+    
+        Should be None(default), True, or False.
+    """
     self.savewf   = BoolKeyword()
-    """ Save wavefunctions to disk """
+    """ Save wavefunctions to disk.
+    
+        Should be None(default), True, or False.
+    """
     self.shrink   = Shrink()
-    """ k-point definition """
+    """ k-point description -- SHRINK
+    
+        The IS (or IS1, IS2, IS3) and ISP keywords are mapped to
+        :py:attr:`~Shrink.mp` and :py:attr:`~Shrink.gallat`. 
+    
+        They can be used as follows::
+    
+          functional.shrink.mp = 5
+          functional.shrink.gallat = 10
+    
+        This will map IS to 5 and ISP to 10.
+        ISP automatically set to equal IS (or IS1) when :py:attr:`~Shrink.gallat`
+        is set to None::
+    
+          functional.shrink.mp = 10
+          functional.shrink.gallat = None
+    
+        This will print in the CRYSTAL input:
+    
+          | SHRINK
+          | 5 5
+    
+        Finally, setting :py:attr:`~Shrink.mp` to a sequence of at most three
+        integers will set IS to 0 and IS1, IS2 (defaults to 1), and IS3 (defaults
+        to 1) to the relevant values::
+    
+          functional.shrink.mp = [5, 6]
+          functional.shrink.gallat = None
+          
+        This will lead to the following input, where ISP defaulted automatically
+        to IS1:
+    
+          | SHRINK
+          | 0 5
+          | 5 6 1
+    
+    
+        Another option it to set :py:attr:`~Shrink.mp` and
+        :py:attr:`~Shrink.gallat` directly::
+    
+          functional.shrink = 8, 8
+    
+        would result in the following ouput
+    
+          | SHRINK
+          | 8 8
+    
+        :py:attr:`~Shrink.mp` will be set to the first item. and
+        :py:attr:`~Shrink.gallat` to the second. There should always be two
+        items.
+    """
     self.fmixing  = TypedKeyword(type=int)
-    """ Fock mixing during electronic minimiztion """
+    """ Fock mixing during electronic minimiztion.
+    
+        Should be None(default) or an integer.
+    """
     self.levshift = LevShift()
-    """ Fock mixing during electronic minimiztion """
+    """ Artificial shift between the valence and conduction band.
+
+        Opens the gap between occupied and unoccupied bands for better
+        numerical behavior. It can be set as follows:
+
+        >>> functional.levshift = 5 * decihartree, False
+    
+        The first parameter is the amount by which to open the gap. It should
+        either an integer, or a signed energy quantity (see quantities_). In
+        the latter case, the input is converted to decihartree and rounded to
+        the nearest integer. 
+
+        The second parameter specifies whether to keep (True) or remove (False)
+        the shift after diagonalization.
+    """
     self.ppan     = BoolKeyword()
-    """ Mulliken population analysis """
+    """ Mulliken population analysis.
+    
+        Should None(default), True, or False.
+    """
     self.biposize = TypedKeyword(type=int)
-    """ Size of buffer for Coulomb integrals bipolar expansions """
+    """ Size of buffer for Coulomb integrals bipolar expansions.
+    
+        Should be None(default), True, or False.
+    """
     self.exchsize = TypedKeyword(type=int)
-    """ Size of buffer for exchange integrals bipolar expansions """
+    """ Size of buffer for exchange integrals bipolar expansions.
+    
+        Should be None(default), True, or False.
+    """
     self.scfdir   = BoolKeyword()
-    """ Whether to reevaluate integrals at each electronic step """
+    """ Whether to reevaluate integrals at each electronic step.
+    
+        Should be None(default), True, or False.
+    """
     self.poleordr = ChoiceKeyword(values=range(0, 7))
-    """ Coulomb intergrals pole truncation """
+    """ Coulomb intergrals pole truncation.
+    
+        Should be None(default), or an integer between 0 and 6 included.
+    """
     self.guessp   = GuessP(value=False)
     """ Reads density matrix from disk.
     
-        If True *and* restart_ is not None, then copies crystal.f9 to
-        fort.20 in the working directory and adds GUESSP keyword to the input.
+        - If True *and*
+          :py:attr:`~lada.dftcrystal.functional.Functional.restart` is not
+          None, then copies crystal.f9 to fort.20 in the working directory and
+          adds GUESSP keyword to the input.
     
-        If True but restart_ is None or the file crystal.f9 does not exist, then
-        does nothing. This is not an error, however.
+        - If True but :py:attr:`~lada.dftcrystal.functional.Functional.restart`
+          is None or the file crystal.f9 does not exist, then does nothing.
+          This is not an error, however.
     
-	If False or None, does nothing. Since GuessP can lead to bizarre
-        problems, it is *False* by default.
-    
-        .. _restart: :py:attr:`~lada.dftcrystal.functional.restart` 
+        - If False or None, does nothing. Since GuessP can lead to bizarre
+          problems, it is *False* by default.
     """ 
     self.dft      = Dft()
-    """ Holds definition of the DFT functional itself """
+    """ Holds definition of the DFT functional itself. """
     self.nofmwf   = BoolKeyword()
-    """ Whether to print formatted wavefunctions to disk. """
+    """ Whether to print formatted wavefunctions to disk.
+    
+        Should be None(default), True, or False.
+    """
     self.nobipola = BoolKeyword()
-    """ Whether to compute bielectronic integrals exactly. """
+    """ Whether to compute bielectronic integrals exactly.
+
+        Should be None(default), True, or False.
+    """
     self.nobipcou = BoolKeyword()
-    """ Whether to compute bielectronic Coulomb integrals exactly. """
+    """ Whether to compute bielectronic Coulomb integrals exactly.
+
+        Should be None(default), True, or False.
+    """
     self.nobipexc = BoolKeyword()
-    """ Whether to compute bielectronic exchange integrals exactly. """
+    """ Whether to compute bielectronic exchange integrals exactly.
+
+        Should be None(default), True, or False.
+    """
     self.nomondir = BoolKeyword()
     """ Whether store monoelectronic integrals to disk. 
     
         If True, the monoelctronic integrals are computed once at the start of
         the SCF calculation and re-read from disk at each geometric
-        optimization step.
+        optimization step. Should be None(default), True, or False.
     """
     self.nosymada = BoolKeyword()
-    """ Whether to not use symmetry adapted functions. """
+    """ Whether to not use symmetry adapted functions. 
+    
+        Should be None(default), True, or False.
+    """
     self.savewf   = BoolKeyword()
-    """ Whether to save wavefunctions at each step. """
+    """ Whether to save wavefunctions at each step. 
+    
+        Should be None(default), True, or False.
+    """
     self.mpp      = BoolKeyword(value=False)
-    """ Whether to use MPP or Pcrystal when running mpi. """
+    """ Whether to use MPP or Pcrystal when running mpi. 
+    
+        If True and more than one process is requested, switches to using
+        MPPcrystal as opposed to Pcrystal.
+        This only works under the assumption that
+        :py:data:`lada.crystal_program` is implemented correctly.
+    """

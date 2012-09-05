@@ -282,10 +282,7 @@ class Functional(object):
         object for the stored results are given.
 
         :param structure:  
-            :py:class:`~lada.crystal.Structure` structure to compute, *unless*
-            a CONTCAR already exists in ``outdir``, in which case this
-            parameter is ignored. (This feature can be disabled with the
-            keyword/attribute ``restart_from_contcar=False``).
+            :py:class:`~lada.crystal.Structure` structure to compute.
         :param outdir:
             Output directory where the results should be stored.  This
             directory will be checked for restart status, eg whether
@@ -341,11 +338,7 @@ class Functional(object):
       # figure out the program to launch.
       program = self.program if self.program is not None else crystal_program
       if hasattr(program, '__call__'):
-        from inspect import getargspec
-        args = getargspec(program)
-        if 'comm' not in args.args and args.kwargs is None:
-              program = program(self)
-        else: program = program(self, comm=comm)
+        program = program(self, structure, comm=comm)
 
       # now creates the process, with a callback when finished.
       onfinish = self.OnFinish(self, structure, workdir, outdir)

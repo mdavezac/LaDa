@@ -75,16 +75,18 @@ VASP
        a full path, or an executable within the environment's $PATH
        variable.
      - callable: The callable is invoked with a
-       :py:class:`~lada.vasp.functional.Vasp` instance as its first argument
-       and the structure upon which the calculation is performed as its second.
-       It should return a string, as described above.  In other words,
-       different vasp executables can be used depending on the type of
-       calculation and on the system.
+       :py:class:`~lada.vasp.functional.Vasp` instance as its first argument, 
+       the structure upon which the calculation is performed as its second, and
+       the communicator as its last.  It should return a string, as described
+       above. In other words, different vasp executables can be used depending
+       on the type of calculation and on the system.
 
        For instance, the following function chooses between a *normal* vasp and
-       vasp compiled for perturbative spin-orbit calculations::
+       vasp compiled for perturbative spin-orbit calculations:
 
-         def vasp_program(vasp, structure):
+       .. code-block:: python
+
+         def vasp_program(vasp, structure, comm):
            """ Path to the vasp executable.
            
                Returns a vasp compiled for spin-orbit if lsorbit is True.

@@ -907,7 +907,7 @@ class Vasp(AttrBlock):
     self.bringup(structure, outdir, comm=comm, overwrite=overwrite)
     # figures out what program to call.
     program = self.program if self.program is not None else vasp_program
-    if hasattr(program, '__call__'): program = program(self, structure)
+    if hasattr(program, '__call__'): program = program(self, structure, comm)
     # creates a process with a callback to bring-down environment once it is
     # done.
     def onfinish(process, error):  self.bringdown(outdir, structure)

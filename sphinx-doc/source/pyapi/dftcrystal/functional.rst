@@ -12,6 +12,17 @@ Functional class and attributes
                      OnFail, OnFinish
    :members:
 
+   Following the pattern of CRYSTAL_'s input, the parameters are separated into sub-blocs:
+
+   .. toctree::
+
+        Geometry optimization block <optgeom>
+
+        Basis block <basis> 
+
+        Computational and Hamiltonian parameters <comp>
+
+
    .. autoattribute:: Extract
 
    .. automethod:: __call__
@@ -57,6 +68,28 @@ Functional class and attributes
         print process.some_result # last process should be an extractor
 
    .. automethod:: add_keyword
+
+   .. attribute:: optgeom
+
+      Geometry relaxation parameters.
+
+      This is an instance of :py:class:`~lada.dftcrystal.optgeom.OptGeom`. Once
+      enabled with 
+
+      >>> functional.optgeom.enable = True
+
+      it will print out the geometry subblock into the input.
+      It controls the structural relaxation: 
+
+      >>> functional.optgeom.intredun = True
+      >>> functional.optgeom.maxcycle = 10
+
+      .. seealso:: 
+
+         :py:class:`~lada.dftcrystal.optgeom.OptGeom`,
+         :py:class:`~lada.dftcrystal.relax.Relax`
+
+   .. attribute:: basis
 
    .. attribute:: dft 
 

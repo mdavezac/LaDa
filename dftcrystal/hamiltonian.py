@@ -374,49 +374,115 @@ class GlobalGridKeyword(BaseKeyword):
     self.__set__(owner, True)
 
 class Dft(AttrBlock):
-  """ DFT attribute block. """ 
+  """ DFT attribute block. 
+  
+      Holds parameters relative to the Hamiltonian used in the calculation.
+      These parameters can be accessed indirectly in tha functional:
+
+      >>> functional.dft.b3lyp = True
+      >>> functional.dft.xxlgrid = True
+     
+      The above would set the Hamiltonian to the B3LYP exchange-correlation
+      functional and the integration grid to 64 fl.oz.
+  """ 
   keyword = 'DFT'
+  """ CRYSTAL keyword. """
   def __init__(self):
     """ Creates the DFT attribute block. """
     super(Dft, self).__init__()
     self.exchange = Exchange() 
-    """ Exchange functional. """
+    """ Exchange functional. 
+    
+        Name of the exchange functional to use.  It should be one of the
+        following: 'becke', 'lda', 'pbe', 'pbesol', 'pwgga', 'sogga', 'vbh',
+        'wcgga', or None(default).
+    """
     self.correlat = Correlation() 
-    """ Correlation functional. """
+    """ Correlation functional. 
+    
+        Name of the correlation functional to use. It can be one of the
+        following: 'lyp', 'p86', 'pbe', 'pbesol', 'pwgga', 'pwlsd', 'pz',
+        'vbh', 'wl', 'vwn', or None. 
+    """
     self.hybrid   = Hybrid()
-    """ Amount of exchange to add to functional. """
+    """ Amount of exchange to add to functional. 
+    
+        It should be a floating point or None.
+    """
     self.nonlocal = NonLocal()
-    """ Non-local weights on exchange-correlation. """
+    """ Non-local weights on exchange-correlation. 
+    
+        A tuple of two floating point which sets the weights of the non-local
+        part of the exchange (first) and of the correlations (second). It can
+        also be None.
+    """
     self.spin     = BoolKeyword(keyword='spin')
-    """ If True, then perform spin-polarized calculation. """
+    """ If True, then perform spin-polarized calculation. 
+    
+        It should be None(default), True, or False.
+    """
     self.b3lyp    = GlobalExc('b3lyp', ['becke', 'lyp', 20, 0.9, 0.81])
-    """ B3LYP global keyword. """
+    """ B3LYP global keyword.
+    
+        Sets :py:attr:`exchange`, :py:attr:`correlat`, :py:attr:`nonlocal`
+        correctly for this functional. Since it acts on/checks upon other
+        attributes, it can only be set to True.
+    """
     self.b3pw     = GlobalExc('b3pw', ['becke', 'pwgga', 20, 0.9, 0.81])
-    """ B3PW global keyword. """
+    """ B3PW global keyword.
+    
+        Sets :py:attr:`exchange`, :py:attr:`correlat`, :py:attr:`nonlocal`
+        correctly for this functional. Since it acts on/checks upon other
+        attributes, it can only be set to True.
+    """
     self.pbe0     = GlobalExc('pbe0', ['pbe', 'pbe', None, None, None])
-    """ B3PW global keyword. """
+    """ PBE0 global keyword. 
+    
+        Sets :py:attr:`exchange`, :py:attr:`correlat`, :py:attr:`nonlocal`
+        correctly for this functional. Since it acts on/checks upon other
+        attributes, it can only be set to True.
+    """
     self.soggaxc  = GlobalExc('soggaxc', ['sogga', 'pbe', None, None, None])
-    """ B3PW global keyword. """
+    """ SOGGAXC global keyword. 
+    
+        Sets :py:attr:`exchange`, :py:attr:`correlat`, :py:attr:`nonlocal`
+        correctly for this functional. Since it acts on/checks upon other
+        attributes, it can only be set to True.
+    """
     self.angular  = Angular()
-    """ Angular integration grid """
+    """ Angular integration grid.
+    
+        Contains two attributes ``intervals`` and ``levels`` which can be used
+        to set the angular grid.
+    """
     self.radial   = Radial()
-    """ Radial integration grid """
+    """ Radial integration grid.
+    
+        Contains two attributes ``intervals`` and ``nbpoints`` which can be used
+        to set the radial integration grid.
+    """
     self.lgrid    = GlobalGridKeyword(( [4], [75],
                                         [0.1667, 0.5, 0.9, 3.05, 9999.0], 
                                         [2, 6, 8, 13, 8] ))
-    """ Preset large integration grid """
+    """ Preset large integration grid. """
     self.xlgrid   = GlobalGridKeyword(( [4], [75],
                                         [0.1667, 0.5, 0.9, 3.5, 9999.0], 
                                         [2, 8, 12, 16, 12] ))
-    """ Preset extra large integration grid """
+    """ Preset extra large integration grid. """
     self.xxlgrid  = GlobalGridKeyword(( [4], [99],
                                         [0.1667, 0.5, 0.9, 3.5, 9999.0], 
                                         [6, 8, 14, 18, 14] ))
-    """ Preset extra extra large integration grid """
+    """ Preset extra extra large integration grid. """
     self.tollgrid = TypedKeyword(type=int)
-    """ DFT grid weight tolerance """
+    """ DFT grid weight tolerance.
+    
+        Should be None(default) or an integer.
+    """
     self.tolldens = TypedKeyword(type=int)
-    """ DFT density tolerance """
+    """ DFT density tolerance 
+
+        Should be None(default) or an integer.
+    """
 
   def __ui_repr__(self, imports, name=None, defaults=None, exclude=None):
     """ Creates user friendly representation. """

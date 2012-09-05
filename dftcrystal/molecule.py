@@ -3,7 +3,7 @@ __all__ = ['Molecule']
 from .input import GeomKeyword
 from ..tools.input import ListBlock, BaseKeyword
 class Molecule(ListBlock):
-  """ Molecule for the CRYSTAL code """
+  """ Base class for functional crystal structures for CRYSTAL. """
   keyword = 'molecule'
   def __init__(self, symmgroup=1, **kwargs):
     """ Creates a crystal following the CRYSTAL philosophy. """
@@ -152,6 +152,8 @@ class Molecule(ListBlock):
     """ Evaluates current structure. 
     
         Runs crystal to evaluate current structure.
+
+        :returns: a :py:class:`~lada.crystal.cppwrappers.Structure` instance.
     """
     from copy import deepcopy
     from tempfile import mkdtemp
@@ -191,7 +193,11 @@ class Molecule(ListBlock):
 
   @property
   def crystal_output(self):
-    """ Crystal output for the geometry alone. """
+    """ CRYSTAL program output. 
+    
+        This is a string which contains the CRYSTAL output from a geometry run.
+        Electronic calculations are not performed.
+    """
     from copy import deepcopy
     from tempfile import mkdtemp
     from shutil import rmtree
@@ -270,6 +276,6 @@ class Molecule(ListBlock):
     return deepcopy(self)
 
   def print_input(self, **kwargs):
-    """ Prints as CRYSTAL output. """
+    """ Returns CRYSTAL input. """
     from .input import print_input
     return print_input(self.output_map(**kwargs))
