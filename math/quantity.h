@@ -1,6 +1,7 @@
-#ifndef LADA_CRYSTAL_SCALE_H
-#define LADA_CRYSTAL_SCALE_H
+#ifndef LADA_CRYSTAL_QUANTITY_H
+#define LADA_CRYSTAL_QUANTITY_H
 
+#include "LaDaConfig.h"
 #include <Python.h>
 
 #include <iostream>
@@ -8,30 +9,30 @@
 #include <boost/python/errors.hpp>
 #include <opt/types.h>
 
-#include "object.h"
-#include "exceptions.h"
+#include <python/object.h>
+#include <python/exceptions.h>
 
 namespace LaDa
 {
-  namespace python
+  namespace math
   {
     //! \brief Wraps units from python package quantities.
-    class Quantity : public Object
+    class Quantity : public python::Object
     {
         //! Private, can't happen cause it would have to throw. 
-        Quantity(Object const &) {} 
+        Quantity(python::Object const &) {} 
       public:
         //! Acquires a python reference.
-        Quantity(PyObject* _in = NULL) : Object(_in) {}
+        Quantity(PyObject* _in = NULL) : python::Object(_in) {}
         //! \brief Sets quantity from given scale and units.
         //! \details Does not throw, but reference may be invalid after call.
-        Quantity(types::t_real _in, std::string const &_units) : Object()
+        Quantity(types::t_real _in, std::string const &_units) : python::Object()
         {
           try { set(_in, _units); }
           catch(...) { object_ = NULL; }
         }
         //! Copy construct.
-        Quantity(Quantity const &_in) : Object(_in) {}
+        Quantity(Quantity const &_in) : python::Object(_in) {}
 
         //! returns input in given units.
         types::t_real get(std::string const &_units = "");
@@ -39,13 +40,13 @@ namespace LaDa
         //! \details If input is a scale object, just change internal reference.
         //!          If it is an integer or float, then rescale while keeping to
         //!          the same units as currently held.
-        void reset(Object const &_in);
+        void reset(python::Object const &_in);
   
         //! \brief True if input is an instance of
         //!        quantities.untiquantity.UnitQuantity or subtype.
         //! \details Never throws after python exception. Clears python error and
         //!          returns false.
-        static bool isinstance(Object const &_in)
+        static bool isinstance(python::Object const &_in)
           { return Quantity::isinstance(_in.borrowed()); }
         //! \brief True if input is an instance of
         //!        quantities.untiquantity.UnitQuantity or subtype.
@@ -56,40 +57,37 @@ namespace LaDa
         //! \brief New reference to quantities.unitquantity.Unitquantity class.
         //! \throws error::ImportError when the class cannot be imported.
         //!         Does not clear the exception. 
-        static Object class_();
+        static python::Object class_();
         //! \returns tuple containing UnitQuantity and Quantity classes.
         //! \throws error::ImportError when the class cannot be imported.
         //!         Does not clear the exception. 
-        static Object classes_();
+        static python::Object classes_();
         //! \brief New reference to quantity module.
         //! \throws error::ImportError when the package cannot be imported.
         //!         Does not clear the  exception. 
-        static Object module();
+        static python::Object module();
 
         //! Imports object from quantities package.
-        static Object import(std::string const &_in);
+        static python::Object import(std::string const &_in);
         //! Imports object from quantities package.
-        static Object import(Object const &_in);
+        static python::Object import(python::Object const &_in);
 
       private:
         //! \brief Runs python code on current object
         //! \details The internal reference  is called self, whereas the input
         //!          object is called input if non null.
-        Object run_code_(std::string const &_code, Object const &_in);
-
+        python::Object run_code_(std::string const &_code, python::Object const &_in);
         //! \brief Runs python code on current object
         //! \details The internal reference  is called self.
-        Object run_code_(std::string const &_code);
-        
+        python::Object run_code_(std::string const &_code);
         //! Sets internal object to represent the input double in given units.
         void set(double _in, std::string const &_units);
     };
-
-    //! Converts python object to real.
-    //! \param[in] _in: Python object which can be a scalar array, a float, or
-    //!                 an integer. It can also be signed by a quantity.
-    //! \param[in] _units: Units to which the value should be converted if signed by a unit.                
-    //! \param[in] _default: Default value if NULL or None.
+    //! Converts an object to a real number. 
+    //! \param[in] _in: Can be a float, a long, a int, a scalar numpy array, or
+    //!                 a signed scalar array.
+    //! \param[in] _units: The units to which a signed array should be converted.
+    //! \param[in] _defaults: A default value if None or NULL is given.
     types::t_real convert_toreal(PyObject *_in, std::string const &_units, types::t_real _default);
   }
 }
