@@ -89,6 +89,11 @@ namespace LaDa
     //! \param[in] _units: The units to which a signed array should be converted.
     //! \param[in] _defaults: A default value if None or NULL is given.
     types::t_real convert_toreal(PyObject *_in, std::string const &_units, types::t_real _default);
+    //! Converts an object to a real number. 
+    //! \param[in] _in: Can be a float, a long, a int, a scalar numpy array, or
+    //!                 a signed scalar array.
+    //! \param[in] _units: The units to which a signed array should be converted.
+    types::t_real convert_toreal(PyObject *_in, std::string const &_units);
   }
 }
 #endif

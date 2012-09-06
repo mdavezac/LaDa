@@ -62,7 +62,7 @@ install(FILES ${PYLADA_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada)
 # target_link_libraries(pyerror ${Boost_PYTHON_LIBRARY})
 # set_target_properties(pyerror PROPERTIES PREFIX "")
 # set_target_properties(pyerror PROPERTIES OUTPUT_NAME error)
-set (EXTRA_FILES exceptions.h object.h quantity.h wrap_numpy.h wrap_numpy.h)
+set (EXTRA_FILES exceptions.h object.h wrap_numpy.h wrap_numpy.h)
 
 if(compile_tests OR compile_debug_tests)
   add_subdirectory(tests)

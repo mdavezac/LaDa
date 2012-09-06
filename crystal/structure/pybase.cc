@@ -9,7 +9,7 @@
 
 #include <python/exceptions.h>
 #include <python/wrap_numpy.h>
-#include <python/quantity.h>
+#include <math/quantity.h>
 
 #include "pybase.h"
 // structure getters/settters.

@@ -1,7 +1,7 @@
 #include "LaDaConfig.h"
 
 #include <Python.h>
-#include <numpy/arrayobject.h>
+// #include <numpy/arrayobject.h>
 #include <boost/exception/get_error_info.hpp>
 #include <boost/exception/diagnostic_information.hpp>
 
@@ -51,7 +51,7 @@ static PyMethodDef methods[] = {
 
 PyMODINIT_FUNC init_quantity(void) 
 {
-  import_array();
+ // import_array();
   {
     LaDa::python::Object o(PyImport_ImportModule("lada.error")); 
     if(not o) return;

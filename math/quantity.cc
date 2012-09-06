@@ -153,9 +153,13 @@ namespace LaDa
 
      types::t_real convert_toreal(PyObject *_in, std::string const &_units, types::t_real _default)
      {
+       if(_in == NULL or _in == Py_None) return _default;
+       return convert_toreal(_in, _units);
+     }
+     types::t_real convert_toreal(PyObject *_in, std::string const &_units)
+     {
        if(PyObject_HasAttrString(_in, "rescale"))
        {
-         std::cout << "THERE" << std::endl;
          char rescale_str[] = "rescale";
          char s_str[] = "s";
          python::Object rescaled 
@@ -167,7 +171,9 @@ namespace LaDa
          python::Object real = PyObject_CallMethod(magnitude.borrowed(), tolist_str, NULL); 
          if(not real) return 0;
          _in = real.borrowed();
-         std::cout << "HERE " << PyFloat_Check(_in) <<  std::endl;
+         if(PyInt_Check(_in) == 1)  return (types::t_real)PyInt_AS_LONG(_in);
+         if(PyLong_Check(_in) == 1) return (types::t_real)PyLong_AsLong(_in);
+         if(PyFloat_Check(_in) == 1) return PyFloat_AsDouble(_in);
        }
        else if(PyObject_HasAttrString(_in, "tolist"))
        {
@@ -176,10 +182,9 @@ namespace LaDa
          if(not real) return 0;
          _in = real.borrowed();
        }
-       else if(_in == NULL or _in == Py_None) return _default;
-       if(PyInt_Check(_in))  return (types::t_real)PyInt_AS_LONG(_in);
-       if(PyLong_Check(_in)) return (types::t_real)PyLong_AsLong(_in);
-       if(PyFloat_Check(_in)) return PyFloat_AsDouble(_in);
+       if(PyInt_Check(_in) == 1)  return (types::t_real)PyInt_AS_LONG(_in);
+       if(PyLong_Check(_in) == 1) return (types::t_real)PyLong_AsLong(_in);
+       if(PyFloat_Check(_in) == 1) return PyFloat_AsDouble(_in);
        
        LADA_PYERROR(TypeError, "Could not convert value to real.");
        return 0;
