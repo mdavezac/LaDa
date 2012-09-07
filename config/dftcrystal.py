@@ -64,7 +64,7 @@ CRYSTAL_delpatterns = ['core', 'ERROR.*']
 crystal_program ='crystal'
 """ Path to crystal executable. """
 
-def crystal_program(self, structure, comm=None):
+def crystal_program(self=None, structure=None, comm=None):
   """ Path to serial or mpi or MPP crystal program version. 
   
       If comm is None, then returns the path to the serial CRYSTAL_ program.
@@ -76,7 +76,7 @@ def crystal_program(self, structure, comm=None):
   ser = 'crystal'
   mpi = 'Pcrystal'
   mpp = 'MPPcrystal'
-  if comm is None: return ser
+  if self is None or comm is None: return ser
   if self.mpp is True: return mpp
   return mpi
 

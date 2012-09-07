@@ -174,7 +174,7 @@ class Molecule(ListBlock):
           file.write('{0}\n'.format(getattr(self, 'name', '')))
           file.write(this.print_input())
         # creates process and run it.
-        if hasattr(program, '__call__'): program = program(self)
+        if hasattr(program, '__call__'): program = program()
         process = Process( program, stdin='crystal.input',
                            outdir=tmpdir, stdout='crystal.out',
                            stderr='crystal.err', dompi=False )
