@@ -135,7 +135,8 @@ class Communicator(dict):
  
   def __del__(self): 
     """ Cleans up communicator. """
-    self.cleanup()
+    try: self.cleanup()
+    except: pass
  
   def cleanup(self):
     """ Removes temporary file. """
