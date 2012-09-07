@@ -350,7 +350,14 @@ class ExtractBase(object):
         # Then re-reads atoms, but in cartesian coordinates.
         for i in xrange(6): file.next()
         for atom in result:
-          atom.pos = array(file.next().split()[3:6], dtype='float64')
+	  # With MPPcrystal, sometimes crap from different processors gets in
+	  # the way of the output. This is a simple hack to avoid that issue.
+	  # Not safe.
+          for i in xrange(5):
+            try: atom.pos = array(file.next().split()[3:6], dtype='float64')
+            except ValueError:
+              if i == 5: raise
+            else: break
     except StopIteration: raise GrepError('Unexpected end of file')
 
     # adds more stuff
@@ -719,6 +726,8 @@ class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
     from os.path import exists, join
     if not exists(join(self.directory, self.STDOUT)): 
       return False
+    try: self.input_crystal
+    except: return False
     try: self.end_date
     except: 
       if self.optgeom_iterations is None: return False

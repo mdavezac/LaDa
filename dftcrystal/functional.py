@@ -257,9 +257,9 @@ class Functional(object):
           for line in out:
             if line not in lines: lines.append(line.rstrip().lstrip())
         with open('crystal.out', 'a') as out:
-          file.write('{0} {1} {0}\n'.format(header, 'ERRROR FILE'))
-          file.write('\n'.join(lines))
-          file.write('{0} END {1} {0}\n'.format(header, 'ERRROR FILE'))
+          out.write('{0} {1} {0}\n'.format(header, 'ERRROR FILE'))
+          out.write('\n'.join(lines))
+          out.write('{0} END {1} {0}\n'.format(header, 'ERRROR FILE'))
     
     if Extract(outdir).success and not samefile(outdir, workdir):
       rmtree(workdir)

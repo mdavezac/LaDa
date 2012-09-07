@@ -188,7 +188,9 @@ class IteratorProcess(Process):
      import sys, traceback
      exc_type, exc_value, exc_traceback = sys.exc_info()
      tb = traceback.format_tb(exc_traceback)
-     raise Fail('{0}: {1}\n{2}'.format(type(e), e, '\n'.join(tb)))
+     raise Fail( '{0}: {1}\nError occured in {3} with '                        \
+                 'the following traceback:\n{2}'                               \
+                 .format(type(e), e, '\n'.join(tb), self.outdir) )
 
   def _next(self, process=None):
     """ Launches next process. """
