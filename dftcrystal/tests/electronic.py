@@ -136,6 +136,151 @@ def test_levshift():
   except: pass
   else: raise Exception()
 
+def test_spinlock():
+  from collections import namedtuple
+  from pickle import loads, dumps
+  from lada.dftcrystal.electronic import SpinLock, Electronic
+
+  Crystal = namedtuple('Crystal', ['dft'])
+  Dft = namedtuple('Dft', ['spin'])
+  on, off = Crystal(Dft(True)), Crystal(Dft(False))
+  a = Electronic()
+  b = a._input['spinlock']
+  assert a.spinlock.nspin is None
+  assert a.spinlock.lock is None
+  assert b.output_map() is None
+  assert eval(repr(b), {'SpinLock': SpinLock}).output_map() is None
+  assert loads(dumps(b)).output_map() is None
+
+  a.spinlock = 5, False
+  assert a.spinlock[0] == 5
+  assert a.spinlock[1] is False
+  assert a.spinlock.nspin == 5
+  assert a.spinlock.lock is False
+  assert b.output_map(crystal=off) is None
+  assert len(b.output_map(crystal=on)) == 1
+  assert b.output_map(crystal=on).get('spinlock', 'a a') == '5 0' 
+  assert eval(repr(b), {'SpinLock': SpinLock}).output_map(crystal=on)['spinlock'] == '5 0'
+  assert eval(repr(b), {'SpinLock': SpinLock}).output_map(crystal=off) is None
+  assert loads(dumps(b)).output_map(crystal=on)['spinlock'] == '5 0'
+
+def test_atomspin():
+  from pickle import loads, dumps
+  from collections import namedtuple
+  from lada.dftcrystal.electronic import AtomSpin, Electronic
+  from lada.error import TypeError
+
+  Crystal = namedtuple('Crystal', ['dft'])
+  Dft = namedtuple('Dft', ['spin'])
+  on, off = Crystal(Dft(True)), Crystal(Dft(False))
+  a = Electronic()
+  b = a._input['atomspin']
+  assert a.atomspin.up is None
+  assert a.atomspin.down is None
+  assert a.atomspin.other is None
+  assert b.output_map(crystal=on) is None
+  assert b.output_map(crystal=off) is None
+
+  a.atomspin.up = [1, 3, 5]
+  assert a.atomspin.up == [1, 3, 5]
+  assert b.output_map(crystal=off) is None
+  assert 'atomspin' in b.output_map(crystal=on)
+  c = b.output_map(crystal=on)['atomspin'].split()
+  assert len(c) == 3*2+1
+  assert c[0] == '3'
+  assert all(u == '1' for u in c[2::2])
+  assert c[1::2] == ['1', '3', '5']
+  assert eval(repr(b), {'AtomSpin':AtomSpin}).output_map(crystal=on) \
+         == b.output_map(crystal=on)
+  assert loads(dumps(b)).output_map(crystal=on) \
+         == b.output_map(crystal=on)
+  c = AtomSpin()
+  c.read_input(b.output_map(crystal=on)['atomspin'])
+  assert repr(c) == repr(b)
+
+  a.atomspin.down = [2, 4, 6]
+  assert a.atomspin.down == [2, 4, 6]
+  assert b.output_map(crystal=off) is None
+  assert 'atomspin' in b.output_map(crystal=on)
+  c = b.output_map(crystal=on)['atomspin'].split()
+  assert len(c) == 6*2+1
+  assert c[0] == '6'
+  assert all(u == '1' for u in c[2::2][:3])
+  assert c[1::2][:3] == ['1', '3', '5']
+  assert all(u == '-1' for u in c[2::2][3:])
+  assert eval(repr(b), {'AtomSpin':AtomSpin}).output_map(crystal=on) \
+         == b.output_map(crystal=on)
+  assert loads(dumps(b)).output_map(crystal=on) \
+         == b.output_map(crystal=on)
+  assert c[1::2][3:] == ['2', '4', '6']
+  c = AtomSpin()
+  c.read_input(b.output_map(crystal=on)['atomspin'])
+  assert repr(c) == repr(b)
+
+  a.atomspin.other = [7, 8, 9]
+  assert a.atomspin.other == [7, 8, 9]
+  assert b.output_map(crystal=off) is None
+  assert 'atomspin' in b.output_map(crystal=on)
+  c = b.output_map(crystal=on)['atomspin'].split()
+  assert len(c) == 9*2+1
+  assert c[0] == '9'
+  assert all(u == '1' for u in c[2::2][:3])
+  assert c[1::2][:3] == ['1', '3', '5']
+  assert all(u == '-1' for u in c[2::2][3:6])
+  assert c[1::2][3:6] == ['2', '4', '6']
+  assert all(u == '0' for u in c[2::2][6:9])
+  assert c[1::2][6:9] == ['7', '8', '9']
+  assert eval(repr(b), {'AtomSpin':AtomSpin}).output_map(crystal=on) \
+         == b.output_map(crystal=on)
+  assert loads(dumps(b)).output_map(crystal=on) \
+         == b.output_map(crystal=on)
+  c = AtomSpin()
+  c.read_input(b.output_map(crystal=on)['atomspin'])
+  assert repr(c) == repr(b)
+
+  a.atomspin.up = None
+  c = b.output_map(crystal=on)['atomspin'].split()
+  assert len(c) == 6*2+1
+  assert c[0] == '6'
+  assert all(u == '-1' for u in c[2::2][:3])
+  assert c[1::2][:3] == ['2', '4', '6']
+  assert all(u == '0' for u in c[2::2][3:])
+  assert c[1::2][3:] == ['7', '8', '9']
+  assert eval(repr(b), {'AtomSpin':AtomSpin}).output_map(crystal=on) \
+         == b.output_map(crystal=on)
+  assert loads(dumps(b)).output_map(crystal=on) \
+         == b.output_map(crystal=on)
+  c = AtomSpin()
+  c.read_input(b.output_map(crystal=on)['atomspin'])
+  assert repr(c) == repr(b)
+  
+  a.atomspin.down = []
+  c = b.output_map(crystal=on)['atomspin'].split()
+  assert len(c) == 3*2+1
+  assert c[0] == '3'
+  assert all(u == '0' for u in c[2::2])
+  assert c[1::2] == ['7', '8', '9']
+  assert eval(repr(b), {'AtomSpin':AtomSpin}).output_map(crystal=on) \
+         == b.output_map(crystal=on)
+  assert loads(dumps(b)).output_map(crystal=on) \
+         == b.output_map(crystal=on)
+  c = AtomSpin()
+  c.read_input(b.output_map(crystal=on)['atomspin'])
+  assert c.output_map(crystal=on) == b.output_map(crystal=on)
+
+  try: a.atomspin.down = 'a'
+  except TypeError: pass
+  else: raise Exception()
+  try: a.atomspin.down = [0, 'a']
+  except TypeError: pass
+  else: raise Exception()
+  try: a.atomspin.down = 5
+  except TypeError: pass
+  else: raise Exception()
+
+
 if __name__ == '__main__': 
   test_shrink()
   test_levshift()
+  test_spinlock()
+  test_atomspin()
