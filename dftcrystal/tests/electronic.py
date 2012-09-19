@@ -147,22 +147,26 @@ def test_spinlock():
   a = Electronic()
   b = a._input['spinlock']
   assert a.spinlock.nspin is None
-  assert a.spinlock.lock is None
+  assert a.spinlock.ncycles is None
   assert b.output_map() is None
   assert eval(repr(b), {'SpinLock': SpinLock}).output_map() is None
-  assert loads(dumps(b)).output_map() is None
+  assert eval(repr(b), {'SpinLock': SpinLock}).nspin is None
+  assert eval(repr(b), {'SpinLock': SpinLock}).ncycles is None
+  assert repr(loads(dumps(b))) == repr(b)
 
-  a.spinlock = 5, False
+  a.spinlock = 5, 30
   assert a.spinlock[0] == 5
-  assert a.spinlock[1] is False
+  assert a.spinlock[1] == 30
   assert a.spinlock.nspin == 5
-  assert a.spinlock.lock is False
+  assert a.spinlock.ncycles == 30
   assert b.output_map(crystal=off) is None
   assert len(b.output_map(crystal=on)) == 1
-  assert b.output_map(crystal=on).get('spinlock', 'a a') == '5 0' 
-  assert eval(repr(b), {'SpinLock': SpinLock}).output_map(crystal=on)['spinlock'] == '5 0'
+  assert b.output_map(crystal=on).get('spinlock', 'a a') == '5 30' 
+  assert eval(repr(b), {'SpinLock': SpinLock}).output_map(crystal=on)['spinlock'] == '5 30'
   assert eval(repr(b), {'SpinLock': SpinLock}).output_map(crystal=off) is None
-  assert loads(dumps(b)).output_map(crystal=on)['spinlock'] == '5 0'
+  assert eval(repr(b), {'SpinLock': SpinLock}).nspin == 5
+  assert eval(repr(b), {'SpinLock': SpinLock}).ncycles == 30
+  assert repr(loads(dumps(b))) == repr(b)
 
 def test_atomspin():
   from pickle import loads, dumps

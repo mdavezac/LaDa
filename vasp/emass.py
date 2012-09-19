@@ -28,6 +28,8 @@ class Extract(ExtractDFT):
             Order up to which to compute taylor coefficients.
     """
     from os.path import dirname, exists, join
+    from ..misc import RelativePath
+    outcar = RelativePath(outcar).path
     if exists(join(outcar, 'reciprocal')):
       outcar = join(outcar, 'reciprocal')
     super(Extract, self).__init__(outcar, **kwargs)

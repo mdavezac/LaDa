@@ -132,7 +132,7 @@ def _set_list(name):
       for v in value: 
         try: int(v)
         except:
-          raise TypeError( 'Wrong type in list when setting SpinLock.{0}.'     \
+          raise TypeError( 'Wrong type in list when setting AtomSpin.{0}.'     \
                            'The list should be all integers.'.format(name) )
     setattr(this, '_' + name, value)
   return setme
@@ -213,11 +213,11 @@ class SpinLock(BaseKeyword):
   """ Implements SpinLock keyword. """
   keyword = 'spinlock'
   """ CRYSTAL input keyword. """
-  def __init__(self, nspin=None, lock=None):
+  def __init__(self, nspin=None, ncycles=None):
     """ Creates the LEVSHIFT keyword. """
     super(SpinLock, self).__init__()
     self.nspin = nspin
-    self.lock = lock
+    self.ncycles = ncycles
   @property
   def nspin(self): 
     return self._nspin
@@ -225,54 +225,57 @@ class SpinLock(BaseKeyword):
   def nspin(self, nspin):
     self._nspin = int(nspin) if nspin is not None else None
   @property
-  def lock(self): 
+  def ncycles(self): 
     """ Whether shift is kept after diagaonalization. """
-    return self._lock
-  @lock.setter
-  def lock(self, lock):
-    self._lock = lock == True if lock is not None else None
+    return self._ncycles
+  @ncycles.setter
+  def ncycles(self, ncycles):
+    self._ncycles = int(ncycles) if ncycles is not None else None
   def __set__(self, instance, value):
     """ Sets the value of this instance. """
     from ..error import ValueError
-    if value is None: self.nspin, self.lock = None, None; return
+    if value is None: self.nspin, self.ncycles = None, None; return
     if not hasattr(value, '__getitem__'): 
       raise ValueError('Incorrect input to spinlock: {0}.'.format(value))
     self.nspin = int(value[0])
-    self.lock = value[1]
+    self.ncycles = value[1]
   def __getitem__(self, index):
-    """ list [self.nspin, self.lock] """
+    """ list [self.nspin, self.ncycles] """
     from ..error import IndexError
     if index == 0: return self.nspin
-    elif index == 1 or index == -1: return self.lock
+    elif index == 1 or index == -1: return self.ncycles
     raise IndexError('Levshift can be indexed with 0, 1, or -1 only.')
   def __setitem__(self, index, value):
-    """ sets as list [self.nspin, self.lock] """
+    """ sets as list [self.nspin, self.ncycles] """
     from ..error import IndexError
     if index == 0: self.nspin = value
-    elif index == 1 or index == -1: self.lock = value
+    elif index == 1 or index == -1: self.ncycles = value
     else: raise IndexError('Levshift can be indexed with 0, 1, or -1 only.')
   def __len__(self): return 2
   @property
   def raw(self):
     """ CRYSTAL input as a string """
-    if self.nspin is None or self.lock is None: return ''
-    return '{0} {1}'.format(self.nspin, 1 if self.lock else 0)
+    if self.nspin is None or self.ncycles is None: return ''
+    return '{0} {1}'.format(self.nspin, self.ncycles)
   @raw.setter
   def raw(self, value):
     """ Sets instance from raw data """
     self.nspin = int(value.split()[0])
-    self.lock = int(value.split()[1])
+    self.ncycles = int(value.split()[1])
   def output_map(self, **kwargs):
-    if self.nspin is None or self.lock is None: return None
+    if self.nspin is None or self.ncycles is None: return None
     if kwargs['crystal'].dft.spin != True: return None
     return super(SpinLock, self).output_map(**kwargs)
   def __repr__(self):
     args = []
     if self.nspin is not None: args.append(str(self.nspin))
-    if self.lock is not None:
-      args.append( 'lock={0}'.format(self.lock) if len(args) == 0              \
-                   else str(self.lock) )
+    if self.ncycles is not None:
+      args.append( 'ncycles={0}'.format(self.ncycles) if len(args) == 0        \
+                   else str(self.ncycles) )
     return '{0.__class__.__name__}({1})'.format(self, ', '.join(args))
+class BetaLock(SpinLock):
+  keyword = 'betalock'
+  
 
 class LevShift(BaseKeyword):
   """ Implements LevShift keyword. """
@@ -589,18 +592,22 @@ class Electronic(AttrBlock):
         between the two spin channels, and the number of electronic
         minimization steps during which the lock is maintained.
 
-        >>> functional.spinlock.nspin = 2
-        >>> functional.spinlock.lock  = 30
+        >>> functional.spinlock.nspin   = 2
+        >>> functional.spinlock.ncycles = 30
 
         The above sets the :math:`\\alpha` and :math:`\\beta` occupations to
         :math:`\\frac{N+2}{2}` and  :math:`\\frac{N-2}{2}` respectively, for 30
-        iterations of the electronic structure minimization algorithm.
+        iterations of the electronic structure minimization algorithm. It
+        results in the input:
+
+          | SPINLOCK
+          | 2 30
 
         Alternatively, the same could be done with the 2-tuple syntax:
 
         >>> functional.spinlock = 2, 30
 
-        If either the occupation or the time-lock is None, then ``SPINLOCK`` is
+        If either the occupation or the cycle-lock is None, then ``SPINLOCK`` is
         *disabled*.
     """
     self.atomspin = AtomSpin()
@@ -639,4 +646,9 @@ class Electronic(AttrBlock):
         
           py:attr:`~lada.dftcrystal.functional.dft.spin` should be set to True
           for this parameter to take effect.
+    """
+    self.betalock = BetaLock()
+    """ Locks in the number of beta electrons. 
+
+        This tag presents the same user-interface as :py:attr:`spinlock`.
     """
