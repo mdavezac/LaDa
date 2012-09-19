@@ -2,8 +2,8 @@
 __docformat__ = "restructuredtext en"
 __all__ = ["Extract", "iter_emass", 'EMass', 'effective_mass']
 from .extract import Extract as ExtractDFT
-from ..functools.makeclass import makeclass, makefunc
-from ..functools import make_cached
+from ..tools.makeclass import makeclass, makefunc
+from ..tools import make_cached
 from .functional import Vasp
 
 class Extract(ExtractDFT):

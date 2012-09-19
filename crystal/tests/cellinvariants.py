@@ -1,7 +1,7 @@
 """ Checks that point group of cell is determined correctly. """
 def test(cell, numops):
   """ Test structure initialization. """
-  from numpy import all, abs, identity, dot, array
+  from numpy import all, abs, dot, array
   from numpy.linalg import inv, det
   from lada.crystal.cppwrappers import cell_invariants, Structure
   from lada.math import is_integer

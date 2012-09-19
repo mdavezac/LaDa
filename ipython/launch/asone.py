@@ -15,6 +15,7 @@ def launch(self, event, jobfolders):
 
   pbsargs = deepcopy(dict(default_comm))
   pbsargs.update(default_pbs)
+  pbsargs['ppn'] = event.ppn
   if not get_walltime(shell, event, pbsargs): return
   if not get_queues(shell, event, pbsargs): return
 

@@ -43,3 +43,14 @@ Iterators
 .. autofunction:: equivalence_iterator
 .. autofunction:: layer_iterator
 
+
+Reading and Writing
+~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: lada.crystal.read
+.. autofunction:: poscar
+.. autofunction:: castep
+
+.. currentmodule:: lada.crystal.write
+.. autofunction:: poscar
+.. autofunction:: castep

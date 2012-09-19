@@ -1,33 +1,13 @@
 """ Methods to parse CRYSTAL input. """
 __docformat__ = "restructuredtext en"
-__all__ = ['InputTree', 'parse']
+__all__ = ['parse']
 
-class InputTree(list):
-  __slots__ = ['raw']
-  def __init__(self):
-    super(InputTree, self).__init__()
-  def descend(self, *args):
-    if len(args) == 0: return self
-    name, args = args[0], args[1:]
-    for key, value in self: 
-      if name == key:
-        return value.descend(*args) if hasattr(value, 'descend') else value
-    self.append((name, InputTree()))
-    return self[-1][1].descend(*args)
-  def __getitem__(self, name):
-    if isinstance(name, str): 
-      for key, value in self: 
-        if name == key: return value
-    return super(InputTree, self).__getitem__(name)
-  def keys(self):
-    return [u[0] for u in self]
-    
-  
 def parse(path, needstarters=True):
   """ Reads crystal input. """
   from re import compile
   from ..misc import RelativePath
   from ..error import IOError
+  from ..tools.input import Tree
   from .. import CRYSTAL_input_blocks as blocks, CRYSTAL_geom_blocks as starters
   if isinstance(path, str): 
     if path.find('\n') == -1:
@@ -40,20 +20,22 @@ def parse(path, needstarters=True):
   keyword_re = compile('^(?:[A-Z](?!\s))')
 
   if needstarters: 
+    title = ""
     for i, line in enumerate(path):
       if len(line.split()) > 0 and line.split()[0] in starters: break
       title = line
+    if len(title) == 0: raise IOError('Could not find CRYSTAL input.')
     if len(line) == 0: raise IOError('Could not find CRYSTAL input.')
     elif line.split()[0] not in starters: 
       raise IOError('Could not find CRYSTAL input.')
     title = title.rstrip().lstrip()
     nesting = [title, line.split()[0]]
-    results = InputTree()
+    results = Tree()
     keyword = line.split()[0]
     raw = ''
   else: 
     nesting = []
-    results = InputTree()
+    results = Tree()
     keyword = None
     raw = ''
   # reads crystal input.
@@ -66,7 +48,7 @@ def parse(path, needstarters=True):
       current = results.descend(*nesting)
 
       # first of subblock
-      if len(nesting) and keyword == nesting[-1]: current.raw = raw
+      if len(nesting) and keyword == nesting[-1]: current.prefix = raw
       elif keyword is not None and keyword[:3] != 'END'                        \
            and keyword[:6] != 'STOP':
         current.append((keyword, raw)) 

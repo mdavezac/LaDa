@@ -72,6 +72,7 @@ def test_basis():
 
 def test_functional():
   from lada.dftcrystal import Functional, Shell
+  from lada.dftcrystal.input import print_input
   
   a = Functional()
   assert repr(a) == repr(loads(dumps(a)))
@@ -91,7 +92,7 @@ def test_functional():
   assert repr(Functional()) != repr(loads(dumps(a)))
   assert repr(a) == repr(loads(dumps(a)))
   b = loads(dumps(a))
-  assert a.print_input(crystal=a) == b.print_input(crystal=b)
+  assert print_input(a.output_map(crystal=a)) == print_input(b.output_map(crystal=b))
 
 if __name__ == '__main__':
   test_molecule()

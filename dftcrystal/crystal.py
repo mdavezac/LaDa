@@ -2,7 +2,118 @@ __docformat__ = "restructuredtext en"
 __all__ = ['Crystal']
 from .molecule import Molecule
 class Crystal(Molecule):
-  """ CRYSTAL-wise structure, e.g. functional approach. """
+  """ CRYSTAL-wise structure, e.g. functional approach. 
+
+      CRYSTAL_ proposes a functional_ approach to crystals, as opposed to the
+      imperative_ style used by LaDa. In practice, this means that CRYSTAL_
+      declares a chain of functions which acts upon an initial data and
+      transform it. The data is generally a space-group with a set of atomic
+      sites. The functions can be affine transformations on these sites,
+      additions and removals of sites, transformation upon the space-group, and
+      even strain relaxation.
+
+      In practice, both approaches can "do the same thing", and indeed both
+      CRYSTAL_ and LaDa provide similar functionalities, e.g. creating a
+      supercell from  a unit-cell. However, there are clear benefits from
+      allowing users to keep working the CRYSTAL_ way when working with
+      CRYSTAL_. 
+
+      This class provides a python wrapper around CRYSTAL_'s approach. It is
+      only a wrapper, in that it merely contains the data necessary to create a
+      CRYSTAL_ input file. It does not re-implement any of CRYSTAL_'s
+      algorithms. However, it does provides the ability to call CRYSTAL_ and
+      extract the results as a LaDa
+      :py:class:`~lada.crystal.cppwrappers.Structure` instance. In this way,
+      both approaches can be mixed, allowing for a complete integration of
+      CRYSTAL_ with python. At present, both the initial data and chain of
+      functions are represented and stored within the same :py:class:`Crystal`
+      instance. This is a bit sub-optimal. A better implementation would make
+      clear the separation bewteen initial data and functions. However, it is
+      less wordy.
+
+      The initial data upon which CRYSTAL_ applies its chain of functions is
+      defined using the :py:attr:`symmgroup`, :py:attr:`args`, and
+      :py:attr:`atoms`. The first references the space-group of the crystal,
+      the second defines the lattice parameters, and the last holds the
+      (initial) atomic sites.  :py:class:`Crystal` is also a list where each
+      item is an operation upon the initial crystal. 
+
+      In practice, the initial data is declared as follows:
+
+      >>> from lada.dftcrystal import Crystal
+      >>> crystal = Crystal(227, 5.43)                                        \\
+      ...                  .add_atom(0.125, 0.125, 0.125, "Si")
+
+      This declares the diamond silicon structure. The first argument is the
+      space-group, and the second the only required lattice parameter. If other
+      parameters were needed they would be listed directly ``Crystal(?, a, b,
+      c, alpha, beta, gamma)``. Only the parameters required for that
+      particular space-group should be listed.
+
+      The second line adds an atomic site to the initial structure.
+      :py:meth:`add_atom` returns an the :py:class:`Crystal` instance itself,
+      so that atomic site declarations can be chained:
+
+      >>> crystal = Crystal(...)                                              \\
+      ...           .add_atom(...)                                            \\
+      ...           .add_atom(...)                                            \\
+      ...           .add_atom(...)
+      
+      Only those atoms which are strictly inequivalent by symmetry operations
+      should be listed.
+
+      :py:class:`Crystal` instances function as lists of transformations which
+      are to be applied to the initial structure. The simplest way to add an
+      operation is to use the traditional CRYSTAL_ format:
+
+
+      >>> crystal = Crystal(227, 5.43)                                        \\
+      ...                  .add_atom(0.125, 0.125, 0.125, "Si")               \\
+      ...                  .append('supercel', '2 0 0 0 1 0 0 0 1')
+
+      Here we have created a supercell of diamond with two unit cell in the
+      (100) direction. The first string in :py:meth:`append` is the keyword and
+      the second string its input. Much as :py:meth:`add_atom`,
+      :py:meth:`append` returns the calling instance of :py:class:`Crystal` so
+      that calls can be chained into a single declarative expression.
+
+      A number of operations are implemented in a more pythonic manner. These
+      can be added to the chain of functions by calling :py:meth:`append` with
+      an operation instance as a the only argument.
+
+      >>> from lada.dftcrystal import Slabcut
+      >>> crystal.append( Slabcut(hkl=(1, 0, 0), isup=1, nl=3) )
+
+      :py:class:`~lada.dftcrystal.input.Slabcut` is an operation to create a
+      thin-film from a 3d bulk material. 
+
+      Finally, the whole  "data+functions" object can be evaluated with
+      :py:meth:`eval`. This will return a
+      :py:class:`~lada.crystal.cppwrappers.Structure` instance which can be
+      used with other LaDa functionalities. Internally, :py:meth:`eval` makes a
+      call to CRYSTAL_ and greps the output to construct the output structure.
+
+      :param symmgroup:
+         String or integer denoting the space-group.
+      :param args:
+         Lattice parameters :math:`a`, :math:`b`, :math:`c`, :math:`\\alpha`,
+         :math:`\\beta`, :math:`\\gamma`. In practice, these parameters are
+         listed as given in the third (or fourth) line of the input to
+         CRYSTAL_. Hence it should conform to the same syntax and the same
+         order.
+      :param shift: 
+         Optional. Non-standard shift of the origin. Should be a sequence of
+         three floats.
+
+      .. seealso::
+      
+         For operations, see :py:mod:`~lada.dftcrystal.geometry`.
+
+
+      .. _functional: http://en.wikipedia.org/wiki/Functional_programming
+      .. _imperative: http://en.wikipedia.org/wiki/Imperative_programming
+  
+  """
   keyword = 'crystal'
   """ CRYSTAL keyword. """
   def __init__(self, symmgroup=1, *args, **kwargs):
@@ -13,6 +124,7 @@ class Crystal(Molecule):
     self.params = list(args)
     """ Lattice parameters. """
     self.shift = shift
+    """ Non-standard shift of the origin. """
 
   @property
   def shift(self):

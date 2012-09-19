@@ -9,7 +9,8 @@
 #include <math/misc.h>
 #include <math/fuzzy.h>
 
-#include "smith/smith.h"
+#include "hart-forcade/hart-forcade.h"
+#include "structure/structure.h"
 #include "utilities.h"
 
 
@@ -37,7 +38,7 @@ namespace LaDa
           if(attr != "" and not result.pyattr_convert("name", "supercell of " + std::string(attr)) ) 
             PyErr_Clear();
         }
-        SmithTransform transform( _lattice.cell(), result.cell());
+        HFTransform transform( _lattice.cell(), result.cell());
         if(not transform) return Structure();;
       
         const math::rMatrix3d factor(transform.transform().inverse());

@@ -10,7 +10,6 @@ from _params import SpecialVaspParam, ExtraElectron, Algo, Precision, Ediff,\
                     EncutGW, System, Relaxation, Smearing, Lsorbit
 from ...misc import add_setter
 
-
 class Incar(object):
   """ Base class containing vasp input parameters.
 

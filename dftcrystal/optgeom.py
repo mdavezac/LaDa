@@ -1,6 +1,7 @@
-from input import AttrBlock, BoolKeyword, TypedKeyword
+from .input import AttrBlock, BoolKeyword
+from ..tools.input import BoolKeyword as BaseBoolKeyword, TypedKeyword
 
-class GeometryOpt(BoolKeyword):
+class GeometryOpt(BaseBoolKeyword):
   """ Geometry optimization keyword. 
 
       When set to True, makes sure that:
@@ -29,7 +30,7 @@ class GeometryOpt(BoolKeyword):
       if self.keyword != 'fulloptg':  instance.fulloptg  = False
       if self.keyword != 'cellonly':  instance.cellonly  = False
       if self.keyword != 'itatocell': instance.itatocell = False
-      if self.keyword != 'interdun':  instance.interdun  = False
+      if self.keyword != 'intredun':  instance.intredun  = False
       if self.keyword != 'fulloptg' and self.keyword != 'cellonly':
         instance.cvolopt = False
 
@@ -40,12 +41,24 @@ class CVolOpt(BoolKeyword):
   """
   keyword = 'cvolopt'
   """ Crystal input keyword """
-  def print_input(self, **kwargs):
+  def output_map(self, **kwargs):
     """ Only prints if FULLOPTG or CELLONLY exist. """
     optgeom = kwargs['crystal'].optgeom
     if optgeom.fulloptg == False and optgeom.cellonly == False:
       return None
-    return super(CVolOpt, self).print_input(**kwargs)
+    return super(CVolOpt, self).output_map(**kwargs)
+
+class FixCell(BoolKeyword):
+  """ Constant volume optimization keyword. 
+  
+      Only appears for INTREDUN relaxations.
+  """
+  keyword = 'fixcell'
+  """ Crystal input keyword """
+  def output_map(self, **kwargs):
+    optgeom = kwargs['crystal'].optgeom
+    if optgeom.intredun == False: return None
+    return super(FixCell, self).output_map(**kwargs)
 
 class MaxCycle(TypedKeyword):
   """ Maxcycle input.
@@ -61,7 +74,8 @@ class ExclAttrBlock(AttrBlock):
   """ An attribute block set up to exclude others. 
   
       Expects both "keyword" and "excludegroup" attributes (or class
-      attributes) to exist in derived instances.
+      attributes) to exist in derived instances. This class makes it convenient
+      to describe mutually exclusive blocks such as optgeom and freqcalc.
   """
   excludegroup = 'optgeom', 'freqcalc', 'anharm', 'confcnt', 'cphf',           \
                  'elastcon', 'eos'
@@ -96,18 +110,18 @@ class ExclAttrBlock(AttrBlock):
     self._parent = ref(instance)
     return self
 
-  def read_input(self, tree, owner=None):
+  def read_input(self, tree, owner=None, **kwargs):
     """ Reads from input. """
     if owner is not None:
       from weakref import ref
       self._parent = ref(owner)
     self.enabled = True
-    return super(ExclAttrBlock, self).read_input(tree, owner)
+    return super(ExclAttrBlock, self).read_input(tree, owner, **kwargs)
 
-  def print_input(self, **kwargs):
+  def output_map(self, **kwargs):
     """ Does not print if disabled. """
     if not self.enabled: return None
-    return super(ExclAttrBlock, self).print_input(**kwargs)
+    return super(ExclAttrBlock, self).output_map(**kwargs)
 
   def __getstate__(self):
     d = self.__dict__.copy()
@@ -129,17 +143,27 @@ class OptGeom(ExclAttrBlock):
       Defines the input block for geometry optimization. Geometry optimization
       must be explicitely enabled:
 
-      .. code-block:: python
-
-        functional.optgeom.enabled = True
+      >>> functional.optgeom.enabled = True
 
       It is disabled by default. When enabled, other sub-blocks within
       CRYSTAL_'s first input block are automatically disabled (e.g. ``freqcalc`` [*]_). 
+      The full set of geometry optimization parameters can be accessed by the
+      user within the :py:attr:`~lada.dftcrystal.functional.Functional.optgeom`
+      attribute of an :py:class:`~lada.dftcrystal.functional.Functional`
+      instance:
+
+      >>> functional.optgeom.fulloptg = True
+      >>> functional.optgeom.maxcycle = 300
+      >>> functional.optgeom.enabled  = True
+
+      The above would set the optimization method to ``FULLOPTG`` and the
+      number of geometry optimization to 300. The third line would enable the
+      block so that the geomtry optimization can happen.
 
       .. note::
 
         Inner keywords can be modified when the block is disabled. However, the
-        block will not appear until is is explicitely enabled.
+        block will not appear in the input until is is explicitely enabled.
 
       .. [*]
       
@@ -152,37 +176,96 @@ class OptGeom(ExclAttrBlock):
   """ CRYSTAL input keyword (class-attribute) """
   def __init__(self): 
     """ Creates an optimization block. """
-    from .input import QuantityKeyword
+    from ..tools.input import QuantityKeyword
     from quantities import UnitQuantity, hartree, angstrom
     super(OptGeom, self).__init__()
  
     self.maxcycle   = MaxCycle()
-    """ Maxium number of iterations in geometry optimization loop.
-    
-        It is expected to be an integer or None.
-        If changed from None or 0 to an integer greater than zero, and no
-        optimization method has yet been selected, set the optimization method
-        to fulloptg.
-    """
+    """ Maxium number of iterations in geometry optimization loop. """
     self.fulloptg   = GeometryOpt('fulloptg')
-    """ Full optimization """
+    """ Full optimization. 
+
+        Unless :py:attr:`cellonly` is True, this will optimize both cell
+        internal and cell external degrees of freedom. This option is not
+        compatible with other optimization methods. Setting it will disable
+        other optimization methods:
+    
+        >>> functional.optgeom.fulloptg = True
+        >>> functional.intredun  # disables intredun automatically.
+        False
+    """
     self.cellonly   = GeometryOpt('cellonly')
-    """ Cell-shape optimization only """
+    """ Cell-shape optimization only. 
+    
+        Constrains optimization to cell-external degrees of freedom only. The
+        fractional coordinates of the atomic sites are kept constant.
+    """
     self.itatocell  = GeometryOpt('itatocell')
-    """ Iterative cell-shape/atom optimization """
-    self.interdun   = GeometryOpt('interdun')
-    """ Constrained optimization """
+    """ Iterative cell-shape/atom optimization.
+    
+        Alternates between relaxing cell-internal and cell-external degrees of
+        freedom. This option is not compatible with other optimization methods.
+        Setting it to ``True`` auttomatically disables other optimization
+        methods.
+
+        >>> functional.optgeom.itatocell = True
+        >>> functional.fulloptg, functional.intredun 
+        False, False
+    """
+    self.intredun   = GeometryOpt('intredun')
+    """ Constrained optimization. 
+    
+        Relaxes the strain energy by optimizing a complete and redundant set of
+        chemically intuitive parameters, such as bond-length and bond-angles. 
+        This option is not compatible with other optimization methods.
+
+        >>> functional.optgeom.intredun = True
+        >>> functional.fulloptg, functional.itatocell 
+        False, False
+    """
     self.cvolopt    = CVolOpt()
-    """ Constant volume optimization """
+    """ Constant volume optimization keyword. 
+    
+        Only appears if FULLOPTG or CELLONLY exist.
+    """
+    self.fixcell    = FixCell()
+    """ Constant volume optimization keyword. 
+    
+        When used in conjunction with :py:attr:`intredun` optimization method,
+        keeps the cell-external degrees of freedom constant. Only appears for
+        :py:attr:`intredun` relaxations.
+    """
     self.toldee     = TypedKeyword('toldee', int)
+    """ Electronic structure minimization convergence criteria. 
+
+        The criteria is with respect to the total energy. It is logarithmic and
+        should be an integer: :math:`|\\Delta E| < 10^{-\\mathrm{toldee}}`. 
+    """
     self.toldeg     = TypedKeyword('toldeg', float)
+    """ Structural relaxation convergence criteria.
+
+        Convergence criteria for the root mean square gradient of the total energy
+        with respect to the displacements. Should be a floating point.
+    """ 
     self.toldex     = TypedKeyword('toldex', float)
+    """ Structural relaxation convergence criteria.
+
+        Convergence criteria as the root mean square of the displacements
+        during structural relaxation. Should be a floating point.
+    """
     bohr = UnitQuantity('crystal_bhor', 0.5291772083*angstrom, symbol='bhor')
     """ Bhor radius as defined by CRYSTAL """
     self.extpress   = QuantityKeyword(units=hartree/bohr**3)
-    """ Hydrostatic pressure in :math:`\\frac{\\text{hartree}}{\\text{bohr}^{3}}` """
+    """ Hydrostatic pressure in :math:`\\frac{\\text{hartree}}{\\text{bohr}^{3}}`.
+    
+        Sets the hydrostatic pressure for which an structural relaxation is
+        performed.
+    """
     self.extstress  = QuantityKeyword(units=hartree/bohr**3, shape=(3,3))
-    """ External stress in :math:`\\frac{\\text{hartree}}{\\text{bohr}^{3}}` """
+    """ External stress in :math:`\\frac{\\text{hartree}}{\\text{bohr}^{3}}`. 
+    
+        Sets the stress for which a structural relaxation is performed.
+    """
 
   def __ui_repr__(self, imports, name=None, defaults=None, exclude=None):
     """ User-friendly output. """

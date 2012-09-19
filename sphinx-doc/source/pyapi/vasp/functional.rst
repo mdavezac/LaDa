@@ -3,9 +3,13 @@ Vasp class
 .. automodule:: lada.vasp.functional
 .. autoclass:: Vasp
    :show-inheritance:
-   :members:
-   :inherited-members:
+   :exclude-members: iter, Extract, add_specie, bringup, bringdown,
+                     write_incar, write_kpoints
+   :members: 
 
-   .. include:: incar-attr.rst 
+   .. automethod:: iter
+   .. automethod:: __call__
+   .. automethod:: add_keyword
 
-   This class also exists directly within the :py:mod:`vasp <lada.vasp>` module.
+
+   .. autoattribute:: Extract

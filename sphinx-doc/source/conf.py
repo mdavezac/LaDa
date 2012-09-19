@@ -91,7 +91,7 @@ pygments_style = 'sphinx'
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'haiku'
+# html_theme = 'haiku'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -214,3 +214,15 @@ man_pages = [
     ('index', 'lada', u'LaDa Documentation',
      [u'Mayeul d\'Avezac'], 1)
 ]
+
+rst_epilog = """
+.. _scipy: http://www.scipy.org/
+.. _matplotlib: http://matplotlib.sourceforge.net/
+.. _ipython: http://ipython.org/
+.. _quantities: http://packages.python.org/quantities/index.html
+.. _VASP: http://www.vasp.at/
+.. _POSCAR: http://cms.mpi.univie.ac.at/wiki/index.php/POSCAR
+.. _KPOINTS: http://cms.mpi.univie.ac.at/wiki/index.php/KPOINTS
+.. _INCAR: http://cms.mpi.univie.ac.at/wiki/index.php/INCAR
+.. _CRYSTAL: http://www.crystal.unito.it/
+"""

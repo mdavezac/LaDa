@@ -1,5 +1,5 @@
 __docformat__ = "restructuredtext en"
-from ..functools import stateless, assign_attributes
+from ..tools import stateless, assign_attributes
 from .extract import Extract
 
 class Functional(object):
@@ -83,16 +83,16 @@ class Functional(object):
   def __getattr__(self, name):
     """ Pushes scf stuff into instance namespace. """
     from ..error import ValueError
-    if name in self.scf._crysinput: return getattr(self.scf, name)
+    if name in self.scf._input: return getattr(self.scf, name)
     raise ValueError('Unknown attribute {0}.'.format(name))
   def __setattr__(self, name, value):
     """ Pushes scf stuff into instance namespace. """
-    from .input import Keyword
-    if isinstance(value, Keyword): 
+    from ..tools.input import BaseKeyword
+    if isinstance(value, BaseKeyword): 
       if name in ['scf', 'basis', 'optgeom']:
         return super(Functional, self).__setattr__(name, value)
       setattr(self.scf, name, value)
-    elif name in self.scf._crysinput:
+    elif name in self.scf._input:
       setattr(self.scf, name, value)
     else: super(Functional, self).__setattr__(name, value)
   def __delattr__(self, name):
@@ -100,7 +100,7 @@ class Functional(object):
   def __dir__(self):
     """ List of attributes and members """
     return list( set(self.__dict__.iterkeys()) | set(dir(self.__class__))      \
-                 | set(self.scf._crysinput.iterkeys()) )
+                 | set(self.scf._input.iterkeys()) )
 
   def add_keyword(self, name, value=None):
     """ Passes on to :py:attr:`~Functional.scf` """
@@ -130,54 +130,51 @@ class Functional(object):
     if 'HAMSCF' in tree.keys():  
       self.scf.read_input(tree['HAMSCF'], owner=self)
 
-  def print_input(self, **kwargs):
+  def output_map(self, **kwargs):
     """ Dumps CRYSTAL input to string. """
+    from ..tools.input import Tree
 
-    # create optgeom part first, since it needs be inserted in the structure
-    # bit. Split along lines and remove empty lines at end.
-    # if empty, then make it empty.
-    optgeom = self.optgeom.print_input(**kwargs)
-    if optgeom is not None:
-      optgeom = optgeom.rstrip().split('\n')
-      while len(optgeom[-1].rstrip().lstrip()) == 0: optgeom.pop(-1)
-      if len(optgeom) == 2: optgeom = []
-    else: optgeom = []
+    if 'crystal' not in kwargs: kwargs['crystal'] = self
+    root = Tree()
+    inner = root
 
-    result = ''
     if 'structure' in kwargs:
       structure = kwargs['structure']
       # insert name of structure as title.
       if hasattr(structure, 'name'):
-        result += str(structure.name).rstrip().lstrip() + '\n'
+        inner = root.descend(structure.name.rstrip().lstrip())
       elif getattr(self, 'title', None) is not None:
-        result += str(self.title).rstrip().lstrip()
-      result = result.rstrip()
-      if len(result) == 0 or result[-1] != '\n': result += '\n'
-       
-      # figure out input of structure. remove empty lines.
-      lines = structure.print_input(**kwargs).split('\n')
-      while len(lines[-1].rstrip().lstrip()) == 0: lines.pop(-1)
-      # insert optgeom inside the geometry bit.
-      if len(optgeom) > 0: lines = lines[:-1] + optgeom + [lines[-1]]
-      # turn back into string.
-      result += '\n'.join(lines)
+        inner = root.descend(self.title.rstrip().lstrip())
+      else: inner = root.descend('')
+      
+      # Output map of the structure
+      smap = structure.output_map(**kwargs)
+      # To which we add the output map of optgeom
+      smap[0][1].update(self.optgeom.output_map(**kwargs))
+      # finally we add that to inner.
+      inner.update(smap)
     else: # no structures. Not a meaningful input, but whatever.
-      result += '\n'.join(optgeom)
+      title = getattr(self, 'title', '')
+      if title is None: title = ''
+      inner = root.descend(title.rstrip().lstrip())
+      inner.update(self.optgeom.output_map(**kwargs))
 
     # now add basis
-    result = result.rstrip()
-    if len(result): result += '\n'
-    result += self.basis.print_input(**kwargs)
+    inner['BASISSET'] = self.basis.output_map(**kwargs)
 
     # add scf block
-    result = result.rstrip()
-    if len(result): result += '\n'
-    result += self.scf.print_input(**kwargs)
-
+    inner.update(self.scf.output_map(**kwargs))
     # end input and return
-    result = result.rstrip()
-    if len(result): result += '\n'
-    return result + 'END\n'
+    return root
+
+  def print_input(self, **kwargs):
+    """ Prints input to string. """
+    from .input import print_input
+    map = self.output_map(**kwargs)
+    # Does not capitalize input.
+    result = map[0][0].rstrip().lstrip() + '\n'
+    # Otherwise, everything is standard.
+    return result + print_input(map[0][1]).rstrip() + '\nEND\n'
 
   def guess_workdir(self, outdir):
     """ Tries and guess working directory. """
@@ -225,11 +222,13 @@ class Functional(object):
         Cats input intO output.
 	Removes workdir if different from outdir **and** run was successfull.
     """
+    from itertools import chain
+    from os import remove
     from os.path import join, samefile
     from shutil import rmtree
     from glob import iglob
     from ..misc import copyfile, Changedir
-    from .. import CRYSTAL_filenames
+    from .. import CRYSTAL_filenames, CRYSTAL_delpatterns
 
     with Changedir(outdir) as cwd:
       for key, value in CRYSTAL_filenames.iteritems():
@@ -253,9 +252,22 @@ class Functional(object):
         with open('crystal.err', 'w') as out:
           for filename in iglob(join(workdir, 'ERROR.*')):
             with open(filename, 'r') as file: out.write(file.read() + '\n')
+        lines = []
+        with open('crystal.err', 'r') as out:
+          for line in out:
+            if line not in lines: lines.append(line.rstrip().lstrip())
+        with open('crystal.out', 'a') as out:
+          out.write('{0} {1} {0}\n'.format(header, 'ERRROR FILE'))
+          out.write('\n'.join(lines))
+          out.write('{0} END {1} {0}\n'.format(header, 'ERRROR FILE'))
     
     if Extract(outdir).success and not samefile(outdir, workdir):
       rmtree(workdir)
+    if samefile(outdir, workdir):
+      with Changedir(workdir) as cwd:
+        for filepath in chain(*[iglob(u) for u in CRYSTAL_delpatterns]):
+          try: remove(filepath)
+          except: pass
       
 
   
@@ -270,10 +282,7 @@ class Functional(object):
         object for the stored results are given.
 
         :param structure:  
-            :py:class:`~lada.crystal.Structure` structure to compute, *unless*
-            a CONTCAR already exists in ``outdir``, in which case this
-            parameter is ignored. (This feature can be disabled with the
-            keyword/attribute ``restart_from_contcar=False``).
+            :py:class:`~lada.crystal.Structure` structure to compute.
         :param outdir:
             Output directory where the results should be stored.  This
             directory will be checked for restart status, eg whether
@@ -329,19 +338,16 @@ class Functional(object):
       # figure out the program to launch.
       program = self.program if self.program is not None else crystal_program
       if hasattr(program, '__call__'):
-        from inspect import getargspec
-        args = getargspec(program)
-        if 'comm' not in args.args and args.kwargs is None:
-              program = program(self)
-        else: program = program(self, comm=comm)
+        program = program(self, structure, comm=comm)
 
       # now creates the process, with a callback when finished.
-      def onfinish(process, error): self.bringdown(structure, workdir, outdir)
+      onfinish = self.OnFinish(self, structure, workdir, outdir)
+      onfail   = self.OnFail(outdir)
       yield ProgramProcess( program, outdir=workdir, onfinish=onfinish,
                             stdout=None if dompi else 'crystal.out', 
                             stderr='crystal.out' if dompi else 'crystal.err',
                             stdin=None if dompi else 'crystal.d12', 
-                            dompi=dompi )
+                            dompi=dompi, onfail=onfail )
     # yields final extraction object.
     yield Extract(outdir)
 
@@ -364,12 +370,12 @@ class Functional(object):
  
   def __repr__(self, defaults=True, name=None):
     """ Returns representation of this instance """
-    from ..functools.uirepr import uirepr
+    from ..tools.uirepr import uirepr
     defaults = self.__class__() if defaults else None
     return uirepr(self, name=name, defaults=defaults)
 
   def __ui_repr__(self, imports, name=None, defaults=None, exclude=None):
-    from ..functools.uirepr import template_ui_repr
+    from ..tools.uirepr import template_ui_repr
 
     results = template_ui_repr(self, imports, name, defaults, ['scf'])
     if name is None:
@@ -392,3 +398,30 @@ class Functional(object):
   def copy(self): 
     from copy import deepcopy
     return deepcopy(self)
+
+  class OnFinish(object):
+    """ Called when a run finishes. 
+       
+	Makes sure files are copied and stuff is pasted at the end of a call to
+        CRYSTAL.
+    """
+    def __init__(self, this, *args):
+      self.this = this
+      self.args = args
+    def __call__(self, *args, **kwargs):
+      self.this.bringdown(*self.args)
+  class OnFail(object):
+    """ Checks whether CRYSTAL run succeeded.
+
+	Crystal reports an error when reaching maximum iteration without
+        converging. This is screws up hwo LaDa does things.
+    """
+    def __init__(self, outdir):
+      self.outdir = outdir
+    def __call__(self, process, error):
+      from ..process import Fail
+      try: success = Extract(self.outdir).success
+      except: success = False
+      if not success:
+        raise Fail( 'Crystal failed to run correctly.\n'                       \
+                    'It returned with error {0}.'.format(error) )

@@ -82,6 +82,139 @@ def test_general():
   b = eval(repr(a), {'Shell': Shell})
   assert all(abs(array(b.raw.split(), dtype='float64') - a_) < 1e-8)
 
+input = """
+CRYSTAL
+0 0 0
+136
+4.63909875  2.97938395
+2
+22 0.0 0.0 0.0
+8  3.061526467783E-01 3.061526467783E-01 0.0
+SLAB
+1 1 0
+2 9
+OPTGEOM
+MAXCYCLE
+10
+END
+END
+22 7
+0 0 8 2. 1.
+225338.0 0.000228
+32315.0 0.001929
+6883.61 0.011100
+1802.14 0.05
+543.063 0.17010
+187.549 0.369
+73.2133 0.4033
+30.3718 0.1445
+0 1 6 8. 1.
+554.042 -0.0059 0.0085
+132.525 -0.0683 0.0603
+43.6801 -0.1245 0.2124
+17.2243 0.2532 0.3902
+7.2248 0.6261 0.4097
+2.4117 0.282 0.2181
+0 1 4 8. 1.
+24.4975 0.0175 -0.0207
+11.4772 -0.2277 -0.0653
+4.4653 -0.7946 0.1919
+1.8904 1.0107 1.3778
+0 1 1 2. 1.
+0.8126 1.0 1.0
+0 1 1 0. 1.
+0.3297 1.0 1.0
+0 3 4 2. 1.
+16.2685 0.0675
+4.3719 0.2934
+1.4640 0.5658
+0.5485 0.5450
+0 3 1 0. 1.
+0.26 1.0
+8 5
+0 0 8 2. 1.
+8020.0 0.00108
+1338.0 0.00804
+255.4 0.05324
+69.22 0.1681
+23.90 0.3581
+9.264 0.3855
+3.851 0.1468
+1.212 0.0728
+0 1 4 6. 1.
+49.43 -0.00883 0.00958
+10.47 -0.0915 0.0696
+3.235 -0.0402 0.2065
+1.217 0.379 0.347
+0 1 1 0. 1.
+0.4567 1.0 1.0
+0 1 1 0. 1.
+0.1843 1.0 1.0
+0 3 1 0. 1.
+ 0.6 1.0
+1 3
+0 0 3 1. 1.
+18.7311370 0.03349460
+2.82539370 0.234726950
+0.640121700 0.813757330
+0 0 1 0. 1.
+0.16127780 1.0
+0 2 1 0. 1.
+1.1 1.0
+99 0
+BREAKSYM
+GHOSTS
+2
+1 2
+END
+DFT
+B3LYP
+END
+MAXCYCLE
+300
+END """
+
+def test_read_input():
+  from numpy import array, all
+  from lada.dftcrystal import Functional
+  from lada.dftcrystal.parse import parse
+  a = Functional()
+  parsed = parse(input)['']['BASISSET']
+  a.basis.read_input(parsed)
+  assert len(a.basis.ghosts) == 2
+  assert a.basis.ghosts[0] == 1
+  assert a.basis.ghosts[1] == 2
+  assert a.basis.ghosts.breaksym is True
+  assert len(a.basis) == 3
+  assert set(a.basis) == set(['H', 'O', 'Ti'])
+  assert len(a.basis['H']) == 3
+  assert abs(a.basis['H'][0].charge - 1) < 1e-8
+  assert len(a.basis['H'][0].functions) == 3
+  assert a.basis['H'][0].type == 's'
+  assert all(abs(array(a.basis['H'][0].functions[0]) - [18.7311370, 0.03349460]) < 1e-8)
+  assert all(abs(array(a.basis['H'][0].functions[1]) - [2.82539370, 0.234726950]) < 1e-8)
+  assert all(abs(array(a.basis['H'][0].functions[2]) - [0.640121700, 0.813757330]) < 1e-8)
+
+def test_output_map():
+  from lada.dftcrystal import Functional, Crystal
+  from lada.dftcrystal.parse import parse
+
+  a = Functional()
+  parsed = parse(input)['']
+  a.basis.read_input(parsed['BASISSET'])
+  structure = Crystal()
+  structure.read_input(parsed['CRYSTAL'])
+  o = a.basis.output_map(structure=structure)
+  assert len(o) == 2
+  assert o[0] == ('breaksym', True)
+  assert o[1] == ('ghosts', '2\n1 2')
+  b = Functional()
+  b.basis.raw = o.prefix
+  assert set(b.basis) == set(['O', 'Ti'])
+  assert repr(b.basis['O']) == repr(a.basis['O'])
+  assert repr(b.basis['Ti']) == repr(a.basis['Ti'])
+
 if __name__ == "__main__":
   test_general()
-
+  test_read_input()
+  test_output_map()

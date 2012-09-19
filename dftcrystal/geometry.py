@@ -1,8 +1,9 @@
 __docformat__ = "restructuredtext en"
 __all__ = [ 'RemoveAtoms', 'Slabinfo', 'Slabcut', 'Slab',
             'DisplaceAtoms', 'InsertAtoms', 'ModifySymmetry',
-            'AffineTransform', 'Marker' ]
-from .input import Keyword, GeomKeyword
+            'AffineTransform', 'Marker', 'Elastic' ]
+from .input import GeomKeyword
+from ..tools.input import BaseKeyword
 
 class RemoveAtoms(GeomKeyword):
   """ Remove atoms from structure. """
@@ -50,7 +51,7 @@ class RemoveAtoms(GeomKeyword):
     if self.breaksym == True: result += 'keepsym=False, '
     return result[:-2] + ')'
     
-class Slabinfo(Keyword):
+class Slabinfo(BaseKeyword):
   """ Creates a slab from a 3d periodic system. """
   keyword = 'slabcut'
   """ CRYSTAL keyword. """
@@ -72,10 +73,10 @@ class Slabinfo(Keyword):
   def __repr__(self):
     return '{0.__class__.__name__}([{0.hkl[0]},  {0.hkl[1]}, {0.hkl[2]}])'     \
            .format(self)
-  def print_input(self, **kwargs):
+  def output_map(self, **kwargs):
     """ Prints input. """
     if self.hkl is None: return None
-    return super(Slabinfo, self).print_input(**kwargs)
+    return super(Slabinfo, self).output_map(**kwargs)
 
 class Slabcut(Slabinfo):
   """ Creates a slab from a 3d periodic system. """
@@ -124,14 +125,15 @@ class DisplaceAtoms(GeomKeyword):
     self.atoms.append(Atom(*args, **kwargs))
     return self
 
-  def __repr__(self, indent= ''):
+  def __repr__(self):
     """ Dumps representation to string. """
     result = super(DisplaceAtoms, self).__repr__()
+    indent = ' '.join('' for i in xrange(result.find('(')))
     # prints atoms.
     for o in self.atoms: 
       dummy = repr(o)
       dummy = dummy[dummy.find('(')+1:dummy.rfind(')')].rstrip().lstrip()
-      result += '\\\n{0}.add_atom({1})'.format(indent + '    ', dummy)
+      result += '\\\n{0}.add_atom({1})'.format(indent, dummy)
     return result
 
   @property
@@ -197,7 +199,7 @@ class InsertAtoms(DisplaceAtoms):
       pos = array(line[1:4], dtype='float64')
       self.add_atom(type=type, pos=pos)
 
-class ModifySymmetry(Keyword):
+class ModifySymmetry(BaseKeyword):
   """ Modify symmetries. """
   keyword = 'modisymm'
   """ CRYSTAL keyword. """
@@ -211,14 +213,15 @@ class ModifySymmetry(Keyword):
     super(ModifySymmetry, self).__init__()
     self.groups = []
     """ Atoms for which to modify symmetries. """
-    for o in args: self.groups.append(o if hasattr(o, '__iter__') else [o])
+    for o in args:
+      self.groups.append(list(o) if hasattr(o, '__iter__') else [o])
 
   @property
   def raw(self):
     """ Raw CRYSTAL input. """
     result = '{0}\n'.format(sum(len(o) for o in self.groups))
     for i, labels in enumerate(self.groups):
-      result += ' '.join('{0} {1} '.format(u, i+1) for u in labels) + '\n'
+      result += ' '.join('{0} {1}'.format(u, i+1) for u in labels) + '\n'
     return result
   @raw.setter
   def raw(self, value):
@@ -235,7 +238,7 @@ class ModifySymmetry(Keyword):
     return '{0.__class__.__name__}({1})'                                       \
            .format(self, ', '.join(repr(u) for u in self.groups))
 
-class AffineTransform(Keyword):
+class AffineTransform(BaseKeyword):
   """ Affine transformation applied to the crystal or crystal fragment. """
   keyword = 'atomrot'
   """ CRYSTAL keyword. """
@@ -500,12 +503,12 @@ class Elastic(GeomKeyword):
     return '{0.__class__.__name__}({1})'.format(self, ', '.join(args))
 
 
-  def print_input(self, **kwargs):
+  def output_map(self, **kwargs):
     if self.matrix is None: return None
-    return super(Elastic, self).print_input()
+    return super(Elastic, self).output_map(**kwargs)
 
 
-class Marker(Keyword):
+class Marker(BaseKeyword):
   """ Places a marker in the execution list. """
   def __init__(self, name=None):
     """ Creates a marker. """
@@ -520,4 +523,4 @@ class Marker(Keyword):
     self.keyword = value
   def __repr__(self):
     return '{0.__class__.__name__}({0.name)'.format(self)
-  def print_input(self, **kwargs): return None
+  def output_map(self, **kwargs): return None

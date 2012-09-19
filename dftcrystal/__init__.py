@@ -3,13 +3,15 @@ __docformat__ = "restructuredtext en"
 __all__ = [ 'Extract', 'AffineTransform', 'DisplaceAtoms', 'InsertAtoms',
             'Marker', 'ModifySymmetry', 'RemoveAtoms', 'Slabcut', 'read',
             'Slabinfo','Crystal', 'Molecule', 'Slab', 'Functional', 'Shell',
-            'read_gaussian_basisset', 'MassExtract', 'read_input', 'exec_input' ]
+            'read_gaussian_basisset', 'MassExtract', 'read_input', 'exec_input',
+            'Elastic' ]
 
 from .basis import Shell
 from .functional import Functional
 from .extract import Extract, MassExtract
 from .geometry import AffineTransform, DisplaceAtoms, InsertAtoms, Marker,      \
-                      ModifySymmetry, RemoveAtoms, Slabcut, Slabinfo, Slab
+                      ModifySymmetry, RemoveAtoms, Slabcut, Slabinfo, Slab,     \
+                      Elastic
 from .crystal import Crystal
 from .molecule import Molecule
 registered = { 'atomrot':    AffineTransform,
@@ -21,6 +23,7 @@ registered = { 'atomrot':    AffineTransform,
                'slabcut':    Slabcut,
                'slab':       Slab,
                'slabinfo':   Slabinfo,
+               'elastic':    Elastic,
                'crystal':    Crystal,
                'molecule':   Molecule }
 """ Keywords used in creating the geometry. """
@@ -145,3 +148,35 @@ def exec_input( script, global_dict=None, local_dict=None,
     if k != 'read_input' and k != 'exec_input':
       global_dict[k] = globals()[k]
   return exec_input(script, global_dict, local_dict, paths, name)
+
+# def read_optc(path):
+#   """ Reads an optc file and creates a structure. """
+#   from numpy import array
+#   from ..crystal import Structure
+#   from ..misc import RelativePath
+#   from ..error import IOError
+#   
+#   # Check whether a path, stream, or string.
+#   if isinstance(path, str): 
+#     if path.find('\n') == -1:
+#       with open(RelativePath(path).path) as file: return read_optc(file)
+#     else:
+#       return read_optc(path.split('\n').__iter__())
+#   try:
+#     # not clear what first line is.
+#     line = file.next()
+#     # 2, 3, 4 are cell vectors.
+#     result = Structure()
+#     result.cell = array([file.next().split() for i in range(3)], dtype='float64')
+#     # now gets space-group
+#     n = int(file.next().rstrip().lstrip())
+#     result.spacegroup = array( [ [file.next().split() for i in xrange(4)] 
+#                                  for j in xrange(n)], dtype='float64' )
+#     # finally, gets asymmetric atoms.
+#     n = int(file.next().rstrip().lstrip())
+
+#   except StopIteration: 
+#     raise IOError('Unexpected end of file in read_optc.')
+
+
+

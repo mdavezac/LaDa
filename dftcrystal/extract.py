@@ -2,8 +2,8 @@
 __docformat__  = 'restructuredtext en'
 __all__ = ['Extract', 'MassExtract']
 
-from ..functools import make_cached
-from ..functools.extract import search_factory, AbstractExtractBase
+from ..tools import make_cached
+from ..tools.extract import search_factory, AbstractExtractBase
 from ..jobfolder import AbstractMassExtract
 from ..error import GrepError
 OutputSearchMixin = search_factory('OutputSearchMixin', 'stdout', __name__, 'crystal.out')
@@ -82,7 +82,7 @@ class ExtractBase(object):
   @make_cached
   def symmetry_operators(self):
     """ Greps symmetry operators from file. """
-    from numpy import array, zeros
+    from numpy import array, zeros, dot
     try:
       file = self.__stdout__()
       for line in file:
@@ -94,7 +94,8 @@ class ExtractBase(object):
         if len(data) != 14: break
         symops.append(zeros((4,3), dtype='float64'))
         symops[-1][:3] = array(data[2:11], dtype='float64').reshape(3,3).T
-        symops[-1][3, :] = array(data[-3:], dtype='float64')
+        symops[-1][3] = array(data[-3:], dtype='float64')
+        symops[-1][3] = dot(self.structure.cell, symops[-1][3])
       return array(symops)
     except Exception as e:
       raise GrepError('Encountered error while grepping for sym ops '          \
@@ -349,7 +350,14 @@ class ExtractBase(object):
         # Then re-reads atoms, but in cartesian coordinates.
         for i in xrange(6): file.next()
         for atom in result:
-          atom.pos = array(file.next().split()[3:6], dtype='float64')
+	  # With MPPcrystal, sometimes crap from different processors gets in
+	  # the way of the output. This is a simple hack to avoid that issue.
+	  # Not safe.
+          for i in xrange(5):
+            try: atom.pos = array(file.next().split()[3:6], dtype='float64')
+            except ValueError:
+              if i == 5: raise
+            else: break
     except StopIteration: raise GrepError('Unexpected end of file')
 
     # adds more stuff
@@ -358,6 +366,15 @@ class ExtractBase(object):
     else:
      if len(title) > 0: result.name = title
     return result
+
+  @property
+  def dimensionality(self):
+    """ Whether 3d, 2d, 1d or molecule. """
+    pattern = 'DIMENSIONALITY\s+OF\s+THE\s+SYSTEM\s+(\d)'
+    result = self._find_last_STDOUT(pattern)
+    if result is None:
+      raise GrepError('Could not determine dimensionality of the system.')
+    return int(result.group(1))
 
   def _find_structure(self, file):
     """ Yields positions in file where structure starts. """
@@ -388,14 +405,133 @@ class ExtractBase(object):
 
   @property
   @make_cached
+  def _is_optgeom(self):
+    """ True if a geometry optimization run. """
+    pattern = "STARTING GEOMETRY OPTIMIZATION"
+    return self._find_first_STDOUT(pattern) is not None
+  @property
+  @make_cached
   def structure(self):
     """ Output structure, LaDa format. """
+    from ..error import NotImplementedError
+    if not self._is_optgeom: return self.input_structure
+    elif self.dimensionality == 0: return self._update_pos_only
+    try:
+      with self.__stdout__() as file:
+        pos = None
+        for pos in self._find_structure(file): continue
+        if pos is None: 
+          raise GrepError('Could not extract structure from file')
+        file.seek(pos, 0)
+        return self._grep_structure(file)
+    # Pcrystal fails to print structure at end of optimization run if reached
+    # maximum number of iterations. This tries to get the structure in a
+    # different way. 
+    except GrepError: 
+      if self.dimensionality == 3: return self._final_structure
+      elif self._no_change_in_params: return self._update_pos_only
+      else: raise NotImplementedError('Cannot grep output structure')
+
+  @property
+  @make_cached
+  def _final_structure(self):
+    """ Bad way to get the final structure.
+    
+        Pcrystal does not necessarily print the geometry when the maximum
+        number of iterations of the geometry is reached without converging. We
+        still try and get the final structure, although it requires some hoop
+        jumping and launching crystal a second time (serially, with TESTGEOM).
+    """
+    from numpy import array, dot
     with self.__stdout__() as file:
-      pos = None
-      for pos in self._find_structure(file): continue
-      if pos is None: raise GrepError('Could not extract structure from file')
-      file.seek(pos, 0)
-      return self._grep_structure(file)
+      lastline = -1
+      pattern = " CRYSTALLOGRAPHIC CELL (VOLUME="
+      N = len(pattern)
+      for i, line in enumerate(file):
+        if len(line) < N: continue
+        if line[:N] == pattern: lastline = i
+    # get cell and atoms.
+    with self.__stdout__() as file:
+      # first, figure out cell.
+      for i, line in enumerate(file):
+        if i == lastline: break
+      try: file.next(); line = file.next()
+      except StopIteration: 
+        raise GrepError('Unexpected end-of-file')
+      a, b, c, alpha, beta, gamma = [float(u) for u in line.split()]
+      crystal = self.input_crystal.copy()
+      crystal[:] = []
+      crystal.params = [a, b, c, alpha, beta, gamma][:len(crystal.params)]
+      # create result with right cell.
+      result = self.input_structure.copy()
+      result.cell = crystal.eval().cell
+      # then add atoms.
+      try: file.next(); file.next(); file.next(); file.next()
+      except StopIteration: 
+        raise GrepError('Unexpected end-of-file')
+      index = 3
+      if abs(result.cell[2,2] - 500.0) < 1e-8: index -= 1
+      if abs(result.cell[1,1] - 500.0) < 1e-8: index -= 1
+      for atom, line in zip(result, file):
+        data = line.split()
+        atom.pos[:index] = dot( result.cell[:index, :index],
+                                array(data[4:4+index], dtype='float64') )
+        atom.pos[index:] = array(data[4+index:4+3], dtype='float64')
+      return result
+
+  @property
+  @make_cached
+  def _no_change_in_params(self):
+    """ Checks whether the cell parameters change or not. """
+    with self.__stdout__() as file:
+      # first find start of optimization run
+      pattern = ' STARTING GEOMETRY OPT'
+      found = False
+      for line in file:
+        if line[:len(pattern)] == pattern: 
+          found = True; break
+      if not found:
+        raise GrepError('Could not find start of geometry optimization')
+
+      # now find primitive cell parameters.
+      params = None
+      primcellpat = ' PRIMITIVE CELL'
+      abcpat = ['A', 'B', 'C', 'ALPHA']
+      inprim, inabc = False, False
+      for line in file:
+        if inprim == True: 
+          if line.split()[:4] == abcpat: inabc = True
+          inprim = False
+          continue
+        elif inabc == True:
+          inabc = False
+          if params is None: params = line
+          elif params != line: return False
+        elif line[:len(primcellpat)] == primcellpat: inprim = True; continue
+      return params is not None
+  @property
+  @make_cached
+  def _update_pos_only(self):
+    """ Returns structure with updated positions only. """
+    from numpy import dot, array
+    result = self.input_structure.copy()
+    pattern = " ATOMS IN THE ASYMMETRIC UNIT"
+    with self.__stdout__() as file:
+      lastindex = -1;
+      for i, line in enumerate(file): 
+        if line[:len(pattern)] == pattern: lastindex = i
+      if lastindex == -1:
+        raise GrepError('Could not find atomic positions in file.')
+    with self.__stdout__() as file:
+      for j, line in enumerate(file):
+        if j == lastindex + 2: break
+      if j != lastindex + 2: raise GrepError('Unexpected end-of-file.')
+      index = self.dimensionality
+      for line, atom in zip(file, result):
+        pos = array(line.split()[4:7], dtype='float64')
+        atom.pos[:index] = dot(result.cell[:index, :index], pos[:index])
+        atom.pos[index:] = pos[index:]
+    return result
 
   @property
   @make_cached
@@ -411,18 +547,19 @@ class ExtractBase(object):
     from .geometry import DisplaceAtoms, Elastic
     
     # Check whether this is a geometry optimization run.
-    if self._find_first_STDOUT("STARTING GEOMETRY OPTIMIZATION") is None:
-      return self.input_crystal
+    if not self._is_optgeom: return self.input_crystal
 
     # Find last operation which is neither ELASTIC nor ATOMDISP
     incrys, instruct, i = self.input_crystal, self.input_structure, 0
+    looped = False
     for i, op in enumerate(incrys[::-1]):
       if op.keyword.lower() not in ['elastic', 'atomdisp']: break
+      looped = True
 
     # deduce structure - last changes in cell-shape or atomic displacements.
-    if i != 0:
+    if looped:
       incrys = incrys.copy()
-      incrys[:] = incrys[:len(incrys)-i]
+      incrys[:] = incrys[:-i]
       instruct = incrys.eval()
 
     # create symmetric strain
@@ -436,7 +573,7 @@ class ExtractBase(object):
 
     # create field displacement
     field = [ dot(cell, dot(inv_out, a.pos) - dot(inv_in, b.pos))
-              for a, b in zip(self.structure, self.input_structure)
+              for a, b in zip(self.structure, instruct)
               if a.asymmetric ]
     field = array(field)
 
@@ -556,11 +693,8 @@ class ExtractBase(object):
   @make_cached
   def optgeom_iterations(self):
     """ Number of geometric iterations. """
-    from ..error import GrepError
-    a = self.optgeom_convergence
-    if a is None: return 0
-    if not a: raise GrepError('Convergence was not achieved')
-    result = self._find_last_STDOUT('POINTS\s+(\d+)\s+\*')
+    result = self._find_last_STDOUT('\-\s+POINT\s+(\d+)')
+    if result is None: return None
     return int(result.group(1))
 
 class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
@@ -589,9 +723,15 @@ class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
 
   @property
   def success(self):
+    from os.path import exists, join
+    if not exists(join(self.directory, self.STDOUT)): 
+      return False
+    try: self.input_crystal
+    except: return False
     try: self.end_date
     except: 
-      return self.optgeom_convergence is not None
+      if self.optgeom_iterations is None: return False
+      return self.optgeom_iterations > 3
     return True
 
 class MassExtract(AbstractMassExtract):
