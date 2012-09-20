@@ -697,6 +697,43 @@ class ExtractBase(object):
     if result is None: return None
     return int(result.group(1))
 
+  @property
+  @make_cached
+  def warnings(self):
+    """ List of warnings. """
+    from re import M 
+    result = []
+    for item in self._search_STDOUT('^ WARNING\s+(.*)$', M):
+      result.append(item.group(1).rstrip().lstrip())
+    return result
+  @property
+  @make_cached
+  def informations(self):
+    """ List of informations. """
+    from re import M 
+    result = []
+    for item in self._search_STDOUT('^ INFORMATION\s+(.*)$', M):
+      result.append(item.group(1).rstrip().lstrip())
+    return result
+  @property
+  @make_cached
+  def errors(self):
+    """ List of errors. """
+    from re import M 
+    result = []
+    for item in self._search_STDOUT('^ ERROR\s+(.*)$', M):
+      result.append(item.group(1).rstrip().lstrip())
+    return result
+  
+  @property
+  @make_cached
+  def istest(self):
+    """ True if a test run. """
+    regex = 'THIS IS A TEST RUN'
+    for u in self.warnings: 
+      if regex in u: return True
+    return False
+
 class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
   """ Extracts DFT data from an OUTCAR. """
   def __init__(self, directory=None, **kwargs):
@@ -732,6 +769,9 @@ class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
     except: 
       if self.optgeom_iterations is None: return False
       return self.optgeom_iterations > 3
+    try: 
+      if self.istest: return False
+    except: return False
     return True
 
 class MassExtract(AbstractMassExtract):

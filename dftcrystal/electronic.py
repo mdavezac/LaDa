@@ -729,3 +729,12 @@ class Electronic(AttrBlock):
 
         This tag presents the same user-interface as :py:attr:`spinlock`.
     """
+  def output_map(self, **kwargs):
+    """ Makes sure DFT subblock is first. """
+    result = super(Electronic, self).output_map(**kwargs)
+    for i, item in enumerate(result):
+      if item[0] == 'DFT': break
+    if result[i][0] == 'DFT': 
+      dft = result.pop(i)
+      result.insert(0, dft)
+    return result
