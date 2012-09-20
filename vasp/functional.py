@@ -898,7 +898,9 @@ class Vasp(AttrBlock):
 
     # check for pre-existing and successful run.
     if not overwrite:
-      extract = self.Extract(outdir)
+      # Check with this instance's Extract, cos it is this calculation we shall
+      # do here. Derived instance's Extract might be checking for other stuff.
+      extract = Vasp.Extract(outdir)
       if extract.success:
         yield extract # in which case, returns extraction object.
         return
