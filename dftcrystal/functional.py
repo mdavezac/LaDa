@@ -170,10 +170,13 @@ class Functional(object):
   def print_input(self, **kwargs):
     """ Prints input to string. """
     from .input import print_input
+    test = kwargs.pop('test', False)
     map = self.output_map(**kwargs)
     # Does not capitalize input.
     result = map[0][0].rstrip().lstrip() + '\n'
     # Otherwise, everything is standard.
+    if test: # If test run, does not actually perform calculation.
+      return result + print_input(map[0][1]).rstrip() + '\nTEST\nEND\n'
     return result + print_input(map[0][1]).rstrip() + '\nEND\n'
 
   def guess_workdir(self, outdir):
@@ -187,7 +190,7 @@ class Functional(object):
                  '{0!s}.{1}'.format(datetime.today(), getpid())\
                             .replace(' ', '_') )
 
-  def bringup(self, structure, workdir, restart):
+  def bringup(self, structure, workdir, restart, test):
     """ Creates file environment for run. """
     from os.path import join
     from ..misc import copyfile, Changedir
@@ -213,7 +216,7 @@ class Functional(object):
 
       # then creates input file.
       string = self.print_input( crystal=self, structure=structure, 
-                                 workdir=workdir )
+                                 workdir=workdir, test=test )
       with open('crystal.d12', 'w') as file: file.write(string)
 
   def bringdown(self, structure, workdir, outdir):
@@ -274,7 +277,7 @@ class Functional(object):
   @assign_attributes(ignore=['overwrite', 'comm', 'workdir'])
   @stateless
   def iter(self, structure, outdir=None, workdir=None, comm=None,
-           overwrite=False, **kwargs):
+           overwrite=False, test=False, **kwargs):
     """ Performs a vasp calculation 
      
         If successfull results (see :py:attr:`extract.Extract.success`) already
@@ -294,6 +297,9 @@ class Functional(object):
             If True, will overwrite pre-existing results. 
             If False, will check whether a successfull calculation exists. If
             one does, then does not execute. 
+        :param test: 
+            If True, TEST is inserted at the very end of the run. This makes it
+            easier to check that the input is correct.
         :param kwargs:
             Any attribute of the VASP instance can be overidden for
             the duration of this call by passing it as keyword argument.  
@@ -329,7 +335,7 @@ class Functional(object):
     with Changedir(workdir) as tmpdir: 
 
       # writes/copies files before launching.
-      self.bringup(structure, workdir, restart=self.restart)
+      self.bringup(structure, workdir, restart=self.restart, test=test)
       dompi = comm is not None
       if dompi:
         from ..misc import copyfile
@@ -352,9 +358,10 @@ class Functional(object):
     yield Extract(outdir)
 
   def __call__( self, structure, outdir=None, workdir=None, comm=None,         \
-                overwrite=False, **kwargs):
+                overwrite=False, test=False, **kwargs):
     for program in self.iter( structure, outdir=outdir, workdir=workdir,
-                              comm=comm, overwrite=overwrite, **kwargs ):
+                              comm=comm, overwrite=overwrite, test=test, 
+                              **kwargs ):
       # iterator may yield the result from a prior successfull run. 
       if getattr(program, 'success', False): continue
       # Or may fail return a failed run.

@@ -13,9 +13,14 @@ def launch(self, event, jobfolders):
   """
   from os.path import join, dirname
   from copy import deepcopy
+  from .. import get_shell
   from ... import default_comm
   
-  kwargs = dict(event.kwargs) if event.kwargs is not None else dict()
+  try: kwargs = get_shell(self).ev(event.kwargs) 
+  except: 
+    print "Could not process keyword arguments."
+    print event.kwargs
+    return
   if event.nbprocs != 0: 
     comm = deepcopy(default_comm)
     comm['n'] = event.nbprocs
@@ -59,7 +64,7 @@ def parser(self, subparsers, opalls):
                                               "Each job will launched one after the other. "\
                                               "This call is *blocking*.",
                                   parents=[opalls] )
-  result.add_argument( '--kwargs', type=dict, default={}, dest="kwargs",
+  result.add_argument( '--kwargs', type=str, default="{}", dest="kwargs",
                        help="Dictionary which contains arguments for the functionals. "\
                             "\"outdir\" and \"comm\" are added automatically. "\
                             "The functional must accept these arguments." )
