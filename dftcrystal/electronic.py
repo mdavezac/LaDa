@@ -95,7 +95,7 @@ class Shrink(BaseKeyword):
     from ..tools.uirepr import add_to_imports
     if defaults is not None: 
       if type(defaults) is not type(self): 
-        add_to_imports(self)
+        add_to_imports(self, imports)
         return {name: repr(self)}
       if self.gallat == defaults.gallat and self.mp == defaults.mp: 
         return {}
@@ -209,6 +209,37 @@ class AtomSpin(BaseKeyword):
       else: args.append('other={0.other!r}'.format(self))
     return '{0.__class__.__name__}({1})'.format(self, ', '.join(args))
 
+  def __ui_repr__(self, imports, name=None, defaults=None, exclude=None):
+    """ Creates user friendly representation. """
+    from ..tools.uirepr import add_to_imports
+
+    if defaults is not None: 
+      if type(defaults) is not type(self): 
+        add_to_imports(self.up, imports)
+        add_to_imports(self.down, imports)
+        add_to_imports(self.other, imports)
+        add_to_imports(self, imports)
+        return {name: repr(self)}
+      if self.up == defaults.up and self.down == defaults.down                 \
+         and self.other == defaults.other: 
+        return {}
+      results = {}
+      if self.up is not None:
+        add_to_imports(self.up, imports)
+        results[name + '.up'] = '{0.up!r}'.format(self)
+      if self.down is not None:
+        add_to_imports(self.down, imports)
+        results[name + '.down'] = '{0.down!r}'.format(self)
+      if self.other is not None:
+        add_to_imports(self.other, imports)
+        results[name + '.down'] = '{0.other!r}'.format(self)
+      return results
+    elif name is None:
+      add_to_imports(self, imports)
+      return {None: 'atomspin = {0!r}'.format(self)}
+    add_to_imports(self, imports)
+    return {name: self.__repr__()}
+
 class SpinLock(BaseKeyword):
   """ Implements SpinLock keyword. """
   keyword = 'spinlock'
@@ -273,6 +304,29 @@ class SpinLock(BaseKeyword):
       args.append( 'ncycles={0}'.format(self.ncycles) if len(args) == 0        \
                    else str(self.ncycles) )
     return '{0.__class__.__name__}({1})'.format(self, ', '.join(args))
+  def __ui_repr__(self, imports, name=None, defaults=None, exclude=None):
+    """ Creates user friendly representation. """
+    from ..tools.uirepr import add_to_imports
+
+    if defaults is not None: 
+      if type(defaults) is not type(self): 
+        add_to_imports(self.shift, imports)
+        add_to_imports(self, imports)
+        return {name: repr(self)}
+      if self.nspin is None and self.ncycles is None: return {}
+      results = {}
+      if self.nspin is not None:
+        add_to_imports(self.nspin, imports)
+        results[name + '.nspin'] = '{0.nspin!r}'.format(self)
+      if self.ncycles is not None:
+        add_to_imports(self.ncycles, imports)
+        results[name + '.ncycles'] = '{0.ncycles!r}'.format(self)
+      return results
+    elif name is None:
+      add_to_imports(self, imports)
+      return {None: 'levshift = {0!r}'.format(self)}
+    add_to_imports(self, imports)
+    return {name: self.__repr__()}
 class BetaLock(SpinLock):
   keyword = 'betalock'
   
@@ -354,6 +408,29 @@ class LevShift(BaseKeyword):
       args.append( 'lock={0}'.format(self.lock) if len(args) == 0              \
                    else str(self.lock) )
     return '{0.__class__.__name__}({1})'.format(self, ', '.join(args))
+
+  def __ui_repr__(self, imports, name=None, defaults=None, exclude=None):
+    """ Creates user friendly representation. """
+    from ..tools.uirepr import add_to_imports
+
+    if defaults is not None: 
+      if type(defaults) is not type(self): 
+        add_to_imports(self.shift, imports)
+        add_to_imports(self, imports)
+        return {name: repr(self)}
+      if self.shift is None and self.lock is None: return {}
+      results = {}
+      if self.shift is not None:
+        results[name + '.shift'] = '{0}'.format(float(self.shift))
+      if self.lock is not None:
+        add_to_imports(self.lock, imports)
+        results[name + '.lock'] = '{0.lock!r}'.format(self)
+      return results
+    elif name is None:
+      add_to_imports(self, imports)
+      return {None: 'levshift = {0!r}'.format(self)}
+    add_to_imports(self, imports)
+    return {name: self.__repr__()}
 
 class GuessP(BoolKeyword):
   """ Implements GuessP parameter. """
