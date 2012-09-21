@@ -454,7 +454,7 @@ class Electronic(AttrBlock):
   """ Name used when printing this instance with ui_repr """
   def __init__(self):
     """ Creates the scf attribute block. """
-    from ..tools.input import ChoiceKeyword
+    from ..tools.input import ChoiceKeyword, QuantityKeyword
     from .hamiltonian import Dft
     super(Electronic, self).__init__()
     self.maxcycle = TypedKeyword(type=int)
@@ -706,8 +706,8 @@ class Electronic(AttrBlock):
         There are two main variables, ``up`` and ``down``, which are lists of
         atomic labels. ``up`` contains the atoms which at the start of the
         calculation should have an up spin, and ``down`` those atoms with a
-        down spin. A third variable, ``other``, corresponds to the "irrelevant"
-        atoms, as per CRYSTAL_'s input.
+        down spin. A third variable, ``other``, corresponds to the
+        ''irrelevant'' atoms, as per CRYSTAL_'s input.
 
         Alternatively, the ``up`` and ``down`` variables can be reached via indexing:
 
@@ -728,6 +728,12 @@ class Electronic(AttrBlock):
     """ Locks in the number of beta electrons. 
 
         This tag presents the same user-interface as :py:attr:`spinlock`.
+    """
+    self.smear = QuantityKeyword(units=hartree)
+    """ Smearing energy, if any.
+
+        Expects None (default, does nothing) or an energy wich defines the
+        width of the smearing function.
     """
   def output_map(self, **kwargs):
     """ Makes sure DFT subblock is first. """
