@@ -1,7 +1,7 @@
 #include "LaDaConfig.h"
 
 #include <Python.h>
-#define PY_ARRAY_UNIQUE_SYMBOL crystal_ARRAY_API
+#define PY_ARRAY_UNIQUE_SYMBOL lada_crystal_ARRAY_API
 #include <numpy/arrayobject.h>
 
 #include <iterator> 

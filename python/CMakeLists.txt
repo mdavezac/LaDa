@@ -19,9 +19,9 @@ endif(ipython_interface)
 
 
 set(which_packages "'math', 'opt', 'crystal'") #, 'physics', 'periodic_table'")
-# if(pcm_functional) 
-#   set(which_packages "${which_packages}, 'pcm'")
-# endif(pcm_functional) 
+if(pcm_functional) 
+  set(which_packages "${which_packages}, 'pcm'")
+endif(pcm_functional) 
 if(ce_package) 
   set(which_packages "${which_packages}, 'ce'")
 endif(ce_package) 
