@@ -139,7 +139,11 @@ class Functional(object):
     inner = root
 
     if 'structure' in kwargs:
-      structure = kwargs['structure']
+      structure = kwargs['structure'].copy()
+      # Appends symmetry modification if basis includes a modification of the
+      # initial guess.
+      modsymm = self.basis.chemod.modisymm(structure)
+      if modsymm is not None: structure.append(modsymm)
       # insert name of structure as title.
       if hasattr(structure, 'name'):
         inner = root.descend(structure.name.rstrip().lstrip())

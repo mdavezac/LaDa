@@ -80,6 +80,22 @@ class ExtractBase(object):
 
   @property
   @make_cached
+  def convtrans(self):
+    """ Transform from primitive to conventional cell. """
+    from numpy import identity, array
+    from ..error import GrepError
+    with self.__stdout__() as file:
+      found = False
+      for line in file:
+        if "TRANSFORMATION MATRIX PRIMITIVE-CRYSTALLOGRAPHIC CELL" in line:
+          found = True; break;
+      if found == False: return identity(3, dtype='float64')
+      try: line = file.next()
+      except StopIteration: raise GrepError('End-of-file reached.')
+      else: return array(line.split(), dtype='float64').reshape(3,3)
+
+  @property
+  @make_cached
   def symmetry_operators(self):
     """ Greps symmetry operators from file. """
     from numpy import array, zeros, dot
@@ -89,13 +105,14 @@ class ExtractBase(object):
         if line.split() == ['V', 'INV', 'ROTATION', 'MATRICES', 'TRANSLATOR']:
           break
       symops = []
+      cell = dot(self.convtrans, self.structure.cell)
       for line in file:
         data = line.split()
         if len(data) != 14: break
         symops.append(zeros((4,3), dtype='float64'))
-        symops[-1][:3] = array(data[2:11], dtype='float64').reshape(3,3).T
+        symops[-1][:3] = array(data[2:11], dtype='float64').reshape(3,3)
         symops[-1][3] = array(data[-3:], dtype='float64')
-        symops[-1][3] = dot(self.structure.cell, symops[-1][3])
+        symops[-1][3] = dot(cell, symops[-1][3])
       return array(symops)
     except Exception as e:
       raise GrepError('Encountered error while grepping for sym ops '          \
@@ -435,11 +452,13 @@ class ExtractBase(object):
     try: charges = self.atomic_charges
     except: pass
     else: 
-      for atom, c in zip(result, charges[-1]): atom.charge = c
+      if charges is not None:
+        for atom, c in zip(result, charges[-1]): atom.charge = c
     try: spins = self.atomic_spins
     except: pass
     else: 
-      for atom, s in zip(result, spins[-1]): atom.spin = s
+      if spins is not None:
+        for atom, s in zip(result, spins[-1]): atom.spin = s
     return result
 
   @property
@@ -792,7 +811,7 @@ class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
     from quantities import elementary_charge as ec
     with self.__stdout__() as file:
       isincharge = False
-      results = []
+      results, inner = [], []
       for line in file:
         if isincharge:
           line = line.split()
@@ -809,7 +828,7 @@ class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
         elif 'TOTAL ATOMIC CHARGES:' in line:
           inner = []
           isincharge = True
-      return array(results) * ec
+      return array(results) * ec if len(results) else None
 
   @property
   @make_cached
@@ -819,7 +838,7 @@ class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
     from quantities import elementary_charge as ec
     with self.__stdout__() as file:
       isincharge = False
-      results = []
+      results, inner = [], []
       for line in file:
         if isincharge:
           line = line.split()
@@ -836,7 +855,7 @@ class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
         elif 'TOTAL ATOMIC SPINS' in line:
           inner = []
           isincharge = True
-      return array(results) * ec
+      return array(results) * ec if len(results) else None
 
 
 class MassExtract(AbstractMassExtract):

@@ -1,7 +1,8 @@
 __docformat__ = "restructuredtext en"
 __all__ = ['BasisSet', 'Shell']
+from collections import MutableMapping
 from quantities import UnitQuantity, angstrom
-from .input import AttrBlock
+from .input import AttrBlock, GeomKeyword
 from ..tools.input import VariableListKeyword
 
 crystal_bohr = UnitQuantity('crystal_bohr', 0.5291772083*angstrom, symbol='bohr')
@@ -301,6 +302,133 @@ class Ghosts(VariableListKeyword):
     else: raise ValueError( 'Ghosts expects a value of the form '              \
                             '``[integers], True or False``.')
 
+
+class Chemod(GeomKeyword, MutableMapping):
+  keyword = 'chemod'
+  def __init__(self, **kwargs):
+    GeomKeyword.__init__(self, **kwargs)
+    MutableMapping.__init__(self)
+    self.modifications = {}
+    """ Holds chemical modifications. """
+  def __getitem__(self, index): return self.modifications[index]
+  def __setitem__(self, index, value): self.modifications[index] = value
+  def __delitem__(self, index): self.modifications.__delitem__(index)
+  def __len__(self): return len(self.modifications)
+  def __iter__(self): return self.modifications.__iter__()
+  def __contains__(self, name): return self.modifications.__contains__(name)
+  def _symequivs(self, structure):
+    """ Symetrically equivalent sites. """
+    from numpy import dot
+    from numpy.linalg import inv
+    from ..crystal import which_site
+    from ..error import internal
+    result = {}
+    sites  = structure.eval()
+    symops = structure.symmetry_operators
+    invcell = inv(sites.cell)
+
+    # loop over atoms of interest
+    for label in self.modifications:
+      atom = sites[label-1]
+      if atom.label != label: 
+        raise ValueError( 'Incorrect atomic label for chemod ({0}).'           \
+                          .format(label) )
+      intermediate = result.get(label, set([label]))
+      # look for symmetrically equivalents.
+      for op in symops:
+        newpos = dot(op[:3], atom.pos) + op[3]
+        index = which_site(newpos, sites, invcell)
+        if index == -1: 
+          print op
+          print sites.cell
+          print dot(invcell, newpos), dot(invcell, atom.pos)
+          raise internal("Symmetry mapped position not in lattice")
+        if index + 1 == label: continue
+        intermediate.add(sites[index].label)
+      # equivalent atoms share equivalency set.
+      for index in intermediate: result[index] = intermediate
+  
+    return result
+
+  def modisymm(self, structure):
+    """ Symmetry modifications, if any. """
+    from numpy import allclose
+    from .geometry import ModifySymmetry
+    if self.keepsym: return None
+    result = []
+    equivs = self._symequivs(structure)
+    for label, shell in self.modifications.iteritems():
+      if any(label in u for u in result): continue
+      indices, split = [shell], {0: [label]}
+      for item in equivs[label]:
+        if item not in self.modifications: 
+          if None in split: split[None].append(item)
+          else: split[None] = [item]
+          continue
+        oshell = self.modifications[item]
+        found = False
+        for i, cmp in enumerate(indices):
+          if allclose(cmp, oshell, atol=1e-8): found = True; break
+        if not found: 
+          indices.append(shell)
+          split[len(indices)-1] = [item]
+        elif item not in split[i]: split[i].append(item)
+      result.extend(split.values())
+    return ModifySymmetry(*result)
+
+  def __get__(self, owner, instance=None): return self
+  def __set__(self, owner, value):
+    if value is None: self.modifications = {}; return
+    self.modifications = value
+  def output_map(self, crystal=None, structure=None, **kwargs):
+    if len(self.modifications) == 0: return None
+    from operator import itemgetter
+    from numpy import allclose
+    equivs = self._symequivs(structure)
+    if self.keepsym:
+      shells = self.modifications.copy()
+      # Adds equivalent shells 
+      for label, shell in self.modifications.iteritems():
+        for equiv in equivs[label]:
+          if equiv == label: continue
+          elif equiv in shells:
+            if not allclose(shell, shells[equiv], atol=1e-8):
+              raise ValueError( 'Found equivalent atoms ({0}, {1}) '           \
+                                'with different input shells.'                 \
+                                .format(label, equiv) )
+          else: shells[equiv] = shell
+            
+          shells[equiv] = shell
+    else: shells = self.modifications
+    raw = "{0}\n".format(len(shells))
+    for key, value in sorted(shells.items(), key=itemgetter(0)):
+      raw += "{0}  {1}\n".format(key, " ".join(str(u) for u in value))
+    return {self.keyword: raw}
+
+  def read_input(self, tree, owner=None, **kwargs):
+    from numpy import array
+    from ..error import ValueError
+    if not hasattr(tree, 'prefix'): raise ValueError('Unexpected empty node.')
+    lines = tree.value.splitlines()
+    N = int(lines[0].rstrip().lstrip())
+    # breaksym is always false if reading from input.
+    self.breaksym = False
+    self.modifications = {}
+    for line in self.lines[1:N+1]:
+      line = line.split()
+      self.modifications[int(line[0])] = array(line[1:], dtype='float64')
+
+  def __ui_repr__(self, imports, name=None, defaults=None, exclude=None):
+    """ Dumps object to string, prettily. """
+    result = {}
+    if defaults is None:
+      result['{0}.breaksym'.format(name)] = repr(self.breaksym)
+    elif self.breaksym == True: 
+      result['{0}.breaksym'.format(name)] = repr(True)
+    for key, value in self.modifications.iteritems():
+      result['{0}[{1}]'.format(name,key)] = repr(value) 
+    return result
+
 class BasisSet(AttrBlock):
   """ Basis set block.
   
@@ -401,6 +529,9 @@ class BasisSet(AttrBlock):
         [1, 3, 5], 
     
     """
+    self.chemod = Chemod()
+    """ Sets initial electronic occupation. """
+
 
   @property
   def raw(self):
