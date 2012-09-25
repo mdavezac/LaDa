@@ -414,23 +414,33 @@ class ExtractBase(object):
   def structure(self):
     """ Output structure, LaDa format. """
     from ..error import NotImplementedError
-    if not self._is_optgeom: return self.input_structure
-    elif self.dimensionality == 0: return self._update_pos_only
-    try:
-      with self.__stdout__() as file:
-        pos = None
-        for pos in self._find_structure(file): continue
-        if pos is None: 
-          raise GrepError('Could not extract structure from file')
-        file.seek(pos, 0)
-        return self._grep_structure(file)
-    # Pcrystal fails to print structure at end of optimization run if reached
-    # maximum number of iterations. This tries to get the structure in a
-    # different way. 
-    except GrepError: 
-      if self.dimensionality == 3: return self._final_structure
-      elif self._no_change_in_params: return self._update_pos_only
-      else: raise NotImplementedError('Cannot grep output structure')
+    if not self._is_optgeom: result = self.input_structure
+    elif self.dimensionality == 0: result = self._update_pos_only
+    else: 
+      try:
+        with self.__stdout__() as file:
+          pos = None
+          for pos in self._find_structure(file): continue
+          if pos is None: 
+            raise GrepError('Could not extract structure from file')
+          file.seek(pos, 0)
+          result = self._grep_structure(file)
+      # Pcrystal fails to print structure at end of optimization run if reached
+      # maximum number of iterations. This tries to get the structure in a
+      # different way. 
+      except GrepError: 
+        if self.dimensionality == 3: result = self._final_structure
+        elif self._no_change_in_params: result = self._update_pos_only
+        else: raise NotImplementedError('Cannot grep output structure')
+    try: charges = self.atomic_charges
+    except: pass
+    else: 
+      for atom, c in zip(result, charges[-1]): atom.charge = c
+    try: spins = self.atomic_spins
+    except: pass
+    else: 
+      for atom, s in zip(result, spins[-1]): atom.spin = s
+    return result
 
   @property
   @make_cached
@@ -773,6 +783,61 @@ class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
       if self.istest: return False
     except: return False
     return True
+
+  @property
+  @make_cached
+  def atomic_charges(self):
+    """ Atomic Charges. """
+    from numpy import array
+    from quantities import elementary_charge as ec
+    with self.__stdout__() as file:
+      isincharge = False
+      results = []
+      for line in file:
+        if isincharge:
+          line = line.split()
+          if len(line) == 0:
+            results.append(inner)
+            isincharge = False
+            continue
+          try: dummy = [float(item) for item in line]
+          except:
+            isincharge = False
+            results.append(inner)
+            continue
+          else: inner.extend(dummy)
+        elif 'TOTAL ATOMIC CHARGES:' in line:
+          inner = []
+          isincharge = True
+      return array(results) * ec
+
+  @property
+  @make_cached
+  def atomic_spins(self):
+    """ Atomic Charges. """
+    from numpy import array
+    from quantities import elementary_charge as ec
+    with self.__stdout__() as file:
+      isincharge = False
+      results = []
+      for line in file:
+        if isincharge:
+          line = line.split()
+          if len(line) == 0:
+            results.append(inner)
+            isincharge = False
+            continue
+          try: dummy = [float(item) for item in line]
+          except:
+            isincharge = False
+            results.append(inner)
+            continue
+          else: inner.extend(dummy)
+        elif 'TOTAL ATOMIC SPINS' in line:
+          inner = []
+          isincharge = True
+      return array(results) * ec
+
 
 class MassExtract(AbstractMassExtract):
   """ Extracts all CRYSTAL calculations in directory and sub-directories. 
