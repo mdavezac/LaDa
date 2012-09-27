@@ -65,6 +65,8 @@ class External(Molecule):
   def raw(self):
     """ Raw input for structure. """
     return ""
+  @raw.setter 
+  def raw(self, value): pass
 
   def output_map(self, **kwargs):
     """ Writes external file and calls base class. """

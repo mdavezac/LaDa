@@ -444,7 +444,8 @@ class GuessP(BoolKeyword):
     if kwargs['crystal'].restart is None: return None
     path = join(kwargs['crystal'].restart.directory, 'crystal.f9')
     if not exists(path): return None
-    copyfile(path, join(kwargs['workdir'], 'fort.20'), nothrow='same')
+    if kwargs.get('filework', False) == True:
+      copyfile(path, join(kwargs['workdir'], 'fort.20'), nothrow='same')
     return super(GuessP, self).output_map(**kwargs)
 
 

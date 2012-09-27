@@ -220,14 +220,14 @@ class Functional(object):
 
       # then creates input file.
       string = self.print_input( crystal=self, structure=structure, 
-                                 workdir=workdir, test=test )
+                                 workdir=workdir, test=test, filework=True )
       with open('crystal.d12', 'w') as file: file.write(string)
 
   def bringdown(self, structure, workdir, outdir):
     """ Copies files back to output directory. 
     
-        Cats input intO output.
-	Removes workdir if different from outdir **and** run was successfull.
+        Cats input intO output. Removes workdir if different from outdir
+        **and** run was successfull.
     """
     from itertools import chain
     from os import remove

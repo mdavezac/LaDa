@@ -99,20 +99,22 @@ class ExtractBase(object):
   def symmetry_operators(self):
     """ Greps symmetry operators from file. """
     from numpy import array, zeros, dot
+    from numpy.linalg import inv
     try:
       file = self.__stdout__()
       for line in file:
         if line.split() == ['V', 'INV', 'ROTATION', 'MATRICES', 'TRANSLATOR']:
           break
       symops = []
-      cell = dot(self.convtrans, self.structure.cell)
+      cell = self.structure.cell
+      invcell = inv(cell)
       for line in file:
         data = line.split()
         if len(data) != 14: break
         symops.append(zeros((4,3), dtype='float64'))
-        symops[-1][:3] = array(data[2:11], dtype='float64').reshape(3,3)
-        symops[-1][3] = array(data[-3:], dtype='float64')
-        symops[-1][3] = dot(cell, symops[-1][3])
+        fracop = array(data[2:11], dtype='float64').reshape(3,3)
+        symops[-1][:3] = dot(cell, dot(fracop, invcell))
+        symops[-1][3] = dot(cell, array(data[-3:], dtype='float64'))
       return array(symops)
     except Exception as e:
       raise GrepError('Encountered error while grepping for sym ops '          \
@@ -286,15 +288,27 @@ class ExtractBase(object):
     """ True if a molecular calculation """
     pattern = "^\s+(MOLECULAR|CRYSTAL)\s+CALCULATION\s*$"
     regex = self._find_last_STDOUT(pattern)
-    if regex is None:
-      raise GrepError('Could not determine whether molecular calculation')
-    return regex.group(1) == 'MOLECULAR'
+    if regex is not None: return regex.group(1) == 'MOLECULAR'
+    with self.__stdout__() as file:
+      for line in file:
+        if "GEOMETRY INPUT FROM EXTERNAL FILE" in line:
+          line = "LADA FOUND LINE"
+          break
+      if line != "LADA FOUND LINE": 
+        raise GrepError('Could not determine whether molecular calculation')
+      try: line = file.next()
+      except:
+        raise GrepError('Could not determine whether molecular calculation')
+      else: return int(line.split()[0][:1]) == 1
+    
     
 
   def _parsed_tree(self):
     """ Returns parsed input tree. """
     from .parse import parse
-    with self.__stdout__() as file: tree = parse(file)
+    try: 
+      with self.__stdout__() as file: tree = parse(file)
+    except: raise GrepError("Could not find CRYSTAL input at start of file.")
     title = tree.keys()[0]
     return tree[title]
 
@@ -309,6 +323,7 @@ class ExtractBase(object):
     """
     from .crystal import Crystal
     from .molecule import Molecule
+    from .external import External
     from .. import CRYSTAL_geom_blocks as starters
     from ..error import IOError, NotImplementedError
 
@@ -318,10 +333,15 @@ class ExtractBase(object):
       if starter in tree.keys(): found = True; break
     if found == False:
       raise IOError('Could not find start of input in file.')
-    if starter.lower() != 'crystal': 
+    if starter.lower() == 'external':
+      result = External(copy=self.input_structure)
+    elif starter.lower() == 'crystal':
+      result = Crystal()
+    elif starter.lower() == 'molecule':
+      result = Molecule()
+    else:
       raise NotImplementedError('Can only read 3d structures.')
 
-    result = Molecule() if self.is_molecular else Crystal()
     result.read_input(tree[starter])
     return result
 

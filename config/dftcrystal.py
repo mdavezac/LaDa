@@ -1,4 +1,4 @@
-CRYSTAL_geom_blocks = set(['CRYSTAL', 'SLAB', 'POLYMER', 'HELIX', 'MOLECULE'])
+CRYSTAL_geom_blocks = set(['CRYSTAL', 'SLAB', 'POLYMER', 'HELIX', 'MOLECULE', 'EXTERNAL'])
 """ List of starting blocks in CRYSTAL input.
 
     CRYSTAL input does not differentiate between its block and keyword inputs.

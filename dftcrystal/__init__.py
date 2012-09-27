@@ -4,7 +4,7 @@ __all__ = [ 'Extract', 'AffineTransform', 'DisplaceAtoms', 'InsertAtoms',
             'Marker', 'ModifySymmetry', 'RemoveAtoms', 'Slabcut', 'read',
             'Slabinfo','Crystal', 'Molecule', 'Slab', 'Functional', 'Shell',
             'read_gaussian_basisset', 'MassExtract', 'read_input', 'exec_input',
-            'Elastic' ]
+            'Elastic', 'External' ]
 
 from .basis import Shell
 from .functional import Functional
@@ -13,6 +13,7 @@ from .geometry import AffineTransform, DisplaceAtoms, InsertAtoms, Marker,      
                       ModifySymmetry, RemoveAtoms, Slabcut, Slabinfo, Slab,     \
                       Elastic
 from .crystal import Crystal
+from .external import External
 from .molecule import Molecule
 registered = { 'atomrot':    AffineTransform,
                'atomdisp':   DisplaceAtoms,
@@ -25,6 +26,7 @@ registered = { 'atomrot':    AffineTransform,
                'slabinfo':   Slabinfo,
                'elastic':    Elastic,
                'crystal':    Crystal,
+               'external':   External,
                'molecule':   Molecule }
 """ Keywords used in creating the geometry. """
 

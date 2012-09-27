@@ -11,7 +11,7 @@ crystal_invbohr2 = UnitQuantity( 'crystal_invbohr2',
                                  1e0/crystal_bohr/crystal_bohr, symbol='bohr^-2' )
 
 def specie_name(specie):
-  """ Translate from CRYSTAL to sensible sepcie name. 
+  """ Translate from CRYSTAL to sensible specie name. 
 
       CRYSTAL uses a fairly obscure numbering system to map species to
       basis-sets. This function translates that mapping into a more explicit

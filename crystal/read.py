@@ -97,7 +97,8 @@ def castep(file):
   from . import Structure
   if isinstance(file, str): 
     if file.find('\n') == -1:
-      with open(RelativePath(file).path) as file: return castep(file)
+      with open(RelativePath(file).path, 'r') as file: return castep(file)
+    else: file = file.splitlines()
   
   file = [l for l in file]
   # Look for BLOCK lattice_cart
@@ -131,4 +132,48 @@ def castep(file):
     result.add_atom(pos=pos, type=line[0])
   return result
   
+def crystal(file='fort.34'):
+  """ Reads CRYSTAL's external format. """
+  from numpy import array
+  from ..misc import RelativePath
+  from ..error import IOError
+  from ..periodic_table import find as find_specie
+  from . import Structure
 
+  if isinstance(file, str):
+    if file.find('\n') == -1:
+      with open(RelativePath(file).path, 'r') as file: return crystal(file)
+    else: file = file.splitlines().__iter__()
+  # read first line
+  try: line = file.next()
+  except StopIteration: raise IOError('Premature end of stream.')
+  else: dimensionality, centering, type = [int(u) for u in line.split()[:3]]
+  # read cell
+  try: cell = array( [file.next().split()[:3] for i in xrange(3)], 
+                     dtype='float64' ).T
+  except StopIteration: raise IOError('Premature end of stream.')
+  result = Structure( cell=cell, centering=centering,
+                      dimensionality=dimensionality, type=type, scale=1e0 )
+  # read symmetry operators
+  result.spacegroup = []
+  try: N = int(file.next())
+  except StopIteration: raise IOError('Premature end of stream.')
+  for i in xrange(N):
+    try: op = array( [file.next().split()[:3] for j in xrange(4)],         
+                     dtype='float64' )
+    except StopIteration: raise IOError('Premature end of stream.')
+    else: op[:3] = op[:3].copy().T
+    result.spacegroup.append(op)
+
+  # read atoms.
+  try: N = int(file.next())
+  except StopIteration: raise IOError('Premature end of stream.')
+  
+  for i in xrange(N):
+    try: line = file.next().split()
+    except StopIteration: raise IOError('Premature end of stream.')
+    else: type, pos = int(line[0]), array(line[1:4], dtype='float64')
+    if type < 100: type = find_specie(atomic_number=type)
+    result.add_atom(pos=pos, type=type)
+
+  return result

@@ -121,38 +121,45 @@ def equivalence_iterator( structure, operations=None,                          \
       
       :returns: Yields iterators over atoms linked by space-group operations.
   """
-  from numpy import array, dot
-  from numpy.linalg import norm
-  from . import into_cell
+  from numpy import dot
+  from numpy.linalg import inv
 
   atoms = [u for u in enumerate(structure)]
   if operations == None: operations = space_group(structure)
+  invcell = inv(structure.cell)
    
   while len(atoms):
     i, atom = atoms.pop()
     equivs = [i]
     if len(atoms): 
+      # check symmetrically equivalent
+      others = [u[1] for u in atoms]
       for op in operations:
-        others = into_cell(array([u[1].pos for u in atoms]),                   \
-                 structure.cell, dot(op[:3], atom.pos)) + op[3]
-        others = [i for i, pos in enumerate(others) if norm(pos) < tolerance]
-        for index in others:
-          i, pos = atoms.pop(index)
-          equivs.append(i)
+        newpos = dot(op[:3], atom.pos) + op[3]
+        index = which_site(newpos, others, invcell)
+        if index != -1: 
+          others.pop(index)
+          other = atoms.pop(index)[0]
+          equivs.append(other)
+    # if no further splitting, returns. 
     if splitocc == None: yield equivs
+    # otherwise, apply splitting.
     else: 
-      results = []
-      for u in equivs: 
-        if len(results) == 0: results.append(equivs)
-        else:
-          found = False
-          for group in results:
-            if splitocc(group[0], u):
-              group.append(u)
-              found = True
-              break
-          if not found: results.append([u])
-      for u in results: yield u
+      # split according to callable.
+      # callable should be transitive. 
+      # This can be order N^2 in worst case scenario.
+      # Using an indexing function would be order N always?
+      results = [ [equivs[0]] ]
+      for u in equivs[1:]: 
+        found = False
+        for group in results:
+          if splitocc(group[0], u):
+            group.append(u)
+            found = True
+            break
+        if not found: results.append([u])
+      # now yield each inequivalent group
+      for group in results: yield group
 
 def shell_iterator(structure, center, direction, thickness=0.05):
   """ Iterates over cylindrical shells of atoms.
@@ -209,7 +216,8 @@ def which_site(atom, lattice, invcell=None, tolerance=1e-8):
   from numpy.linalg import inv
   from .cppwrappers import are_periodic_images as api
   if invcell is None: invcell = inv(lattice.cell)
+  lattice = [getattr(site, 'pos', site) for site in lattice]
   pos = getattr(atom, 'pos', atom)
   for i, site in enumerate(lattice):
-    if api(pos, site.pos, invcell, tolerance): return i
+    if api(pos, site, invcell, tolerance): return i
   return -1
