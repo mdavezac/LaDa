@@ -40,15 +40,15 @@ namespace LaDa
              <<         _self->cell(0, 0)
              << ", " << _self->cell(0, 1) 
              << ", " << _self->cell(0, 2) 
-             << ",\\\n" << std::string(name.size()+2, ' ')
+             << ",\n" << std::string(name.size()+2, ' ')
              <<         _self->cell(1, 0)
              << ", " << _self->cell(1, 1) 
              << ", " << _self->cell(1, 2) 
-             << ",\\\n" << std::string(name.size()+2, ' ')
+             << ",\n" << std::string(name.size()+2, ' ')
              <<         _self->cell(2, 0)
              << ", " << _self->cell(2, 1) 
              << ", " << _self->cell(2, 2)
-             << ",\\\n" << std::string(name.size()+2, ' ')
+             << ",\n" << std::string(name.size()+2, ' ')
              << "scale=" << _self->scale;
           
       // Including python dynamic attributes.

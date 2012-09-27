@@ -198,9 +198,19 @@ namespace LaDa
         else 
         {
           python::Object i_outer = PyObject_GetIter(_in);
-          if(not i_outer) { return false; }
+          if(not i_outer)
+          { 
+            if(not PyErr_Occurred()) 
+              LADA_PYERROR(TypeError, "Argument cannot be converted to matrix.");
+             return false; 
+          }
           python::Object outer(PyIter_Next(i_outer.borrowed()));
-          if(not outer.is_valid()) return false; 
+          if(not outer.is_valid())
+          { 
+            if(not PyErr_Occurred()) 
+              LADA_PYERROR(TypeError, "Argument cannot be converted to matrix.");
+            return false; 
+          }
           if(not outer.hasattr("__iter__")) // except 9 in a row
           {
             size_t i(0);

@@ -80,22 +80,41 @@ class ExtractBase(object):
 
   @property
   @make_cached
+  def convtrans(self):
+    """ Transform from primitive to conventional cell. """
+    from numpy import identity, array
+    from ..error import GrepError
+    with self.__stdout__() as file:
+      found = False
+      for line in file:
+        if "TRANSFORMATION MATRIX PRIMITIVE-CRYSTALLOGRAPHIC CELL" in line:
+          found = True; break;
+      if found == False: return identity(3, dtype='float64')
+      try: line = file.next()
+      except StopIteration: raise GrepError('End-of-file reached.')
+      else: return array(line.split(), dtype='float64').reshape(3,3)
+
+  @property
+  @make_cached
   def symmetry_operators(self):
     """ Greps symmetry operators from file. """
     from numpy import array, zeros, dot
+    from numpy.linalg import inv
     try:
       file = self.__stdout__()
       for line in file:
         if line.split() == ['V', 'INV', 'ROTATION', 'MATRICES', 'TRANSLATOR']:
           break
       symops = []
+      cell = self.structure.cell
+      invcell = inv(cell)
       for line in file:
         data = line.split()
         if len(data) != 14: break
         symops.append(zeros((4,3), dtype='float64'))
-        symops[-1][:3] = array(data[2:11], dtype='float64').reshape(3,3).T
-        symops[-1][3] = array(data[-3:], dtype='float64')
-        symops[-1][3] = dot(self.structure.cell, symops[-1][3])
+        fracop = array(data[2:11], dtype='float64').reshape(3,3)
+        symops[-1][:3] = dot(cell, dot(fracop, invcell))
+        symops[-1][3] = dot(cell, array(data[-3:], dtype='float64'))
       return array(symops)
     except Exception as e:
       raise GrepError('Encountered error while grepping for sym ops '          \
@@ -269,15 +288,27 @@ class ExtractBase(object):
     """ True if a molecular calculation """
     pattern = "^\s+(MOLECULAR|CRYSTAL)\s+CALCULATION\s*$"
     regex = self._find_last_STDOUT(pattern)
-    if regex is None:
-      raise GrepError('Could not determine whether molecular calculation')
-    return regex.group(1) == 'MOLECULAR'
+    if regex is not None: return regex.group(1) == 'MOLECULAR'
+    with self.__stdout__() as file:
+      for line in file:
+        if "GEOMETRY INPUT FROM EXTERNAL FILE" in line:
+          line = "LADA FOUND LINE"
+          break
+      if line != "LADA FOUND LINE": 
+        raise GrepError('Could not determine whether molecular calculation')
+      try: line = file.next()
+      except:
+        raise GrepError('Could not determine whether molecular calculation')
+      else: return int(line.split()[0][:1]) == 1
+    
     
 
   def _parsed_tree(self):
     """ Returns parsed input tree. """
     from .parse import parse
-    with self.__stdout__() as file: tree = parse(file)
+    try: 
+      with self.__stdout__() as file: tree = parse(file)
+    except: raise GrepError("Could not find CRYSTAL input at start of file.")
     title = tree.keys()[0]
     return tree[title]
 
@@ -292,6 +323,7 @@ class ExtractBase(object):
     """
     from .crystal import Crystal
     from .molecule import Molecule
+    from .external import External
     from .. import CRYSTAL_geom_blocks as starters
     from ..error import IOError, NotImplementedError
 
@@ -301,10 +333,15 @@ class ExtractBase(object):
       if starter in tree.keys(): found = True; break
     if found == False:
       raise IOError('Could not find start of input in file.')
-    if starter.lower() != 'crystal': 
+    if starter.lower() == 'external':
+      result = External(copy=self.input_structure)
+    elif starter.lower() == 'crystal':
+      result = Crystal()
+    elif starter.lower() == 'molecule':
+      result = Molecule()
+    else:
       raise NotImplementedError('Can only read 3d structures.')
 
-    result = Molecule() if self.is_molecular else Crystal()
     result.read_input(tree[starter])
     return result
 
@@ -414,23 +451,35 @@ class ExtractBase(object):
   def structure(self):
     """ Output structure, LaDa format. """
     from ..error import NotImplementedError
-    if not self._is_optgeom: return self.input_structure
-    elif self.dimensionality == 0: return self._update_pos_only
-    try:
-      with self.__stdout__() as file:
-        pos = None
-        for pos in self._find_structure(file): continue
-        if pos is None: 
-          raise GrepError('Could not extract structure from file')
-        file.seek(pos, 0)
-        return self._grep_structure(file)
-    # Pcrystal fails to print structure at end of optimization run if reached
-    # maximum number of iterations. This tries to get the structure in a
-    # different way. 
-    except GrepError: 
-      if self.dimensionality == 3: return self._final_structure
-      elif self._no_change_in_params: return self._update_pos_only
-      else: raise NotImplementedError('Cannot grep output structure')
+    if not self._is_optgeom: result = self.input_structure
+    elif self.dimensionality == 0: result = self._update_pos_only
+    else: 
+      try:
+        with self.__stdout__() as file:
+          pos = None
+          for pos in self._find_structure(file): continue
+          if pos is None: 
+            raise GrepError('Could not extract structure from file')
+          file.seek(pos, 0)
+          result = self._grep_structure(file)
+      # Pcrystal fails to print structure at end of optimization run if reached
+      # maximum number of iterations. This tries to get the structure in a
+      # different way. 
+      except GrepError: 
+        if self.dimensionality == 3: result = self._final_structure
+        elif self._no_change_in_params: result = self._update_pos_only
+        else: raise NotImplementedError('Cannot grep output structure')
+    try: charges = self.atomic_charges
+    except: pass
+    else: 
+      if charges is not None:
+        for atom, c in zip(result, charges[-1]): atom.charge = c
+    try: spins = self.atomic_spins
+    except: pass
+    else: 
+      if spins is not None:
+        for atom, s in zip(result, spins[-1]): atom.spin = s
+    return result
 
   @property
   @make_cached
@@ -813,6 +862,61 @@ class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
       if self.istest: return False
     except: return False
     return True
+
+  @property
+  @make_cached
+  def atomic_charges(self):
+    """ Atomic Charges. """
+    from numpy import array
+    from quantities import elementary_charge as ec
+    with self.__stdout__() as file:
+      isincharge = False
+      results, inner = [], []
+      for line in file:
+        if isincharge:
+          line = line.split()
+          if len(line) == 0:
+            results.append(inner)
+            isincharge = False
+            continue
+          try: dummy = [float(item) for item in line]
+          except:
+            isincharge = False
+            results.append(inner)
+            continue
+          else: inner.extend(dummy)
+        elif 'TOTAL ATOMIC CHARGES:' in line:
+          inner = []
+          isincharge = True
+      return array(results) * ec if len(results) else None
+
+  @property
+  @make_cached
+  def atomic_spins(self):
+    """ Atomic Charges. """
+    from numpy import array
+    from quantities import elementary_charge as ec
+    with self.__stdout__() as file:
+      isincharge = False
+      results, inner = [], []
+      for line in file:
+        if isincharge:
+          line = line.split()
+          if len(line) == 0:
+            results.append(inner)
+            isincharge = False
+            continue
+          try: dummy = [float(item) for item in line]
+          except:
+            isincharge = False
+            results.append(inner)
+            continue
+          else: inner.extend(dummy)
+        elif 'TOTAL ATOMIC SPINS' in line:
+          inner = []
+          isincharge = True
+      return array(results) * ec if len(results) else None
+
 
 class MassExtract(AbstractMassExtract):
   """ Extracts all CRYSTAL calculations in directory and sub-directories. 

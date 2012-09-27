@@ -172,7 +172,7 @@ class Molecule(ListBlock):
         # writes input file
         with open('crystal.input', 'w') as file:
           file.write('{0}\n'.format(getattr(self, 'name', '')))
-          file.write(this.print_input())
+          file.write(this.print_input(filework=True))
         # creates process and run it.
         if hasattr(program, '__call__'): program = program()
         process = Process( program, stdin='crystal.input',
@@ -184,9 +184,9 @@ class Molecule(ListBlock):
 
         try: return Extract().input_structure
         except GrepError:
-          message = self.print_input() + '\n\n'
+          message = this.print_input(filework=True) + '\n\n'
           with Extract().__stdout__() as file: message += file.read()
-          raise ValueError(message + '\n\nInput tructure is likely incorrect\n')
+          raise ValueError(message + '\n\nInput structure is likely incorrect\n')
     finally:
       try: rmtree(tmpdir)
       except: pass
@@ -213,7 +213,7 @@ class Molecule(ListBlock):
         # writes input file
         with open('crystal.input', 'w') as file:
           file.write('{0}\n'.format(getattr(self, 'name', '')))
-          file.write(this.print_input())
+          file.write(this.print_input(filework=True))
         # creates process and run it.
         if hasattr(program, '__call__'): program = program(self)
         process = Process( program, stdin='crystal.input',
@@ -223,6 +223,43 @@ class Molecule(ListBlock):
         process.start()
         process.wait()
         with open('crystal.out', 'r') as file: return file.read()
+    finally:
+      try: rmtree(tmpdir)
+      except: pass
+
+  @property
+  def extprt(self):
+    """ CRYSTAL external output.
+    
+        This is a string which contains the structure in CRYSTAL_'s external
+        output format. Mostly for debugging.
+    """
+    from copy import deepcopy
+    from tempfile import mkdtemp
+    from shutil import rmtree
+    from ..misc import Changedir
+    from ..process import ProgramProcess as Process
+    from .. import crystal_program as program
+    this = deepcopy(self)
+    this.append('EXTPRT')
+    this.append('TESTGEOM')
+    try:
+      tmpdir = mkdtemp()
+
+      with Changedir(tmpdir) as cwd:
+        # writes input file
+        with open('crystal.input', 'w') as file:
+          file.write('{0}\n'.format(getattr(self, 'name', '')))
+          file.write(this.print_input(filework=True))
+        # creates process and run it.
+        if hasattr(program, '__call__'): program = program(self)
+        process = Process( program, stdin='crystal.input',
+                           outdir=tmpdir, stdout='crystal.out',
+                           stderr='crystal.err', dompi=False )
+
+        process.start()
+        process.wait()
+        with open('fort.34', 'r') as file: return file.read()
     finally:
       try: rmtree(tmpdir)
       except: pass
@@ -251,7 +288,7 @@ class Molecule(ListBlock):
         # writes input file
         with open('crystal.input', 'w') as file:
           file.write('{0}\n'.format(getattr(self, 'name', '')))
-          file.write(this.print_input())
+          file.write(this.print_input(filework=True))
         # creates process and run it.
         if hasattr(program, '__call__'): program = program(self)
         process = Process( program, stdin='crystal.input',
@@ -263,9 +300,9 @@ class Molecule(ListBlock):
 
         try: return Extract().symmetry_operators
         except GrepError:
-          message = self.print_input() + '\n\n'
+          message = this.print_input(filework=True) + '\n\n'
           with Extract().__stdout__() as file: message += file.read()
-          raise ValueError(message + '\n\nInput tructure is likely incorrect\n')
+          raise ValueError(message + '\n\nInput structure is likely incorrect\n')
     finally:
       try: rmtree(tmpdir)
       except: pass

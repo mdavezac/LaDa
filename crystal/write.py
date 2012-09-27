@@ -9,7 +9,7 @@ def poscar(structure, file='POSCAR', vasp5=None, substitute=None):
       :param file:
           Object with a ''write'' method. If a string, then a file object is
           opened with that filename. The file is overwritten. If None, then
-          returns a string.
+          writes to POSCAR in current working directory.
       :type file: str, stream, or None.
       :param bool vasp5:
           If true, include species in poscar, vasp-5 style.  Otherwise, looks
@@ -98,4 +98,107 @@ def castep(structure, file=None):
     from ..misc import RelativePath
     with open(RelativePath(file).path, 'w') as file: file.write(string)
   else: file.write(string)
+
+def crystal( structure, file='fort.34',
+             dimensionality=None, centering=None, type=None, spacegroup=None ):
+  """ Writes structure as CRYSTAL's EXTPRT. 
+
+      :param structure:
+          The structure to print out.
+      :type structure: :py:class:`Structure`
+      :param file:
+          Object with a ''write'' method. If a string, then a file object is
+          opened with that filename. The file is overwritten. If None, then
+          returns a string.
+      :type file: str, stream, or None.
+      :param int dimensionality:
+          Dimensionality of the system as an integer between 0 and  3 included.
+          If None, checks for a ''dimensionality'' attribute in ``structure``.
+          If that does not fit the biil, defaults to 3.
+      :param int centering:
+          Centering in CRYSTAL_'s integer format. Is None, checks ``structure``
+          for a ``centering`` integer attribute. If that does not exist or is
+          not convertible to an integer, then defaults to 1.
+      :param int type:
+          Crystal type in CRYSTAL_'s integer format. Is None, checks
+          ``structure`` for a ``type`` integer attribute. If that does not
+          exist or is not convertible to an integer, then defaults to 1.
+      :param spacegroup:
+          The structure's space group as a sequence of 4x3 matrices. If this is
+          None (default), then checks for ''spacegroup'' attributes. If that
+          does not exist, uses :py:function:`~lada.crystal.space_group`.
+  """
+  from StringIO import StringIO
+  from numpy import zeros
+  from ..crystal import equivalence_iterator
+  from ..periodic_table import find as find_specie
+  from . import space_group
+  # makes sure file is a stream.
+  # return string when necessary
+  if file is None:
+    file = StringIO()
+    crystal(structure, file, dimensionality, centering, type, spacegroup)
+    return file.getvalue()
+  elif not hasattr(file, 'write'):
+    with open(file, 'w') as fileobj:
+      return crystal( structure, fileobj, dimensionality,
+                      centering, type, spacegroup)
   
+  # normalize input as keyword vs from structure vs default.
+  try:
+    if dimensionality is None:
+      dimensionality = getattr(structure, 'dimensionality', 3)
+    dimensionality = int(dimensionality)
+    if dimensionality < 0 or dimensionality > 3: dimensionality = 3
+  except: dimensionality = 3
+  try:
+    if centering is None: centering = getattr(structure, 'centering', 1)
+    centering = int(centering)
+  except: centering = 1
+  try:
+    if type is None: type = getattr(structure, 'type', 1)
+    type = int(type)
+  except: type = 1
+  if spacegroup is None: spacegroup = getattr(structure, 'spacegroup', None)
+  if spacegroup is None: spacegroup = space_group(structure)
+  if len(spacegroup) == 0:
+    spacegroup = zeros((1, 4, 3))
+    spacegroup[0,0,0] = 1
+    spacegroup[0,1,1] = 1
+    spacegroup[0,2,2] = 1
+
+  # write first line
+  file.write('{0} {1} {2}\n'.format(dimensionality, centering, type))
+  # write cell
+  file.write( '{0[0]: > 18.12f} {0[1]: > 18.12f} {0[2]: > 18.12f}\n'           \
+              '{1[0]: > 18.12f} {1[1]: > 18.12f} {1[2]: > 18.12f}\n'           \
+              '{2[0]: > 18.12f} {2[1]: > 18.12f} {2[2]: > 18.12f}\n'           \
+              .format( *(structure.cell*structure.scale) ) )
+  # write symmetry operators
+  file.write('{0}\n'.format(len(spacegroup)))
+  for op in spacegroup:
+    file.write( '{0[0]: > 18.12f} {0[1]: > 18.12f} {0[2]: > 18.12f}\n'         \
+                '{1[0]: > 18.12f} {1[1]: > 18.12f} {1[2]: > 18.12f}\n'         \
+                '{2[0]: > 18.12f} {2[1]: > 18.12f} {2[2]: > 18.12f}\n'         \
+                .format(*op[:3]) )
+    file.write( '    {0[0]: > 18.12f} {0[1]: > 18.12f} {0[2]: > 18.12f}\n'     \
+                .format(op[3]) )
+
+
+  # figure out inequivalent atoms.
+  groups = [u for u in equivalence_iterator(structure, spacegroup)]
+  file.write('{0}\n'.format(len(groups)))
+  for group in groups:
+    atom = structure[group[0]]
+    # Try figuring out atomic number.
+    type = atom.type
+    try: n = int(type)
+    except: 
+      try: n = find_specie(name=type)
+      except:
+        raise ValueError( 'Could not transform {0} to atomic number.'          \
+                          .format(type) )
+      else: type = n.atomic_number
+    else: type = n
+    file.write( '{0: >5} {1[0]: > 18.12f} {1[1]: > 18.12f} {1[2]: > 18.12f}\n' \
+                .format(type, atom.pos*structure.scale) )

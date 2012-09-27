@@ -139,7 +139,11 @@ class Functional(object):
     inner = root
 
     if 'structure' in kwargs:
-      structure = kwargs['structure']
+      structure = kwargs['structure'].copy()
+      # Appends symmetry modification if basis includes a modification of the
+      # initial guess.
+      modsymm = self.basis.chemod.modisymm(structure)
+      if modsymm is not None: structure.append(modsymm)
       # insert name of structure as title.
       if hasattr(structure, 'name'):
         inner = root.descend(structure.name.rstrip().lstrip())
@@ -216,14 +220,14 @@ class Functional(object):
 
       # then creates input file.
       string = self.print_input( crystal=self, structure=structure, 
-                                 workdir=workdir, test=test )
+                                 workdir=workdir, test=test, filework=True )
       with open('crystal.d12', 'w') as file: file.write(string)
 
   def bringdown(self, structure, workdir, outdir):
     """ Copies files back to output directory. 
     
-        Cats input intO output.
-	Removes workdir if different from outdir **and** run was successfull.
+        Cats input intO output. Removes workdir if different from outdir
+        **and** run was successfull.
     """
     from itertools import chain
     from os import remove
