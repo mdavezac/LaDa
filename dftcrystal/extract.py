@@ -703,8 +703,12 @@ class ExtractBase(object):
     """ List of warnings. """
     from re import M 
     result = []
-    for item in self._search_STDOUT('^ WARNING\s+(.*)$', M):
-      result.append(item.group(1).rstrip().lstrip())
+    unique = set()
+    for item in self._search_STDOUT('^\s?WARNING\s+(.*)$', M):
+      dummy = item.group(1).rstrip().lstrip()
+      if dummy in unique: continue
+      result.append(dummy)
+      unique.add(dummy)
     return result
   @property
   @make_cached
@@ -712,8 +716,12 @@ class ExtractBase(object):
     """ List of informations. """
     from re import M 
     result = []
-    for item in self._search_STDOUT('^ INFORMATION\s+(.*)$', M):
-      result.append(item.group(1).rstrip().lstrip())
+    unique = set()
+    for item in self._search_STDOUT('^\s?INFORMATION\s+(.*)$', M):
+      dummy = item.group(1).rstrip().lstrip()
+      if dummy in unique: continue
+      result.append(dummy)
+      unique.add(dummy)
     return result
   @property
   @make_cached
@@ -721,8 +729,12 @@ class ExtractBase(object):
     """ List of errors. """
     from re import M 
     result = []
-    for item in self._search_STDOUT('^ ERROR\s+(.*)$', M):
-      result.append(item.group(1).rstrip().lstrip())
+    unique = set()
+    for item in self._search_STDOUT('^\s?ERROR\s+(.*)$', M):
+      dummy = item.group(1).rstrip().lstrip()
+      if dummy in unique: continue
+      result.append(dummy)
+      unique.add(dummy)
     return result
   
   @property
@@ -733,6 +745,34 @@ class ExtractBase(object):
     for u in self.warnings: 
       if regex in u: return True
     return False
+
+  @property
+  @make_cached
+  def atomic_charges(self):
+    """ Atomic Charges. """
+    from numpy import array
+    from quantities import elementary_charge as ec
+    with self.__stdout__() as file:
+      isincharge = False
+      results = []
+      for line in file:
+        if isincharge: 
+          line = line.split()
+          if len(line) == 0:
+            results.append(inner)
+            isincharge = False
+            continue
+          try: dummy = [float(item) for item in line]
+          except:
+            isincharge = False
+            results.append(inner) 
+            continue
+          else: inner.extend(dummy)
+        elif 'TOTAL ATOMIC CHARGES:' in line:
+          inner = []
+          isincharge = True
+      return array(results) * ec
+                   
 
 class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
   """ Extracts DFT data from an OUTCAR. """
