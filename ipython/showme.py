@@ -197,7 +197,7 @@ def showme_pbs(self, which):
     print 'Could not find appropriate file for {0}'.format(interactive.jobfolder.name)
     return
   files = sorted(files, key=lambda x: getmtime(x))
-  self.system('less {0}'.format(files[-1]))
+  self.shell.system('less {0}'.format(files[-1]))
 
 def completer(self, event):
   """ Completer for showme. """

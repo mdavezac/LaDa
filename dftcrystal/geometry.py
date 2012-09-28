@@ -209,6 +209,13 @@ class ModifySymmetry(BaseKeyword):
         Each argument is a sequence of atomic label. Each argument will be
         assigned a different flag. This input is somewhat more condensed than
         the original CRYSTAL input.
+
+        >>> a = ModifySymmetry([1, 2, 3], [4, 5, 6])
+        >>> structure.append(a)
+        
+	The snippet above adds a symmetry modifier to a structure which
+	disables any symmetry operation  between the group of atoms 
+	``[1, 2, 3]`` and the group of atoms ``[4, 5, 6]``.
     """
     super(ModifySymmetry, self).__init__()
     self.groups = []

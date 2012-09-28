@@ -37,6 +37,7 @@ class Communicator(dict):
         lent to the returned communicator. They should be given back when
         cleanup is called on the result.
     """
+    from lada import do_multiple_mpi_programs
     from weakref import ref
     try: 
       if nprocs == 'all': nprocs = self['n']
@@ -45,6 +46,9 @@ class Communicator(dict):
       raise NodeFileExists("Comm already used in other process.")
     if nprocs > self['n']: raise MPISizeError((nprocs, self['n']))
     if nprocs <= 0: raise MPISizeError(nprocs)
+    if do_multiple_mpi_programs == False and nprocs != self['n']:
+      raise MPISizeError( 'No mpi placement is allowed '                       \
+                          'by current LaDa configuration')
     result = self.__class__()
     result.machines = {}
     result.parent = ref(self)
