@@ -1,7 +1,7 @@
 __docformat__ = "restructuredtext en"
 __all__ = [ 'RemoveAtoms', 'Slabinfo', 'Slabcut', 'Slab',
             'DisplaceAtoms', 'InsertAtoms', 'ModifySymmetry',
-            'AffineTransform', 'Marker', 'Elastic' ]
+            'AffineTransform', 'Elastic', 'Supercell', 'Supercon' ]
 from .input import GeomKeyword
 from ..tools.input import BaseKeyword
 
@@ -507,20 +507,81 @@ class Elastic(GeomKeyword):
     if self.matrix is None: return None
     return super(Elastic, self).output_map(**kwargs)
 
+class Supercell(BaseKeyword):
+  """ CRYSTAL function to create a supercell. """
+  keyword = "supercel"
+  def __init__(self, matrix=None):
+    from numpy import array
+    from ..error import ValueError
+    super(Supercell, self).__init__()
+    self.matrix = matrix
+    if self.matrix is not None:
+      self.matrix = array(matrix, dtype='float64')                       \
+                            .round().astype('int64')
+      N = len(self.matrix.flat)
+      if N == 1: self.matrix = self.matrix.reshape(1,1)
+      elif N == 4: self.matrix = self.matrix.reshape(2,2)
+      elif N == 9: self.matrix = self.matrix.reshape(3,3)
+      else: raise ValueError('Incorect matrix size in Supercell.')
+    
+  @property 
+  def matrix(self):
+    """ Supercell in basis of the unit-cell. """
+    return self._matrix
+  @matrix.setter
+  def matrix(self, value):
+    from numpy import array
+    from numpy.linalg import det
+    from ..error import ValueError
+    if value is None: self._matrix = None; return
+    self._matrix = array(value, dtype='float64').round().astype('int64')
+    N = len(self._matrix.flat)
+    if N == 1: self._matrix = self._matrix.reshape(1,1)
+    elif N == 4: self._matrix = self._matrix.reshape(2,2)
+    elif N == 9: self._matrix = self._matrix.reshape(3,3)
+    else: raise ValueError('Incorect matrix size in Supercell.')
+    if det(self._matrix) == 0:
+      raise ValueError('Determinant of supercell cannot be zero.')
 
-class Marker(BaseKeyword):
-  """ Places a marker in the execution list. """
-  def __init__(self, name=None):
-    """ Creates a marker. """
-    self.keyword = name
-    """ Name of marker. """
-  @property
-  def name(self):
-    """ Name of marker. """
-    return self.keyword
-  @name.setter
-  def name(self, value):
-    self.keyword = value
   def __repr__(self):
-    return '{0.__class__.__name__}({0.name)'.format(self)
-  def output_map(self, **kwargs): return None
+    """ Dumps object to stream. """
+    if self.matrix is None: return '{0.__class__.__name__}'.format(self)
+    return '{0.__class__.__name__}({1!r})'                                     \
+           .format(self, self.matrix.tolist())
+
+  def output_map(self, structure=None, **kwargs):
+    """ Checks dimensionality. """
+    from numpy import any, abs
+    from ..error import ValueError
+    if self.matrix is None: return None
+    # dimensionality check, wherever possible.
+    if structure is not None: 
+      for i, op in enumerate(structure): 
+        if op is self: break
+      if op is self: 
+        structure = structure.copy()
+        structure[:] = structure[:i]
+        try: cell = structure.eval().cell
+        except: pass
+        else: 
+          N = len(self.matrix)
+          if N < 1 and any(abs(cell[:, 0] - [5e2, 0,0]) > 1e-8):
+            raise ValueError( 'Structure and supercell '                       \
+                              'dimensionality do not match.' )
+          if N < 2 and any(abs(cell[:, 1] - [0, 5e2, 0]) > 1e-8):
+            raise ValueError( 'Structure and supercell '                       \
+                              'dimensionality do not match.' )
+          if N < 3 and any(abs(cell[:, 2] - [0, 0, 5e2]) > 1e-8):
+            raise ValueError( 'Structure and supercell '                       \
+                              'dimensionality do not match.' )
+
+    string = '\n'.join(' '.join(str(i) for i in j) for j in self.matrix)
+    return {self.keyword: string}
+             
+  def read_input(self, tree, owner=None):
+    from numpy import array
+    self.matrix = array(tree.split(), dtype='float64')                      \
+                          .round().astype('int64')
+
+class Supercon(Supercell):
+  keyword = 'supercon'

@@ -316,3 +316,6 @@ class Molecule(ListBlock):
     """ Returns CRYSTAL input. """
     from .input import print_input
     return print_input(self.output_map(**kwargs))
+  def output_map(self, **kwargs):
+    if 'structure' not in kwargs: kwargs['structure'] = self
+    return super(Molecule, self).output_map(**kwargs)
