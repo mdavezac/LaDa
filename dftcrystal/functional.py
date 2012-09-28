@@ -97,6 +97,8 @@ class Functional(object):
     else: super(Functional, self).__setattr__(name, value)
   def __delattr__(self, name):
     """ Deletes attributes. """
+    if name in self.scf._input: del self.scf._input[name]
+    else: super(Functional, self).__delattr__(name)
   def __dir__(self):
     """ List of attributes and members """
     return list( set(self.__dict__.iterkeys()) | set(dir(self.__class__))      \

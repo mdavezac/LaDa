@@ -448,11 +448,21 @@ class ExtractBase(object):
     return self._find_first_STDOUT(pattern) is not None
   @property
   @make_cached
+  def _cellinternal_only(self):
+    """ True if cell internal geometry optimization. """
+    regex = "ATOMIC POSITIONS OPTIMIZATION CONTROL"
+    if self._find_first_STDOUT(regex) is not None: return True
+    try: a = self.functional.optgeom.fixcell 
+    except: return False
+    else: return a is True
+  @property
+  @make_cached
   def structure(self):
     """ Output structure, LaDa format. """
     from ..error import NotImplementedError
     if not self._is_optgeom: result = self.input_structure
     elif self.dimensionality == 0: result = self._update_pos_only
+    elif self._cellinternal_only: result = self._update_pos_only
     else: 
       try:
         with self.__stdout__() as file:
