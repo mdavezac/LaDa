@@ -154,6 +154,8 @@ subroutine ewaldf(ipr,eewald,fewa,fewac,stress, natot,rc,zz,ecut,avec,mxdnat, er
        esumr = zero
        ssumg = zero
        ssumr = zero
+       fsumg = zero
+       fsumr = zero
  
 !c     start sum in g space
  

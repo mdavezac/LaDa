@@ -47,7 +47,7 @@ namespace LaDa
       const int verbosity(0);
       double energy(0);
       int error;
-      npy_intp dims[3] = {PyArray_DIM(positions, 0), PyArray_DIM(positions, 1), 6};
+      npy_intp dims[3] = {PyArray_DIM(positions, 0), 3, 6};
       int const nptype = math::numpy::type<double>::value;
       python::Object forces = PyArray_ZEROS(2, dims, nptype, 0);
       if(not forces) return NULL;
