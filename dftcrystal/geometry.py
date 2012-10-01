@@ -552,7 +552,7 @@ class Supercell(BaseKeyword):
 
   def __repr__(self):
     """ Dumps object to stream. """
-    if self.matrix is None: return '{0.__class__.__name__}'.format(self)
+    if self.matrix is None: return '{0.__class__.__name__}()'.format(self)
     return '{0.__class__.__name__}({1!r})'                                     \
            .format(self, self.matrix.tolist())
 
@@ -588,7 +588,7 @@ class Supercell(BaseKeyword):
   def read_input(self, tree, owner=None):
     from numpy import array
     self.matrix = array(tree.split(), dtype='float64')                      \
-                          .round().astype('int64')
+                       .round().astype('int64')
 
 class Supercon(Supercell):
   keyword = 'supercon'

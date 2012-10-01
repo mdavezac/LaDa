@@ -602,6 +602,7 @@ class ExtractBase(object):
     """
     from numpy import dot, identity, abs, array, any, all
     from numpy.linalg import inv, det
+    from ..crystal import into_voronoi
     from ..error import internal 
     from .geometry import DisplaceAtoms, Elastic
     
@@ -617,6 +618,7 @@ class ExtractBase(object):
 
     # deduce structure - last changes in cell-shape or atomic displacements.
     if looped:
+      print looped, incrys[:-i]
       incrys = incrys.copy()
       incrys[:] = incrys[:-i]
       instruct = incrys.eval()
@@ -634,6 +636,7 @@ class ExtractBase(object):
     field = [ dot(cell, dot(inv_out, a.pos) - dot(inv_in, b.pos))
               for a, b in zip(self.structure, instruct)
               if a.asymmetric ]
+    field = [into_voronoi(u, cell, inv_out) for u in field]
     field = array(field)
 
     # check if changes:
@@ -867,7 +870,7 @@ class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
     try: self.end_date
     except: 
       if self.optgeom_iterations is None: return False
-      return self.optgeom_iterations > 3
+      return self.optgeom_iterations > 0
     try: 
       if self.istest: return False
     except: return False
