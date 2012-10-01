@@ -861,6 +861,13 @@ class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
     OutputSearchMixin.__init__(self)
 
   @property
+  def scf_converged(self):
+    """ Checks if SCF cycle converged. """
+    regex = """\s+\=\=\s+SCF\s+ENDED\s+-\s+(TOO MANY CYCLES|CONVERGENCE)"""
+    result = self._find_last_STDOUT(regex)
+    if result is None: raise GrepError('No comment about convergence')
+    return result.group(1) == 'CONVERGENCE'
+  @property
   def success(self):
     from os.path import exists, join
     if not exists(join(self.directory, self.STDOUT)): 
@@ -870,7 +877,10 @@ class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
     try: self.end_date
     except: 
       if self.optgeom_iterations is None: return False
-      return self.optgeom_iterations > 0
+      return self.optgeom_iterations > 1
+    else: 
+      try: return self.scf_converged
+      except: return False
     try: 
       if self.istest: return False
     except: return False
