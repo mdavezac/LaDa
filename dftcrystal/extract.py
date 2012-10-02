@@ -334,7 +334,7 @@ class ExtractBase(object):
     if found == False:
       raise IOError('Could not find start of input in file.')
     if starter.lower() == 'external':
-      result = External(copy=self.input_structure)
+      result = External(copy=self._initial_structure)
     elif starter.lower() == 'crystal':
       result = Crystal()
     elif starter.lower() == 'molecule':
@@ -432,13 +432,40 @@ class ExtractBase(object):
   @make_cached
   def input_structure(self):
     """ Input structure, LaDa format. """
+    # First finds end of structural input. It may be the end-of the file in
+    # testgeom runs.
+    with self.__stdout__() as file:
+      while True:
+        line = file.readline()
+        if not line: break
+        if "TYPE OF CALCULATION" in line: break
+      endgeom = file.tell()
+    with self.__stdout__() as file:
+      last, pos = None, None
+      for pos in self._find_structure(file): 
+        if pos > endgeom: break
+        last = pos
+      if last is None: last = pos
+      if last is None: raise GrepError('Could not extract structure from file')
+      file.seek(last, 0)
+      return self._grep_structure(file)
+
+  @property
+  @make_cached
+  def _initial_structure(self):
+    """ Initial structure, LaDa format. 
+    
+        This greps the very first structure. When reading from external files,
+        this would be the initial structure in the external file. However, that
+        structure may be transformed by further input, and hence is not the
+        input structure.
+    """
     with self.__stdout__() as file:
       pos = None
       for pos in self._find_structure(file): break
-      if pos is None: raise GrepError('Could extract structure from file')
+      if pos is None: raise GrepError('Could not extract structure from file')
       file.seek(pos, 0)
       return self._grep_structure(file)
-
 
   @property
   @make_cached

@@ -412,6 +412,37 @@ class Functional(object):
     from copy import deepcopy
     return deepcopy(self)
 
+  def test_basis(self, structure, **kwargs):
+    """ Returns output of test basis run. """
+    from copy import deepcopy
+    from tempfile import mkdtemp
+    from shutil import rmtree
+    try:
+      this = deepcopy(self)
+      this.basis.add_keyword('TEST')
+      tmpdir = mkdtemp()
+
+      result = this(structure, outdir=tmpdir, **kwargs)
+      with result.__stdout__() as file: return file.read()
+    finally:
+      try: rmtree(tmpdir)
+      except: pass
+  def test_hamiltonian(self, structure, **kwargs):
+    """ Returns output of test basis run. """
+    from copy import deepcopy
+    from tempfile import mkdtemp
+    from shutil import rmtree
+    try:
+      this = deepcopy(self)
+      this.add_keyword('TEST')
+      tmpdir = mkdtemp()
+
+      result = this(structure, outdir=tmpdir, **kwargs)
+      with result.__stdout__() as file: return file.read()
+    finally:
+      try: rmtree(tmpdir)
+      except: pass
+
   class OnFinish(object):
     """ Called when a run finishes. 
        
