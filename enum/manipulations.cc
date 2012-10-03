@@ -13,7 +13,6 @@
 #include <python/numpy_types.h>
 #include <python/exceptions.h>
 #include <python/wrap_numpy.h>
-#include <python/quantity.h>
 
 #include "manipulations.h"
 
