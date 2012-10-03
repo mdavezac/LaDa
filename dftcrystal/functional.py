@@ -446,7 +446,7 @@ class Functional(object):
   class OnFinish(object):
     """ Called when a run finishes. 
        
-	Makes sure files are copied and stuff is pasted at the end of a call to
+        Makes sure files are copied and stuff is pasted at the end of a call to
         CRYSTAL.
     """
     def __init__(self, this, *args):
@@ -457,7 +457,7 @@ class Functional(object):
   class OnFail(object):
     """ Checks whether CRYSTAL run succeeded.
 
-	Crystal reports an error when reaching maximum iteration without
+        Crystal reports an error when reaching maximum iteration without
         converging. This is screws up hwo LaDa does things.
     """
     def __init__(self, outdir):

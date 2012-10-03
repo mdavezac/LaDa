@@ -448,6 +448,107 @@ class GuessP(BoolKeyword):
       copyfile(path, join(kwargs['workdir'], 'fort.20'), nothrow='same')
     return super(GuessP, self).output_map(**kwargs)
 
+class Broyden(BaseKeyword):
+  """ Broyden mixing parameters. """
+  keyword = 'broyden'
+  """ CRYSTAL keyword. """
+  def __init__(self, w0=None, imix=None, istart=None):
+    super(Broyden, self).__init__()
+
+    self.w0 = w0
+    self.imix = imix
+    self.istart = istart
+
+  @property
+  def w0(self): 
+    """ Anderson mixing parameter. """
+    return self._w0
+  @w0.setter
+  def w0(self, value):
+    from ..error import ValueError
+    if value is None: self._w0 = None; return
+    try: self._w0 = float(value)
+    except:
+      raise ValueError('w0 attribute expects a floating point in Broyden.')
+  @property
+  def imix(self): 
+    """ Percent mixing when Broyden is switched on. """
+    return self._imix
+  @imix.setter
+  def imix(self, value):
+    from ..error import ValueError
+    if value is None: self._imix = None; return
+    try: dummy = int(value)
+    except:
+      raise ValueError('imix attribute expects an integer point in Broyden.')
+    else: 
+      if dummy < 1 or dummy > 99:
+        raise ValueError("Broyden's imix should be > 0 and < 100.")
+      self._imix = dummy
+  @property
+  def istart(self): 
+    """ Percent mixing when Broyden is switched on. """
+    return self._istart
+  @istart.setter
+  def istart(self, value):
+    from ..error import ValueError
+    if value is None: self._istart = None; return
+    try: dummy = int(value)
+    except:
+      raise ValueError('istart attribute expects an integer point in Broyden.')
+    else:
+      if dummy < 2: 
+        raise ValueError("Broyden's istart should be larger than or equal to 2.")
+      self._istart = dummy
+  def output_map(self, **kwargs):
+    if self._w0 is None or self._istart is None or self._imix is None:
+      return None
+    return {self.keyword: '{0.w0!r} {0.imix!r} {0.istart!r}'.format(self)}
+
+  def read_input(self, value, **kwargs):
+    self.__set__(None, value.split())
+
+  def __set__(self, instance, value):
+    from collections import Sequence
+    from ..error import TypeError
+    if value is None:
+      self._w0, self._imix, self._istart = None, None, None
+      return
+    if not isinstance(value, Sequence):
+      raise TypeError("Expected a sequence [float, int, int] in Brodyen.")
+    if len(value) != 3: 
+      raise TypeError("Expected a sequence [float, int, int] in Brodyen.")
+    self.w0 = value[0]
+    self.imix = value[1]
+    self.istart = value[2]
+
+  def __getitem__(self, index):
+    """ Allows access to input as sequence. """
+    from ..error import IndexError
+    if index == 0 or index == -3: return self.w0
+    if index == 1 or index == -2: return self.imix
+    if index == 2 or index == -1: return self.istart
+    raise IndexError('Index out-of-range in Broyden.')
+  def __setitem__(self, index, value):
+    """ Allows access to input as sequence. """
+    from ..error import IndexError
+    if index == 0 or index == -3:   self.w0     = value
+    elif index == 1 or index == -2: self.imix   = value
+    elif index == 2 or index == -1: self.istart = value
+    else: raise IndexError('Index out-of-range in Broyden.')
+
+  def __repr__(self):
+    """ Prints keyword to string. """
+    args = []
+    if self.w0 is not None: args.append("{0.w0!r}".format(self))
+    if self.imix is not None:
+      if len(args) == 0: args.append("imix={0.imix!r}".format(self))
+      else: args.append("{0.imix!r}".format(self))
+    if self.istart is not None:
+      if len(args) != 2: args.append("istart={0.istart!r}".format(self))
+      else: args.append("{0.istart!r}".format(self))
+    return "{0.__class__.__name__}({1})".format(self, ', '.join(args))
+
 
 class Electronic(AttrBlock):
   """ DFT attribute block. """ 
@@ -736,6 +837,38 @@ class Electronic(AttrBlock):
         Expects None (default, does nothing) or an energy wich defines the
         width of the smearing function.
     """
+    self.anderson = BoolKeyword()
+    """ Applies Anderson mixing method. 
+    
+        Andersen mixing does not require any input. 
+        It expects None (default, does nothing), True or False. The latter is
+        equivalent to None.
+    """
+    self.broyden = Broyden()
+    """ Applies broyden mixing method. 
+    
+        Broyden takes three inputs: 
+
+        >>> functional.broyden.w0     = 1e-4
+        >>> functional.broyden.imix   = 50
+        >>> functional.broyden.istart = 2
+
+        The above results in:
+
+          | BROYDEN
+          | 0.0001 50 2
+
+        The first attribute should be a floating point, whereas the second and
+        third should be integers. The second item should be between 0 and 100,
+        excluded, and the third larger than two.
+        The input can also be set and accessed as an array:
+
+        >>> functional.broyden = [1e-4, 50, 2]
+        >>> functional.broyden[1] = 25
+        >>> functional.broyden.imix
+        25
+    """
+
   def output_map(self, **kwargs):
     """ Makes sure DFT subblock is first. """
     result = super(Electronic, self).output_map(**kwargs)

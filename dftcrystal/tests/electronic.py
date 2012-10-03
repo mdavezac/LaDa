@@ -282,9 +282,98 @@ def test_atomspin():
   except TypeError: pass
   else: raise Exception()
 
+def test_broyden():
+  from pickles import loads, dumps
+  from lada.dftcrystal import Functional
+  from lada.dftcrystal.electronic import Broyden
+  from lada.error import ValueError, TypeError
+
+  a = Functional()
+  b = a.scf._input['broyden']
+  assert a.broyden.w0 is None
+  assert a.broyden.imix is None
+  assert a.broyden.istart is None
+  assert b.output_map() is None
+  assert eval(repr(b), {'Broyden': Broyden}).w0 is None
+  assert eval(repr(b), {'Broyden': Broyden}).imix is None
+  assert eval(repr(b), {'Broyden': Broyden}).istart is None
+  
+  a.broyden.w0 = 1e-4
+  assert abs(a.broyden.w0 - 1e-4) < 1e-8
+  assert a.broyden.imix is None
+  assert a.broyden.istart is None
+  assert b.output_map() is None
+  assert abs(eval(repr(b), {'Broyden': Broyden}).w0 - 1e-4) < 1e-8
+  assert eval(repr(b), {'Broyden': Broyden}).imix is None
+  assert eval(repr(b), {'Broyden': Broyden}).istart is None
+
+  a.broyden.w0 = None
+  a.broyden.imix = 50
+  a.broyden.istart = 3
+  assert a.broyden.w0 is None
+  assert a.broyden.imix == 50
+  assert a.broyden.istart == 3
+  assert eval(repr(b), {'Broyden': Broyden}).w0 is None
+  assert eval(repr(b), {'Broyden': Broyden}).imix == 50
+  assert eval(repr(b), {'Broyden': Broyden}).istart == 3
+  assert b.output_map() is None
+
+  a.broyden.w0 = 1e-4
+  a.broyden.imix = 50
+  a.broyden.istart = 3
+  assert abs(a.broyden.w0 - 1e-4) < 1e-8
+  assert a.broyden.imix == 50
+  assert a.broyden.istart == 3
+  assert abs(eval(repr(b), {'Broyden': Broyden}).w0 - 1e-4) < 1e-8
+  assert eval(repr(b), {'Broyden': Broyden}).imix == 50
+  assert eval(repr(b), {'Broyden': Broyden}).istart == 3
+  assert b.output_map() is not None
+  assert 'broyden' in b.output_map() 
+  assert len(b.output_map()['broyden'].split()) == 3
+  assert abs(float(b.output_map()['broyden'].split()[0])-1e-4) < 1e-8
+  assert int(b.output_map()['broyden'].split()[1]) == 50
+  assert int(b.output_map()['broyden'].split()[2]) == 3
+
+  a.broyden[0] = '1e-2'
+  assert abs(a.broyden.w0 - 1e-2) < 1e-8
+  assert abs(a.broyden[0] - 1e-2) < 1e-8
+  a.broyden[1] = 25
+  assert a.broyden.imix == 25
+  assert a.broyden[1] == 25
+  a.broyden[2] = 5
+  assert a.broyden.istart == 5
+  assert a.broyden[2] == 5
+
+  assert abs(loads(dumps(b))[0] - 1e-2) < 1e-8
+  assert loads(dumps(b))[1] == 25
+  assert loads(dumps(b))[2] == 5
+
+  a.broyden = None
+  assert a.broyden.w0 is None
+  assert a.broyden.imix is None
+  assert a.broyden.istart is None
+  a.broyden = ' 1e-2', 25, 5
+  assert abs(a.broyden[0] - 1e-2) < 1e-8
+  assert a.broyden[1] == 25
+  assert a.broyden[2] == 5
+
+  try: a.broyden = 0
+  except TypeError: pass
+  else: raise Exception()
+  try: a.broyden = 0, 1
+  except TypeError: pass
+  else: raise Exception()
+  try: a.broyden[1] = 0
+  except ValueError: pass
+  else: raise Exception()
+  try: a.broyden[2] = 1
+  except ValueError: pass
+  else: raise Exception()
+
 
 if __name__ == '__main__': 
   test_shrink()
   test_levshift()
   test_spinlock()
   test_atomspin()
+  test_broyden()
