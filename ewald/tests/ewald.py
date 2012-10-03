@@ -1,9 +1,8 @@
 def test():
-  import lada
   from numpy import all, abs, sqrt
-  from quantities import angstrom, a0, Ry
   from lada.crystal import Structure
-  from lada.pcm import ewald
+  from lada.ewald import ewald
+  from quantities import angstrom, a0, Ry
   structure = Structure( [ [1,0,0],
                            [0,1,0],
                            [0,0,1] ], scale=50 )                               \
