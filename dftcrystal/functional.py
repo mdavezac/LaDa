@@ -443,6 +443,121 @@ class Functional(object):
       try: rmtree(tmpdir)
       except: pass
 
+
+  def _ibz(self, structure, **kwargs):
+    """ Guesses irreducible k-points from input. """
+    from collections import Sequence
+    from numpy import abs, floor, dot, any, identity, zeros, array, all
+    from numpy.linalg import inv, det
+    from ..error import ValueError
+    from ..crystal import HFTransform, into_cell
+  
+    # first figure out supercell and cell in k-space
+    cell = structure.eval().cell
+    # the supercell is the 
+    ksupercell = inv(cell).T
+    periodicity = 3
+    if abs(cell[2, 2] - 500) < 1e-8: 
+      periodicity = 2
+      if abs(cell[1, 1] - 500) < 1e-8: 
+        periodicity = 1
+        if abs(cell[0, 0] - 500) < 1e-8:
+          raise ValueError('Non-periodic system.')
+  
+    mp = self.shrink.mp
+    if not isinstance(mp, Sequence):
+      mp = [mp] * periodicity
+    kcell = ksupercell.copy()
+    if periodicity > 2: kcell[:, 2] /= float(mp[2])
+    if periodicity > 1: kcell[:, 1] /= float(mp[1])
+    if periodicity > 0: kcell[:, 0] /= float(mp[0])
+  
+    # check those symmetries which leave the reciprocal lattice invariant.
+    # also checks for inversion operator.
+    symops = []
+    invkcell = inv(kcell)
+    inverse = -identity(3)
+    for op in structure.symmetry_operators:
+      if inverse is not None and all(abs(op[:3] - inverse) < 1e-8):
+        symops.append(op[:3])
+        continue
+      transform = dot(invkcell, dot(op[:3], kcell))
+      if any(abs(transform - floor(transform)) > 1e-8): continue
+      if abs(det(transform) - 1e0) < 1e-8: symops.append(op[:3])
+    
+    # Now adds inversion operator if it does not exist.
+    if inverse is not None:
+      for op in [u for u in symops]:
+        matrix = dot(op, inverse)
+        if all([all(abs(matrix - u) > 1e-8) for u in symops]):
+          symops.append(matrix)
+        matrix = dot(inverse, op)
+        if all([all(abs(matrix - u) > 1e-8) for u in symops]):
+          symops.append(matrix)
+      if all([all(abs(inverse - u) > 1e-8) for u in symops]):
+        symops.append(inverse)
+   
+    # Now we have a fully consistent symmetry group for the k-mesh.
+    # We can actually the work advertised:
+    # The Hart-Forcade transforms creates a mapping from any point in a lattice
+    # back into a supercell.
+    transform = HFTransform(kcell, ksupercell)
+    # It can be used to quickly index transformd kpoints and figure out which
+    # kpoints are equivalent by symmetry.
+    map = zeros(transform.quotient, dtype='bool')
+  
+    # First we create a list of symmetry operators with the right-hand-side in
+    # the index basis and the left-hand-side in cartesian basis.
+    invtrans = inv(transform.transform)
+    symops = [ dot(op, invtrans) for op in symops 
+               if any(abs(op-identity(3)) > 1e-8) ]
+  
+    # now loop over all k-points an check their symmetries.
+    result = []
+    for i in xrange(transform.quotient[0]):
+      for j in xrange(transform.quotient[1]):
+        for k in xrange(transform.quotient[2]):
+          i_orig = array([i, j, k])
+          if not map[i, j, k]:
+            result.append(dot(invtrans, i_orig))
+            map[i, j, k] = True
+          for op in symops: 
+            u, v, w = transform.indices(dot(op, i_orig))
+            map[u, v, w] = True
+    return into_cell(array(result), ksupercell)
+
+  def _nAOs(self, structure, **kwargs):
+    """ Determins number of orbitals. 
+
+        The number of orbitals is *not* reduced by symmetry. 
+    """ 
+    from ..error import KeyError
+    species = [u.type for u in structure.eval()]
+    result = 0
+    for specie in set(species):
+      if specie not in self.basis:
+        raise KeyError("Unknown specie {0}.".format(specie))
+      dummy = 0
+      for shell in self.basis[specie]:
+        if shell.type == 's': dummy += 1
+        elif shell.type == 'sp': dummy += 4
+        elif shell.type == 'p': dummy += 3
+        elif shell.type == 'd': dummy += 5
+      result += species.count(specie) * dummy
+    return result
+
+  def ndogs(self, structure, **kwargs):
+    """ Number of degrees of liberty. 
+
+        This is the main number of MPPcrystal's golden rule for choosing the
+        number of cores: :math:`N_{cores} = \\frac{N_{spin}N_{AO}N_{IBZ}}{20}`.
+        This routine returns the numerator in the fraction.
+    """
+    return (2 if self.dft.spin else 1)                                         \
+           * self._nAOs(structure, **kwargs)                                   \
+           * len(self._ibz(structure, **kwargs))
+
+
   class OnFinish(object):
     """ Called when a run finishes. 
        

@@ -107,7 +107,29 @@ Slab = Slabcut
 """ Alias for :py:class`~lada.dftcrystal.geometry.Slabcut`. """
 
 class DisplaceAtoms(GeomKeyword):
-  """ Displaces atoms. """
+  """ Displaces atoms.
+  
+      This keywords applies a displacement to a set of atoms, identified by
+      their labels:
+
+      >>> from lada.dftcrystal import DisplaceAtoms
+      >>> disp = DisplaceAtoms(keepsym=True)                                   \\
+      ...                     .add_atom(0, 0.01, 0.002, 1)                     \\
+      ...                     .add_atom(0, -0.01, 0.05, 5)
+      >>> structure.append(disp)
+
+
+      The above creates a displacement operations for two atoms, labelled 1 and
+      5, as well as to their symmetric equivalent (``keepsym=True``). The
+      displacements are in cartesian coordinates. It would look as follows in
+      CRYSTAL_'s input:
+
+        | KEEPSYMM
+        | ATOMDISP
+        | 2
+        | 1 0.0 0.01 0.002
+        | 5 0.0 -0.01 0.05
+  """
   keyword = 'atomdisp'
   """ CRYSTAL keyword. """
   def __init__(self, **kwargs):
