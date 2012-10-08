@@ -303,12 +303,56 @@ class ExtractBase(object):
     
     
 
-  def _parsed_tree(self):
-    """ Returns parsed input tree. """
+  def _parsed_tree(self, doadd_input=False):
+    """ Returns parsed input tree.
+ 
+	Checks first whether an input file exists in the output file, as per
+	Giuseppe Malia's standard script. If it does, parse it and returns it.
+
+	If it doesn't check for a file with the same name and path as the
+	input, but with a d12 extension. If it exists and is parsable, returns
+        that.
+        
+        :param bool doadd_input:
+	  If True and the output file does not have an input file, but a
+          parsable d12 file exist, then prefix the output file with the d12 file.
+
+          .. warning:: Yes, this does change the output file.
+    """
+    from os.path import splitext, exists, join
     from .parse import parse
+    if not exists(join(self.directory, self.stdout)):
+      raise GrepError( 'Output file does not exist, {0}.'                      \
+                       .format(join(self.directory, self.stdout)) )
     try: 
       with self.__stdout__() as file: tree = parse(file)
     except: raise GrepError("Could not find CRYSTAL input at start of file.")
+    if len(tree) == 0:
+      # Could not find input file, try and see if it exists on its own.
+      root, ext = splitext(self.stdout)
+      newfilename = join(self.directory, root + '.d12')
+      if exists(newfilename): 
+        try: 
+          with open(newfilename, 'r') as file: 
+            tree = parse(file)
+        except:
+          raise GrepError("Could not find CRYSTAL input at start of file.")
+      if len(tree) == 0:
+        raise GrepError( 'Could not find CRYSTAL input at start of file '      \
+                         'nor a file with the same name and a .d12 extension.')
+      if doadd_input: 
+        with open(newfilename, 'r') as file: 
+          input = file.read()
+        with self.__stdout__() as file: output = file.read()
+        header = ''.join(['#']*20)
+        with open(join(self.directory, self.stdout), 'w') as file:
+          file.write('{0} {1} {0}\n'.format(header, 'INPUT FILE'))
+          input = input.rstrip()
+          if input[-1] != '\n': input += '\n'
+          file.write(input)
+          file.write('{0} END {1} {0}\n'.format(header, 'INPUT FILE'))
+          file.write(output)
+        
     title = tree.keys()[0]
     return tree[title]
 
@@ -645,7 +689,6 @@ class ExtractBase(object):
 
     # deduce structure - last changes in cell-shape or atomic displacements.
     if looped:
-      print looped, incrys[:-i]
       incrys = incrys.copy()
       incrys[:] = incrys[:-i]
       instruct = incrys.eval()
@@ -862,31 +905,6 @@ class ExtractBase(object):
           isincharge = True
       return array(results) * ec
                    
-
-class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
-  """ Extracts DFT data from an OUTCAR. """
-  def __init__(self, directory=None, **kwargs):
-    """ Initializes extraction object. 
-    
-        :param directory: 
-          Directory where the OUTCAR resides. 
-          It may also be the path to an OUTCAR itself, if the file is not
-          actually called OUTCAR.
-    """
-    from os.path import exists, isdir, basename, dirname
-    from lada.misc import RelativePath
-       
-    self.stdout = 'crystal.out'
-    """ Name of file to grep. """
-    if directory is not None:
-      directory = RelativePath(directory).path
-      if exists(directory) and not isdir(directory):
-        self.STDOUT = basename(directory)
-        directory = dirname(directory)
-    AbstractExtractBase.__init__(self, directory)
-    ExtractBase.__init__(self)
-    OutputSearchMixin.__init__(self)
-
   @property
   def scf_converged(self):
     """ Checks if SCF cycle converged. """
@@ -894,25 +912,6 @@ class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
     result = self._find_last_STDOUT(regex)
     if result is None: raise GrepError('No comment about convergence')
     return result.group(1) == 'CONVERGENCE'
-  @property
-  def success(self):
-    from os.path import exists, join
-    if not exists(join(self.directory, self.STDOUT)): 
-      return False
-    try: self.input_crystal
-    except: return False
-    try: self.end_date
-    except: 
-      if self.optgeom_iterations is None: return False
-      return self.optgeom_iterations > 1
-    else: 
-      try: return self.scf_converged
-      except: return False
-    try: 
-      if self.istest: return False
-    except: return False
-    return True
-
   @property
   @make_cached
   def atomic_charges(self):
@@ -966,6 +965,71 @@ class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
           inner = []
           isincharge = True
       return array(results) * ec if len(results) else None
+  
+  @property
+  @make_cached
+  def nAOs(self):
+    """ Number of atomic orbitals. """
+    from os.path import join
+    regex = self._find_first_STDOUT('NUMBER OF AO\s*(\d+)')
+    if regex is None:
+      raise GrepError( 'Could not grep number of atomic orbitals from {0}'     \
+                       .format(join(self.directory, self.stdout)) )
+    return int(regex.group(1))
+
+  @property
+  @make_cached
+  def nIBZ_kpoints(self):
+    """ Number of kpoints in the irreducible Brilloin zone. """
+    pattern = "NUMBER OF K POINTS IN THE IBZ\s+(\d+)\s*$"
+    result = self._find_last_STDOUT(pattern)
+    if result is None:
+      raise GrepError("Could not grep number of irreducible k-points.")
+    return int(result.group(1))
+
+
+class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
+  """ Extracts DFT data from an OUTCAR. """
+  def __init__(self, directory=None, **kwargs):
+    """ Initializes extraction object. 
+    
+        :param directory: 
+          Directory where the OUTCAR resides. 
+          It may also be the path to an OUTCAR itself, if the file is not
+          actually called OUTCAR.
+    """
+    from os.path import exists, isdir, basename, dirname
+    from lada.misc import RelativePath
+       
+    self.stdout = 'crystal.out'
+    """ Name of file to grep. """
+    if directory is not None:
+      directory = RelativePath(directory).path
+      if exists(directory) and not isdir(directory):
+        self.STDOUT = basename(directory)
+        directory = dirname(directory)
+    AbstractExtractBase.__init__(self, directory)
+    ExtractBase.__init__(self)
+    OutputSearchMixin.__init__(self)
+
+  @property
+  def success(self):
+    from os.path import exists, join
+    if not exists(join(self.directory, self.STDOUT)): 
+      return False
+    try: self.input_crystal
+    except: return False
+    try: self.end_date
+    except: 
+      if self.optgeom_iterations is None: return False
+      return self.optgeom_iterations > 1
+    else: 
+      try: return self.scf_converged
+      except: return False
+    try: 
+      if self.istest: return False
+    except: return False
+    return True
 
 
 class MassExtract(AbstractMassExtract):

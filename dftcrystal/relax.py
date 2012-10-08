@@ -10,10 +10,12 @@ class RelaxExtract(Extract):
     """ Focuses on intermediate steps. """
     def __iter_alljobs__(self):
       """ Goes through all directories with an OUTVAR. """
+      from re import match
       from glob import iglob
       from os.path import relpath, join, exists
 
       for dir in iglob(join(join(self.rootpath, 'relax'), '*/')):
+        if not match('\d+', dir.split('/')[-2]): continue 
         if not exists(join(self.rootpath, join(dir, 'crystal.out'))): continue
         try: result = Extract(dir[:-1])
         except: continue
