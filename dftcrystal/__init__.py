@@ -152,34 +152,39 @@ def exec_input( script, global_dict=None, local_dict=None,
       global_dict[k] = globals()[k]
   return exec_input(script, global_dict, local_dict, paths, name)
 
-# def read_optc(path):
-#   """ Reads an optc file and creates a structure. """
-#   from numpy import array
-#   from ..crystal import Structure
-#   from ..misc import RelativePath
-#   from ..error import IOError
-#   
-#   # Check whether a path, stream, or string.
-#   if isinstance(path, str): 
-#     if path.find('\n') == -1:
-#       with open(RelativePath(path).path) as file: return read_optc(file)
-#     else:
-#       return read_optc(path.split('\n').__iter__())
-#   try:
-#     # not clear what first line is.
-#     line = file.next()
-#     # 2, 3, 4 are cell vectors.
-#     result = Structure()
-#     result.cell = array([file.next().split() for i in range(3)], dtype='float64')
-#     # now gets space-group
-#     n = int(file.next().rstrip().lstrip())
-#     result.spacegroup = array( [ [file.next().split() for i in xrange(4)] 
-#                                  for j in xrange(n)], dtype='float64' )
-#     # finally, gets asymmetric atoms.
-#     n = int(file.next().rstrip().lstrip())
 
-#   except StopIteration: 
-#     raise IOError('Unexpected end of file in read_optc.')
+from lada import is_interactive
+if is_interactive: 
+  from IPython.core.magic import register_line_magic
+   
+  @register_line_magic
+  def complete_crystal(line):
+    """ Adds input file to beginning of output file where necessary. 
+        
+        Works only for dftcrystal and should only be enabled when the
+        dftcrystal is loaded from ipython.
+        
+        A complete file should contain all the information necessary to recreate
+        that file. Unfortunately, this is generally not the case with CRYSTAL's
+        standard output, at least not without thorough double-guessing. 
 
+        This function adds the .d12 file if it not already there, as well as the
+        input structure if it is in "external" format.
+    """
+    from lada import is_interactive
+    if not is_interactive: return
+    ip = get_ipython() # should be defined in interactive mode.
+    if 'collect' not in ip.user_ns:
+      print 'No jobfolder loaded in memory.'
+      return
+    collect = ip.user_ns['collect']
+    jobparams = ip.user_ns['jobparams']
+    for name, extractor in collect.iteritems():
+      if not hasattr(extractor, '_complete_output'): continue
 
-
+      structure = jobparams[name].structure
+      if extractor._complete_output(structure):
+        print 'Corrected ', extractor.directory
+  del complete_crystal
+  del register_line_magic
+del is_interactive

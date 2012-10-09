@@ -321,15 +321,15 @@ class ExtractBase(object):
     """
     from os.path import splitext, exists, join
     from .parse import parse
-    if not exists(join(self.directory, self.stdout)):
+    if not exists(join(self.directory, self.STDOUT)):
       raise GrepError( 'Output file does not exist, {0}.'                      \
-                       .format(join(self.directory, self.stdout)) )
+                       .format(join(self.directory, self.STDOUT)) )
     try: 
       with self.__stdout__() as file: tree = parse(file)
     except: raise GrepError("Could not find CRYSTAL input at start of file.")
     if len(tree) == 0:
       # Could not find input file, try and see if it exists on its own.
-      root, ext = splitext(self.stdout)
+      root, ext = splitext(self.STDOUT)
       newfilename = join(self.directory, root + '.d12')
       if exists(newfilename): 
         try: 
@@ -345,7 +345,7 @@ class ExtractBase(object):
           input = file.read()
         with self.__stdout__() as file: output = file.read()
         header = ''.join(['#']*20)
-        with open(join(self.directory, self.stdout), 'w') as file:
+        with open(join(self.directory, self.STDOUT), 'w') as file:
           file.write('{0} {1} {0}\n'.format(header, 'INPUT FILE'))
           input = input.rstrip()
           if input[-1] != '\n': input += '\n'
@@ -431,9 +431,9 @@ class ExtractBase(object):
         # Then re-reads atoms, but in cartesian coordinates.
         for i in xrange(6): file.next()
         for atom in result:
-	  # With MPPcrystal, sometimes crap from different processors gets in
-	  # the way of the output. This is a simple hack to avoid that issue.
-	  # Not safe.
+				  # With MPPcrystal, sometimes crap from different processors gets in
+				  # the way of the output. This is a simple hack to avoid that issue.
+				  # Not safe.
           for i in xrange(5):
             try: atom.pos = array(file.next().split()[3:6], dtype='float64')
             except ValueError:
@@ -499,17 +499,27 @@ class ExtractBase(object):
   def _initial_structure(self):
     """ Initial structure, LaDa format. 
     
-        This greps the very first structure. When reading from external files,
-        this would be the initial structure in the external file. However, that
-        structure may be transformed by further input, and hence is not the
-        input structure.
+        This greps the input structure from the output file. CRYSTAL_ does not
+        allow any way to create this file from the outset. As such, it is
+        necessary to add it  by hand to the output. This is generally done by
+        LaDa automatically, unless the run stopped abruptly, e.g by the
+        supercomputer's resource manager. In that case, use the magic function
+        ``%complete_crystal`` with a jobfolder loaded.
     """
+    from ..crystal import read
+    header = ''.join(['#']*20)
+    regex = '{0} {1} {0}\n'.format(header, 'INITIAL STRUCTURE')
     with self.__stdout__() as file:
-      pos = None
-      for pos in self._find_structure(file): break
-      if pos is None: raise GrepError('Could not extract structure from file')
-      file.seek(pos, 0)
-      return self._grep_structure(file)
+      found = False
+      for line in file:
+        if line == regex: found = True; break
+      if not found: raise GrepError('No initial structure in output file.')
+      lines = []
+      regex = '{0} END {1} {0}\n'.format(header, 'INITIAL STRUCTURE')
+      for line in file:
+        if line == regex: break
+        lines.append(line)
+      return read.crystal(lines.__iter__())
 
   @property
   @make_cached
@@ -974,7 +984,7 @@ class ExtractBase(object):
     regex = self._find_first_STDOUT('NUMBER OF AO\s*(\d+)')
     if regex is None:
       raise GrepError( 'Could not grep number of atomic orbitals from {0}'     \
-                       .format(join(self.directory, self.stdout)) )
+                       .format(join(self.directory, self.STDOUT)) )
     return int(regex.group(1))
 
   @property
@@ -1001,7 +1011,7 @@ class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
     from os.path import exists, isdir, basename, dirname
     from lada.misc import RelativePath
        
-    self.stdout = 'crystal.out'
+    self.STDOUT = 'crystal.out'
     """ Name of file to grep. """
     if directory is not None:
       directory = RelativePath(directory).path
@@ -1031,6 +1041,47 @@ class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
     except: return False
     return True
 
+  def _complete_output(self, structure):
+    """ Adds stuff to an output so it is complete. 
+
+        A complete file should contain all the information necessary to recreate
+        that file. Unfortunately, this is generally not the case with CRYSTAL's
+        standard output, at least not without thorough double-guessing. 
+
+        This function adds the .d12 file if it not already there, as well as the
+        input structure if it is in "external" format.
+
+        :param structure:
+          The input structure, as it was given to the run.
+        :returns: True if the file was modified.
+    """
+    from os.path import join
+    from ..crystal import write
+    from .external import External
+    from .parse import parse
+    if not hasattr(self, '_parsed_tree'): return False
+    if not hasattr(self, '__stdout__'): return False
+    try: tree = parse(self.__stdout__())
+    except: pass
+    else:
+      dotree = len(tree) == 0
+    if dotree:
+      try: tree = self._parsed_tree(True)
+      except: dotree = False
+    if isinstance(structure, External):
+      try: self._initial_structure
+      except: 
+        with self.__stdout__() as file: out = file.read()
+        with open(join(self.directory, self.STDOUT), 'w') as file:
+          header = ''.join(['#']*20)
+          file.write('{0} {1} {0}\n'.format(header, 'INITIAL STRUCTURE'))
+          file.write(write.crystal(structure.initial, None))
+          file.write('{0} END {1} {0}\n'.format(header, 'INITIAL STRUCTURE'))
+          file.write(out)
+        return True
+    return dotree
+        
+    
 
 class MassExtract(AbstractMassExtract):
   """ Extracts all CRYSTAL calculations in directory and sub-directories. 

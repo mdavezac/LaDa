@@ -236,6 +236,8 @@ class Functional(object):
     from os.path import join, samefile
     from shutil import rmtree
     from glob import iglob
+    from .external import External
+    from ..crystal import write
     from ..misc import copyfile, Changedir
     from .. import CRYSTAL_filenames, CRYSTAL_delpatterns
 
@@ -253,6 +255,10 @@ class Functional(object):
         if input[-1] != '\n': input += '\n'
         file.write(input)
         file.write('{0} END {1} {0}\n'.format(header, 'INPUT FILE'))
+        if isinstance(structure, External):
+          file.write('{0} {1} {0}\n'.format(header, 'INITIAL STRUCTURE'))
+          file.write(write.crystal(structure.initial, None))
+          file.write('{0} END {1} {0}\n'.format(header, 'INITIAL STRUCTURE'))
         file.write(output)
         file.write('\n{0} {1} {0}\n'.format(header, 'FUNCTIONAL'))
         file.write(self.__repr__(defaults=False))

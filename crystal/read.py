@@ -134,7 +134,9 @@ def castep(file):
   
 def crystal(file='fort.34'):
   """ Reads CRYSTAL's external format. """
-  from numpy import array
+  from numpy import array, abs, zeros, any, dot
+  from numpy.linalg import inv
+  from ..crystal import which_site
   from ..misc import RelativePath
   from ..error import IOError
   from ..periodic_table import find as find_specie
@@ -164,6 +166,7 @@ def crystal(file='fort.34'):
     except StopIteration: raise IOError('Premature end of stream.')
     else: op[:3] = op[:3].copy().T
     result.spacegroup.append(op)
+  result.spacegroup = array(result.spacegroup)
 
   # read atoms.
   try: N = int(file.next())
@@ -173,7 +176,18 @@ def crystal(file='fort.34'):
     try: line = file.next().split()
     except StopIteration: raise IOError('Premature end of stream.')
     else: type, pos = int(line[0]), array(line[1:4], dtype='float64')
-    if type < 100: type = find_specie(atomic_number=type)
-    result.add_atom(pos=pos, type=type)
+    if type < 100: type = find_specie(atomic_number=type).symbol
+    result.add_atom(pos=pos, type=type, asymmetric=True)
+
+  # Adds symmetrically equivalent structures.
+  identity = zeros((4, 3), dtype='float64')
+  for i in xrange(3): identity[i, i] == 1
+  symops = [u for u in result.spacegroup if any(abs(u - identity) > 1e-8)]
+  invcell = inv(result.cell)
+  for atom in [u for u in result]:
+    for op in symops:
+      pos = dot(op[:3], atom.pos) + op[3]
+      if which_site(pos, result, invcell=invcell) == -1:
+        result.add_atom(pos=pos, type=atom.type, asymmetric=False)
 
   return result

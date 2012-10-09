@@ -20,6 +20,17 @@ class RelaxExtract(Extract):
         try: result = Extract(dir[:-1])
         except: continue
         yield join('/', relpath(dir[:-1], self.rootpath)), result
+    def _complete_output(self, structure):
+      """ Completes output after stopped jobs. """
+      result = False
+      dummy = structure
+      for extractor in self.itervalues():
+        if hasattr(extractor, '_complete_output'):
+          if extractor._complete_output(dummy):
+            extractor.uncache()
+            result = True
+        dummy = extractor.input_crystal
+      return result
         
   @property
   def details(self):
@@ -33,6 +44,16 @@ class RelaxExtract(Extract):
     from itertools import chain
     for file in chain( super(RelaxExtract, self).iterfiles(**kwargs),
                        self.details.iterfiles(**kwargs) ): yield file
+
+  def _complete_output(self, structure):
+    """ Completes output after stopped jobs. """
+    result = self.details._complete_output(structure)
+    try: structure = self.details[-1].input_crystal
+    except: pass
+    else: 
+      if super(RelaxExtract, self)._complete_output(structure):
+        return True
+    return result
 
 def iter_relax(self, structure=None, outdir=None, maxiter=30, **kwargs):
   """ Performs relaxations until convergence is reached.
