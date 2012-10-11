@@ -100,7 +100,6 @@ class ProgramProcess(Process):
 
         .. _str : http://docs.python.org/library/functions.html#str
     """
-    from os.path import getsize
     from ..error import ValueError
     from ..misc import RelativePath
     super(ProgramProcess, self).__init__(maxtrials, **kwargs)
@@ -148,12 +147,20 @@ class ProgramProcess(Process):
     self.onfail = onfail
     """ Called if program fails. 
 
-	Some program, such as CRYSTAL, return error codes when unconverged.
-	However, does not necessarily mean the program failed to run. This
-	function is called when a failure occurs, to make sure it is real or
-	not. It should raise Fail if an error has occurred and return normally
+				Some program, such as CRYSTAL, return error codes when unconverged.
+				However, does not necessarily mean the program failed to run. This
+				function is called when a failure occurs, to make sure it is real or
+				not. It should raise Fail if an error has occurred and return normally
         otherwise.
     """ 
+
+    self._onexit_id = None
+    """ Id of the callback for cleaning up left-over jobs when python exits.
+
+        This job may be killed prior by, say, the resources manager, before it
+        actually ends. We may want to keep track of it to make sure the process
+        is killed.
+    """
 
   def poll(self): 
     """ Polls current job.
@@ -197,6 +204,9 @@ class ProgramProcess(Process):
     return False
 
   def start(self, comm=None):
+    if not self.started: 
+      from ..onexit import add_callback
+      self._onexit_id = add_callback(self.__class__._onexit_callback, self)
     if super(ProgramProcess, self).start(comm): return True
     self._next()
     return False
@@ -244,6 +254,12 @@ class ProgramProcess(Process):
 
   def _cleanup(self):
     """ Cleanup files and crap. """
+    # Deletes onexit callback if it exists.
+    if self._onexit_id is not None: 
+      from ..onexit import del_callback
+      del_callback(self._onexit_id)
+      self._onexit_id = None
+    
     try: 
       if not getattr(self._stdio[0], 'closed', True):
         self._stdio[0].close()
@@ -252,6 +268,7 @@ class ProgramProcess(Process):
       if not getattr(self._stdio[2], 'closed', True):
         self._stdio[2].close()
     finally: self._stdio = None, None, None
+
     # delete modified communicator, if it exists
     if self._modcomm is not None:
       self._modcomm.cleanup()
@@ -265,3 +282,26 @@ class ProgramProcess(Process):
     self.process.wait()
     self.poll()
 
+  def _onexit_callback(self):
+    """ Registered callback for killing a process. """
+    # First deletes this callback from the list.
+    if self._onexit_id is not None: 
+      from ..onexit import del_callback
+      del_callback(self._onexit_id)
+      self._onexit_id = None
+
+    # if process is None, then nothing to do.
+    if self.process is None: return
+    
+    # otherwise, kill the process.
+    try: self.process.kill()
+    except: pass
+
+    # cleanup.
+    try: self._cleanup()
+    except: pass
+
+    # call on finish.
+    if self.onfinish is None: return
+    try: self.onfinish(process=self, error=True)
+    except: pass
