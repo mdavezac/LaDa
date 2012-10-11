@@ -231,7 +231,7 @@ class Functional(object):
       # Creates symlink to make sure we keep working directory.
       with Changedir(outdir) as cwd:
         with open('crystal.d12', 'w') as file: file.write(string)
-        with open('crystal.out', 'w') as file: file.write(string)
+        with open('crystal.out', 'w') as file: pass
         with open('crystal.err', 'w') as file: pass
         with open('ERROR', 'w') as file: pass
         symlink(abspath('crystal.out'), abspath(join(workdir, 'crystal.out')))
