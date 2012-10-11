@@ -27,10 +27,12 @@ def launch(self, event):
   """ 
   import argparse
   from ...jobfolder import load as load_jobs
-  from ... import interactive
+  from ... import interactive, qsub_array_exe
   from .scattered import parser as scattered_parser
   from .interactive import parser as interactive_parser
   from .asone import parser as asone_parser
+  from .array import parser as array_parser
+  from .single import parser as single_parser
   from ...misc import RelativePath, LockFile
 
   # main parser
@@ -52,6 +54,8 @@ def launch(self, event):
   scattered_parser(self, subparsers, opalls) 
   interactive_parser(self, subparsers, opalls) 
   asone_parser(self, subparsers, opalls) 
+  single_parser(self, subparsers, opalls) 
+  if qsub_array_exe is not None: array_parser(self, subparsers, opalls)
 
   # parse arguments
   try: args = parser.parse_args(event.split())
@@ -94,12 +98,19 @@ def completer(self, info):
   from .scattered import completer as scattered_completer
   from .interactive import completer as interactive_completer
   from .asone import completer as asone_completer
+  from .array import completer as array_completer
+  from .single import completer as single_completer
+  from ... import qsub_array_exe
 
   data = info.line.split()[1:]
   if "scattered" in data: return scattered_completer(self, info, data)
   elif "interactive" in data: return interactive_completer(self, info, data)
   elif "asone" in data: return asone_completer(self, info, data)
-  return ["scattered", "interactive", 'asone', '--help']
+  elif "single" in data: return single_completer(self, info, data)
+  elif qsub_array_exe is not None and "array" in data:
+    return array_completer(self, info, data)
+  result = ["scattered", "interactive", 'asone', 'single', '--help']
+  return result + ['array'] if qsub_array_exe is not None else result
          
 
 def get_mppalloc(shell, event, withdefault=True):

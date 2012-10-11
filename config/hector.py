@@ -3,11 +3,13 @@ debug_queue = None
 
 qsub_exe = "qsub"
 """ Qsub executable. """
+qsub_array_exe = "qsub -r y -J 1-{nbjobs}", "$PBS_ARRAY_INDEX"
+""" Launches job-arrays. """
 qdel_exe = "qdel"
 """ Qdel executable. """
           
 default_pbs = { 'walltime': "00:55:00", 'nnodes': 1, 'ppn': 32,
-                'account': 'eO5' }
+                'account': 'eO5', 'header': "", 'footer': '' }
 """ Defaults parameters filling the pbs script. """
 
 def pbs_string(**kwargs):
@@ -23,12 +25,14 @@ def pbs_string(**kwargs):
          "#PBS -l walltime={walltime}\n"                                       \
          "#PBS -A {account}\n"                                                 \
          "#PBS -V \n\n"                                                        \
-         "export TMPDIR=/work/e05/e05/`whoami`/lada_tmp\n"                     \
+         "export PBS_TMPDIR=/work/e05/e05/`whoami`/lada_tmp\n"                 \
          "if [ ! -e $TMPDIR ] ; then\n"                                        \
          "  mkdir -p $TMPDIR\n"                                                \
          "fi\n"                                                                \
          "cd {directory}\n"                                                    \
-         "python {scriptcommand}\n".format(**kwargs)                           
+         "{header}\n"                                                          \
+         "python {scriptcommand}\n"                                            \
+         "{footer}\n".format(**kwargs)
 
 default_comm = { 'n': 2, 'ppn': default_pbs['ppn']}
 """ Default mpirun parameters. """
@@ -103,11 +107,4 @@ def ipython_qstat(self, arg):
   return SList([ "{0:>10} {1:>4} {2:>3} -- {3}".format(id, mpp, state, name)   \
                  for id, mpp, state, name in zip(ids, mpps, states, names)]) 
 
-def crystal_program(self, comm=None):
-  """ Calls serial or sequential version. """
-  ser = 'crystal'
-  mpi = 'MPPcrystal'
-  if comm is None: return ser
-  if comm['n'] == 1: return ser
-  return mpi
-
+crystal_inplace = False

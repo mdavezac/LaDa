@@ -196,9 +196,10 @@ class Functional(object):
                  '{0!s}.{1}'.format(datetime.today(), getpid())\
                             .replace(' ', '_') )
 
-  def bringup(self, structure, workdir, restart, test):
+  def bringup(self, structure, outdir, workdir, restart, test):
     """ Creates file environment for run. """
-    from os.path import join
+    from os.path import join, abspath, samefile, exists
+    from os import symlink, remove
     from ..misc import copyfile, Changedir
     from ..error import ValueError
     from .. import CRYSTAL_filenames
@@ -224,6 +225,24 @@ class Functional(object):
       string = self.print_input( crystal=self, structure=structure, 
                                  workdir=workdir, test=test, filework=True )
       with open('crystal.d12', 'w') as file: file.write(string)
+
+    with Changedir(outdir) as cwd: pass
+    if not samefile(outdir, workdir):
+      # Creates symlink to make sure we keep working directory.
+      with Changedir(outdir) as cwd:
+        with open('crystal.d12', 'w') as file: file.write(string)
+        with open('crystal.out', 'w') as file: file.write(string)
+        with open('crystal.err', 'w') as file: pass
+        with open('ERROR', 'w') as file: pass
+        symlink(abspath('crystal.out'), abspath(join(workdir, 'crystal.out')))
+        symlink(abspath('crystal.err'), abspath(join(workdir, 'crystal.err')))
+        symlink(abspath('ERROR'), abspath(join(workdir, 'ERROR')))
+        if exists('workdir'): 
+          try: remove('workdir')
+          except: pass
+          else: symlink(workdir, 'workdir')
+        else: symlink(workdir, 'workdir')
+        
 
   def bringdown(self, structure, workdir, outdir):
     """ Copies files back to output directory. 
@@ -264,12 +283,14 @@ class Functional(object):
         file.write(self.__repr__(defaults=False))
         file.write('\n{0} END {1} {0}\n'.format(header, 'FUNCTIONAL'))
       if len([0 for filename in iglob(join(workdir, 'ERROR.*'))]):
-        with open('crystal.err', 'w') as out:
-          for filename in iglob(join(workdir, 'ERROR.*')):
-            with open(filename, 'r') as file: out.write(file.read() + '\n')
+        string = ""
+        for filename in iglob(join(workdir, 'ERROR.*')):
+          with open(filename, 'r') as file: string += file.read() + '\n'
+        with open('crystal.err', 'w') as out: out.write(string)
         lines = []
         with open('crystal.err', 'r') as out:
           for line in out:
+            if len(line.rstrip().lstrip()) == 0: continue
             if line not in lines: lines.append(line.rstrip().lstrip())
         with open('crystal.out', 'a') as out:
           out.write('{0} {1} {0}\n'.format(header, 'ERRROR FILE'))
@@ -277,7 +298,10 @@ class Functional(object):
           out.write('{0} END {1} {0}\n'.format(header, 'ERRROR FILE'))
     
     if Extract(outdir).success and not samefile(outdir, workdir):
-      rmtree(workdir)
+      try: rmtree(workdir)
+      except: pass
+      try: remove(join(outdir, 'workdir'))
+      except: pass
     if samefile(outdir, workdir):
       with Changedir(workdir) as cwd:
         for filepath in chain(*[iglob(u) for u in CRYSTAL_delpatterns]):
@@ -347,7 +371,7 @@ class Functional(object):
     with Changedir(workdir) as tmpdir: 
 
       # writes/copies files before launching.
-      self.bringup(structure, workdir, restart=self.restart, test=test)
+      self.bringup(structure, outdir, workdir, restart=self.restart, test=test)
       dompi = comm is not None
       if dompi:
         from ..misc import copyfile
