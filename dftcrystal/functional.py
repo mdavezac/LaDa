@@ -297,16 +297,16 @@ class Functional(object):
           out.write('\n'.join(lines))
           out.write('{0} END {1} {0}\n'.format(header, 'ERRROR FILE'))
     
-    if Extract(outdir).success and not samefile(outdir, workdir):
-      try: rmtree(workdir)
-      except: pass
-      try: remove(join(outdir, 'workdir'))
-      except: pass
     if samefile(outdir, workdir):
       with Changedir(workdir) as cwd:
         for filepath in chain(*[iglob(u) for u in CRYSTAL_delpatterns]):
           try: remove(filepath)
           except: pass
+    elif Extract(outdir).success:
+      try: rmtree(workdir)
+      except: pass
+      try: remove(join(outdir, 'workdir'))
+      except: pass
       
 
   

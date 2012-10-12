@@ -33,7 +33,8 @@ CRYSTAL_filenames = { 'crystal.out':   '{0}.out',      # output file
                       'OPTHESS.DAT':   '{0}.opthess',  # formatted hessian
                       'OPTINFO.DAT':   '{0}.optinfo',  # restart info
                       'PPAN.DAT':      '{0}.ppan',     # Muliken population analysis
-                      'ERROR':         '{0}.err'       # Error file in parallel CRYSTAL
+                      'ERROR':         '{0}.err',      # Error file in parallel CRYSTAL
+                      'SCFOUT.LOG':    '{0}.scflog'    # SCF log
                     }
 """ Filnames of crystal programs. 
 
