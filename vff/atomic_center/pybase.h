@@ -39,18 +39,16 @@ namespace LaDa
         //! Holds reference to other bonds.
         std::vector<AtomicCenterData*> bonds;
         //! Holds reference to other an atom.
-        crystal::AtomData* center;
+        crystal::Atom center;
         //! Index of the atom in the structure.
         types::t_unsigned index;
       };
       //! Creates a new atomic_center.
       AtomicCenterData* PyAtomicCenter_New();
-      //! Creates a new atomic_center with a given type.
-      AtomicCenterData* PyAtomicCenter_NewWithArgs(PyTypeObject* _type, PyObject *_args, PyObject *_kwargs);
-      //! Creates a new atomic_center with a given type, also calling initialization.
-      AtomicCenterData* PyAtomicCenter_NewFromArgs(PyTypeObject* _type, PyObject *_args, PyObject *_kwargs);
-      //! Creates a deepcopy of atomic_center.
-      AtomicCenterData *PyAtomicCenter_Copy(AtomicCenterData* _self, PyObject *_memo = NULL);
+      //! Adds bond to two atomic centers.
+      types::t_int PyAtomicCenter_AddBond( AtomicCenterData *_self,  
+                                           AtomicCenterData* _other, 
+                                           types::t_real _cutoff )
       // Returns pointer to atomic_center type.
       PyTypeObject* atomic_center_type();
       //! Returns address of atomic_center iterator type object.

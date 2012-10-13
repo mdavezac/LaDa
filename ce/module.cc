@@ -170,7 +170,7 @@ namespace LaDa
       Py_RETURN_NONE;
     }
 
-    //! Methods table for crystal module.
+    //! Methods table for ce module.
     static PyMethodDef methods_table[] = {
         {"outer_sum",  outer_sum, METH_VARARGS,
          "Sums to input n-tensor the n-tensor created from n vectors.\n\n"

@@ -36,20 +36,24 @@ namespace LaDa
       if(not result) return NULL;
       result->weakreflist = NULL;
       new(&result->bonds) std::vector<AtomicCenterData*>;
-      result->center = NULL;
+      new(&result->center) crystal::Atom
       result->index = 0u;
       return result;
     }
-    //! Creates a new atomic_center with a given type.
-    AtomicCenterData* PyAtomicCenter_NewWithArgs(PyTypeObject* _type, PyObject *_args, PyObject *_kwargs)
-      { return PyAtomicCenter_New(); }
 
-    // Creates a new atomic_center with a given type, also calling initialization.
-    AtomicCenterData* PyAtomicCenter_NewFromArgs(PyTypeObject* _type, PyObject *_args, PyObject *_kwargs)
+    // Creates a deepcopy of structure.
+    AtomicCenterData *shallow_copy(AtomicCenterData* _self, PyObject *_memo)
     {
-      AtomicCenterData* result = PyAtomicCenter_NewWithArgs(_type, _args, _kwargs);
-      if(result == NULL) return NULL;
-      if(_type->tp_init((PyObject*)result, _args, _kwargs) < 0) {Py_DECREF(result); return NULL; }
+      AtomicCenterData* result = PyAtomicCenter_New();
+      result->index = _self->index;
+      result->center = _self->center;
+      std::vector<AtomciCenterData*> :: const_iterator i_first = _self->bonds.begin();
+      std::vector<AtomciCenterData*> :: const_iterator const i_end = _self->bonds.end();
+      for(; i_first != i_end; ++i_first)
+      {
+        result->bonds.push_back(*i_first);
+        Py_XINCREF(*i_first);
+      }  
       return result;
     }
 

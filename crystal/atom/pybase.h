@@ -3,9 +3,6 @@
 
 #include "LaDaConfig.h"
 
-#define PY_ARRAY_UNIQUE_SYMBOL lada_crystal_ARRAY_API
-#define NO_IMPORT_ARRAY
-
 #include <Python.h>
 
 #include <math/eigen.h>
