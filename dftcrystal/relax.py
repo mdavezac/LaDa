@@ -55,6 +55,22 @@ class RelaxExtract(Extract):
         return True
     return result
 
+  @property
+  def is_running(self):
+    """ True if program is running on this functional. 
+         
+	A file '.lada_is_running' is created in the output folder when it is
+	set-up to run CRYSTAL_. The same file is removed when CRYSTAL_ returns
+        (more specifically, when the :py:class:`lada.process.ProgramProcess` is
+	polled). Hence, this file serves as a marker of those jobs which are
+        currently running.
+    """
+    from os.path import join, exists
+    if exists(join(self.directory, '.lada_is_running')): return True
+    for value in self.details.itervalues():
+      if value.is_running: return True
+    return False
+
 def iter_relax(self, structure=None, outdir=None, maxiter=30, **kwargs):
   """ Performs relaxations until convergence is reached.
   

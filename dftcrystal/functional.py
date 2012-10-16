@@ -188,21 +188,21 @@ class Functional(object):
   def guess_workdir(self, outdir):
     """ Tries and guess working directory. """
     from os import environ, getpid
-    from os.path import join
+    from tempfile import mkdtemp
     from datetime import datetime
     from .. import crystal_inplace
     if crystal_inplace: return outdir
-    return join( environ.get('PBS_TMPDIR', outdir),
-                 '{0!s}.{1}'.format(datetime.today(), getpid())\
-                            .replace(' ', '_') )
+    rootdir = environ.get('PBS_TMPDIR', outdir)
+    return mkdtemp( prefix='dftcrystal_{0!s}'.format(datetime.today()), 
+                    dir=rootdir )
 
   def bringup(self, structure, outdir, workdir, restart, test):
     """ Creates file environment for run. """
-    from os.path import join, abspath, samefile, exists
+    from os.path import join, abspath, samefile, lexists
     from os import symlink, remove
     from ..misc import copyfile, Changedir
     from ..error import ValueError
-    from .. import CRYSTAL_filenames
+    from .. import CRYSTAL_filenames as filenames
 
     # sanity check
     if len(self.basis) == 0:
@@ -211,12 +211,12 @@ class Functional(object):
     with Changedir(workdir) as cwd:
       # first copies file from current working directory
       if restart is not None: 
-        for key, value in CRYSTAL_filenames.iteritems():
+        for key, value in filenames.iteritems():
           copyfile( value.format('crystal'), key, nocopyempty=True,
                     symlink=False, nothrow="never" )
       # then copy files from restart.
       if restart is not None:
-        for key, value in CRYSTAL_filenames.iteritems():
+        for key, value in filenames.iteritems():
           copyfile( join(restart.directory, value.format('crystal')), 
                     key, nocopyempty=True, symlink=False, 
                     nothrow="never" )
@@ -234,14 +234,33 @@ class Functional(object):
         with open('crystal.out', 'w') as file: pass
         with open('crystal.err', 'w') as file: pass
         with open('ERROR', 'w') as file: pass
-        symlink(abspath('crystal.out'), abspath(join(workdir, 'crystal.out')))
-        symlink(abspath('crystal.err'), abspath(join(workdir, 'crystal.err')))
-        symlink(abspath('ERROR'), abspath(join(workdir, 'ERROR')))
-        if exists('workdir'): 
+        # creates symlink files.
+	for filename in ['crystal.err', 'crystal.out', 'ERROR']:
+          if lexists(join(workdir, filename)):
+            try: remove( join(workdir, filename) )
+            except: pass
+          symlink(abspath(filename), abspath(join(workdir, filename)))
+        # for optgeom, make sure we bring SCFOUT.LOG 
+        if self.optgeom.enabled:
+          if self.optgeom.onelog is None or self.optgeom.onelog == False:
+            outname = filenames['SCFOUT.LOG'].format('crystal')
+            with open(outname, 'w') as file: pass
+            if lexists(join(workdir, 'SCFOUT.LOG')):
+              try: remove(join(workdir, 'SCFOUT.LOG'))
+              except: pass
+            try: 
+              symlink( abspath(outname),
+                       abspath(join(workdir, 'SCFOUT.LOG')) )
+            except: pass
+            
+        if lexists('workdir'): 
           try: remove('workdir')
           except: pass
-          else: symlink(workdir, 'workdir')
-        else: symlink(workdir, 'workdir')
+        try: symlink(workdir, 'workdir')
+        except: pass
+    
+    # creates a file in the directory, to say we are going to work here
+    with open(join(outdir, '.lada_is_running'), 'w') as file: pass
         
 
   def bringdown(self, structure, workdir, outdir):
@@ -293,9 +312,14 @@ class Functional(object):
             if len(line.rstrip().lstrip()) == 0: continue
             if line not in lines: lines.append(line.rstrip().lstrip())
         with open('crystal.out', 'a') as out:
-          out.write('{0} {1} {0}\n'.format(header, 'ERRROR FILE'))
+          out.write('{0} {1} {0}\n'.format(header, 'ERROR FILE'))
           out.write('\n'.join(lines))
-          out.write('{0} END {1} {0}\n'.format(header, 'ERRROR FILE'))
+          out.write('{0} END {1} {0}\n'.format(header, 'ERROR FILE'))
+
+      # remove 'is running' file marker.
+      if exists('.lada_is_running'):
+        try: remove('.lada_is_running')
+        except: pass
     
     if samefile(outdir, workdir):
       with Changedir(workdir) as cwd:
@@ -307,8 +331,8 @@ class Functional(object):
       except: pass
       try: remove(join(outdir, 'workdir'))
       except: pass
-      
-
+    
+    
   
   @assign_attributes(ignore=['overwrite', 'comm', 'workdir'])
   @stateless

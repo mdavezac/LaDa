@@ -775,22 +775,6 @@ class ExtractBase(object):
                        '{0.directory}/{0.STDOUT}.'.format(self) )
     return float(regex.group(1)) * hartree
 
-  def iterfiles(self, **kwargs):
-    """ iterates over input/output files. 
-    
-        :param bool input: Include INCAR file
-        :param bool wavefunctions: Include WAVECAR file
-        :param bool structure: Include POSCAR file
-    """
-    from os.path import exists, join
-    files = [self.STDOUT]
-    if kwargs.get('input', False):   files.append('crystal.d12')
-    if kwargs.get('wavefunctions', False): files.append('crystal.f98')
-    if kwargs.get('structure', False):  files.append('crystal.34')
-    for file in files:
-      file = join(self.directory, file)
-      if exists(file): yield file
-
   @property
   @make_cached
   def optgeom_convergence(self): 
@@ -1080,7 +1064,39 @@ class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
           file.write(out)
         return True
     return dotree
+
+  def iterfiles(self, **kwargs):
+    """ iterates over input/output files. 
+    
+        :param bool input: Include INCAR file
+        :param bool wavefunctions: Include WAVECAR file
+        :param bool structure: Include POSCAR file
+    """
+    from os.path import exists, join
+    files = [self.STDOUT]
+    if kwargs.get('input', False):   files.append('crystal.d12')
+    if kwargs.get('wavefunctions', False): files.append('crystal.f98')
+    if kwargs.get('structure', False):  files.append('crystal.34')
+    try: dummy = self.functional.optgeom.enabled or self._is_optgeom
+    except: dummy = True
+    if dummy: files.append('crystal.scflog')
+    for file in files:
+      file = join(self.directory, file)
+      if exists(file): yield file
+
         
+  @property
+  def is_running(self):
+    """ True if program is running on this functional. 
+         
+	A file '.lada_is_running' is created in the output folder when it is
+	set-up to run CRYSTAL_. The same file is removed when CRYSTAL_ returns
+        (more specifically, when the :py:class:`lada.process.ProgramProcess` is
+	polled). Hence, this file serves as a marker of those jobs which are
+        currently running.
+    """
+    from os.path import join, exists
+    return exists(join(self.directory, '.lada_is_running'))
     
 
 class MassExtract(AbstractMassExtract):
