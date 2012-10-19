@@ -83,7 +83,6 @@ class ExtractBase(object):
   def convtrans(self):
     """ Transform from primitive to conventional cell. """
     from numpy import identity, array
-    from ..error import GrepError
     with self.__stdout__() as file:
       found = False
       for line in file:
@@ -169,7 +168,6 @@ class ExtractBase(object):
   def end_date(self):
     """ Title of the calculations. """
     from datetime import datetime
-    from ..error import GrepError
     pattern = "E+\s+TERMINATION\s+DATE\s*(\d+)\s+(\d+)\s+(\d+)\s+TIME\s+(\S+)"
     regex = self._find_last_STDOUT(pattern)
     if regex is None: 
@@ -191,7 +189,6 @@ class ExtractBase(object):
   def cputime(self):
     """ Total CPU time. """
     from datetime import timedelta
-    from ..error import GrepError
     regex = self._find_first_STDOUT("TOTAL\s+CPU\s+TIME\s+=\s+(\S+)")
     if regex is None: raise GrepError("Could not grep total cpu time.")
     return timedelta(seconds=float(regex.group(1)))
@@ -398,7 +395,6 @@ class ExtractBase(object):
     """
     from numpy import array, identity
     from ..crystal import Structure
-    from ..error import GrepError
     from .basis import specie_name
     result = Structure()
     try: 
@@ -798,7 +794,6 @@ class ExtractBase(object):
   def surface_area(self):
     """ Surface area of 2d slabs. """
     from quantities import angstrom
-    from ..error import GrepError
     result = self._find_last_STDOUT('AREA\s+OF\s+THE\s+2D\s+CELL\s+(\S+)')
     if result is None: raise GrepError('Likely not a 2D slab')
     return float(result.group(1)) * angstrom * angstrom 
@@ -808,7 +803,6 @@ class ExtractBase(object):
   def slab_height(self):
     """ Height of the slab. """
     from quantities import angstrom
-    from ..error import GrepError
     a = self.surface_area.magnitude
     result = self._find_last_STDOUT('VOLUME\s+OF\s+THE\s+3D\s+CELL\s+(\S+)')
     if result is None: raise GrepError('Likely not a 2D slab')
@@ -981,6 +975,11 @@ class ExtractBase(object):
       raise GrepError("Could not grep number of irreducible k-points.")
     return int(result.group(1))
 
+  @property
+  @make_cached
+  def nbelectrons(self):
+    """ Number of electrons per formula unit. """
+    return self.functional.valence(self.structure)
 
 class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
   """ Extracts DFT data from an OUTCAR. """
@@ -1089,14 +1088,15 @@ class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
   def is_running(self):
     """ True if program is running on this functional. 
          
-	A file '.lada_is_running' is created in the output folder when it is
-	set-up to run CRYSTAL_. The same file is removed when CRYSTAL_ returns
+        A file '.lada_is_running' is created in the output folder when it is
+        set-up to run CRYSTAL_. The same file is removed when CRYSTAL_ returns
         (more specifically, when the :py:class:`lada.process.ProgramProcess` is
-	polled). Hence, this file serves as a marker of those jobs which are
+        polled). Hence, this file serves as a marker of those jobs which are
         currently running.
     """
     from os.path import join, exists
     return exists(join(self.directory, '.lada_is_running'))
+
     
 
 class MassExtract(AbstractMassExtract):

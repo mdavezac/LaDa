@@ -1,3 +1,7 @@
+""" Subpackage grouping hamiltonian and computational parameters. 
+
+    In practice, this holds "block 3" input. 
+"""
 __docformat__ = "restructuredtext en"
 __all__ = ['Electronic']
 from .input import AttrBlock, BoolKeyword
@@ -8,7 +12,7 @@ class Shrink(BaseKeyword):
   """ Implements SHRINK parameter. """
   keyword = 'shrink'
   """ Crystal keyword. """
-  def __init__(self, mp=1, gallat=None):
+  def __init__(self, mp=None, gallat=None):
     """ Initializes Shrink keyword. 
 
         :param mp: 
@@ -30,7 +34,7 @@ class Shrink(BaseKeyword):
     return self._mp
   @mp.setter
   def mp(self, value):
-    if value is None: self._mp = 1
+    if value is None: self._mp = None; return
     elif hasattr(value, '__iter__'):
       mp = [max(int(u), 1) for u in value]
       if len(mp) > 3:
@@ -49,6 +53,7 @@ class Shrink(BaseKeyword):
   @property
   def raw(self):
     """ Prints raw CRYSTAL input. """
+    if self.mp is None: return ""
     if hasattr(self.mp, '__iter__'):
       ISP = self.mp[0] if self.gallat is None else self.gallat
       IS = ' '.join(str(u) for u in self.mp + [1]*(3-len(self.mp)))
@@ -82,7 +87,7 @@ class Shrink(BaseKeyword):
   def __repr__(self):
     """ Representation of this instance. """
     args = []
-    if self.mp == 1:
+    if self.mp is None:
       if self.gallat is not None:
         args.append('gallat={0.gallat!r}'.format(self))
     else:
@@ -109,6 +114,7 @@ class Shrink(BaseKeyword):
   def output_map(self, **kwargs):
     """ Prints SHRINK keyword """
     from .molecule import Molecule
+    if self.mp is None: return None
     # The 'get' piece is to make testing a bit easier
     if type(kwargs.get('structure', None)) is Molecule: return None
     return super(Shrink, self).output_map(**kwargs)
@@ -557,6 +563,7 @@ class Electronic(AttrBlock):
   def __init__(self):
     """ Creates the scf attribute block. """
     from ..tools.input import ChoiceKeyword, QuantityKeyword
+    from .input import SetPrint
     from .hamiltonian import Dft
     super(Electronic, self).__init__()
     self.maxcycle = TypedKeyword(type=int)
@@ -867,6 +874,24 @@ class Electronic(AttrBlock):
         >>> functional.broyden[1] = 25
         >>> functional.broyden.imix
         25
+    """
+    self.setprint = SetPrint()
+    """ Extended printing request.
+
+        Printing options consists of (keyword, value) pairs. As such, they can
+        be inputed much like arrays:
+
+        >>> functional.setprint[66] = -5
+        
+        Will result in the output:
+
+          | SETPRINT
+          | 1
+          | 66 -5
+
+        which prints the eigenvalues of the first five k-points at the end of
+        the electronic minimization loop only. The print-out options can be
+        found in the CRYSTAL_ user-guide.
     """
 
   def output_map(self, **kwargs):

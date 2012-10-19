@@ -165,18 +165,25 @@ class AttrBlock(BaseKeyword):
     result = root if getattr(self, 'keyword', None) is None                    \
              else root.descend(self.keyword)
     for key, value in self._input.iteritems():
-      if value is None: continue
-      elif isinstance(value, bool): result[key] = value 
-      elif hasattr(value, 'output_map'):
-        dummy = value.output_map(**kwargs)
-        if dummy is not None: result.update(dummy)
-      elif getattr(value, 'raw', None) is not None:
-        result[key] = str(value.raw)
-      elif hasattr(value, '__iter__'):
-        result[key] =  ' '.join(str(u) for u in value)
-      else: result[key] = str(value)
+      self._output_map(result, key, value, **kwargs)
     if len(result) == 0: return None
     return root
+
+  @staticmethod
+  def _output_map(_tree, _key, _value, **kwargs):
+    """ Modifies output tree for given keyword/value. """
+    if _value is None: return False
+    elif isinstance(_value, bool): _tree[_key] = _value 
+    elif hasattr(_value, 'output_map'):
+      dummy = _value.output_map(**kwargs)
+      if dummy is None: return False
+      _tree.update(dummy)
+    elif getattr(_value, 'raw', None) is not None:
+      _tree[_key] = str(_value.raw)
+    elif hasattr(_value, '__iter__'):
+      _tree[_key] =  ' '.join(str(u) for u in _value)
+    else: _tree[_key] = str(_value)
+    return True
 
   def read_input(self, tree, owner=None, **kwargs):
     """ Sets object from input tree. """

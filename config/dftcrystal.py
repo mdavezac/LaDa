@@ -52,7 +52,8 @@ CRYSTAL_propnames = { 'fort.25':      '{0}.f25',      # bands, maps, doss data
                       'POTC.DAT':     '{0}.POTC',     # exact electrostatic potential
                       'fort.31':      '{0}.prop3d',   # charge/spin density/potential
                       'fort.8':       '{0}.localwf',  # wannier function
-                      'freqinfo.DAT': '{0}.freqinfo'  # info for freq restart
+                      'freqinfo.DAT': '{0}.freqinfo', # info for freq restart
+                      'BAND.DATA':    '{0}.bands'     # band-structure info
                     }
 CRYSTAL_delpatterns = ['core', 'ERROR.*']
 """ Delete files with these patterns. 
