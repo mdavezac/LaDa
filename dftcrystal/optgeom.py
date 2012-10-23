@@ -266,12 +266,12 @@ class OptGeom(ExclAttrBlock):
     
         Sets the stress for which a structural relaxation is performed.
     """
-    self.onelog     = BoolKeyword(value=True)
+    self.onelog     = BoolKeyword()
     """ Whether to print electronic minimization at each geometry step. 
 
-	The electronic minimization steps can be printed to the same file as
-	the geometry optimization step (e.g. the standard output). By default,
-	LaDa prefers to print to the same file, in contrast to CRYSTAL_'s
+        The electronic minimization steps can be printed to the same file as
+        the geometry optimization step (e.g. the standard output). By default,
+        LaDa prefers to print to the same file, in contrast to CRYSTAL_'s
         default.
     """
     self.noxyz       = BoolKeyword()

@@ -53,7 +53,7 @@ CRYSTAL_propnames = { 'fort.25':      '{0}.f25',      # bands, maps, doss data
                       'fort.31':      '{0}.prop3d',   # charge/spin density/potential
                       'fort.8':       '{0}.localwf',  # wannier function
                       'freqinfo.DAT': '{0}.freqinfo', # info for freq restart
-                      'BAND.DATA':    '{0}.bands'     # band-structure info
+                      'BAND.DAT':     '{0}.bands'     # band-structure info
                     }
 CRYSTAL_delpatterns = ['core', 'ERROR.*']
 """ Delete files with these patterns. 
@@ -62,9 +62,6 @@ CRYSTAL_delpatterns = ['core', 'ERROR.*']
     should be removed. This is only applied if the working directory is the
     thesame as the output directory.
 """
-
-crystal_program ='crystal'
-""" Path to crystal executable. """
 
 def crystal_program(self=None, structure=None, comm=None):
   """ Path to serial or mpi or MPP crystal program version. 
@@ -84,3 +81,6 @@ def crystal_program(self=None, structure=None, comm=None):
 
 crystal_inplace = True
 """ Wether to perform calculation in-place or in a tmpdir. """
+
+properties_program = 'properties'
+""" Path to single-electron CRYSTAL properties program. """

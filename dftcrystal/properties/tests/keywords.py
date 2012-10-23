@@ -39,7 +39,7 @@ def test_rdfmwf():
     a.rdfmwf = None
     assert len(a.output_map(filework=False)) == 1
     assert a.output_map(filework=False)['rdfmwf'] == True
-    assert not exists(join(outdir, 'crystal.f98'))
+    assert not exists(join(outdir, 'fort.98'))
     # should fail
     a.rdfmwf = False
     try: a.output_map(filework=True, workdir=outdir)
@@ -47,25 +47,28 @@ def test_rdfmwf():
     else: raise Exception()
     # now check writing
     a.rdfmwf = None
-    assert not exists(join(outdir, 'crystal.f98'))
+    assert not exists(join(outdir, 'fort.98'))
     assert a.output_map(filework=True, workdir=outdir)['rdfmwf'] == True
-    assert exists(join(outdir, 'crystal.f98'))
-    remove(join(outdir, 'crystal.f98'))
+    assert exists(join(outdir, 'fort.98'))
+    remove(join(outdir, 'fort.98'))
     a.rdfmwf = True
-    assert not exists(join(outdir, 'crystal.f98'))
+    assert not exists(join(outdir, 'fort.98'))
     assert a.output_map(filework=True, workdir=outdir)['rdfmwf'] == True
-    assert exists(join(outdir, 'crystal.f98'))
+    assert exists(join(outdir, 'fort.98'))
     remove(join(indir, 'crystal.f98'))
+    remove(join(outdir, 'fort.98'))
+    with open(join(outdir, 'crystal.f98'), 'w') as file: file.write('hello')
     assert exists(join(outdir, 'crystal.f98'))
+    assert not exists(join(outdir, 'fort.98'))
     assert a.output_map(filework=True, workdir=outdir, outdir=outdir)['rdfmwf'] == True
-    assert exists(join(outdir, 'crystal.f98'))
-    remove(join(outdir, 'crystal.f98'))
+    assert exists(join(outdir, 'fort.98'))
+    remove(join(outdir, 'fort.98'))
     
     # now for .f9
     with open(join(indir, 'crystal.f9'), 'w') as file: file.write('hello')
     a.rdfmwf = None
     assert len(a.output_map(filework=False)) == 0
-    assert not exists(join(outdir, 'crystal.f9'))
+    assert not exists(join(outdir, 'fort.9'))
     # should fail
     a.rdfmwf = True
     try: a.output_map(filework=True, workdir=outdir)
@@ -73,19 +76,22 @@ def test_rdfmwf():
     else: raise Exception()
     # now check writing
     a.rdfmwf = None
-    assert not exists(join(outdir, 'crystal.f9'))
+    assert not exists(join(outdir, 'fort.9'))
     assert len(a.output_map(filework=True, workdir=outdir)) == 0
-    assert exists(join(outdir, 'crystal.f9'))
-    remove(join(outdir, 'crystal.f9'))
+    assert exists(join(outdir, 'fort.9'))
+    remove(join(outdir, 'fort.9'))
     a.rdfmwf = False
-    assert not exists(join(outdir, 'crystal.f9'))
+    assert not exists(join(outdir, 'fort.9'))
     assert len(a.output_map(filework=True, workdir=outdir)) == 0
-    assert exists(join(outdir, 'crystal.f9'))
+    assert exists(join(outdir, 'fort.9'))
     remove(join(indir, 'crystal.f9'))
+    remove(join(outdir, 'fort.9'))
+    with open(join(outdir, 'crystal.f9'), 'w') as file: file.write('hello')
+    assert not exists(join(outdir, 'fort.9'))
     assert exists(join(outdir, 'crystal.f9'))
     assert len(a.output_map(filework=True, workdir=outdir, outdir=outdir)) == 0
-    assert exists(join(outdir, 'crystal.f9'))
-    remove(join(outdir, 'crystal.f9'))
+    assert exists(join(outdir, 'fort.9'))
+    remove(join(outdir, 'fort.9'))
 
   finally:
     try: rmtree(indir)
@@ -145,7 +151,7 @@ def test_band():
 
   Shell = namedtuple('Shell', ['charge'])
   Functional = namedtuple('Functional', ['basis'])
-  Extract    = namedtuple('Extract', ['functional', 'directory'])
+  Extract    = namedtuple('Extract', ['functional', 'directory', 'structure'])
   Atom       = namedtuple('Atom', ['type'])
   class Structure(list):
     def __init__(self, *args, **kwargs):
@@ -155,9 +161,9 @@ def test_band():
   shells['Al'] = [Shell(randint(0, 10)) for i in xrange(5)]
   shells['Be'] = [Shell(randint(0, 10)) for i in xrange(5)]
   functional = Functional(shells)
-  input = Extract(functional, '/dev/null')
   structure = Structure([Atom(u) for u in ['Al']*3 + ['Be'] * 4])
-  kwargs = {'input': input, 'structure': structure, 'filework': False}
+  input = Extract(functional, '/dev/null', structure)
+  kwargs = {'input': input, 'filework': False}
 
   nelectrons = sum(u.charge for u in shells['Al']) * 3                         \
                + sum(u.charge for u in shells['Be']) * 4  
@@ -169,8 +175,8 @@ def test_band():
   assert all(abs(eval(repr(a.band), {'Band': Band})._lines - a.band._lines) < 1e-8)
   assert all(abs(loads(dumps(a.band))._lines - a.band._lines) < 1e-8)
   c = a.output_map(**kwargs)['band'].split()
-  assert all(array(c[:7], dtype='float64') == [2, 100000000, 40, 0, nelectrons+6, 1, 0])
-  assert all(abs(array(c[7:], dtype='float64') / 1e8 - a.band._lines.flatten()) < 1e-8)
+  assert all(array(c[:7], dtype='float64') == [2, 10000, 40, 1, nelectrons//2+4, 1, 0])
+  assert all(abs(array(c[7:], dtype='float64') / 1e4 - a.band._lines.flatten()) < 1e-8)
   assert a._input['band'].__ui_repr__({}, name='band')['band'] == repr(a.band)
   c = a._input['band'].__ui_repr__({}, name='band', defaults=Band())['band']
   assert all(abs(array(eval(c), dtype='float64') - a.band._lines) < 1e-8)
@@ -186,7 +192,9 @@ def test_band():
   
   # check title
   assert len(a.output_map(properties=a, **kwargs)['band'].splitlines()[0]) == 0
-  structure.name = 'hello'
+  Extract = namedtuple('Extract', ['functional', 'directory', 'structure', 'title'])
+  input = Extract(functional, '/dev/null', structure, 'hello')
+  kwargs['input'] = input
   assert a.output_map(properties=a, **kwargs)['band'].splitlines()[0] == 'hello'
   a.band.title = 'goodbye'
   assert a.output_map(properties=a, **kwargs)['band'].splitlines()[0] == 'goodbye'

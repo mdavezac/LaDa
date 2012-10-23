@@ -622,7 +622,6 @@ class Functional(object):
     return result
     
 
-
   class OnFinish(object):
     """ Called when a run finishes. 
        
@@ -638,7 +637,7 @@ class Functional(object):
     """ Checks whether CRYSTAL run succeeded.
 
         Crystal reports an error when reaching maximum iteration without
-        converging. This is screws up hwo LaDa does things.
+        converging. This screws up how LaDa does things.
     """
     def __init__(self, outdir):
       self.outdir = outdir

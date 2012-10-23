@@ -65,18 +65,20 @@ class Band(BaseKeyword):
     value = self._check_values(value)
     self._lines = value.copy()
 
-  def output_map(self, structure=None, properties=None, input=None, **kwargs):
+  def output_map(self, properties=None, input=None, **kwargs):
     """ Returns an output map. """
     if self._lines is None or len(self.lines) == 0: return None
     formats = {}
     formats["title"] = self.title if self.title is not None                    \
-                       else getattr(structure, 'name', "")
-    formats["iss"] = int(1e8) if self.iss is None else int(self.iss)
+                       else getattr(input, 'title', '')
+    formats["iss"] = int(1e4) if self.iss is None else int(self.iss)
     formats["nsub"] = len(self.lines) * 10 if self.nsub is None else self.nsub
     formats["inzb"] = 0 if self.minband is None else int(self.minband)
-    nelectrons = properties.nbelectrons(structure, input)
-    formats["ifnb"] = nelectrons + 6  if self.maxband is None                  \
+    formats["inzb"] = int(formats['inzb']+1e-6) + 1
+    nbands = properties.nbelectrons(input) // 2
+    formats["ifnb"] = nbands + 3  if self.maxband is None                      \
                       else int(self.maxband)
+    formats["ifnb"] = int(formats['ifnb']+1e-6) + 1
     formats["iplo"] = 1
     formats["lpr66"] = 0
     formats["nlines"] = len(self.lines) // 2
@@ -105,22 +107,6 @@ class Band(BaseKeyword):
     self._lines = array(value[5:3*2*nlines], dtype='int64')
     if self.iss is not None:
       self._lines = self._lines.astype('float64') / float(self.iss)
-
-  def save_files(self, **kwargs):
-    """ Copies files appropriately. 
-
-        Should be called with same arguments as output_map.
-    """
-    from os.path import exists, join
-    from ...misc import copyfile
-    from ... import CRYSTAL_propnames as propnames
-    if self.output_map(**kwargs) is None: return 
-    workdir = kwargs['workdir']
-    outdir = kwargs['outdir']
-    if exists(join(workdir, 'BANDS.DAT')):
-      copyfile( join(workdir, 'BANDS.DAT'), 
-                join(outdir, propnames['BANDS.DAT'].format('crystal')),
-                nothrow='same' )
 
   def __repr__(self):
     """ Dumps representation to string. """
@@ -254,7 +240,8 @@ class Rdfmwf(BoolKeyword):
     if which is not None:
       value = which[which.rfind('.'):] == '.f98'
       if kwargs.get('filework', False):
-        copyfile(which, kwargs['workdir'], nothrow='same')
+        path = join(kwargs['workdir'], 'fort.98' if value else  'fort.9')
+        copyfile(which, path, nothrow='same')
     elif kwargs.get('filework', False): 
       raise IOError('Could not find input density.')
     return None if value is False or value is None else {self.keyword: True}

@@ -1,11 +1,17 @@
 """ Subpackage grouping single-electron properties. """
 __docformat__ = "restructuredtext en"
 __all__ = ['Properties']
+from ...tools import stateless, assign_attributes
 from ..input import AttrBlock
+from .extract import Extract
 
 class Properties(AttrBlock):
   """ Wrap single-electron property calculations. """
-  def __init__(self, input=None):
+  Extract = Extract
+  """ Extraction class. """
+  __ui_name__ = 'properties'
+  """ Name used in user-friendly representation """
+  def __init__(self, input=None, program=None):
     from .keywords import NewK, Band, Rdfmwf
     from ..input import BoolKeyword
     super(Properties, self).__init__()
@@ -73,6 +79,11 @@ class Properties(AttrBlock):
 
         >>> properties.band = [startA, endA], [startB, endB], ...
     """
+    self.program = program
+    """ CRYSTAL_'s properties program. 
+
+        If None, defaults to :py:data:`lada.properties_program`.
+    """ 
     self.input = input
 
   def output_map(self, **kwargs):
@@ -133,12 +144,179 @@ class Properties(AttrBlock):
     elif isinstance(value, str): self._input_calc = CrystalExtract(value)
     else: self._input_calc = value
 
-  def nbelectrons(self, structure, input=None):
+  def nbelectrons(self, input=None):
     if input is None: input = self.input
-    species = [u.type for u in structure.eval()]
+    species = [u.type for u in input.structure]
     result = 0
     for specie in set(species):
       result += sum(u.charge for u in input.functional.basis[specie])          \
                 * species.count(specie)
     return result
 
+  def guess_workdir(self, outdir):
+    """ Tries and guess working directory. """
+    from os import environ
+    from tempfile import mkdtemp
+    from datetime import datetime
+    rootdir = environ.get('PBS_TMPDIR', outdir)
+    return mkdtemp( prefix='dftcrystal_prop_{0!s}'.format(datetime.today()), 
+                    dir=rootdir )
+
+  def iter( self, input=None, outdir=None, workdir=None, overwrite=False,
+            **kwargs ):
+    """ Performs a single-electron property calculation. """
+    from os import getcwd
+    from os.path import abspath
+    from copy import deepcopy
+    from ...process.program import ProgramProcess
+    from ...misc import Changedir
+    from ... import properties_program
+    from ..functional import Functional
+    from ...error import AttributeError
+
+    # Performs deepcopy of self.
+    this = deepcopy(self)
+    # copy attributes.
+    if input is not None: this.input = input
+    for key, value in kwargs.iteritems():
+      if key in ['comm', 'structure']: continue
+      if hasattr(self, key): setattr(self, key, value)
+      else: raise AttributeError('Unknown attribute {0}'.format(key))
+      
+    # check for pre-existing and successfull run.
+    if not overwrite:
+      extract = this.Extract(outdir)
+      if extract.success:
+        yield extract # in which case, returns extraction object.
+        return
+    
+    if outdir == None: outdir = getcwd()
+    if workdir == None: workdir = this.guess_workdir(outdir)
+
+    outdir = abspath(outdir)
+    workdir = abspath(workdir)
+    with Changedir(workdir) as tmpdir: 
+      # writes/copies files before launching.
+      this.bringup(outdir, workdir)
+
+      # figure out the program to launch.
+      program = this.program if this.program is not None else properties_program
+      if hasattr(program, '__call__'): program = program(this)
+
+      # now creates the process, with a callback when finished.
+      onfinish = Functional.OnFinish(this, workdir, outdir)
+      yield ProgramProcess( program, outdir=workdir, onfinish=onfinish,
+                            stdout='prop.out', stderr='prop.out', 
+                            stdin='prop.d12', dompi=False )
+    # yields final extraction object.
+    yield Extract(outdir)
+
+  def bringup(self, outdir, workdir):
+    """ Sets up call to program. """
+    from os.path import join, abspath, samefile, lexists
+    from os import symlink, remove
+    from ...misc import copyfile, Changedir
+    from ... import CRYSTAL_propnames as filenames
+    with Changedir(workdir) as cwd:
+      # first copies file from current working directory
+      for key, value in filenames.iteritems():
+        copyfile( join(workdir, value.format('prop')), key, nocopyempty=True,
+                  symlink=False, nothrow="never" )
+      for key, value in filenames.iteritems():
+        copyfile( join(self.input.directory, value.format('prop')), 
+                  key, nocopyempty=True, symlink=False, 
+                  nothrow="never" )
+
+      # then creates input file.
+      string = self.print_input(workdir=workdir, outdir=outdir, filework=True)
+      with open('prop.d12', 'w') as file: file.write(string)
+
+    with Changedir(outdir) as cwd: pass
+    if not samefile(outdir, workdir):
+      # Creates symlink to make sure we keep working directory.
+      with Changedir(outdir) as cwd:
+        with open('prop.d12', 'w') as file: file.write(string)
+        with open('prop.out', 'w') as file: pass
+        with open('prop.err', 'w') as file: pass
+        # creates symlink files.
+        for filename in ['prop.err', 'prop.out']:
+          if lexists(join(workdir, filename)):
+            try: remove( join(workdir, filename) )
+            except: pass
+          symlink(abspath(filename), abspath(join(workdir, filename)))
+            
+        if lexists('workdir'): 
+          try: remove('workdir')
+          except: pass
+        try: symlink(workdir, 'workdir')
+        except: pass
+    
+    # creates a file in the directory, to say we are going to work here
+    with open(join(outdir, '.lada_is_running'), 'w') as file: pass
+
+  def bringdown(self, workdir, outdir):
+    """ Copies files back to output directory. 
+    
+        Cats input intO output. Removes workdir if different from outdir
+        **and** run was successfull.
+    """
+    from os import remove
+    from os.path import join, exists
+    from shutil import rmtree
+    from ...misc import copyfile, Changedir
+    from ... import CRYSTAL_propnames as propnames
+
+    with Changedir(outdir) as cwd:
+      for key, value in propnames.iteritems():
+        copyfile( join(workdir, key), value.format('prop'),
+                  nocopyempty=True, symlink=False, nothrow="never" )
+
+      with open('prop.d12', 'r') as file: input = file.read()
+      with open('prop.out', 'r') as file: output = file.read()
+      header = ''.join(['#']*20)
+      with open('prop.out', 'w') as file:
+        file.write('{0} {1} {0}\n'.format(header, 'INPUT FILE'))
+        input = input.rstrip()
+        if input[-1] != '\n': input += '\n'
+        file.write(input)
+        file.write('{0} END {1} {0}\n'.format(header, 'INPUT FILE'))
+        file.write(output)
+        file.write('\n{0} {1} {0}\n'.format(header, 'FUNCTIONAL'))
+        file.write(self.__repr__(defaults=False))
+        file.write('\n{0} END {1} {0}\n'.format(header, 'FUNCTIONAL'))
+
+      # remove 'is running' file marker.
+      if exists('.lada_is_running'):
+        try: remove('.lada_is_running')
+        except: pass
+    
+    if Extract(outdir).success:
+      try: rmtree(workdir)
+      except: pass
+      try: remove(join(outdir, 'workdir'))
+      except: pass
+
+  def __call__( self, input=None, outdir=None, workdir=None, overwrite=False,
+                **kwargs):
+    for program in self.iter( input=input, outdir=outdir, workdir=workdir,
+                              overwrite=overwrite, **kwargs ):
+      # iterator may yield the result from a prior successfull run. 
+      if getattr(program, 'success', False): continue
+      # Or may fail return a failed run.
+      if not hasattr(program, 'start'): return program
+      # otherwise, it should yield a Program tuple to execute.
+      program.start()
+      program.wait()
+    # Last yield should be an extraction object.
+    if not program.success:
+      raise RuntimeError("CRYSTAL failed to execute correctly.")
+    return program
+  __call__.__doc__ = iter.__doc__
+
+  def __ui_repr__(self, imports, name=None, defaults=None, exclude=None):
+    from ...tools.uirepr import template_ui_repr
+
+    results = template_ui_repr(self, imports, name, defaults, ['scf'])
+    if name is None:
+      name = getattr(self, '__ui_name__', self.__class__.__name__.lower())
+    return results
