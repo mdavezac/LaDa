@@ -250,29 +250,27 @@ def translate_to_regex(pat):
           res = res + escape(c)
   return res 
 
-def latest_file(filename, *args):
+def latest_file(*args):
   """ Path of latest file.
 
-      Check in each directory wether a file name ``filename`` exists and is
-      non-empty. If there are more than one, returns the latest. If there are
-      none, returns None.
+      Check each argument if it exists and is non-empty and is a file. If there
+      are more than one, returns the latest. If there are none, returns None.
 
 
-      :param str filename: 
-         Unqualified name of the files.
       :param *args:
-         Directories where to check for the file.
+         Path to files for which to perform comparison.
 
       :returns: path to the latest file or None
   """
-  from os.path import join, exists, getsize
+  from os.path import exists, getsize, isfile
   from os import stat
   from operator import itemgetter
   if len(args) == 0: return None
   dummy = []
-  for directory in args: 
-    path = join(directory, filename)
+  for filename in args: 
+    path = RelativePath(filename).path
     if not exists(path): continue
+    if not isfile(path): continue
     if getsize(path) == 0: continue
     dummy.append((path, stat(path).st_mtime))
   if len(dummy) == 0: return None

@@ -1,0 +1,84 @@
+def test():
+  from tempfile import mkdtemp
+  from shutil import rmtree
+  from os.path import join
+  from numpy import all
+  from quantities import hartree
+  from lada.dftcrystal import Crystal, Functional, Shell
+  from lada.dftcrystal.properties import Properties
+  from lada import default_comm
+
+  functional = Functional()
+  functional.basis['Si'] = [
+      Shell('s', a0=[16120.0, 0.001959],
+                 a1=[2426.0, 0.01493], 
+                 a2=[553.9, 0.07285],
+                 a3=[156.3, 0.2461], 
+                 a4=[50.07, 0.4859],
+                 a5=[17.02, 0.325]),
+      Shell('sp', a0=[292.7, -0.002781, 0.004438],
+                  a1=[69.87, -0.03571, 0.03267],
+                  a2=[22.34, -0.115, 0.1347],
+                  a3=[8.15, 0.09356, 0.3287],
+                  a4=[3.135, 0.603, 0.4496]), 
+      Shell('sp', 4.0, a0=[1.22, 1.0, 1.0]),
+      Shell('sp', 0.0, a0=[0.55, 1.0, 1.0]),
+      Shell('sp', 0.0, a0=[0.27, 1.0, 1.0]) ]
+
+  functional.dft.pbe0 = True
+  functional.fmixing = 30
+  functional.shrink = 8, 16
+  functional.levshift = 5, True
+  functional.maxcycle = 600
+  functional.dft.spin = True
+
+  crystal = Crystal(227, 5.43).add_atom(0.125, 0.125, 0.125, 'Si')
+  directory = mkdtemp() 
+  firstdir, seconddir = join(directory, '0'), join(directory, '1')
+  try: 
+     si = functional(crystal, outdir=firstdir, comm=default_comm)
+     properties = Properties(si)
+     properties.band = [0, 0, 0], [1, 0, 0], [1, 0, 0], [0, 1, 0]
+     result0 = properties(outdir=firstdir)
+     assert all(abs(result0.bandstructure.eigenvalues[0] - result0.bandstructure.eigenvalues[1]) < 1e-6)
+     test = [ [-64.55637917, -64.55637522,  -3.64877203,  -3.64854929,
+                -1.98183315,  -1.98183315,  -1.98183315,  -1.98097196,
+                -1.98097196,  -1.98097196,   1.00052165,   1.49996607,
+                 1.49996607,   1.49996607,   1.63212276,   1.63212276,
+                 1.63212276,   1.66407077],
+               [-64.55637917, -64.55637522,  -3.64877203,  -3.64854929,
+                 -1.98183315,  -1.98183315,  -1.98183315,  -1.98097196,
+                 -1.98097196,  -1.98097196,   1.00052165,   1.49996607,
+                  1.49996607,   1.49996607,   1.63212276,   1.63212276,
+                  1.63212276,   1.66407077] ] * hartree
+     assert all(abs(result0.bandstructure.eigenvalues[0,0] - test[0]) < 1e-8)
+     assert all(abs(result0.bandstructure.eigenvalues[0,-1] - test[1]) < 1e-8)
+     test = [[ 0.06666667,  0.        ,  0.        ],
+             [ 0.13333333,  0.        ,  0.        ],
+             [ 0.2       ,  0.        ,  0.        ],
+             [ 0.26666667,  0.        ,  0.        ],
+             [ 0.33333333,  0.        ,  0.        ],
+             [ 0.4       ,  0.        ,  0.        ],
+             [ 0.46666667,  0.        ,  0.        ],
+             [ 0.53333333,  0.        ,  0.        ],
+             [ 0.6       ,  0.        ,  0.        ],
+             [ 0.66666667,  0.        ,  0.        ],
+             [ 0.73333333,  0.        ,  0.        ],
+             [ 0.8       ,  0.        ,  0.        ],
+             [ 0.86666667,  0.        ,  0.        ],
+             [ 0.93333333,  0.        ,  0.        ],
+             [ 1.        ,  0.        ,  0.        ],
+             [ 1.06666667,  0.        ,  0.        ]]
+     assert all(abs(result0.bandstructure.kpoints - test) < 1e-8)
+     
+     functional.dft.spin = False
+     si = functional(crystal, outdir=seconddir, comm=default_comm)
+     properties = Properties(si)
+     properties.band = [0, 0, 0], [1, 0, 0], [1, 0, 0], [0, 1, 0]
+     result1 = properties(outdir=seconddir)
+     assert all(abs(result1.bandstructure.eigenvalues - result0.bandstructure.eigenvalues[0]) < 1e-6)
+     assert all(abs(result1.bandstructure.kpoints - result0.bandstructure.kpoints) < 1e-6)
+  finally: 
+    if directory != '/tmp/test/': rmtree(directory)
+if __name__ == '__main__':
+  test()

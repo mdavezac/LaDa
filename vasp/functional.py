@@ -947,9 +947,13 @@ class Vasp(AttrBlock):
       with open(files.POTCAR, 'w') as potcar:
         for s in specieset(structure):
           potcar.writelines( self.species[s].read_potcar() )
+      # Add is running file marker.
+      with open('.lada_is_running', 'w') as file: pass
     
   def bringdown(self, directory, structure):
      """ Copies contcar to outcar. """
+     from os.path import exists
+     from os import remove
      from . import files
      from ..misc import Changedir
 
@@ -970,7 +974,7 @@ class Vasp(AttrBlock):
          outcar.write('\n################ FUNCTIONAL ################\n')
          outcar.write(repr(self))
          outcar.write('\n################ END FUNCTIONAL ################\n')
-
+       if exists('.lada_is_running'): remove('.lada_is_running')
 
   def write_incar(self, structure, path=None, **kwargs):
     """ Writes incar file. """

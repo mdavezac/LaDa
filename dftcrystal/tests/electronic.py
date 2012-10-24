@@ -5,12 +5,21 @@ def test_shrink():
   from lada.dftcrystal.molecule import Molecule
 
   a = Shrink()
-  assert a.mp == 1
+  assert a.mp is None
+  assert a.gallat is None
+  assert a.output_map() is None
+  assert eval(repr(a), {'Shrink': Shrink}).mp  is None
+  assert eval(repr(a), {'Shrink': Shrink}).gallat  is None
+  assert repr(loads(dumps(a))) == repr(a)
+
+  a.mp = 1
+  assert a.mp == 1 
   assert a.gallat is None
   assert 'shrink' in a.output_map()
   assert a.output_map()['shrink'] == a.raw
   assert a.output_map()['shrink'] == '1 1\n'
-  assert repr(a) == 'Shrink()'
+  assert eval(repr(a), {'Shrink': Shrink}).mp == 1
+  assert eval(repr(a), {'Shrink': Shrink}).gallat  is None
   assert repr(loads(dumps(a))) == repr(a)
 
   a.mp = 5
@@ -61,7 +70,8 @@ def test_shrink():
   assert all(array(a.mp) == [5, 2, 10]) and a.gallat == 10
   a.raw = '0 10\n1 1 1'
   assert all(array(a.mp) == 1) and a.gallat == 10
-  assert repr(a) == 'Shrink(gallat=10)'
+  assert eval(repr(a), {'Shrink': Shrink}).mp  == 1
+  assert eval(repr(a), {'Shrink': Shrink}).gallat == 10
 
   try: a.gallat = 'a'
   except ValueError: pass

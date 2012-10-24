@@ -157,7 +157,46 @@ class BoolKeyword(BaseBoolKeyword):
       Makes sure it is set to True from its mere presence in the input file.
   """
   def read_input(self, *args, **kwargs): self.value = True
-    
+
+
+class SetPrint(BaseKeyword):
+  """ Print options. """
+  keyword = "setprint"
+  def __init__(self, args=None):
+    super(SetPrint, self).__init__()
+    self.options = args.copy() if args is not None else {}
+  def __getitem__(self, name):
+    return self.options[name]
+  def __setitem__(self, name, value):
+    self.options[name] = value
+  def output_map(self, **kwargs):
+     if len(self.options) == 0: return None
+     result = str(len(self.options)) + '\n'
+     for i, (key, value) in enumerate(self.options.iteritems()):
+       if i != 0 and  i % 5 == 0: result += '\n'
+       result += "{0} {1}  ".format(key, value)
+     return {self.keyword: result}
+  def __get__(self, instance, owner=None): return self
+  def __set__(self, instance, value):
+    self.options = {} if value is None else value.copy()
+  def __delete__(self, instance): self.options = {}
+  def __len__(self): return len(self.options)
+
+  def read_input(self, value, **kwargs):
+    from ..error import ValueError
+    self.options = {}
+    if value is None: return
+    value = value.split()
+    if len(value) < 3: return
+    N = int(value[0]) * 2 + 1
+    if len(value) < N:
+      raise ValueError('Array of options is too small in SetPrint.')
+    for key, value in zip(value[1:N:2], value[2:N:2]):
+      self.options[int(key)] = int(value)
+  def __repr__(self):
+    """ Dumps representation to string. """
+    if len(self.options) == 0: return "{0.__class__.__name__}()".format(self)
+    return "{0.__class__.__name__}({0.options!r})".format(self)
 
 def print_input(map):
   """ Prints output map to string. """

@@ -28,31 +28,37 @@ def test_init(Class):
   a = Class(identity(3)*2.5, scale=5.45, m=True)
   assert all(abs(a.cell - identity(3)*2.5) < 1e-8) and abs(a.scale - 5.45) < 1e0\
          and len(a.__dict__) == 1 and getattr(a, 'm', False)
-  assert str(a) == "Structure( 2.5, 0, 0,\\\n"\
-                   "           0, 2.5, 0,\\\n"\
-                   "           0, 0, 2.5,\\\n"\
-                   "           scale=5.45, m=True )"
+  assert all(abs(eval(repr(a), {'Structure': Structure}).cell - a.cell) < 1e-8)
+  assert abs(eval(repr(a), {'Structure': Structure}).scale - a.scale) < 1e-8
+  assert getattr(eval(repr(a), {'Structure': Structure}), 'm', False) 
   refcnt = getrefcount(a)
   a.add_atom(0,0,0, "Au")\
    .add_atom(0.25, 0.5, 0.25, "Au", "Pd", m=5)
   gc.collect() 
   # makes sure add_atom did not increase refcount innapropriately
   assert getrefcount(a) == refcnt 
-  assert str(a) == "Structure( 2.5, 0, 0,\\\n"\
-                   "           0, 2.5, 0,\\\n"\
-                   "           0, 0, 2.5,\\\n"\
-                   "           scale=5.45, m=True )\\\n"\
-                   "  .add_atom(0, 0, 0, 'Au')\\\n"\
-                   "  .add_atom(0.25, 0.5, 0.25, ['Au', 'Pd'], m=5)"
+  assert all(abs(eval(repr(a), {'Structure': Structure}).cell - a.cell) < 1e-8)
+  assert abs(eval(repr(a), {'Structure': Structure}).scale - a.scale) < 1e-8
+  assert getattr(eval(repr(a), {'Structure': Structure}), 'm', False) 
+  assert all(abs(eval(repr(a), {'Structure': Structure})[0].pos - a[0].pos) < 1e-8)
+  assert eval(repr(a), {'Structure': Structure})[0].type == 'Au'
+  assert all(abs(eval(repr(a), {'Structure': Structure})[1].pos - a[1].pos) < 1e-8)
+  assert eval(repr(a), {'Structure': Structure})[1].type == ['Au', 'Pd']
+  assert getattr(eval(repr(a), {'Structure': Structure})[1], 'm', False)
   # make sure that add_atom did not increase a's ref count innapropriately.
   a.cell[0,0] = 1e0
   a.cell[1,:] = 1e0
-  assert str(a) == "Structure( 1, 0, 0,\\\n"\
-                   "           1, 1, 1,\\\n"\
-                   "           0, 0, 2.5,\\\n"\
-                   "           scale=5.45, m=True )\\\n"\
-                   "  .add_atom(0, 0, 0, 'Au')\\\n"\
-                   "  .add_atom(0.25, 0.5, 0.25, ['Au', 'Pd'], m=5)"
+  assert all(abs(eval(repr(a), {'Structure': Structure}).cell - a.cell) < 1e-8)
+  assert abs(eval(repr(a), {'Structure': Structure}).cell[0,0] - 1e0) < 1e-8
+  assert abs(eval(repr(a), {'Structure': Structure}).cell[1,0] - 1e0) < 1e-8
+  assert abs(eval(repr(a), {'Structure': Structure}).scale - a.scale) < 1e-8
+  assert getattr(eval(repr(a), {'Structure': Structure}), 'm', False) 
+  assert all(abs(eval(repr(a), {'Structure': Structure})[0].pos - a[0].pos) < 1e-8)
+  assert eval(repr(a), {'Structure': Structure})[0].type == 'Au'
+  assert all(abs(eval(repr(a), {'Structure': Structure})[1].pos - a[1].pos) < 1e-8)
+  assert eval(repr(a), {'Structure': Structure})[1].type == ['Au', 'Pd']
+  assert getattr(eval(repr(a), {'Structure': Structure})[1], 'm', False)
+                   
 def test_initerror(Class, AtomClass):
   """ Checks initialization throws appropriately. """
   from numpy import identity

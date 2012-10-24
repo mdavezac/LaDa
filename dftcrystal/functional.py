@@ -187,7 +187,7 @@ class Functional(object):
 
   def guess_workdir(self, outdir):
     """ Tries and guess working directory. """
-    from os import environ, getpid
+    from os import environ
     from tempfile import mkdtemp
     from datetime import datetime
     from .. import crystal_inplace
@@ -235,7 +235,7 @@ class Functional(object):
         with open('crystal.err', 'w') as file: pass
         with open('ERROR', 'w') as file: pass
         # creates symlink files.
-	for filename in ['crystal.err', 'crystal.out', 'ERROR']:
+        for filename in ['crystal.err', 'crystal.out', 'ERROR']:
           if lexists(join(workdir, filename)):
             try: remove( join(workdir, filename) )
             except: pass
@@ -339,7 +339,7 @@ class Functional(object):
   @stateless
   def iter(self, structure, outdir=None, workdir=None, comm=None,
            overwrite=False, test=False, **kwargs):
-    """ Performs a vasp calculation 
+    """ Performs a CRYSTAL calculation 
      
         If successfull results (see :py:attr:`extract.Extract.success`) already
         exist in outdir, calculations are not repeated. Instead, an extraction
@@ -611,6 +611,16 @@ class Functional(object):
            * self._nAOs(structure, **kwargs)                                   \
            * len(self._ibz(structure, **kwargs))
 
+  def nbelectrons(self, structure, **kwargs):
+    """ Number of electrons per formula unit. """
+    species = [u.type for u in structure.eval()]
+    result = 0
+    for specie in set(species):
+      if specie not in self.basis:
+        raise KeyError("Unknown specie {0}.".format(specie))
+      result += sum(u.charge for u in self.basis[species])
+    return result
+    
 
   class OnFinish(object):
     """ Called when a run finishes. 
@@ -627,7 +637,7 @@ class Functional(object):
     """ Checks whether CRYSTAL run succeeded.
 
         Crystal reports an error when reaching maximum iteration without
-        converging. This is screws up hwo LaDa does things.
+        converging. This screws up how LaDa does things.
     """
     def __init__(self, extract):
       self.extract = extract
