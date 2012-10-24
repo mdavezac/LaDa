@@ -54,6 +54,9 @@ class Band(BaseKeyword):
     """ Sets k-point path. """
     value = self._check_values(value)
     self._lines = value
+  def __len__(self):
+    """ Number of band-structure lines. """
+    return 0 if self._lines is None else len(self._lines) 
 
   @property
   def lines(self): 

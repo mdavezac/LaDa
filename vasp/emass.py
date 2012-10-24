@@ -412,7 +412,7 @@ iter_emass.Extract = Extract
 """ Extractor class for the reciprocal method. """
 EMass = makeclass( 'EMass', Vasp, iter_emass, None, module='lada.vasp.emass',
                     doc='Functional form of the '                              \
-                        ':py:class:`lada.vasp.relax.iter_emass` method.' )
+                        ':py:class:`lada.emass.relax.iter_emass` method.' )
 
 # Function call to effective mass. No iterations. returns when calculations are
 # done or fail.

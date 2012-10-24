@@ -92,12 +92,13 @@ class ExtractBase(object):
     # create the result class.
     BandStructure = namedtuple('BandStructure', ['kpoints', 'eigenvalues'])
 
-    # then greps k-points.
-    regex = r"^\s*LINE\s+\d+\s*\(\s*(\d+)\s+(\d+)\s+(\d+)\s*:\s*"              \
-            r"\s*(\d+)\s+(\d+)\s+(\d+)\s*\)\s*(\d+)\s*POINTS\s*\-\s*"          \
-            r"SHRINKING_FACTOR\s+(\d+)\s*$"                                    \
+    # then greps k-points
+    regex = r"^\s*LINE\s+\d+\s*\(\s*({0})\s+({0})\s+({0})\s*:\s*"              \
+            r"\s*({0})\s+({0})\s+({0})\s*\)\s*({0})\s*POINTS\s*\-\s*"          \
+            r"SHRINKING_FACTOR\s+({0})\s*$"                                    \
             r"\s*CARTESIAN\s+COORD\.\s+\(\s*(\S+)\s+(\S+)\s+(\S+)\s*\)"        \
-            r"\s*:\s*\(\s*(\S+)\s+(\S+)\s+(\S+)\s*\)\s*STEP\s+(\S+)\s*$"
+            r"\s*:\s*\(\s*(\S+)\s+(\S+)\s+(\S+)\s*\)\s*STEP\s+(\S+)\s*$"       \
+            .format("(?:-|\+)?\d+")
     kpoints = []
     for kpre in self._search_STDOUT(regex, M):
       # if the segments are continuous, then CRYSTAL does not recompute the
@@ -174,16 +175,21 @@ class ExtractBase(object):
 
 class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
   """ Extracts DFT data from an OUTCAR. """
-  def __init__(self, directory=None, **kwargs):
+  def __init__(self, directory=None, input=None, **kwargs):
     """ Initializes extraction object. 
     
         :param directory: 
           Directory where the OUTCAR resides. 
           It may also be the path to an OUTCAR itself, if the file is not
           actually called OUTCAR.
+        :param input:
+          Extraction object for self-consistent calculations. 
+          If None, defaults to a normal crystal calculation in the input
+          directory.
     """
     from os.path import exists, isdir, basename, dirname
-    from lada.misc import RelativePath
+    from ...misc import RelativePath
+    from ..extract import Extract as ExtractSingle
        
     self.STDOUT = 'prop.out'
     """ Name of file to grep. """
@@ -195,6 +201,9 @@ class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
     AbstractExtractBase.__init__(self, directory)
     ExtractBase.__init__(self)
     OutputSearchMixin.__init__(self)
+
+    self.input = input if input is not None else ExtractSingle(self.directory)
+    """ Extraction object for self-consistent calculations. """
 
   @property
   def success(self):
