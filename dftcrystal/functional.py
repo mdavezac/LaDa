@@ -1,6 +1,6 @@
 __docformat__ = "restructuredtext en"
 from ..tools import stateless, assign_attributes
-from .extract import Extract
+from .extract import Extract as ExtractBase
 
 class Functional(object):
   """ Wrapper for the CRYSTAL program. 
@@ -48,7 +48,7 @@ class Functional(object):
           be written as ``functional.scf.tolinteg = ...``.
 
   """
-  Extract = Extract
+  Extract = ExtractBase
   """ Extraction class. """
   __ui_name__ = 'functional'
   """ Name used in user-friendly representation """
@@ -271,7 +271,7 @@ class Functional(object):
     """
     from itertools import chain
     from os import remove
-    from os.path import join, samefile
+    from os.path import join, samefile, exists
     from shutil import rmtree
     from glob import iglob
     from .external import External
@@ -314,6 +314,7 @@ class Functional(object):
         with open('crystal.out', 'a') as out:
           out.write('{0} {1} {0}\n'.format(header, 'ERROR FILE'))
           out.write('\n'.join(lines))
+          if len(lines) > 0: out.write('\n')
           out.write('{0} END {1} {0}\n'.format(header, 'ERROR FILE'))
 
       # remove 'is running' file marker.
@@ -326,7 +327,7 @@ class Functional(object):
         for filepath in chain(*[iglob(u) for u in CRYSTAL_delpatterns]):
           try: remove(filepath)
           except: pass
-    elif Extract(outdir).success:
+    elif ExtractBase(outdir).success:
       try: rmtree(workdir)
       except: pass
       try: remove(join(outdir, 'workdir'))
@@ -374,10 +375,9 @@ class Functional(object):
         :raise RuntimeError: when computations do not complete.
         :raise IOError: when outdir exists but is not a directory.
     """ 
-    from os.path import abspath
     from os import getcwd
     from ..process.program import ProgramProcess
-    from ..misc import Changedir
+    from ..misc import Changedir, RelativePath
     from .. import crystal_program
 
     # check for pre-existing and successfull run.
@@ -390,8 +390,8 @@ class Functional(object):
     if outdir == None: outdir = getcwd()
     if workdir == None: workdir = self.guess_workdir(outdir)
 
-    outdir = abspath(outdir)
-    workdir = abspath(workdir)
+    outdir = RelativePath(outdir).path
+    workdir = RelativePath(workdir).path
     with Changedir(workdir) as tmpdir: 
 
       # writes/copies files before launching.
@@ -408,14 +408,14 @@ class Functional(object):
 
       # now creates the process, with a callback when finished.
       onfinish = self.OnFinish(self, structure, workdir, outdir)
-      onfail   = self.OnFail(outdir)
+      onfail   = self.OnFail(ExtractBase(outdir))
       yield ProgramProcess( program, outdir=workdir, onfinish=onfinish,
                             stdout=None if dompi else 'crystal.out', 
                             stderr='crystal.out' if dompi else 'crystal.err',
                             stdin=None if dompi else 'crystal.d12', 
                             dompi=dompi, onfail=onfail )
     # yields final extraction object.
-    yield Extract(outdir)
+    yield ExtractBase(outdir)
 
   def __call__( self, structure, outdir=None, workdir=None, comm=None,         \
                 overwrite=False, test=False, **kwargs):
@@ -629,11 +629,13 @@ class Functional(object):
         Crystal reports an error when reaching maximum iteration without
         converging. This is screws up hwo LaDa does things.
     """
-    def __init__(self, outdir):
-      self.outdir = outdir
+    def __init__(self, extract):
+      self.extract = extract
     def __call__(self, process, error):
+      from os.path import exists
       from ..process import Fail
-      try: success = Extract(self.outdir).success
+      self.extract.uncache()
+      try: success = self.extract.success
       except: success = False
       if not success:
         raise Fail( 'Crystal failed to run correctly.\n'                       \
