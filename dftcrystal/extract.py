@@ -761,14 +761,36 @@ class ExtractBase(object):
 
   @property
   @make_cached
+  def ncycles(self):
+    """ Number of scf cycles. 
+
+	This is mostly to make it easier to known where a running job is at.
+	It is the number of electronic minimization steps as grepped from the
+        the last line 
+ 
+	 | CYC 4 ETOT(AU) -3.200+04 DETOT -2.22E-04 tst  8.13E-03 PX  9.40E-04
+
+        in the output file. In the example above, it would be 4.
+    """
+    pattern = r"^\s*CYC\s+(\d+)\s*ETOT\(AU\)\s+(\S+)\s+DETOT\s*(\S+)\s*tst"
+    regex = self._find_last_STDOUT(pattern)
+    if regex is None: return 0
+    return int(regex.group(1))
+
+  @property
+  @make_cached
   def delta_energy(self):
     """ Difference in energy between last two minimization steps. """
     from quantities import hartree
     pattern = "TOTAL ENERGY\(\S+\)\(AU\)\(\s*\d+\)\s*\S+\s*DE(\S+)\s*tester"
     regex = self._find_last_STDOUT(pattern)
     if regex is None: 
-      raise GrepError( 'Could not grep delta energy from '                     \
-                       '{0.directory}/{0.STDOUT}.'.format(self) )
+      pattern = r"^\s*CYC\s+(\d+)\s*ETOT\(AU\)\s+(\S+)\s+DETOT\s*(\S+)\s*tst"
+      regex = self._find_last_STDOUT(pattern)
+      if regex is None: 
+        raise GrepError( 'Could not grep delta energy from '                     \
+                         '{0.directory}/{0.STDOUT}.'.format(self) )
+      return float(regex.group(3)) * hartree
     return float(regex.group(1)) * hartree
 
   @property
@@ -1064,6 +1086,27 @@ class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
         return True
     return dotree
 
+  @property
+  def scflog(self):
+    """ SCFLOG file if it exists. """
+    from os.path import exists, join
+    from .. import CRYSTAL_filenames as filenames
+    from ..error import AttributeError, IOError
+    # no geometry optimization, no log.
+    if not self._is_optgeom: 
+      raise AttributeError('Not a geometry optimization.')
+    # if onelog, returns self.
+    if any('ONELOG' in u for u in self.informations): return self
+    # otherwise check if extraction object already exists.
+    result = getattr(self, '_scflog', None)
+    if result is not None: return result
+    # if it doesn't exist, create it if the file exists.
+    path = join(self.directory, filenames['SCFOUT.LOG'].format('crystal'))
+    if not exists(path): raise IOError('Could not find SCFOUT.LOG')
+    self._scflog = self.__class__(path)
+    return self._scflog
+    
+    
   def iterfiles(self, **kwargs):
     """ iterates over input/output files. 
     
@@ -1072,13 +1115,17 @@ class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
         :param bool structure: Include POSCAR file
     """
     from os.path import exists, join
+    from .. import CRYSTAL_filenames as filenames
     files = [self.STDOUT]
-    if kwargs.get('input', False):   files.append('crystal.d12')
-    if kwargs.get('wavefunctions', False): files.append('crystal.f98')
-    if kwargs.get('structure', False):  files.append('crystal.34')
+    if kwargs.get('input', False):
+      files.append(filenames['crystal.d12'].format('crystal'))
+    if kwargs.get('wavefunctions', False):
+      files.append(filenames['fort.98'].format('crystal'))
+    if kwargs.get('structure', False):  
+      files.append(filenames['fort.34'].format('crystal'))
     try: dummy = self.functional.optgeom.enabled or self._is_optgeom
     except: dummy = True
-    if dummy: files.append('crystal.scflog')
+    if dummy: files.append(filenames['SCFOUT.LOG'].format('crystal'))
     for file in files:
       file = join(self.directory, file)
       if exists(file): yield file

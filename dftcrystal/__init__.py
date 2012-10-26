@@ -151,3 +151,82 @@ def exec_input( script, global_dict=None, local_dict=None,
     if k != 'read_input' and k != 'exec_input':
       global_dict[k] = globals()[k]
   return exec_input(script, global_dict, local_dict, paths, name)
+
+from lada import is_interactive
+if is_interactive:
+  from IPython.core.magic import register_line_magic
+
+  @register_line_magic
+  def complete_crystal(line):
+    """ Adds input file to beginning of output file where necessary.
+
+        Works only for dftcrystal and should only be enabled when the
+        dftcrystal is loaded from ipython.
+
+        A complete file should contain all the information necessary to recreate
+        that file. Unfortunately, this is generally not the case with CRYSTAL's
+        standard output, at least not without thorough double-guessing.
+
+        This function adds the .d12 file if it not already there, as well as the
+        input structure if it is in "external" format.
+    """
+    from lada import is_interactive
+    if not is_interactive: return
+    ip = get_ipython() # should be defined in interactive mode.
+    if 'collect' not in ip.user_ns:
+      print 'No jobfolder loaded in memory.'
+      return
+    collect = ip.user_ns['collect']
+    jobparams = ip.user_ns['jobparams']
+    for name, extractor in collect.iteritems():
+      if not hasattr(extractor, '_complete_output'): continue
+
+      structure = jobparams[name].structure
+      if extractor._complete_output(structure):
+        print 'Corrected ', extractor.directory
+  del complete_crystal
+
+  @register_line_magic
+  def crystal_mppcount(line):
+    """ Number of processors on which group of jobs can be sent.
+
+	It can be a bit difficult to determine whether an MPPcrystal job will
+	run correctly (e.g. with k-point parallelization), especially if more
+	than one job is involved and each job must have the same number of
+        processors.
+     
+	This magic function determines likely core counts (per job) across a
+	job-folder. It can take a single integer argument to filter the
+	processor counts to multiples of that integer (e.g. to run on complete
+        nodes only). 
+    """
+    # figure multipleof
+    shell = get_ipython()
+    line = line.rstrip().lstrip()
+    if len(line) == 0: multipleof = 1
+    elif line in shell.user_ns: multipleof = shell.user_ns[line]
+    else: multipleof = eval(line, shell.user_ns.copy())
+
+    # figure jobparams
+    if 'jobparams' not in shell.user_ns:
+      print 'No jobfolder loaded in memory.'
+      return
+    jobparams = shell.user_ns['jobparams']
+
+    allsets = []
+    for job in jobparams['/'].itervalues():
+      if job.is_tagged: continue
+      dummy = job.functional.mpp_compatible_procs( job.structure,
+                                                   multipleof=multipleof )
+      allsets.append(dummy)
+    
+    maxprocs = min(max(m) for m in allsets)
+    result = set(list(xrange(maxprocs)))
+    for s in allsets: result &= set(s)
+    return sorted(result)
+
+  del crystal_mppcount
+  del register_line_magic
+
+del is_interactive
+

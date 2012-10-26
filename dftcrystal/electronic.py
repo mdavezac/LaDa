@@ -893,6 +893,8 @@ class Electronic(AttrBlock):
         the electronic minimization loop only. The print-out options can be
         found in the CRYSTAL_ user-guide.
     """
+    self.cmplxfac = TypedKeyword(type=float)
+    """ Computaional weight of complex vs real k-points. """
 
   def output_map(self, **kwargs):
     """ Makes sure DFT subblock is first. """

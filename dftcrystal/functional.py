@@ -82,9 +82,9 @@ class Functional(object):
 
   def __getattr__(self, name):
     """ Pushes scf stuff into instance namespace. """
-    from ..error import ValueError
+    from ..error import AttributeError
     if name in self.scf._input: return getattr(self.scf, name)
-    raise ValueError('Unknown attribute {0}.'.format(name))
+    raise AttributeError('Unknown attribute {0}.'.format(name))
   def __setattr__(self, name, value):
     """ Pushes scf stuff into instance namespace. """
     from ..tools.input import BaseKeyword
@@ -187,14 +187,9 @@ class Functional(object):
 
   def guess_workdir(self, outdir):
     """ Tries and guess working directory. """
-    from os import environ
-    from tempfile import mkdtemp
-    from datetime import datetime
+    from ..misc import mkdtemp
     from .. import crystal_inplace
-    if crystal_inplace: return outdir
-    rootdir = environ.get('PBS_TMPDIR', outdir)
-    return mkdtemp( prefix='dftcrystal_{0!s}'.format(datetime.today()), 
-                    dir=rootdir )
+    return outdir if crystal_inplace else mkdtemp(prefix='dftcrystal') 
 
   def bringup(self, structure, outdir, workdir, restart, test):
     """ Creates file environment for run. """
@@ -498,7 +493,7 @@ class Functional(object):
       except: pass
 
 
-  def _ibz(self, structure, **kwargs):
+  def _ibz(self, structure):
     """ Guesses irreducible k-points from input. """
     from collections import Sequence
     from numpy import abs, floor, dot, any, identity, zeros, array, all
@@ -580,7 +575,7 @@ class Functional(object):
             map[u, v, w] = True
     return into_cell(array(result), ksupercell)
 
-  def _nAOs(self, structure, **kwargs):
+  def _nAOs(self, structure):
     """ Determins number of orbitals. 
 
         The number of orbitals is *not* reduced by symmetry. 
@@ -600,18 +595,140 @@ class Functional(object):
       result += species.count(specie) * dummy
     return result
 
-  def ndogs(self, structure, **kwargs):
-    """ Number of degrees of liberty. 
+  def _nb_real_cmplx_kpoints(self, structure):
+    """ Number of real and complex k-points. """
+    from numpy import dot
+    from numpy.linalg import inv
+    from ..math import is_integer
+    # we need to compute real and complex k-points differently.
+    # real k-points are those which are on the Brillouin zone edege and Gamma.
+    # Their wavefunctions are real through time=reversal and translational
+    # symmetry.
+    invrecipcell = structure.eval().cell.T
+    kpoints = self._ibz(structure)
+    kpoints = dot(invrecipcell, kpoints.T).T
+    nreal, ncmplx = 0, 0
+    for kpoint in kpoints:
+      if is_integer(2.*kpoint): nreal += 1
+      else: ncmplx += 1
+    return nreal, ncmplx
 
-        This is the main number of MPPcrystal's golden rule for choosing the
-        number of cores: :math:`N_{cores} = \\frac{N_{spin}N_{AO}N_{IBZ}}{20}`.
-        This routine returns the numerator in the fraction.
+  def mpp_compatible_procs( self, structure, multipleof=1, dof=20,
+                            cmplxfac=None ):
+    """ Returns list of MPP compatible processor counts.
+       
+        Processor counts are compatible if:
+
+        - :math:`N_p < N_{AO} * N_k * N_s // dof
+        - :math:`N_p % multipleof == 0`
+	- the number of processors per k-point is never prime
+
+        Where: 
+
+        - :math:`N_p` is the number of cores
+        - :math:`N_k` is the number of irreducible kpoints 
+	- :math:`N_s` is the number of spins
+	- :math:`N_{AO}` is the number of atomic orbitals
+
+	The last condition is somewhat more complex and depends upon the total
+	number of kpoints, the number of k-points at the Brillouin zone edge,
+	and the particular way CRYSTAL_ assigns procs for each k-point. This
+        decomposition is computed in :py:meth:`kpoint_blocking`.
+
+        :param structure:
+          Crystal structure for which to run the code. 
+        :param int multipleof:
+	  Pars down results to multiple of this number (eg cores per node).
+        :param int dof:
+          Minimum degrees of freedom per processor. 
     """
-    return (2 if self.dft.spin else 1)                                         \
-           * self._nAOs(structure, **kwargs)                                   \
-           * len(self._ibz(structure, **kwargs))
+    if cmplxfac is None: cmplxfac = getattr(self, 'cmplxfac', 2) 
+    # computes number of real and complex k-points.
+    kreal, kcmplx = self._nb_real_cmplx_kpoints(structure)
+    # we can now define the max and min number of procs.
+    nAOs = self._nAOs(structure)
+    nspin = 2 if self.dft.spin else 1
+    # the minimum number of procs should be divisible by multipleof
+    weightedprocs = kreal + int(cmplxfac * kcmplx)
+    minprocs = int(weightedprocs * 2)
+    maxprocs = nAOs * minprocs // dof
+    if minprocs % multipleof != 0:
+      minprocs = (minprocs // multipleof + 1) * multipleof
+ 
+    # compute all primes, so as to avoid problems later on.
+    def allprimes(n):
+      """ Computes all primes up to n. """
+      primes = list(xrange(2, n+1))
+      i = 0
+      while i < len(primes):
+        fac = primes[i]
+        primes = primes[:i+1] + [p for p in primes[i+1:] if p % fac != 0]
+        i += 1
+      return set([1] + primes)
+    primes = allprimes(maxprocs)
 
-  def nbelectrons(self, structure, **kwargs):
+    # now loop over potential number of procs and append if ok
+    result = []
+    for i in xrange(minprocs, maxprocs+1, multipleof):
+      blocks = self.kpoint_blocking(structure, i, (kreal, kcmplx))
+      if primes.isdisjoint(blocks): result.append(i)
+    return result
+
+       
+  def kpoint_blocking(self, structure, nprocs, nkpoints=None, cmplxfac=None):
+    """ Infers the number of procs per kpoint. 
+
+	This function is helpfull in checking whether MPPcrystal will run
+	correcly or not. It returns a list consisting of the number of procs
+	per k-point. It is a list since CRYSTAL_ may assign some k-points with
+	more processors than others, in order to maximize the number of
+	processors used. However, this approach fails when a k-point is
+	assigned a prime number of processors, because of some bug somewhere
+	(see comment in k_space_MPP.f90: asssing_k_to_proc in CRYSTAL_ code).
+        Unfortunately, MPPCrystal does not recover well from this problem.
+    """
+    # count real and complex k-points in irreducible Brillouin zone.
+    if nkpoints is None:
+      kreal, kimag = self._nb_real_cmplx_kpoints(structure)
+    else: kreal, kimag = nkpoints
+    if self.dft.spin: kreal *= 2; kimag *= 2
+
+    # now perform blocking as in crystal.
+    # cmplxfac: computational cost of a complex k-point w.r.t. real k-point.
+    if cmplxfac is None: cmplxfac = getattr(self, 'cmplxfac', 2)
+    # weight: total compuational weight of real+complex k-points.
+    weight = cmplxfac*kimag + kreal
+    # trivial case where there are more k-points than processors.
+    if weight > nprocs: return 0
+    # avoids round-off errors
+    nreal = int(float(nprocs) / weight)
+    nimag = int(cmplxfac * nreal)
+    if nreal*kreal + nimag*kimag > nprocs:
+      nreal -= 1; nimag = int(cmplxfac * nreal)
+      assert nreal*kreal + nimag*kimag <= nprocs
+    
+    nleft = nprocs - nreal*kreal - nimag*kimag
+    if nleft == 0:
+      if kreal == 0: return [nimag]
+      elif kimag == 0: return [nreal]
+      else: return [nreal, nimag]
+
+    result = []
+    if kimag != 0:
+      imagonly = min(nleft, int(cmplxfac) * kimag)
+      nleft -= imagonly
+      result.append(nimag + imagonly//kimag)
+      if imagonly % kimag != 0: result.append(result[-1] - 1)
+      
+    if kreal != 0:
+      result.append(nreal + nleft // kreal)
+      if nleft % kreal != 0: result.append(result[-1] - 1)
+
+    return sorted(set(result))
+      
+      
+    
+  def nbelectrons(self, structure):
     """ Number of electrons per formula unit. """
     species = [u.type for u in structure.eval()]
     result = 0
