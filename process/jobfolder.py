@@ -79,8 +79,11 @@ class JobFolderProcess(Process):
     """
     self._finished = set()
     """ Set of finished runs. """
-    self._torun = set(self.jobfolder.keys())
+    self._torun = set()
     """ List of jobs to run. """
+    for name, job in self.jobfolder.iteritems():
+      if not job.is_tagged: self._torun.add(name)
+
     self.errors = {}
     """ Map between name of failed jobs and exception. """
     self.keepalive = keepalive
@@ -272,6 +275,7 @@ class JobFolderProcess(Process):
     """
     running = set([n for n in self.process])
     for name, value in jobfolder.root.iteritems():
+      if value.is_tagged: continue
       if name in running: continue
       elif name not in self.jobfolder.root:
         newjob = self.jobfolder.root / name

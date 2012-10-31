@@ -304,6 +304,6 @@ def mkdtemp(suffix='', prefix='', dir=None):
     if rootdir is None: rootdir = dir
     rootdir = RelativePath(rootdir).path
     if len(prefix) == 0: prefix = str(datetime.today())
-    else: prefix = '{0}_{1}'.format( repr(datetime.today()).replace(' ', '-'),
+    else: prefix = '{0}_{1}'.format( str(datetime.today()).replace(' ', '-'),
                                      prefix )
     return pymkdtemp(prefix=prefix, suffix=suffix, dir=rootdir)

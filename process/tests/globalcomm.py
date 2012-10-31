@@ -1,4 +1,4 @@
-#! /work/y07/y07/nag/python-shared-xe6/2.6.5/bin/python
+#!/usr/bin/python
 #PBS -e global_comm_err
 #PBS -o global_comm_out
 #PBS -N global_comm

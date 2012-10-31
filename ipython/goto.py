@@ -33,19 +33,6 @@ def goto(self, cmdl):
   if args[0] == "next":       return iterate(self, "")
   elif args[0] == "previous": return iterate(self, "previous")
   elif args[0] == "reset":    return iterate(self, "reset")
-  elif args[0] == "pbs":
-    if interactive.jobfolder_path is None: 
-      print "Cannot go to pbs dir: default dictionary path not set."\
-            "\nPlease user \"savejobs\"."
-      return
-    elif not exists(interactive.jobfolder_path + ".pbs"):
-      print "pbs dir {0} does not exist.".format(interactive.jobfolder_path + ".pbs")
-      return
-    elif not isdir(interactive.jobfolder_path + ".pbs"):
-      print "pbs dir {0} exists but is not a directory.".format(interactive.jobfolder_path + ".pbs")
-      return
-    chdir(interactive.jobfolder_path+".pbs")
-    return 
 
   # case for which precise location is given.
   try: result = interactive.jobfolder[args[0]] 
@@ -70,6 +57,7 @@ def goto(self, cmdl):
   if interactive.jobfolder_path is None: return
   dir = join(splitpath(interactive.jobfolder_path)[0], interactive.jobfolder.name[1:]) 
   if exists(dir): chdir(dir)
+  else: print "No corresponding directory on disk."
   return
 
 
@@ -121,10 +109,6 @@ def completer(self, event):
   from lada import interactive
   if len(event.line.split()) > 2: raise TryNext
 
-  has_pbs =      interactive.jobfolder_path is not None \
-             and exists("{0}.pbs".format(interactive.jobfolder_path)) \
-             and isdir("{0}.pbs".format(interactive.jobfolder_path)) 
-
   if '/' in event.symbol:
     subkey = ""
     for key in event.symbol.split('/')[:-1]: subkey += key + "/"
@@ -137,7 +121,6 @@ def completer(self, event):
   else:
     result = [a + "/" for a in interactive.jobfolder.children.keys()]
     result.extend(["/", "next", "reset"])
-    if has_pbs: result.append("pbs")
     if interactive.jobfolder.parent is not None: result.append("../")
     if len(getattr(interactive, "_lada_subjob_iterated", [])) != 0:
       result.append("previous")
