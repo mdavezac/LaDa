@@ -517,8 +517,12 @@ class Elastic(GeomKeyword):
     type = 2 if self.is_epsilon else 1
     if not self.const_volume: type = -type
     result = str(type) + '\n'
-    for i in xrange(3):
-      result += ' '.join(str(self.matrix[i,j]) for j in xrange(3)) + '\n'
+    if self.is_epsilon:
+      for i in xrange(3):
+        result += ' '.join(str(self.matrix[i,j]) for j in xrange(3)) + '\n'
+    else: 
+      for i in xrange(3):
+        result += ' '.join(str(self.matrix.T[i,j]) for j in xrange(3)) + '\n'
     return result
   @raw.setter
   def raw(self, value):
@@ -528,6 +532,7 @@ class Elastic(GeomKeyword):
     self.is_epsilon = abs(type) == 2
     self.const_volume = type > 0
     self.matrix = array([u.split()[:3] for u in value[1:4]], dtype='float64')
+    if self.is_epsilon: self.matrix = self.matrix.T
 
   def __repr__(self):
     """ Representation of this object. """

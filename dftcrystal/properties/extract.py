@@ -149,7 +149,7 @@ class ExtractBase(object):
         if "DIRECT LATTICE VECTOR COMPONENT" in line: break
       try: 
         result.cell = array( [file.next().split() for i in xrange(3)],
-                             dtype='float64' )
+                             dtype='float64' ).T
       except StopIteration: 
         raise GrepError('Could not determine lattice parameter.')
       natoms = None

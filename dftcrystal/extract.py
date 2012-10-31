@@ -422,7 +422,7 @@ class ExtractBase(object):
         try: file.next()
         except StopIteration: raise GrepError('File is incomplete.')
         result.cell = array( [file.next().split() for i in xrange(3)],
-                             dtype='float64' )
+                             dtype='float64' ).T
       
         # Then re-reads atoms, but in cartesian coordinates.
         for i in xrange(6): file.next()
