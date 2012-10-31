@@ -185,5 +185,47 @@ if is_interactive:
       if extractor._complete_output(structure):
         print 'Corrected ', extractor.directory
   del complete_crystal
+
+  @register_line_magic
+  def crystal_mppcount(line):
+    """ Number of processors on which group of jobs can be sent.
+
+	It can be a bit difficult to determine whether an MPPcrystal job will
+	run correctly (e.g. with k-point parallelization), especially if more
+	than one job is involved and each job must have the same number of
+        processors.
+     
+	This magic function determines likely core counts (per job) across a
+	job-folder. It can take a single integer argument to filter the
+	processor counts to multiples of that integer (e.g. to run on complete
+        nodes only). 
+    """
+    # figure multipleof
+    shell = get_ipython()
+    line = line.rstrip().lstrip()
+    if len(line) == 0: multipleof = 1
+    elif line in shell.user_ns: multipleof = shell.user_ns[line]
+    else: multipleof = eval(line, shell.user_ns.copy())
+
+    # figure jobparams
+    if 'jobparams' not in shell.user_ns:
+      print 'No jobfolder loaded in memory.'
+      return
+    jobparams = shell.user_ns['jobparams']
+
+    allsets = []
+    for job in jobparams['/'].itervalues():
+      if job.is_tagged: continue
+      dummy = job.functional.mpp_compatible_procs( job.structure,
+                                                   multipleof=multipleof )
+      allsets.append(dummy)
+    
+    maxprocs = min(max(m) for m in allsets)
+    result = set(list(xrange(maxprocs)))
+    for s in allsets: result &= set(s)
+    return sorted(result)
+
+  del crystal_mppcount
   del register_line_magic
+
 del is_interactive

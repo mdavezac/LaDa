@@ -21,3 +21,9 @@ global_root = '/'
     the disk is the same relative to this path, all LaDa paths will point to
     equivalent objects.
 """
+global_tmpdir = None
+""" Global temporary directory for LaDa.
+
+    If None, defaults to system tmp dir. However, two environment variable take
+    precedence: PBS_TMPDIR and LADA_TMPDIR.
+"""
