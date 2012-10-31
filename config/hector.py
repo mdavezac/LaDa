@@ -25,9 +25,9 @@ def pbs_string(**kwargs):
          "#PBS -l walltime={walltime}\n"                                       \
          "#PBS -A {account}\n"                                                 \
          "#PBS -V \n\n"                                                        \
-         "export PBS_TMPDIR=/work/e05/e05/`whoami`/lada_tmp\n"                 \
-         "if [ ! -e $TMPDIR ] ; then\n"                                        \
-         "  mkdir -p $TMPDIR\n"                                                \
+         "export LADA_TMPDIR=/work/e05/e05/`whoami`/lada_tmp\n"                \
+         "if [ ! -e $LADA_TMPDIR ] ; then\n"                                   \
+         "  mkdir -p $LADA_TMPDIR\n"                                           \
          "fi\n"                                                                \
          "cd {directory}\n"                                                    \
          "{header}\n"                                                          \
@@ -107,4 +107,26 @@ def ipython_qstat(self, arg):
   return SList([ "{0:>10} {1:>4} {2:>3} -- {3}".format(id, mpp, state, name)   \
                  for id, mpp, state, name in zip(ids, mpps, states, names)]) 
 
+def crystal_program(self=None, structure=None, comm=None):
+  """ Path to serial or mpi or MPP crystal program version. 
+  
+      If comm is None, then returns the path to the serial CRYSTAL_ program.
+      Otherwise, if :py:attr:`dftcrystal.Functional.mpp
+      <lada.dftcrystal.electronic.Electronic.mpp>` is
+      True, then returns the path to the MPP version. If that is False, then
+      returns the path to the MPI version.
+  """
+  ser = getattr(self, 'program_ser', None) 
+  mpi = getattr(self, 'program_mpi', None)
+  mpp = getattr(self, 'program_mpp', None)
+  if ser is None: ser = 'crystal'
+  if mpi is None: mpi = 'Pcrystal'
+  if mpp is None: mpp = 'MPPcrystal'
+
+  if self is None or comm is None: return ser
+  if self.mpp is True: return mpp
+  return mpi
+
 crystal_inplace = False
+
+global_tmpdir='$WORK/lada_tmp'
