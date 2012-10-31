@@ -736,7 +736,31 @@ class ExtractBase(object):
       result.append(a)
     return result
 
+  @property
+  @make_cached
+  def kpoints(self):
+    """ K-points in the calculations (fractional). """
+    from re import M
+    from numpy import array
+    regex = "(?:\d+)-(?:R|C)\(\s*(\d+)\s+(\d+)\s+(\d+)\)(?:\s+|\n)"
+    kpoints = [ array( [k.group(1), k.group(2), k.group(3)], dtype='int64')    \
+                       for k in self._search_STDOUT(regex, M) ]
+    shrink = 1e0/self.kmesh.astype('float64')
+    return array(kpoints, dtype='float64') * shrink
 
+  @property
+  @make_cached
+  def kmesh(self):
+     """ Mesh as grepped from output. 
+
+         This is the calculation's shrinking factor.
+     """
+     from numpy import array
+     regex = "SHRINK\. FACT\.\(MONKH\.\)\s*(\d+)\s+(\d+)\s+(\d+)"
+     regex = self._find_first_STDOUT(regex)
+     if regex is None: raise GrepError('Could not grep shrinking factor.')
+     return array([regex.group(i) for i in xrange(1, 4)], dtype='int64')
+     
   @property
   @make_cached
   def total_energy(self):
@@ -898,8 +922,7 @@ class ExtractBase(object):
     """ Checks if SCF cycle converged. """
     regex = """\s+\=\=\s+SCF\s+ENDED\s+-\s+(TOO MANY CYCLES|CONVERGENCE)"""
     result = self._find_last_STDOUT(regex)
-    if result is None: raise GrepError('No comment about convergence')
-    return result.group(1) == 'CONVERGENCE'
+    return False if result is None else result.group(1) == 'CONVERGENCE'
   @property
   @make_cached
   def atomic_charges(self):

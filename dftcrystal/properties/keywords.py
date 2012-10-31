@@ -56,7 +56,7 @@ class Band(BaseKeyword):
     self._lines = value
   def __len__(self):
     """ Number of band-structure lines. """
-    return 0 if self._lines is None else len(self._lines) 
+    return 0 if self._lines is None else len(self._lines) // 2
 
   @property
   def lines(self): 

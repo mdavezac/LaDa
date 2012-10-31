@@ -377,6 +377,7 @@ class LevShift(BaseKeyword):
   def __set__(self, instance, value):
     """ Sets the value of this instance. """
     from ..error import ValueError
+    if value is None: self.shift, self.lock = None, None; return
     if not hasattr(value, '__getitem__'): 
       raise ValueError('Incorrect input to levshift: {0}.'.format(value))
     self.shift = value[0]

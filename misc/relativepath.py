@@ -113,9 +113,12 @@ class RelativePath(object):
     return normpath(expandvars(expanduser(self._envvar)))
   @envvar.setter
   def envvar(self, value):
+
+    path = self.path if self._relative is not None else None
     if value is None: self._envvar = None
     elif len(value.rstrip().lstrip()) == 0: self._envvar = None
     else: self._envvar = value
+    if path is not None: self.path = path
     self.hook(self.path)
 
   @property 

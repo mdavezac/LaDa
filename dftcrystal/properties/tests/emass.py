@@ -30,15 +30,18 @@ def test():
   functional.levshift = 5, True
   functional.maxcycle = 600
   functional.dft.spin = False
+  functional.toldee = 12
 
   crystal = Crystal(227, 5.43).add_atom(0.125, 0.125, 0.125, 'Si')
   directory = '/tmp/test/' #mkdtemp() 
   firstdir, seconddir = join(directory, '0'), join(directory, '1')
   try: 
-     emass = effective_mass(functional, crystal, outdir=directory, comm=default_comm)
+     emass = effective_mass(functional, crystal, range=0.05, polarpoints=20, nbpoints=10, outdir=directory, comm=default_comm)
      assert emass.success
      print emass.bandstructure.kpoints.shape, emass.bandstructure.eigenvalues.shape
      print emass.success
+     print emass.tensors([0, 1, 2])[2][11:15]
+  #  print emass.kpoints
   #  kpoints = emass.bandstructure.kpoints
   #  ball = abs(sum(kpoints*kpoints, axis=1)-1e0) < 1e-8
   #  print kpoints[ball]

@@ -39,13 +39,10 @@ class Extract(ExtractBase):
 
     input = exec_input(lines)
     return { 'center': input.center,
-             'polarpoints': input.polarpoints,
              'nbpoints': input.nbpoints,
              'range': input.range }
   @property
   def center(self): return self._details['center']
-  @property
-  def polarpoints(self): return self._details['polarpoints']
   @property
   def nbpoints(self): return self._details['nbpoints']
   @property
@@ -61,7 +58,7 @@ class Extract(ExtractBase):
     result = orders 
     if result is None: result = [0, 2]
     if not hasattr(result, '__iter__'): result = [result]
-    return result
+    return sorted(result)
 
   def parameters(self, orders):
     """ Parameters for the least-square-fit approach. """
@@ -113,13 +110,147 @@ class Extract(ExtractBase):
         eigenvalues -= eigenvalues[index]
     return lstsq(self.parameters(orders), eigenvalues.magnitude)
 
-  def inverse_effective_mass(self, orders=None):
-    """ Computes inverse effective mass tensors. """
+  def tensors(self, orders=None):
+    """ Return tensors for each band. """
+    from numpy import zeros, array
+    from itertools import chain, permutations
+    from quantities import angstrom
     orders = self._orders(orders)
-    startindex = 0
-    if 0 in orders: startindex += 1
-    if 1 in orders: startindex += 3
-    if len(self.eigenvalues.shape) == 3
+    all_xs = self.fit(orders)[0].T
+    result = [[]]*(len(orders))
+    
+    current_index, current_order = 0, 0
+    # add results for order 0.
+    if 0 in orders:
+      result[current_order] = all_xs[:, current_index].copy()                  \
+                              * self.eigenvalues.units                         
+      current_index += 1                                                       
+      current_order += 1                                                       
+    # add results for order 1.                                                 
+    if 1 in orders:                                                        
+      result[current_order] = all_xs[:, current_index:current_index+3]         \
+                              * self.eigenvalues.units * angstrom
+      current_index += 3
+      current_order += 1
+
+    # compute index ranges for subsequent orders.
+    u, indices_range = current_index, [current_index]
+    for order in orders[current_order:]:
+      for p in xrange(order+1):
+        for q in xrange(p+1): u += 1
+      indices_range.append(u)
+
+    # loop over remaining orders.
+    for order, startu in zip(orders[current_order:], indices_range):
+      # loop over results for each band.
+      for band_x in all_xs:
+        u = startu
+        # create tensor from n vector.
+        dummy = zeros([3]*order, dtype="float64")
+        for p in xrange(order+1):
+          for q in xrange(p+1):
+            indices = [ [i]*j for i, j in
+                         zip([0, 1, 2], [order-p, p-q, q]) if j != 0 ]
+            indices = set(permutations(chain(*indices)))
+            for index in indices:
+              dummy[index] = band_x[u] if abs(band_x[u]) > 1e-12 else 0
+            u += 1
+        # add tensor to results for that order.
+        result[current_order].append(dummy)
+      result[current_order] = array(result[current_order])                     \
+                              * self.eigenvalues.units * angstrom**order
+      current_order += 1
+
+    # got it all.
+    return result
+
+  @property
+  def breakpoints(self):
+    """ Indices for start of each path. """
+    from numpy import any, abs, cross
+    breakpoints, last_dir = [0], None
+    for i, k in enumerate(self.kpoints[1:]):
+      if last_dir is None: last_dir = k - self.kpoints[breakpoints[-1]]
+      elif any( abs(cross(last_dir, k-self.kpoints[breakpoints[-1]])) > 1e-8):
+        breakpoints.append(i+1)
+        last_dir = None
+    return breakpoints + [len(self.kpoints)]
+
+  @property
+  def directions(self):
+    """ Direction for each path. """
+    from numpy import dot, array
+    from numpy.linalg import norm, inv
+    from quantities import angstrom
+    results = []
+    breakpoints = self.breakpoints
+    recipcell = inv(self.structure.cell).T
+    for start, end in zip(breakpoints[:-1], breakpoints[1:]):
+      results.append(self.kpoints[end-1] - self.kpoints[start])
+      results[-1] = dot(recipcell, results[-1])
+      results[-1] /= norm(results[-1])
+    return array(results) / angstrom
+
+  def emass(self, orders=None):
+    """ Computes effective mass for each direction. """
+    from numpy import dot, concatenate, pi, array
+    from numpy.linalg import inv, lstsq
+    from math import factorial
+    from quantities import angstrom, emass, h_bar
+    from ...error import ValueError
+
+    orders = self._orders(orders)
+    if 2 not in orders:
+      raise ValueError('Cannot compute effective masses without second order term.')
+
+    results = []
+    breakpoints = self.breakpoints
+    recipcell = inv(self.structure.cell).T * 2e0 * pi / self.structure.scale
+    for start, end, direction in zip( breakpoints[:-1], 
+                                      breakpoints[1:], 
+                                      self.directions ):
+      kpoints = self.kpoints[start:end]
+      x = dot(direction, dot(recipcell, kpoints.T)) 
+      measurements = self.eigenvalues[start:end].copy()
+      parameters = concatenate([x[:, None]**i / factorial(i) for i in orders], axis=1)
+      fit = lstsq(parameters, measurements)
+      results.append(fit[0][orders.index(2)])
+
+    result = (array(results) * self.eigenvalues.units * angstrom**2 / h_bar**2)
+    return 1./result.rescale(1/emass)
+
+  def fit_directions(self, orders=None):
+    """ Returns fit for computed directions.
+    
+        When dealing with degenerate states, it is better to look at each
+        computed direction separately, since the order of bands might depend on
+        the direction (in which case it is difficult to construct a tensor).
+    """
+    from numpy import dot, concatenate, pi
+    from numpy.linalg import inv, lstsq
+    from math import factorial
+    from ...error import ValueError
+
+    orders = self._orders(orders)
+    if 2 not in orders:
+      raise ValueError('Cannot compute effective masses without second order term.')
+
+    results = []
+    breakpoints = self.breakpoints
+    recipcell = inv(self.structure.cell).T * 2e0 * pi / self.structure.scale
+    for start, end, direction in zip( breakpoints[:-1], 
+                                      breakpoints[1:], 
+                                      self.directions ):
+      kpoints = self.kpoints[start:end]
+      x = dot(direction, dot(recipcell, kpoints.T)) 
+      measurements = self.eigenvalues[start:end].copy()
+      parameters = concatenate([x[:, None]**i / factorial(i) for i in orders], axis=1)
+      fit = lstsq(parameters, measurements)
+      results.append(fit[0])
+
+    return results
+
+        
 
 class _OnFinish(object):
   """ Called when effective mass calculation finishes. 
@@ -127,12 +258,13 @@ class _OnFinish(object):
       Adds some data to the calculation so we can figure out what the arguments
       to the call.
   """
-  def __init__(self, previous, outdir, center, polarpoints, nbpoints, range):
+  def __init__(self, previous, outdir, center, nbpoints, range, directions):
+    super(_OnFinish, self).__init__()
     self.previous = previous
     self.outdir = outdir
     self.center = [u for u in center]
-    self.polarpoints = polarpoints
     self.nbpoints = nbpoints
+    self.directions = directions
     self.range = range
   def __call__(self, *args, **kwargs):
     from os.path import join
@@ -143,20 +275,21 @@ class _OnFinish(object):
     with open(join(self.outdir, 'prop.out'), 'a') as file: 
       file.write('{0} {1} {0}\n'.format(header, 'EMASS DETAILS'))
       file.write('center={0!r}\n'.format(self.center))
-      file.write('polarpoints={0!r}\n'.format(self.polarpoints))
       file.write('nbpoints={0!r}\n'.format(self.nbpoints))
       file.write('range={0!r}\n'.format(self.range))
+      file.write('directions={0!r}\n'.format(self.directions))
       file.write('{0} END {1} {0}\n'.format(header, 'EMASS DETAILS'))
 
 def iter_emass( functional, structure=None, outdir=None, workdir=None,
-                center=None, polarpoints=5, nbpoints=5, range=0.1, **kwargs ):
-  """ Computes effective mass for a given kpoint. 
+                center=None, nbpoints=5, range=0.1, directions=None, **kwargs ):
+  """ Computes effective mass tensor for a given kpoint. 
   
       Computes Taylor expansion of a Hamiltonian around a given k-point.
       The expansion will be obtained by fitting an n-th order expansion to a
       set of eigenvalues in the neighberhood of the kpoint. In practice, a
-      polar grid is created as a set of "band-structure" paths between
-      diametrically opposed end-points. The eigenvalues are obtained for each
+      a fixed set of "band-structure" paths between
+      diametrically opposed end-points are computed for a number of directions
+      (001, 110, 111,...). The eigenvalues are obtained for each
       path using CRYSTAL_'s BAND keyword (in properties program). 
 
       :param functional:
@@ -186,18 +319,30 @@ def iter_emass( functional, structure=None, outdir=None, workdir=None,
 
       :param outdir: Output directory.
       :param workdir: Directory where calculations are performed.
-      :param center: k-point for which to perform taylor expansion.
+      :param center:
+          k-point for which to perform taylor expansion. Cartesian coordinates,
+          units of 1/angstrom.
       :type  center: 3d-vector in fractional coordinates
-      :param int polarpoints:
-        Number of points on a half-circle. These points and their diametrical
-        oppposite define the "band-structure" lines for which eigenvalues are
-        computed. 
       :param int nbpoints: 
-        Number of points per "band-structure" lines.
+          Number of points per "band-structure" lines.
       :param float range:
-        
+          Extent of the grid around the central k-point.
+      :param directions:
+          Array of directions (cartesian coordinates). If None, defaults to a
+          reasonable set of directions: 001, 110, 111 and so forth. Note that
+          if given on input, then the tensors should not be extracted. The
+          directions are normalized. Eventually, the paths will extend from
+          ``directions/norm(directions)*range`` to
+          ``-directions/norm(directions)*range``.
+
+      .. warning:: 
+      
+         In the case of degenerate states, it may be difficult to compute the
+         effective mass tensors, especially in the case of warped eigenvalue
+         surfaces, as in Si.
   """
-  from numpy import mgrid, concatenate, pi, sin, cos, outer, ones, array, zeros
+  from numpy import array, zeros, sqrt, dot
+  from numpy.linalg import norm
   from ...error import input as InputError
   from . import Properties
 
@@ -231,30 +376,28 @@ def iter_emass( functional, structure=None, outdir=None, workdir=None,
   # creates Properties functional
   functional = Properties(input=input)
   # creates polar grid
-  theta = mgrid[0:pi:pi/float(polarpoints)]
-  cos_theta = cos(theta)
-  sin_theta = sin(theta)
-  x0 = range * outer(cos_theta, sin_theta).flatten()
-  y0 = range * outer(sin_theta, sin_theta).flatten()
-  z0 = range * outer(ones(len(cos_theta)), cos_theta).flatten()
-  # The "grid" of lines is polar and centered at the kpoint.
-  # In practice, it translates into a list of diametrically opposite points.
-  # points: points on one side of ball centered at [0, 0, 0]
-  points = concatenate((x0[:, None], y0[:, None], z0[:, None]), axis=1)
-  # points contains replicas of the same point at the pole. we know make sure
-  # each point is unique. we also make sure that diametrically opposed points
-  # are avoided (there shouldn't be any, but whatever).
-  unique = [points[0]]
-  for point in points[1:]: 
-    if any(sum((point-p)**2) < 1e-8 for p in unique): continue
-    if any(sum((point+p)**2) < 1e-8 for p in unique): continue
-    unique.append(point)
-  unique = array(unique)
-  # endpoints: pairs of diametically opposite points on a ball centered at kpoint.
-  endpoints = concatenate(( (center+unique)[:,None, :],
-                            (center-unique)[:, None, :]), axis=1)
-  functional.band = endpoints
-  # number of points per line should be nbpoints.
+  if directions is None:
+    bands = array([ [1, 0, 0], [-1, 0, 0],
+                    [0, 1, 0], [0, -1, 0],
+                    [0, 0, 1], [0, 0, -1],
+                    [1, 0, 1], [-1, 0, -1],
+                    [0, 1, 1], [0, -1, -1],
+                    [1, 1, 0], [-1, -1, 0],
+                    [1, 0, -1], [-1, 0, 1],
+                    [0, -1, 1], [0, 1, -1],
+                    [-1, 1, 0], [1, -1, 0],
+                    [1, 1, 1], [-1, -1, -1],
+                    [1, 1, -1], [-1, -1, 1],
+                    [1, -1, 1], [-1, 1, -1],
+                    [-1, 1, 1], [1, -1, -1] ], dtype='float64')
+    bands[6:18] *= 1e0/sqrt(2.)
+    bands[18:] *= 1e0/sqrt(3.)
+  else: 
+    directions = array(directions).reshape(-1, 3)
+    bands = array([d/norm(d) for d in directions])
+    bands = array([(d, -d) for d in bands]).reshape(-1, 3)
+  bands *= range
+  functional.band = dot(input.structure.cell.T, (bands + center).T).T
   functional.band.nsub = len(functional.band) * nbpoints
 
   # now call functional.
@@ -262,8 +405,8 @@ def iter_emass( functional, structure=None, outdir=None, workdir=None,
     if getattr(u, 'success', False): continue
     if hasattr(u, 'success'): yield u; return
     # modify onfinish so that call arguments are added to the output file.
-    onfinish = _OnFinish( u.onfinish, outdir, center, polarpoints, nbpoints,
-                          range)
+    onfinish = _OnFinish( u.onfinish, outdir, center, nbpoints, range,
+                          directions )
     u.onfinish = onfinish
     yield u
     

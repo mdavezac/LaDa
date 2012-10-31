@@ -498,10 +498,19 @@ class Elastic(GeomKeyword):
   """ CRYSTAL keyword """
   def __init__(self, matrix=None, is_epsilon=True, constvol=False, **kwargs):
     """ Creates cell-shape deformation. """
+    from numpy import array
     super(Elastic, self).__init__(**kwargs)
-    self.matrix = None
-    self.is_epsilon = True
-    self.const_volume = False
+    self.matrix = matrix
+    """ Deformation matrix. 
+
+        It may or may not include the identity, depending on
+        :py:attr:`is_epsilon`.
+    """
+    if matrix is not None: self.matrix = array(matrix)
+    self.is_epsilon = is_epsilon
+    """ Whether the matrix includes the identity. """
+    self.const_volume = constvol
+    """ Whether this is a constant volume deformation. """
   @property
   def raw(self):
     if self.matrix is None: return ""
