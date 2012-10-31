@@ -795,6 +795,17 @@ class ExtractBase(object):
 
   @property
   @make_cached
+  def delta_energies(self):
+    """ Energy step between minization steps. """
+    from re import M
+    from numpy import array
+    from quantities import hartree
+    pattern = r"^\s*CYC\s+(\d+)\s*ETOT\(AU\)\s+(\S+)\s+DETOT\s*(\S+)\s*tst"
+    result = [float(r.group(3)) for r in self._search_STDOUT(pattern, M)]
+    return array(result) * hartree
+
+  @property
+  @make_cached
   def optgeom_convergence(self): 
     """ True if optgeom convergence was achieved
 

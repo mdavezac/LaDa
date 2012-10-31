@@ -196,11 +196,13 @@ do_multiple_mpi_programs = True
 """ Whether to get address of host machines at start of calculation. """
 
 figure_out_machines =  'from socket import gethostname\n'                      \
-                       'from boost.mpi import world\n'                         \
-                       'for i in xrange(world.size):\n'                        \
-                       '  if i == world.rank:\n'                               \
-                       '    print "LADA MACHINE HOSTNAME:", gethostname()\n'   \
-                       '  world.barrier()\n'                            
+                       'from boost.mpi import gather, world\n'                 \
+                       'hostname = gethostname()\n'                            \
+                       'results = gather(world, hostname, 0)\n'                \
+                       'if world.rank == 0:\n'                                 \
+                       '  for hostname in results:\n'                          \
+                       '    print "LADA MACHINE HOSTNAME:", hostname\n'        \
+                       'world.barrier()\n'
 """ Figures out machine hostnames for a particular job.
 
     Can be any programs which outputs each hostname (once per processor),
