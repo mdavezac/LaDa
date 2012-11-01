@@ -27,7 +27,6 @@ namespace LaDa
 }
 PyMODINIT_FUNC initcppwrappers(void) 
 {
-  import_array(); // needed for NumPy 
   LaDa::error::bp_register();
 
   if (PyType_Ready(LaDa::vff::node_type()) < 0) return;
@@ -40,6 +39,7 @@ PyMODINIT_FUNC initcppwrappers(void)
 
   char const doc[] =  "Wrapper around C++ vff class and affiliates.";
   PyObject* module = Py_InitModule3("cppwrappers", LaDa::vff::methods_table, doc);
+  import_array(); // needed for NumPy 
 
   PyModule_AddObject(module, "Node", (PyObject *)LaDa::vff::node_type());
   PyModule_AddObject(module, "Edge", (PyObject *)LaDa::vff::edge_type());

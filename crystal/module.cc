@@ -25,7 +25,6 @@
 
 PyMODINIT_FUNC initcppwrappers(void) 
 {
-  import_array(); // needed for NumPy 
   LaDa::error::bp_register();
 
   if (PyType_Ready(LaDa::crystal::atom_type()) < 0) return;
@@ -40,6 +39,7 @@ PyMODINIT_FUNC initcppwrappers(void)
 
   char const doc[] =  "Wrapper around C++ atom/structure class and affiliates.";
   PyObject* module = Py_InitModule3("cppwrappers", LaDa::crystal::methods_table, doc);
+  import_array(); // needed for NumPy 
 
   PyModule_AddObject(module, "Atom", (PyObject *)LaDa::crystal::atom_type());
   PyModule_AddObject(module, "Structure", (PyObject *)LaDa::crystal::structure_type());

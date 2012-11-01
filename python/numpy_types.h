@@ -7,9 +7,6 @@
 #include <boost/python/object.hpp>
 #include <boost/python/handle.hpp>
 #include <boost/python/errors.hpp>
-#include <numpy/ndarrayobject.h>
-#include <numpy/arrayobject.h>
-#include <numpy/npy_common.h>
 
 #include <root_exceptions.h>
 #include "exceptions.h"
