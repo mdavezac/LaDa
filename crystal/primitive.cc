@@ -18,11 +18,19 @@ namespace LaDa
     Structure primitive(Structure const &_structure, types::t_real _tolerance)
     {
       if( _tolerance < 0e0 ) _tolerance = types::tolerance;
-      if( _structure.size() == 0 ) LADA_PYTHROW(ValueError, "Empty structure.");
+      if( _structure.size() == 0 )
+      {
+        LADA_PYERROR(ValueError, "Empty structure.");
+        return Structure();
+      }
 
       // copies lattice.
       Structure result(_structure.copy());
-      if(not result) LADA_PYTHROW(ValueError, "primitive: Input lattice is not deep-copyable.");
+      if(not result)
+      {
+        LADA_PYERROR(ValueError, "primitive: Input lattice is not deep-copyable.");
+        return Structure();
+      }
       math::rMatrix3d const cell = math::gruber(result.cell());
       bool is_primitive = true;
 
@@ -108,7 +116,10 @@ namespace LaDa
               trial.col(1) = *i_third;
     #         ifdef LADA_DEBUG
                 if(trial.determinant() < types::tolerance)
-                  LADA_PYTHROW(internal, "Negative volume.");
+                {
+                  LADA_PYERROR(internal, "Negative volume.");
+                  return Structure();
+                }
     #         endif
             }
             // Checks that original cell is a supercell.
@@ -122,7 +133,10 @@ namespace LaDa
 
       // Found the new cell with smallest volume (e.g. primivite)
       if(math::eq(_structure.volume(), new_cell.determinant()))
-        LADA_PYTHROW(internal, "Found translation but no primitive cell.");
+      {
+        LADA_PYERROR(internal, "Found translation but no primitive cell.");
+        return Structure();
+      }
 
       // now creates new lattice.
       result.clear();
@@ -142,9 +156,15 @@ namespace LaDa
         }
       }
       if(_structure.size() % result.size() != 0)
-        LADA_PYTHROW(internal, "Nb of atoms in output not multiple of input.");
+      {
+        LADA_PYERROR(internal, "Nb of atoms in output not multiple of input.");
+        return Structure();
+      }
       if(math::neq(types::t_real(_structure.size()/result.size()), _structure.volume()/result.volume()))
-        LADA_PYTHROW(internal, "Size and volumes do not match.");
+      {
+        LADA_PYERROR(internal, "Size and volumes do not match.");
+        return Structure();
+      }
 
       return result;
     }

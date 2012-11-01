@@ -48,9 +48,7 @@ namespace LaDa
       {
         PyObject *item = PyTuple_GetItem(_args, 0);
         if(item == NULL) return -1;
-        std::cout << "WTF\n" << std::flush;
         if(structure_setcell(_self, item, NULL) < 0) return -1;
-        std::cout << "HTF\n" << std::flush;
       }
       else if(N == 9 and structure_setcell(_self, _args, NULL) < 0) return -1;
       else if(N == 3 and structure_setcell(_self, _args, NULL) < 0) return -1;

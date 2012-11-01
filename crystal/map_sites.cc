@@ -14,9 +14,15 @@ namespace LaDa
                     python::Object _withocc, types::t_real _tolerance )
     {
       if(_mapper.size() == 0) 
-        LADA_PYTHROW(ValueError, "Empty mapper structure.");
+      {
+        LADA_PYERROR(ValueError, "Empty mapper structure.");
+        return false;
+      }
       if(_mappee.size() == 0) 
-        LADA_PYTHROW(ValueError, "Empty mappee structure.");
+      {
+        LADA_PYERROR(ValueError, "Empty mappee structure.");
+        return false;
+      }
 
       math::rMatrix3d const cell = math::gruber(_mapper.cell());
       math::rMatrix3d const invcell = cell.inverse();
@@ -27,7 +33,10 @@ namespace LaDa
       types::t_real tolerance = _tolerance / _mapper->scale;
       math::rMatrix3d const intcell_ = invcell * _mappee.cell() * ratio;
       if(not math::is_integer(intcell_, _tolerance))
-        LADA_PYTHROW(ValueError, "Mappee not a supercell of mapper.");
+      {
+        LADA_PYERROR(ValueError, "Mappee not a supercell of mapper.");
+        return false;
+      }
 
       // Copy mapper sites to a vector, making sure positiosn are in cell.
       std::vector<math::rVector3d> sites; 
@@ -67,7 +76,10 @@ namespace LaDa
           }
         }
         if( math::eq(fneigh_dist, sneigh_dist, tolerance) and sneigh_index != -1)
-          LADA_PYTHROW(ValueError, "Found two atoms at the same site.");
+        {
+          LADA_PYERROR(ValueError, "Found two atoms at the same site.");
+          return false;
+        }
         if(fneigh_dist > tolerance) 
         {
           fneigh_index = -1;
@@ -90,7 +102,11 @@ namespace LaDa
             if(i == -1 and PyErr_Occurred() != NULL) BOOST_THROW_EXCEPTION(error::internal());
             if(i == 0) fneigh_index = -1;
           }
-          else LADA_PYTHROW(ValueError, "Callable is expected to return True or False");
+          else
+          {
+            LADA_PYERROR(ValueError, "Callable is expected to return True or False");
+            return false;
+          }
         }
         if(fneigh_index == -1)
         {
@@ -100,7 +116,12 @@ namespace LaDa
         else
         { 
           python::Object pyint = PyLong_FromLong(fneigh_index);
-          if(not pyint) {PyErr_Clear(); LADA_PYTHROW(internal, "Could not create python integer."); }
+          if(not pyint)
+          { 
+            PyErr_Clear(); 
+            LADA_PYERROR(internal, "Could not create python integer."); 
+            return false;
+          }
           i_atom->pyattr("site", pyint.borrowed());
         }
       }

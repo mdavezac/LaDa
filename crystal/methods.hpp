@@ -304,7 +304,7 @@ namespace LaDa
                         scale == Py_True ? true: false,
                         cartesian == Py_True ? true: false,
                         tolerance ) ) Py_RETURN_TRUE;
-        Py_RETURN_FALSE;
+        else if(not PyErr_Occurred()) Py_RETURN_FALSE;
       }
       catch(...) { boost::python::handle_exception(); }                                 
       return NULL;
@@ -481,7 +481,7 @@ namespace LaDa
       try
       { 
         if(map_sites(mapper, mappee, _cmp, tolerance)) Py_RETURN_TRUE;
-        Py_RETURN_FALSE;
+        else if(not PyErr_Occurred()) Py_RETURN_FALSE;
       }
       catch(...)
       {
