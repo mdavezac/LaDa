@@ -7,56 +7,48 @@
 
 #include <math/eigen.h>
 
-#define LADA_ACQUIRE_PYOBJECT(a, b, type) \
-      {                                   \
-        PyObject *dummy = (PyObject*)a;   \
-        a = (type*)b;                     \
-        Py_XINCREF(b);                    \
-        Py_XDECREF(dummy);                \
-      }
-
 //! Returns true if an object is an atom or subtype.
 #define PyAtom_Check(object) PyObject_TypeCheck(object, LaDa::crystal::atom_type())
 //! Returns true if an object is an atom.
 #define PyAtom_CheckExact(object) object->ob_type == LaDa::crystal::atom_type()
 
-namespace LaDa
+//! \brief Describes basic atom type. 
+//! \details This is a python object. 
+struct PyAtomObject
 {
-  namespace crystal
-  {
-    extern "C"
-    {
-      //! \brief Describes basic atom type. 
-      //! \details This is a python object. 
-      struct AtomData
-      {
-        PyObject_HEAD
-        //! Holds list of weak pointers.
-        PyObject *weakreflist;
-        //! Holds python attribute dictionary.
-        PyObject *pydict;
-        //! Holds the occupation object.
-        PyObject *type;
-        //! The atomic position in cartesian coordinate.
-        math::rVector3d pos;
-      };
-      
-      //! Creates a new atom.
-      AtomData* PyAtom_New();
-      //! Creates a new atom with a given type.
-      AtomData* PyAtom_NewWithArgs(PyTypeObject* _type, PyObject *_args, PyObject *_kwargs);
-      //! Creates a new atom with a given type, also calling initialization.
-      AtomData* PyAtom_NewFromArgs(PyTypeObject* _type, PyObject *_args, PyObject *_kwargs);
-      //! Creates a deepcopy of atom.
-      AtomData *PyAtom_Copy(AtomData* _self, PyObject *_memo = NULL);
-      // Returns pointer to atom type.
-      PyTypeObject* atom_type();
-    } // extern "C"
-
-    //! \brief imports crystal python module.
-    //! \details Sets python exception on import failure.
-    bool import();
-  } // namespace Crystal
-} // namespace LaDa
+  PyObject_HEAD
+  //! Holds list of weak pointers.
+  PyObject *weakreflist;
+  //! Holds python attribute dictionary.
+  PyObject *pydict;
+  //! Holds the occupation object.
+  PyObject *type;
+  //! The atomic position in cartesian coordinate.
+  math::rVector3d pos;
+};
+    
+#ifndef LADA_CRYSTAL_MODULE
+   //! Creates a new atom.
+   static PyAtomObject* PyAtom_New();
+   //! Creates a new atom with a given type.
+   static PyAtomObject* PyAtom_NewWithArgs(PyTypeObject* _type, PyObject *_args, PyObject *_kwargs);
+   //! Creates a new atom with a given type, also calling initialization.
+   static PyAtomObject* PyAtom_NewFromArgs(PyTypeObject* _type, PyObject *_args, PyObject *_kwargs);
+   //! Creates a deepcopy of atom.
+   static PyAtomObject *PyAtom_Copy(PyAtomObject* _self, PyObject *_memo = NULL);
+   // Returns pointer to atom type.
+   static PyTypeObject* atom_type();
+#else 
+   //! Creates a new atom.
+#  define PyAtom_New PyAtomObject*();
+   //! Creates a new atom with a given type.
+#  define PyAtom_NewWithArgs PyAtomObject* *(PyTypeObject* _type, PyObject *_args, PyObject *_kwargs);
+   //! Creates a new atom with a given type, also calling initialization.
+   static PyAtomObject* PyAtom_NewFromArgs(PyTypeObject* _type, PyObject *_args, PyObject *_kwargs);
+   //! Creates a deepcopy of atom.
+   static PyAtomObject *PyAtom_Copy(PyAtomObject* _self, PyObject *_memo = NULL);
+   // Returns pointer to atom type.
+   static PyTypeObject* atom_type();
+#endif
   
 #endif

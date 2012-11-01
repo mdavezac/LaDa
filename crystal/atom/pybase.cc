@@ -28,9 +28,9 @@ namespace LaDa
   namespace crystal
   {
     //! Creates a new atom.
-    AtomData* PyAtom_New()
+    PyAtomObject* PyAtom_New()
     {
-      AtomData* result = (AtomData*) atom_type()->tp_alloc(atom_type(), 0);
+      PyAtomObject* result = (PyAtomObject*) atom_type()->tp_alloc(atom_type(), 0);
       if(not result) return NULL;
       result->weakreflist = NULL;
       result->type = Py_None;
@@ -41,9 +41,9 @@ namespace LaDa
       return result;
     }
     //! Creates a new atom with a given type.
-    AtomData* PyAtom_NewWithArgs(PyTypeObject* _type, PyObject *_args, PyObject *_kwargs)
+    PyAtomObject* PyAtom_NewWithArgs(PyTypeObject* _type, PyObject *_args, PyObject *_kwargs)
     {
-      AtomData* result = (AtomData*)_type->tp_alloc(_type, 0);
+      PyAtomObject* result = (PyAtomObject*)_type->tp_alloc(_type, 0);
       if(not result) return NULL;
       result->weakreflist = NULL;
       result->type = Py_None;
@@ -54,18 +54,18 @@ namespace LaDa
       return result;
     }
     //! Creates a new atom with a given type, also calling initialization.
-    AtomData* PyAtom_NewFromArgs(PyTypeObject* _type, PyObject *_args, PyObject *_kwargs)
+    PyAtomObject* PyAtom_NewFromArgs(PyTypeObject* _type, PyObject *_args, PyObject *_kwargs)
     {
-      AtomData* result = PyAtom_NewWithArgs(_type, _args, _kwargs);
+      PyAtomObject* result = PyAtom_NewWithArgs(_type, _args, _kwargs);
       if(result == NULL) return NULL;
       if(_type->tp_init((PyObject*)result, _args, _kwargs) < 0) {Py_DECREF(result); return NULL; }
       return result;
     }
 
     // Creates a deepcopy of atom.
-    AtomData *PyAtom_Copy(AtomData* _self, PyObject *_memo)
+    PyAtomObject *PyAtom_Copy(PyAtomObject* _self, PyObject *_memo)
     {
-      AtomData* result = (AtomData*)_self->ob_type->tp_alloc(_self->ob_type, 0);
+      PyAtomObject* result = (PyAtomObject*)_self->ob_type->tp_alloc(_self->ob_type, 0);
       if(not result) return NULL;
       result->weakreflist = NULL;
       new(&result->pos) LaDa::math::rVector3d(_self->pos);
@@ -119,7 +119,7 @@ namespace LaDa
 #     undef LADA_DECLARE
 #     define LADA_DECLARE(name, object, doc) \
         { const_cast<char*>(#name), T_OBJECT_EX, \
-          offsetof(LaDa::crystal::AtomData, object), 0, const_cast<char*>(doc) }
+          offsetof(LaDa::crystal::PyAtomObject, object), 0, const_cast<char*>(doc) }
       static PyMemberDef members[] = {
         LADA_DECLARE(__dict__, pydict, "Python attribute dictionary."),
 #       ifdef LADA_DEBUG
@@ -147,7 +147,7 @@ namespace LaDa
           PyObject_HEAD_INIT(NULL)
           0,                                 /*ob_size*/
           "lada.crystal.cppwrappers.Atom",   /*tp_name*/
-          sizeof(AtomData),   /*tp_basicsize*/
+          sizeof(PyAtomObject),   /*tp_basicsize*/
           0,                                 /*tp_itemsize*/
           (destructor)lada_atom_dealloc,     /*tp_dealloc*/
           0,                                 /*tp_print*/
@@ -193,7 +193,7 @@ namespace LaDa
           (traverseproc)lada_atom_traverse,  /* tp_traverse */
           (inquiry)lada_atom_gcclear,        /* tp_clear */
           0,		                     /* tp_richcompare */
-          offsetof(AtomData, weakreflist),   /* tp_weaklistoffset */
+          offsetof(PyAtomObject, weakreflist),   /* tp_weaklistoffset */
           0,		                     /* tp_iter */
           0,		                     /* tp_iternext */
           methods,                           /* tp_methods */
@@ -203,7 +203,7 @@ namespace LaDa
           0,                                 /* tp_dict */
           0,                                 /* tp_descr_get */
           0,                                 /* tp_descr_set */
-          offsetof(AtomData, pydict),        /* tp_dictoffset */
+          offsetof(PyAtomObject, pydict),        /* tp_dictoffset */
           (initproc)lada_atom_init,          /* tp_init */
           0,                                 /* tp_alloc */
           (newfunc)PyAtom_NewWithArgs,                /* tp_new */

@@ -352,7 +352,7 @@ namespace LaDa
         return NULL;
       }
       math::rVector3d center(0,0,0);
-      if(PyAtom_Check(_center)) center = ((AtomData*)_center)->pos;
+      if(PyAtom_Check(_center)) center = ((PyAtomObject*)_center)->pos;
       else if(not python::convert_to_vector(_center, center)) return NULL;
       Structure struc = Structure::acquire(structure);
       try { return neighbors(struc, nmax, center, tolerance); }
@@ -383,7 +383,7 @@ namespace LaDa
         return NULL;
       }
       math::rVector3d center(0,0,0);
-      if(PyAtom_Check(_center)) center = ((AtomData*)_center)->pos;
+      if(PyAtom_Check(_center)) center = ((PyAtomObject*)_center)->pos;
       else if(not python::convert_to_vector(_center, center)) return NULL;
       Structure struc = Structure::acquire(structure);
       try { return coordination_shells(struc, nmax, center, tolerance, natoms); }

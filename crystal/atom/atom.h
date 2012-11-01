@@ -26,7 +26,7 @@ namespace LaDa
         //! Acquires ownership of an atom.
         Atom(Atom const &_c ) : Object(_c) {}
         //! Shallow copy Constructor
-        Atom(AtomData *_data ) : Object((PyObject*)_data) {}
+        Atom(PyAtomObject *_data ) : Object((PyObject*)_data) {}
         //! Full Initialization.
         Atom(PyObject *_args, PyObject *_kwargs) : Object()
           { object_ = (PyObject*)PyAtom_NewFromArgs(atom_type(), _args, _kwargs); }
@@ -51,34 +51,34 @@ namespace LaDa
         //! \details Return does not share data with this atom. 
         //!          Use constructor to obtain that behavior.
         //!          The user should check that the atom is valid.
-        Atom copy() const { return Atom(PyAtom_Copy((AtomData*)object_)); } 
+        Atom copy() const { return Atom(PyAtom_Copy((PyAtomObject*)object_)); } 
 
         //! Returns borrowed reference to dictionary.
-        PyObject* dict() const { return ((AtomData*)object_)->pydict; }
+        PyObject* dict() const { return ((PyAtomObject*)object_)->pydict; }
 
         //! Points to data.
-        AtomData const* operator->() const { return (AtomData*)object_; }
+        PyAtomObject const* operator->() const { return (PyAtomObject*)object_; }
         //! Points to data.
-        AtomData* operator->() { return (AtomData*)object_; }
+        PyAtomObject* operator->() { return (PyAtomObject*)object_; }
 
         //! Returns const reference to pos.
-        math::rVector3d const & pos() const { return ((AtomData*)object_)->pos; }
+        math::rVector3d const & pos() const { return ((PyAtomObject*)object_)->pos; }
         //! Returns reference to pos.
-        math::rVector3d & pos() { return ((AtomData*)object_)->pos; }
+        math::rVector3d & pos() { return ((PyAtomObject*)object_)->pos; }
         //! Returns const reference to pos.
-        math::rVector3d::Scalar const & pos(size_t i) const { return ((AtomData*)object_)->pos(i); }
+        math::rVector3d::Scalar const & pos(size_t i) const { return ((PyAtomObject*)object_)->pos(i); }
         //! Returns reference to pos.
-        math::rVector3d::Scalar & pos(size_t i) { return ((AtomData*)object_)->pos(i); }
+        math::rVector3d::Scalar & pos(size_t i) { return ((PyAtomObject*)object_)->pos(i); }
 
         //! Returns type as a python object.
-        python::Object type() const { return python::Object::acquire(((AtomData*)object_)->type); }
+        python::Object type() const { return python::Object::acquire(((PyAtomObject*)object_)->type); }
         //! Returns type as a python object.
-        PyObject* pytype() const { return ((AtomData*)object_)->type; }
+        PyObject* pytype() const { return ((PyAtomObject*)object_)->type; }
         //! Sets type to python object.
         void type(python::Object const &_in)
         { 
-          PyObject *dummy = ((AtomData*)object_)->type;
-          ((AtomData*)object_)->type = _in.new_ref(); 
+          PyObject *dummy = ((PyAtomObject*)object_)->type;
+          ((PyAtomObject*)object_)->type = _in.new_ref(); 
           Py_XDECREF(dummy);
         }
  
@@ -93,7 +93,7 @@ namespace LaDa
         //! \throws error::TypeError if not an Atom or subtype, both cpp and python.
         static Atom acquire(PyObject *_atom) 
         {
-          if(_atom == NULL) return Atom((AtomData*)_atom);
+          if(_atom == NULL) return Atom((PyAtomObject*)_atom);
           if(not Atom::check(_atom))
           {
             LADA_PYERROR_FORMAT( TypeError,
@@ -102,14 +102,14 @@ namespace LaDa
             BOOST_THROW_EXCEPTION(error::TypeError());
           }
           Py_INCREF(_atom);
-          return Atom((AtomData*)_atom);
+          return Atom((PyAtomObject*)_atom);
         }
         //! \brief Acquires new reference to an object.
         //! \details incref's reference first, unless null.
         //!          Does not check object is Atom or subtype, and does not
         //!          throw.
         static Atom acquire_(PyObject *_atom) 
-          { Py_XINCREF(_atom); return Atom((AtomData*)_atom); }
+          { Py_XINCREF(_atom); return Atom((PyAtomObject*)_atom); }
     };
   } // namespace Crystal
 } // namespace LaDa
