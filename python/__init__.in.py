@@ -21,7 +21,7 @@
 __docformat__ = "restructuredtext en"
 __all__ = ["error", @which_packages@]
 import error
-import physics # does some patching to quanitities
+import physics 
 
 version_info = (@LaDa_VERSION_MAJOR@, @LaDa_VERSION_MINOR@)
 """ Tuple containing version info. """

@@ -9,6 +9,12 @@ namespace LaDa
 {
   namespace math
   {
+    namespace details
+    {
+      //! \brief function which needs to be compiled without optimization.
+      //! \throw error::singular_matrix if the matrix is singular.
+      bool no_opt_change_test(types::t_real _new, types::t_real _last);
+    }
     types::t_int const max_no_change = 2;
 
     //! Implementation of the Gruber algorithm.

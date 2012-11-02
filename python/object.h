@@ -123,51 +123,54 @@ namespace LaDa
             }
           }
 
-        //! \brief Compares two objects for equality.
-        //! \details Looks for __eq__ in a. If not found, throws c++
-        //! exception.
-        bool operator==(PyObject *_b) const { return operator==(acquire(_b)); }
-        //! \brief Compares two objects for equality.
-        //! \details Looks for __eq__ in a. If not found, throws c++
-        //! exception.
-        bool operator==(Object const &_b) const
-        {
-          if(not hasattr("__eq__"))
-            LADA_PYTHROW(TypeError, "No __eq__ member function found when comparing objects.");
-          Object methodname = PyString_FromString("__eq__");
-          if(not methodname) LADA_PYTHROW(internal, "Could not create string.");
-          Object result = PyObject_CallMethodObjArgs(borrowed(), 
-                                                     methodname.borrowed(), _b.borrowed(), NULL);
-          if(not result) LADA_PYTHROW(TypeError, "Python exception thrown when comparing objects.");
-          // Try reflected operation.
-          if(result.borrowed() == Py_NotImplemented)
-          {
-            if(not _b.hasattr("__eq__"))
-            {
-              if(_b.borrowed()->ob_type != borrowed()->ob_type) return false;
-              LADA_PYTHROW(TypeError, "No implementation of equality between these two object has been found.");
-            }
-            result.reset( PyObject_CallMethodObjArgs(_b.borrowed(), 
-                                                     methodname.borrowed(), borrowed(), NULL) );
-            if(not result) LADA_PYTHROW(TypeError, "Python exception thrown when comparing objects.");
-            if(result.borrowed() == Py_NotImplemented)
-            {
-              if(_b.borrowed()->ob_type != borrowed()->ob_type) return false;
-              LADA_PYTHROW(TypeError, "No implementation of equality between these two object has been found.");
-            }
-          }
-          if(PyBool_Check(result.borrowed())) return result.borrowed() == Py_True;
-          if(PyInt_Check(result.borrowed())) return PyInt_AS_LONG(result.borrowed()) != 0;
-          LADA_PYTHROW(ValueError, "Could not make sense of return of comparison function.");
-        };
-        //! \brief Compares two objects for equality.
-        //! \details Looks for __eq__ in a. If not found, throws c++
-        //! exception.
-        bool operator!=(Object const &_b) const { return not operator==(_b); }
-        //! \brief Compares two objects for equality.
-        //! \details Looks for __eq__ in a. If not found, throws c++
-        //! exception.
-        bool operator!=(PyObject *_b) const { return operator!=(acquire(_b)); }
+//       //! \brief Compares two objects for equality.
+//       //! \details Looks for __eq__ in a. If not found, throws c++
+//       //! exception.
+//       bool operator==(PyObject *_b) const { return operator==(acquire(_b)); }
+//       //! \brief Compares two objects for equality.
+//       //! \details Looks for __eq__ in a. If not found, throws c++
+//       //! exception.
+//       bool operator==(Object const &_b) const
+//       {
+//         if(not hasattr("__eq__"))
+//         {
+//           LADA_PYERROR(TypeError, "No __eq__ member function found when comparing objects.");
+//           return NULL;
+//         }
+//         Object methodname = PyString_FromString("__eq__");
+//         if(not methodname) LADA_PYTHROW(internal, "Could not create string.");
+//         Object result = PyObject_CallMethodObjArgs(borrowed(), 
+//                                                    methodname.borrowed(), _b.borrowed(), NULL);
+//         if(not result) LADA_PYTHROW(TypeError, "Python exception thrown when comparing objects.");
+//         // Try reflected operation.
+//         if(result.borrowed() == Py_NotImplemented)
+//         {
+//           if(not _b.hasattr("__eq__"))
+//           {
+//             if(_b.borrowed()->ob_type != borrowed()->ob_type) return false;
+//             LADA_PYTHROW(TypeError, "No implementation of equality between these two object has been found.");
+//           }
+//           result.reset( PyObject_CallMethodObjArgs(_b.borrowed(), 
+//                                                    methodname.borrowed(), borrowed(), NULL) );
+//           if(not result) LADA_PYTHROW(TypeError, "Python exception thrown when comparing objects.");
+//           if(result.borrowed() == Py_NotImplemented)
+//           {
+//             if(_b.borrowed()->ob_type != borrowed()->ob_type) return false;
+//             LADA_PYTHROW(TypeError, "No implementation of equality between these two object has been found.");
+//           }
+//         }
+//         if(PyBool_Check(result.borrowed())) return result.borrowed() == Py_True;
+//         if(PyInt_Check(result.borrowed())) return PyInt_AS_LONG(result.borrowed()) != 0;
+//         LADA_PYTHROW(ValueError, "Could not make sense of return of comparison function.");
+//       };
+//       //! \brief Compares two objects for equality.
+//       //! \details Looks for __eq__ in a. If not found, throws c++
+//       //! exception.
+//       bool operator!=(Object const &_b) const { return not operator==(_b); }
+//       //! \brief Compares two objects for equality.
+//       //! \details Looks for __eq__ in a. If not found, throws c++
+//       //! exception.
+//       bool operator!=(PyObject *_b) const { return operator!=(acquire(_b)); }
       protected:
         //! Python reference.
         PyObject* object_;

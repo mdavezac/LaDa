@@ -180,6 +180,7 @@ namespace LaDa
     void smith_normal_form( iMatrix3d& _S, iMatrix3d & _L,
                             const iMatrix3d& _M, iMatrix3d &_R )
     {
+      if(_M.determinant() == 0) BOOST_THROW_EXCEPTION(error::singular_matrix());
       // set up the system _out = _left * _smith * _right.
       _L  = iMatrix3d::Identity();
       _R = iMatrix3d::Identity();
