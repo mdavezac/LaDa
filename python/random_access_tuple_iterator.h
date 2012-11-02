@@ -37,28 +37,40 @@ namespace LaDa
         const reference operator*() const
         {
           if(index_ >= (int)PyTuple_GET_SIZE(object_) or index_ < 0)
-            LADA_PYTHROW(IndexError, "List iterator is out of range.");
+          {
+            LADA_PYERROR(IndexError, "List iterator is out of range.");
+            BOOST_THROW_EXCEPTION(error::IndexError());
+          }
           return PyTuple_GET_ITEM(object_, index_);
         }
         //! Deref operator.
         reference operator*()
         {
           if(index_ >= (int)PyTuple_GET_SIZE(object_) or index_ < 0)
-            LADA_PYTHROW(IndexError, "List iterator is out of range.");
+          {
+            LADA_PYERROR(IndexError, "List iterator is out of range.");
+            BOOST_THROW_EXCEPTION(error::IndexError());
+          }
           return PyTuple_GET_ITEM(object_, index_);
         }
         //! Deref operator.
         const pointer operator->() const
         {
           if(index_ >= (int)PyTuple_GET_SIZE(object_) or index_ < 0)
-            LADA_PYTHROW(IndexError, "List iterator is out of range.");
+          {
+            LADA_PYERROR(IndexError, "List iterator is out of range.");
+            BOOST_THROW_EXCEPTION(error::IndexError());
+          }
           return &PyTuple_GET_ITEM(object_, index_);
         }
         //! Deref operator.
         pointer operator->()
         {
           if(index_ >= (int)PyTuple_GET_SIZE(object_) or index_ < 0)
-            LADA_PYTHROW(IndexError, "List iterator is out of range.");
+          {
+            LADA_PYERROR(IndexError, "List iterator is out of range.");
+            BOOST_THROW_EXCEPTION(error::IndexError());
+          }
           return &PyTuple_GET_ITEM(object_, index_);
         }
         //! Equality operator.

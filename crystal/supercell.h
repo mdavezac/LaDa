@@ -29,14 +29,21 @@ namespace LaDa
         }
         namespace bt = boost::tuples;
         Structure result = _lattice.copy(); 
-        if(not result) LADA_PYTHROW(ValueError, "Could not deepcopy the lattice.");
+        if(not result) { LADA_PYTHROW(ValueError, "Could not deepcopy the lattice.");}
         result.clear();
         result->cell = _supercell;
         if(_lattice.hasattr("name") and PyString_Check(_lattice.pyattr("name").borrowed()) )
         {
           char *const attr = PyString_AS_STRING(_lattice.pyattr("name").borrowed());
-          if(attr != "" and not result.pyattr_convert("name", "supercell of " + std::string(attr)) ) 
-            PyErr_Clear();
+          if(attr != "")
+          {
+            std::string const name = "supercell of " + std::string(attr);
+            PyObject* pyname = PyString_FromString(name.c_str());
+            if(not pyname) { LADA_PYTHROW(internal, "Could not create string."); }
+            result.pyattr("name", pyname);
+            Py_DECREF(pyname);
+            if(PyErr_Occurred()) BOOST_THROW_EXCEPTION(error::internal());
+          }
         }
         HFTransform transform( _lattice.cell(), result.cell());
         if(not transform) return Structure();;

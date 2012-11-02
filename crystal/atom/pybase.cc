@@ -3,12 +3,11 @@
 #include <Python.h>
 #include "structmember.h"
 
-#define PY_ARRAY_UNIQUE_SYMBOL lada_crystal_ARRAY_API
+#define PY_ARRAY_UNIQUE_SYMBOL lada_math_ARRAY_API
 #define NO_IMPORT_ARRAY
 #include <numpy/arrayobject.h>
 
 
-#include <math/python/python.hpp>
 #include <python/wrap_numpy.h>
 #include <python/exceptions.h>
 #include <python/numpy_types.h>
@@ -219,7 +218,7 @@ namespace LaDa
     {
       PyObject *module = PyImport_ImportModule("lada.crystal.cppwrappers");
       if(PyErr_Occurred() != NULL) return false;
-      if(module == NULL) LADA_PYERROR(ImportError, "Could not import lada.crystal.cppwrappers");
+      if(module == NULL) { LADA_PYERROR(ImportError, "Could not import lada.crystal.cppwrappers"); }
       else Py_DECREF(module);
       return module != NULL;
     }

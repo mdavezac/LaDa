@@ -39,7 +39,10 @@ namespace LaDa
         void reset(PyObject *_in) 
         {
           if(_in != NULL and not PyAtom_Check(_in))
-            LADA_PYTHROW(TypeError, "Cannot acquire object which is not an Atom or subclass.");
+          {
+            LADA_PYERROR(TypeError, "Cannot acquire object which is not an Atom or subclass.");
+            return;
+          }
           PyObject *dummy = (PyObject*)object_;
           object_ = (PyObject*)_in;
           Py_XINCREF(object_);
@@ -90,7 +93,7 @@ namespace LaDa
         //! \brief Acquires new reference to an object.
         //! \details incref's reference first, unless null.
         //!          If non-null checks that it is a subtype of Atom.
-        //! \throws error::TypeError if not an Atom or subtype, both cpp and python.
+        //! \returns a valid or invalid Atom object.
         static Atom acquire(PyObject *_atom) 
         {
           if(_atom == NULL) return Atom((PyAtomObject*)_atom);
@@ -99,7 +102,7 @@ namespace LaDa
             LADA_PYERROR_FORMAT( TypeError,
                                  "Expected an Atom or subtype, not %.200s",
                                  _atom->ob_type->tp_name );
-            BOOST_THROW_EXCEPTION(error::TypeError());
+            return Atom();
           }
           Py_INCREF(_atom);
           return Atom((PyAtomObject*)_atom);

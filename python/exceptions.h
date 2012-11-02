@@ -45,13 +45,24 @@ namespace LaDa
 #   define LADA_PYERROR(EXCEPTION, MESSAGE)                                       \
       {                                                                           \
         PyObject* err_module = PyImport_ImportModule("lada.error");               \
-        if(not err_module) return NULL;                                           \
-        PyObject *err_result = PyObject_GetAttrString(err_module, #EXCEPTION);    \
-        if(not err_result) {Py_DECREF(err_module); return NULL;}                  \
-        PyErr_SetString(err_result, MESSAGE);                                     \
-        Py_DECREF(err_module);                                                    \
-        Py_DECREF(err_result);                                                    \
+        if(err_module)                                                            \
+        {                                                                         \
+          PyObject *err_result = PyObject_GetAttrString(err_module, #EXCEPTION);  \
+          if(not err_result) Py_DECREF(err_module);                               \
+          else                                                                    \
+          {                                                                       \
+            PyErr_SetString(err_result, MESSAGE);                                 \
+            Py_DECREF(err_module);                                                \
+            Py_DECREF(err_result);                                                \
+          }                                                                       \
+        }                                                                         \
       }
+#   define LADA_PYTHROW(EXCEPTION, MESSAGE)                                       \
+      {                                                                           \
+        LADA_PYERROR(#EXCEPTION, MESSAGE);                                        \
+        BOOST_THROW_EXCEPTION(error::EXCEPTION() << error::string(MESSAGE));      \
+      }
+
     //! \def LADA_PYERROR(EXCEPTION, MESSAGE)
     //!      Raises a python exception with a formatted message, but no c++ exception.
     //!      For formatting, see PyErr_Format from the python C API.
@@ -59,12 +70,17 @@ namespace LaDa
 #   define LADA_PYERROR_FORMAT(EXCEPTION, MESSAGE, OTHER) \
       {                                                                           \
         PyObject* err_module = PyImport_ImportModule("lada.error");               \
-        if(not err_module) return NULL;                                           \
-        PyObject *err_result = PyObject_GetAttrString(err_module, #EXCEPTION);    \
-        if(not err_result) {Py_DECREF(err_module); return NULL;}                  \
-        PyErr_Format(err_result, MESSAGE, OTHER);                                 \
-        Py_DECREF(err_module);                                                    \
-        Py_DECREF(err_result);                                                    \
+        if(err_module)                                                            \
+        {                                                                         \
+          PyObject *err_result = PyObject_GetAttrString(err_module, #EXCEPTION);  \
+          if(not err_result) Py_DECREF(err_module);                               \
+          else                                                                    \
+          {                                                                       \
+            PyErr_Format(err_result, MESSAGE, OTHER);                             \
+            Py_DECREF(err_module);                                                \
+            Py_DECREF(err_result);                                                \
+          }                                                                       \
+        }                                                                         \
       }
   }
 }

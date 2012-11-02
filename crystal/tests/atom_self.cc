@@ -1,9 +1,5 @@
 #include "LaDaConfig.h"
 
-#include <python/numpy_types.h>
-#include <boost/exception/get_error_info.hpp>
-#include <boost/exception/diagnostic_information.hpp>
-
 #include "../atom/atom.h"
 
 namespace bp = boost::python;
@@ -36,8 +32,5 @@ static PyMethodDef methods[] = {
 
 PyMODINIT_FUNC init_atom_self(void) 
 {
-  LaDa::error::bp_register();
-  import_array();
-  LaDa::crystal::import();
   PyObject* module = Py_InitModule("_atom_self", methods);
 }
