@@ -3,9 +3,6 @@
 
 #include "LaDaConfig.h"
 
-#include <boost/serialization/serialization.hpp>
-
-
 #include <opt/debug.h>
 #include <opt/types.h>
 
