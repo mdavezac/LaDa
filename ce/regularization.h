@@ -7,7 +7,7 @@
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/tuple/tuple.hpp>
 
-#include <opt/types.h>
+#include <misc/types.h>
 #include <opt/debug.h>
 #include <opt/errors.h>
 #include <crystal/structure.h>

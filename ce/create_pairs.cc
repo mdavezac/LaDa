@@ -6,7 +6,7 @@
 #include <crystal/neighbors.h>
 #include <crystal/symmetry_operator.h>
 #include <crystal/which_site.h>
-#include <opt/types.h>
+#include <misc/types.h>
 #include <math/fuzzy.h>
 
 #include "create_pairs.h"

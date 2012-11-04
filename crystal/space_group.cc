@@ -7,7 +7,7 @@
 
 #include <vector>
 
-#include <opt/types.h>
+#include <misc/types.h>
 #include <math/fuzzy.h>
 #include <math/misc.h>
 #include <math/gruber.h>

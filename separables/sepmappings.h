@@ -5,7 +5,7 @@
 
 #include <boost/lambda/lambda.hpp>
 
-#include <opt/types.h>
+#include <misc/types.h>
 #include <opt/debug.h>
 #include <math/fuzzy.h>
 

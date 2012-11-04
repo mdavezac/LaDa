@@ -2,14 +2,13 @@
 
 #include "../atom/atom.h"
 
-namespace bp = boost::python;
 using namespace LaDa::crystal;
 static Atom satom; 
 PyObject* get_static_object() { return satom.new_ref(); }
 PyObject* set_static_object(PyObject* _module, PyObject *_object)
 {
   try { satom.reset(_object); }
-  catch(...) { boost::python::handle_exception(); return NULL; }
+  catch(...) { return NULL; }
   Py_RETURN_NONE; 
 }
 

@@ -6,7 +6,7 @@
 #include<boost/numeric/ublas/vector.hpp>
 #include<boost/numeric/ublas/matrix.hpp>
 
-#include <opt/types.h>
+#include <misc/types.h>
 #include <opt/debug.h>
 #include <opt/indirection.h>
 

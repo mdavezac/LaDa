@@ -1,7 +1,7 @@
 #include <math.h> 
-#include <stdlib.h>
 #include <iostream>
 #include <mpi.h>
+#include <unistd.h>
 #include <string>
 #include <time.h>
 #include <algorithm> 
@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
   for (i = rank + 1; i <= n; i += size) { 
     x = h * ((double)i - 0.5); 
     sum += (4.0 / (1.0 + x*x)); 
-    if(s != 0) sleep(s);
+    if(s != 0) ::sleep(s);
   } 
   mypi = h * sum; 
  

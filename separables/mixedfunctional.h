@@ -7,7 +7,7 @@
 #include<boost/numeric/ublas/matrix.hpp>
 #include<string>
 
-#include <opt/types.h>
+#include <misc/types.h>
 #include <opt/debug.h>
 #include <ce/cluster.h>
 #include <ce/constituent_strain.h>

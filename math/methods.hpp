@@ -178,7 +178,7 @@ namespace LaDa
 
       try
       {
-        rMatrix3d const result = gruber(cell, itermax, tolerance);
+        rMatrix3d result = gruber(cell, itermax, tolerance);
         return python::wrap_to_numpy(result);
       }
       catch(error::singular_matrix& _e)

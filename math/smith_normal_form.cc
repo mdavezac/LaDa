@@ -1,6 +1,6 @@
 #include "LaDaConfig.h"
 
-#include <opt/types.h>
+#include <misc/types.h>
 #include "smith_normal_form.h"
 #include "fuzzy.h"
 #include "exceptions.h"

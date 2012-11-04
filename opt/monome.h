@@ -14,7 +14,7 @@
 #include <numeric>
 #include <iostream>
 
-#include "opt/types.h"
+#include "misc/types.h"
 
 namespace LaDa
 {

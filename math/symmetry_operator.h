@@ -4,7 +4,7 @@
 #include "LaDaConfig.h"
 
 #include <opt/debug.h>
-#include <opt/types.h>
+#include <misc/types.h>
 
 #include "fuzzy.h"
 #include "misc.h"

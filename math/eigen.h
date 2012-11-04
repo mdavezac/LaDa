@@ -5,7 +5,7 @@
 #include <Eigen/LU>
 #include <Eigen/Geometry>
 
-#include <opt/types.h>
+#include <misc/types.h>
 
 namespace LaDa
 {

@@ -59,7 +59,7 @@ namespace LaDa
       }
 #   define LADA_PYTHROW(EXCEPTION, MESSAGE)                                       \
       {                                                                           \
-        LADA_PYERROR(#EXCEPTION, MESSAGE);                                        \
+        LADA_PYERROR(EXCEPTION, MESSAGE);                                         \
         BOOST_THROW_EXCEPTION(error::EXCEPTION() << error::string(MESSAGE));      \
       }
 

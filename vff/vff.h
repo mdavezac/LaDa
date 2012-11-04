@@ -20,7 +20,7 @@
 #include <crystal/structure.h>
 #include <crystal/lattice.h>
 #include <crystal/periodic_dnc.h>
-#include <opt/types.h>
+#include <misc/types.h>
 #include <opt/function_base.h>
 #include <opt/debug.h>
 #include <opt/mpi.h>

@@ -19,7 +19,7 @@ set(LIBCRYSTAL_PYSOURCES __init__.py read.py write.py ABX.py A2BX4.py bravais.py
 
 include_directories(${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDES})
 add_library (crystal SHARED ${LIBCRYSTAL_HEADERS} ${LIBCRYSTAL_PYHEADERS} ${LIBCRYSTAL_SOURCES})
-target_link_libraries(crystal ${PYTHON_LIBRARY} pymath)
+target_link_libraries(crystal ${PYTHON_LIBRARY} mathlib)
 install(TARGETS crystal DESTINATION lib64)
 
 add_library (pycrystal SHARED module.cc)
