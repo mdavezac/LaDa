@@ -153,7 +153,7 @@ namespace LaDa
     {
       if(PyIndex_Check(_index))
       {
-        Py_ssize_t i = PyNumber_AsSsize_t(_index, ::LaDa::error::get_error("IndexEror").ptr());
+        Py_ssize_t i = PyNumber_AsSsize_t(_index, PyExc_IndexError);
         if (i == -1 and PyErr_Occurred()) return NULL;
         return getitem(_self, i);
       }

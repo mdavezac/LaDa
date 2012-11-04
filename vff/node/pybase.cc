@@ -2,7 +2,7 @@
 
 #include <Python.h>
 #include <structmember.h>
-#define PY_ARRAY_UNIQUE_SYMBOL lada_crystal_ARRAY_API
+#define PY_ARRAY_UNIQUE_SYMBOL lada_math_ARRAY_API
 #define NO_IMPORT_ARRAY
 #include <numpy/arrayobject.h>
 
@@ -209,6 +209,22 @@ namespace LaDa
           LADA_DECLARE( link,  link, KEYWORDS,
                         "Adds a bond between to nodes."),
           LADA_DECLARE(clear,  clear, NOARGS, "Removes all bonds."),
+          LADA_DECLARE(sc_bond_iter, 
+                       bond_iterator_create<dcbonditerator_type>, 
+                       NOARGS, 
+                       "Iterates over bonds without double counting.\n\n"
+                       "This function allows iterating over the bonds of a"
+                       "structure without double counting. Nevertheless, it\n"
+                       "proceed via a nested loop:\n\n"
+                       ">>> for node in structure_tree:\n"
+                       "...   for other, vector in node.sc_bond_iter():\n"
+                       "...     perimag = dot(structure.cell, vector)\n"
+                       "...     bond_vector = perimag + other.pos - node.pos\n\n"
+                       "The above loops first over the atoms in a structure"
+                       "tree obtained from :py:meth:`Functional.build_tree`,\n"
+                       "and then over the bonds for that center."
+                       "The resulting ``bond_vector`` is the vector between the\n"
+                       "atom (in the first loop) to the end-point of the bond."),
           {NULL}  /* Sentinel */
       };
 #     undef LADA_DECLARE
@@ -241,7 +257,7 @@ namespace LaDa
           (inquiry)gcclear,                  /* tp_clear */
           0,		                             /* tp_richcompare */
           0,                                 /* tp_weaklistoffset */
-          (getiterfunc)&bond_iterator_create,/* tp_iter */
+          (getiterfunc)&bond_iterator_create<bonditerator_type>,/* tp_iter */
           0,		                             /* tp_iternext */
           methods,                           /* tp_methods */
           0,                                 /* tp_members */
@@ -290,6 +306,42 @@ namespace LaDa
           0,		                                      /* tp_weaklistoffset */
           (getiterfunc)get_self,                      /* tp_iter */
           (iternextfunc)bond_iterator_next,           /* tp_iternext */
+      };
+      return &type;
+    }
+
+    // Returns pointer to structure iterator type.
+    PyTypeObject* dcbonditerator_type()
+    { 
+      static PyTypeObject type = {
+          PyObject_HEAD_INIT(NULL)
+          0,                                          /*ob_size*/
+          "lada.vff.cppwrappers.DcBondIterator",      /*tp_name*/
+          sizeof(BondIterator),                       /*tp_basicsize*/
+          0,                                          /*tp_itemsize*/
+          (destructor)bond_iterator_dealloc,          /*tp_dealloc*/
+          0,                                          /*tp_print*/
+          0,                                          /*tp_getattr*/
+          0,                                          /*tp_setattr*/
+          0,                                          /*tp_compare*/
+          0,                                          /*tp_repr*/
+          0,                                          
+          0,                                          /*tp_as_sequence*/
+          0,                                          /*tp_as_mapping*/
+          0,                                          /*tp_hash */
+          0,                                          /*tp_call*/
+          0,                                          /*tp_str*/
+          0,                                          /*tp_getattro*/
+          0,                                          /*tp_setattro*/
+          0,                                          /*tp_as_buffer*/
+          Py_TPFLAGS_HAVE_ITER,
+          "Iterator over bonds, without double counting.",
+          0,                                          /* tp_traverse */
+          0,                                          /* tp_clear */
+          0,                                          /* tp_richcompare */
+          0,		                              /* tp_weaklistoffset */
+          (getiterfunc)get_self,                      /* tp_iter */
+          (iternextfunc)dcbond_iterator_next,           /* tp_iternext */
       };
       return &type;
     }

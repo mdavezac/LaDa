@@ -17,6 +17,6 @@ target_link_libraries(pyvff ${PYTHON_LIBRARY} ${Boost_PYTHON_LIBRARY} crystal)
 install(TARGETS pyvff DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/vff)
 
 
-# if(compile_tests OR compile_debug_tests)
-#   add_subdirectory(tests)
-# endif(compile_tests OR compile_debug_tests)
+if(compile_tests OR compile_debug_tests)
+  add_subdirectory(tests)
+endif(compile_tests OR compile_debug_tests)
