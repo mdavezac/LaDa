@@ -40,7 +40,23 @@ namespace LaDa
           return result;                                                                \
         }                                                                               \
         /* catch exceptions. */                                                         \
-        catch(...) { boost::python::handle_exception(); }                               \
+        catch(std::exception &_e)                                                       \
+        {                                                                               \
+          if(not PyErr_Occurred())                                                      \
+          {                                                                             \
+            LADA_PYERROR(internal, ( std::string("Caught c++ exception: ")              \
+                                     + _e.what()).c_str());                             \
+          }                                                                             \
+          return NULL;                                                                  \
+        }                                                                               \
+        catch(...)                                                                      \
+        {                                                                               \
+          if(not PyErr_Occurred())                                                      \
+          {                                                                             \
+            LADA_PYERROR(internal, "Caught c++ exception: ");                           \
+          }                                                                             \
+          return NULL;                                                                  \
+        }                                                                               \
       }                                                                                 \
       else                                                                              \
       {                                                                                 \
@@ -89,6 +105,28 @@ namespace LaDa
     LADA_MACRO(into_voronoi)
     LADA_MACRO(zero_centered)
 #   undef LADA_MACRO
+#   ifdef LADA_CATCH
+#     error LADA_CATCH macro already defined
+#   endif
+#   define LADA_CATCH                                                              \
+    catch(std::exception &_e)                                                      \
+    {                                                                              \
+      if(not PyErr_Occurred())                                                     \
+      {                                                                            \
+        LADA_PYERROR(internal, ( std::string("Caught c++ exception: ")             \
+                                 + _e.what()).c_str());                            \
+      }                                                                            \
+      return NULL;                                                                 \
+    }                                                                              \
+    catch(...)                                                                     \
+    {                                                                              \
+      if(not PyErr_Occurred())                                                     \
+      {                                                                            \
+        LADA_PYERROR(internal, "Caught c++ exception: ");                          \
+      }                                                                            \
+      return NULL;                                                                 \
+    }
+
     //! Wrapper around periodic image tester.
     PyObject* are_periodic_images_wrapper(PyObject *_module, PyObject *_args)
     {
@@ -121,7 +159,7 @@ namespace LaDa
         }
         Py_RETURN_FALSE;
       }
-      catch(...) { boost::python::handle_exception(); }
+      LADA_CATCH;
       return NULL;
     }
     //! Wrapper around the supercell method.
@@ -144,7 +182,7 @@ namespace LaDa
       if(not python::convert_to_matrix(cellin, cell)) return NULL;
       // create supercell.
       try { return supercell(Structure::acquire(lattice), cell).release(); } 
-      catch(...) { boost::python::handle_exception(); }
+      LADA_CATCH;
       return NULL;
     }
 
@@ -171,7 +209,7 @@ namespace LaDa
       types::t_real tolerance = N == 1 ? -1:
               ( PyInt_Check(tolobj) ? PyInt_AS_LONG(tolobj): PyFloat_AS_DOUBLE(tolobj) );
       try { return primitive(lattice, tolerance).release(); } 
-      catch(...) { boost::python::handle_exception(); }
+      LADA_CATCH;
       return NULL;
     };
 
@@ -202,7 +240,7 @@ namespace LaDa
         if(is_primitive(lattice, tolerance)) Py_RETURN_TRUE;
         Py_RETURN_FALSE;
       } 
-      catch(...) { boost::python::handle_exception(); }
+      LADA_CATCH;
       return NULL;
     };
 
@@ -306,7 +344,7 @@ namespace LaDa
                         tolerance ) ) Py_RETURN_TRUE;
         else if(not PyErr_Occurred()) Py_RETURN_FALSE;
       }
-      catch(...) { boost::python::handle_exception(); }                                 
+      LADA_CATCH;
       return NULL;
     }
  
@@ -352,7 +390,7 @@ namespace LaDa
         return NULL;
       }
       math::rVector3d center(0,0,0);
-      if(PyAtom_Check(_center)) center = ((AtomData*)_center)->pos;
+      if(PyAtom_Check(_center)) center = ((PyAtomObject*)_center)->pos;
       else if(not python::convert_to_vector(_center, center)) return NULL;
       Structure struc = Structure::acquire(structure);
       try { return neighbors(struc, nmax, center, tolerance); }
@@ -383,14 +421,14 @@ namespace LaDa
         return NULL;
       }
       math::rVector3d center(0,0,0);
-      if(PyAtom_Check(_center)) center = ((AtomData*)_center)->pos;
+      if(PyAtom_Check(_center)) center = ((PyAtomObject*)_center)->pos;
       else if(not python::convert_to_vector(_center, center)) return NULL;
       Structure struc = Structure::acquire(structure);
       try { return coordination_shells(struc, nmax, center, tolerance, natoms); }
       catch(...)
       {
         if(not PyErr_Occurred())
-          LADA_PYERROR(InternalError, "Unknown c++ exception occurred.\n");
+          { LADA_PYERROR(InternalError, "Unknown c++ exception occurred.\n"); }
       }
       return NULL;
     }
@@ -440,7 +478,7 @@ namespace LaDa
       catch(...)
       {
         if(PyErr_Occurred() == NULL)
-          LADA_PYERROR(InternalError, "splitconfigs: Unknown c++ exception occurred.\n");
+          { LADA_PYERROR(InternalError, "splitconfigs: Unknown c++ exception occurred.\n"); }
       }
       return NULL;
     }
@@ -486,7 +524,7 @@ namespace LaDa
       catch(...)
       {
         if(PyErr_Occurred() == NULL)
-          LADA_PYERROR(InternalError, "map_sites: Unknown c++ exception occurred.\n");
+        { LADA_PYERROR(InternalError, "map_sites: Unknown c++ exception occurred.\n"); }
       }
       return NULL;
     }

@@ -203,7 +203,7 @@ namespace LaDa
       // Check first that _args is not a tuple containing an atom.
       if(PyTuple_Size(_args) == 1)
       {
-        AtomData* wrapper = (AtomData*)PyTuple_GET_ITEM(_args, 0);
+        PyAtomObject* wrapper = (PyAtomObject*)PyTuple_GET_ITEM(_args, 0);
         if(PyAtom_Check(wrapper)) 
         {
           if(_kwargs != NULL)

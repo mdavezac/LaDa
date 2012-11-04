@@ -2,7 +2,7 @@
 
 #include <Python.h>
 #include <structmember.h>
-#define PY_ARRAY_UNIQUE_SYMBOL lada_crystal_ARRAY_API
+#define PY_ARRAY_UNIQUE_SYMBOL lada_math_ARRAY_API
 #define NO_IMPORT_ARRAY
 #include <numpy/arrayobject.h>
 
@@ -88,7 +88,7 @@ namespace LaDa
       std::vector<Atom>::const_iterator const i_end = _self->atoms.end();
       for(; i_first != i_end; ++i_first)
       {
-        Atom atom((AtomData*)PyObject_CallMethodObjArgs(copymod, deepcopystr, i_first->borrowed(), _memo, NULL));
+        Atom atom((PyAtomObject*)PyObject_CallMethodObjArgs(copymod, deepcopystr, i_first->borrowed(), _memo, NULL));
         if(not atom) return NULL;
         result->atoms.push_back(atom);
       }

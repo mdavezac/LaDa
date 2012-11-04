@@ -8,7 +8,7 @@
 #include <vector> 
 #include <utility> 
 
-#include <opt/types.h>
+#include <misc/types.h>
 #include <opt/debug.h>
 #include <opt/errors.h>
 #include <opt/leave_many_out.h>

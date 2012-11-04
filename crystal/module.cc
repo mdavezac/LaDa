@@ -1,7 +1,7 @@
 #include "LaDaConfig.h"
 
 #include <Python.h>
-#define PY_ARRAY_UNIQUE_SYMBOL lada_crystal_ARRAY_API
+#define PY_ARRAY_UNIQUE_SYMBOL lada_math_ARRAY_API
 #include <numpy/arrayobject.h>
 
 #include <iterator> 
@@ -25,8 +25,6 @@
 
 PyMODINIT_FUNC initcppwrappers(void) 
 {
-  LaDa::error::bp_register();
-
   if (PyType_Ready(LaDa::crystal::atom_type()) < 0) return;
   if (PyType_Ready(LaDa::crystal::structure_type()) < 0) return;
   if (PyType_Ready(LaDa::crystal::structureiterator_type()) < 0) return;

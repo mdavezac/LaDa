@@ -6,7 +6,7 @@
 #include <vector>
 
 #include <opt/debug.h>
-#include <opt/types.h>
+#include <misc/types.h>
 #include <tinyxml/tinyxml.h>
 
 #include <gsl/gsl_block.h>

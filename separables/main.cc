@@ -21,7 +21,7 @@
 #include <minimizer/cgs.h>
 #include <math/fuzzy.h>
 #include <math/random.h>
-#include <opt/types.h>
+#include <misc/types.h>
 #include <opt/debug.h>
 #include <opt/errors.h>
 #include <opt/bpo_macros.h>

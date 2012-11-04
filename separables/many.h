@@ -7,7 +7,7 @@
 #include<boost/numeric/ublas/matrix.hpp>
 #include<boost/shared_ptr.hpp>
 
-#include <opt/types.h>
+#include <misc/types.h>
 #include <opt/debug.h>
 
 #include "prepare.h"

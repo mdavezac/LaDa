@@ -174,7 +174,11 @@ namespace LaDa
     bool is_primitive(Structure const &_structure, types::t_real _tolerance)
     {
       if( _tolerance < 0e0 ) _tolerance = types::tolerance;
-      if( _structure.size() == 0 ) LADA_PYTHROW(ValueError, "Empty structure.");
+      if( _structure.size() == 0 )
+      { 
+        LADA_PYERROR(ValueError, "Empty structure.");
+        BOOST_THROW_EXCEPTION(error::internal() << error::string("empty structure"));
+      }
 
       // copies lattice.
       math::rMatrix3d const cell = math::gruber(_structure.cell());

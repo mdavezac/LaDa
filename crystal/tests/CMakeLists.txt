@@ -4,7 +4,7 @@ if(NOT compile_debug_tests)
   add_test(crystal_atom_memory python ${CMAKE_CURRENT_SOURCE_DIR}/atom_memory.py ${CMAKE_CURRENT_BINARY_DIR})
 
   add_library (atom_self SHARED "atom_self.cc")
-  target_link_libraries(atom_self ${PYTHON_LIBRARY} ${Boost_PYTHON_LIBRARY} crystal mathlib)
+  target_link_libraries(atom_self ${PYTHON_LIBRARY} crystal pymath)
   set_target_properties(atom_self PROPERTIES PREFIX "_")
   add_test(crystal_atom_self python ${CMAKE_CURRENT_SOURCE_DIR}/atom_self.py ${CMAKE_CURRENT_BINARY_DIR})
 

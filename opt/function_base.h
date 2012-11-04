@@ -9,7 +9,7 @@
 #include <vector>
 #include <stdexcept>
 
-#include "opt/types.h"
+#include "misc/types.h"
 
 
 namespace LaDa

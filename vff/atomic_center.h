@@ -10,7 +10,7 @@
 #include <crystal/atom.h>
 #include <crystal/structure.h>
 #include <crystal/lattice.h>
-#include <opt/types.h>
+#include <misc/types.h>
 #include <opt/function_base.h>
 #include <opt/debug.h>
 

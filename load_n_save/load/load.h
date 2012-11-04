@@ -2,7 +2,7 @@
 #define LADA_LOADNSAVE_LOAD_LOAD_H
 
 #include "LaDaConfig.h"
-#include <opt/types.h>
+#include <misc/types.h>
 
 #include "../tree/tree.h"
 #include "../xpr/section.h"

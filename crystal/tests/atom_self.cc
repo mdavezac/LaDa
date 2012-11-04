@@ -1,19 +1,14 @@
 #include "LaDaConfig.h"
 
-#include <python/numpy_types.h>
-#include <boost/exception/get_error_info.hpp>
-#include <boost/exception/diagnostic_information.hpp>
-
 #include "../atom/atom.h"
 
-namespace bp = boost::python;
 using namespace LaDa::crystal;
 static Atom satom; 
 PyObject* get_static_object() { return satom.new_ref(); }
 PyObject* set_static_object(PyObject* _module, PyObject *_object)
 {
   try { satom.reset(_object); }
-  catch(...) { boost::python::handle_exception(); return NULL; }
+  catch(...) { return NULL; }
   Py_RETURN_NONE; 
 }
 
@@ -36,8 +31,5 @@ static PyMethodDef methods[] = {
 
 PyMODINIT_FUNC init_atom_self(void) 
 {
-  LaDa::error::bp_register();
-  import_array();
-  LaDa::crystal::import();
   PyObject* module = Py_InitModule("_atom_self", methods);
 }
