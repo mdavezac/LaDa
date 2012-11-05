@@ -130,10 +130,6 @@ namespace LaDa
       Py_RETURN_TRUE;
     }
 
-//   static PyObject* getattro(PyObject* _self, PyObject *_attr)
-//     { return PyObject_GetAttr(((NodeData*)_self)->center.borrowed(), _attr); }
-//   static int setattro(PyObject* _self, PyObject *_attr, PyObject *_value)
-//     { return PyObject_SetAttr(((NodeData*)_self)->center.borrowed(), _attr, _value); }
     static PyObject* getpos(NodeData* _self, void *closure)
       { return crystal::lada_atom_getpos((crystal::PyAtomObject*)_self->center.borrowed(), closure); }
     static int setpos(NodeData* _self, PyObject* _value, void *closure)
