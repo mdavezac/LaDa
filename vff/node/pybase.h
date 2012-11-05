@@ -48,6 +48,8 @@ namespace LaDa
       PyTypeObject* bonditerator_type();
       //! Returns pointer to single-counting bond iterator type.
       PyTypeObject* dcbonditerator_type();
+      //! Returns pointer to angle iterator type.
+      PyTypeObject* angleiterator_type();
     }
   } // namespace vff
 

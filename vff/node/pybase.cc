@@ -168,6 +168,11 @@ namespace LaDa
       return 0;
     }
 
+    static PyObject* make_sure_itsdefined(NodeData* _in) 
+      { return bond_iterator_create<&bonditerator_type>(_in); }
+    static PyObject* make_sure_itsdefined2(NodeData* _in) 
+      { return bond_iterator_create<&dcbonditerator_type>(_in); }
+
     // Returns pointer to node type.
     PyTypeObject* node_type()
     {
@@ -225,6 +230,8 @@ namespace LaDa
                        "and then over the bonds for that center."
                        "The resulting ``bond_vector`` is the vector between the\n"
                        "atom (in the first loop) to the end-point of the bond."),
+          LADA_DECLARE( angle_iter, angle_iterator_create, NOARGS, 
+                        "Iterates over angles centered on this node." ),
           {NULL}  /* Sentinel */
       };
 #     undef LADA_DECLARE
@@ -274,7 +281,7 @@ namespace LaDa
       return &dummy;
     }
 
-    // Returns pointer to structure iterator type.
+    // Returns bond iterator type, with double counting.
     PyTypeObject* bonditerator_type()
     { 
       static PyTypeObject type = {
@@ -299,7 +306,17 @@ namespace LaDa
           0,                                          /*tp_setattro*/
           0,                                          /*tp_as_buffer*/
           Py_TPFLAGS_HAVE_ITER,
-          "Iterator over bonds.",
+          "Iterator over bonds.\n\n"
+          "Yields a tuple ``(center, v)``, where ``center``\n"
+          "is the  nearest-neighbor :py:class:`Node` at the other\n"
+          "end of the bond, and ``v`` is  a vector in fractional\n"
+          "coordinates from which the vector linking the two end\n"
+          "points can be obtained:\n\n"
+          ">>> for center, v in node: \n"
+          ">>>    atob = center.pos + dot(structure.cell, v) - node.pos\n\n"
+          "The code above loops over all the bonds to a given node. The\n"
+          "vector ``atob`` links the node to the correct periodic image\n"
+          "of the node ``center`` at the end of the bond.",
           0,                                          /* tp_traverse */
           0,                                          /* tp_clear */
           0,                                          /* tp_richcompare */
@@ -310,7 +327,7 @@ namespace LaDa
       return &type;
     }
 
-    // Returns pointer to structure iterator type.
+    // Returns bond iterator type, without double counting.
     PyTypeObject* dcbonditerator_type()
     { 
       static PyTypeObject type = {
@@ -335,13 +352,62 @@ namespace LaDa
           0,                                          /*tp_setattro*/
           0,                                          /*tp_as_buffer*/
           Py_TPFLAGS_HAVE_ITER,
-          "Iterator over bonds, without double counting.",
+          "Iterator over bonds, without double counting."
+          "Yields a tuple ``(center, v)``, where ``center``\n"
+          "is the  nearest-neighbor :py:class:`Node` at the other\n"
+          "end of the bond, and ``v`` is  a vector in fractional\n"
+          "coordinates from which the vector linking the two end\n"
+          "points can be obtained:\n\n"
+          ">>> from lada.vff import build_tree\n"
+          ">>> tree = build_tree(structure)\n"
+          ">>> for node in tree: \n"
+          ">>>   for center, v in node.sc_bond_iter(): \n"
+          ">>>      atob = center.pos + dot(structure.cell, v) - node.pos\n\n"
+          "The code above loops over *all* the bonds in a structure, *without*\n"
+          "double counting. The  vector ``atob`` links the node to the correct\n"
+          "periodic image of the node ``center`` at the end of the bond.\n",
           0,                                          /* tp_traverse */
           0,                                          /* tp_clear */
           0,                                          /* tp_richcompare */
           0,		                              /* tp_weaklistoffset */
           (getiterfunc)get_self,                      /* tp_iter */
           (iternextfunc)dcbond_iterator_next,           /* tp_iternext */
+      };
+      return &type;
+    }
+
+    // Returns angle iterator type
+    PyTypeObject* angleiterator_type()
+    { 
+      static PyTypeObject type = {
+          PyObject_HEAD_INIT(NULL)
+          0,                                          /*ob_size*/
+          "lada.vff.cppwrappers.AngleIterator",       /*tp_name*/
+          sizeof(AngleIterator),                      /*tp_basicsize*/
+          0,                                          /*tp_itemsize*/
+          (destructor)angle_iterator_dealloc,         /*tp_dealloc*/
+          0,                                          /*tp_print*/
+          0,                                          /*tp_getattr*/
+          0,                                          /*tp_setattr*/
+          0,                                          /*tp_compare*/
+          0,                                          /*tp_repr*/
+          0,                                          
+          0,                                          /*tp_as_sequence*/
+          0,                                          /*tp_as_mapping*/
+          0,                                          /*tp_hash */
+          0,                                          /*tp_call*/
+          0,                                          /*tp_str*/
+          0,                                          /*tp_getattro*/
+          0,                                          /*tp_setattro*/
+          0,                                          /*tp_as_buffer*/
+          Py_TPFLAGS_HAVE_ITER,
+          "Iterator over angles.",
+          0,                                          /* tp_traverse */
+          0,                                          /* tp_clear */
+          0,                                          /* tp_richcompare */
+          0,		                                      /* tp_weaklistoffset */
+          (getiterfunc)get_self,                      /* tp_iter */
+          (iternextfunc)angle_iterator_next,          /* tp_iternext */
       };
       return &type;
     }

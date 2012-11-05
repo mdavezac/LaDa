@@ -31,11 +31,13 @@ PyMODINIT_FUNC initcppwrappers(void)
   if (PyType_Ready(LaDa::vff::edge_type()) < 0) return;
   if (PyType_Ready(LaDa::vff::bonditerator_type()) < 0) return;
   if (PyType_Ready(LaDa::vff::dcbonditerator_type()) < 0) return;
+  if (PyType_Ready(LaDa::vff::angleiterator_type()) < 0) return;
 
   Py_INCREF(LaDa::vff::node_type());
   Py_INCREF(LaDa::vff::edge_type());
   Py_INCREF(LaDa::vff::bonditerator_type());
   Py_INCREF(LaDa::vff::dcbonditerator_type());
+  Py_INCREF(LaDa::vff::angleiterator_type());
 
   char const doc[] =  "Wrapper around C++ vff class and affiliates.";
   PyObject* module = Py_InitModule3("cppwrappers", LaDa::vff::methods_table, doc);
@@ -45,4 +47,5 @@ PyMODINIT_FUNC initcppwrappers(void)
   PyModule_AddObject(module, "Edge", (PyObject *)LaDa::vff::edge_type());
   PyModule_AddObject(module, "BondIterator", (PyObject *)LaDa::vff::bonditerator_type());
   PyModule_AddObject(module, "ScBondIterator", (PyObject *)LaDa::vff::dcbonditerator_type());
+  PyModule_AddObject(module, "AngleIterator", (PyObject *)LaDa::vff::angleiterator_type());
 }

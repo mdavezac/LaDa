@@ -40,9 +40,9 @@ namespace LaDa
         std::vector<PyObject*> :: iterator i_first, i_second, i_end;
       };
       //! Returns next object.
-      static PyObject* angle_iterator_next(BondIterator* _self);
+      static PyObject* angle_iterator_next(AngleIterator* _self);
       //! Function to deallocate a string atom.
-      static void angle_iterator_dealloc(BondIterator *_self);
+      static void angle_iterator_dealloc(AngleIterator *_self);
       //! Creates iterator.
       static PyObject* angle_iterator_create(NodeData* _self);
     }
@@ -79,8 +79,8 @@ namespace LaDa
         if(result == NULL) return NULL;
         result->parent = _in;
         Py_INCREF(result->parent);
-        result->i_first = _in->bonds.begin();
-        result->i_end = _in->bonds.end();
+        new(&result->i_first) std::vector<EdgeData*>::iterator(_in->bonds.begin());
+        new(&result->i_end) std::vector<EdgeData*>::iterator(_in->bonds.end());
         result->is_first = true;
         result->N = _in->bonds.size();
         return (PyObject*) result;
@@ -111,30 +111,7 @@ namespace LaDa
     }
 
     // Returns next object.
-    PyObject* angle_iterator_next(BondIterator* _self)
-    {
-      if(_self->N != _self->parent->bonds.size())
-      {
-        LADA_PYERROR(IndexError, "Bonds changed mid-iteration.");
-        return NULL;
-      }
-      if(_self->i_first != _self->i_end) 
-      {
-        if(_self->is_first) _self->is_first = false; else ++_self->i_first;
-        while(_self->i_first != _self->i_end)
-        {
-          if((*_self->i_first)->a == _self->parent)
-            return edge_to_tuple(_self->parent, *_self->i_first);
-          ++_self->i_first;
-        }
-      }
-      PyErr_SetNone(PyExc_StopIteration);
-      return NULL;
-    }
-
-
-    // Returns next object.
-    PyObject* angle_iterator_next(BondIterator* _self)
+    PyObject* angle_iterator_next(AngleIterator* _self)
     {
       if(_self->i_first == _self->i_end)
       {
@@ -148,14 +125,14 @@ namespace LaDa
       }
       
       PyObject *result = PyTuple_New(2);
-      Py_INCREF(_self->i_first);
-      PyTuple_SET_ITEM(result, 0, _self->i_first);
-      Py_INCREF(_self->i_second);
-      PyTuple_SET_ITEM(result, 1, _self->i_second);
+      Py_INCREF(*_self->i_first);
+      PyTuple_SET_ITEM(result, 0, *_self->i_first);
+      Py_INCREF(*_self->i_second);
+      PyTuple_SET_ITEM(result, 1, *_self->i_second);
       return result;
     }
     //! Function to deallocate a string atom.
-    static void angle_iterator_dealloc(BondIterator *_self)
+    static void angle_iterator_dealloc(AngleIterator *_self)
     {
       PyObject* dummy = (PyObject*)_self->parent;
       _self->parent = NULL;
@@ -168,28 +145,28 @@ namespace LaDa
         *i_first = NULL;
         Py_XDECREF(dummy);
       }
-      _result->container.clear();
+      _self->container.clear();
       Py_XDECREF(dummy);
     }
     //! Creates iterator.
     static PyObject* angle_iterator_create(NodeData* _in)
     {
-      AngleIterator *result = PyObject_New(AngleIterator, angle_iterator_type());
+      AngleIterator *result = PyObject_New(AngleIterator, angleiterator_type());
       if(result == NULL) return NULL;
       result->parent = _in;
       Py_INCREF(result->parent);
-      _result->container.clear();
+      new(&result->container) std::vector<PyObject*>;
       std::vector<EdgeData*>::iterator i_first = _in->bonds.begin();
       std::vector<EdgeData*>::iterator const i_end = _in->bonds.end();
       for(; i_first != i_end; ++i_first)
       {
-        PyObject *dummy = edge_to_tuple(_self->parent, *_self->i_first);
+        PyObject *dummy = edge_to_tuple(_in, *i_first);
         if(dummy == NULL) return NULL;
-        _result->container.push_back(dummy);
+        result->container.push_back(dummy);
       }
-      result->i_first = _result->container.begin();
-      result->i_second = _result->i_first;
-      result->i_end = _in->container.end();
+      new(&result->i_first) std::vector<PyObject*>::iterator(result->container.begin());
+      new(&result->i_second) std::vector<PyObject*>::iterator(result->i_first);
+      new(&result->i_end) std::vector<PyObject*>::iterator(result->container.end());
       return (PyObject*) result;
     }
   }
