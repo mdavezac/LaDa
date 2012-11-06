@@ -26,5 +26,57 @@ def test():
   assert all(abs(abs(c[1].pos) - [0.67875]*3) < 1e-8)
   assert all(abs(c[0].pos + c[1].pos) < 1e-8)
 
+def test_readwrite():
+  """ Test that writing to and reading from file yield same result. """
+  from tempfile import mkdtemp
+  from shutil import rmtree
+  from lada.dftcrystal import External, Supercell, InsertAtoms
+  from lada.crystal import read, write
+  from lada.misc import Changedir
+
+  structure = External( 2.97938, 0, 0,
+                        0, 6.56068, 0,
+                        0, 0, 34.6664,
+                        scale=1 )\
+        .add_atom(0, -1.64017, 6.33322, 'O', asymmetric=True, group='O', label=1)\
+        .add_atom(0, 1.64017, 4.7745, 'Ti', asymmetric=True, group='TI', label=2)\
+        .add_atom(1.48969, -1.64017, 5.28628, 'Ti', asymmetric=True, group='TI', label=3)\
+        .add_atom(1.48969, 2.872, 5.15099, 'O', asymmetric=True, group='O', label=4)\
+        .add_atom(1.48969, 0.408334, 5.15099, 'O', asymmetric=False, group='O', label=5)\
+        .add_atom(0, -1.64017, 3.768, 'O', asymmetric=True, group='O', label=6)\
+        .add_atom(0, 1.64017, 2.98235, 'O', asymmetric=True, group='O', label=7)\
+        .add_atom(0, -1.64017, 1.96284, 'Ti', asymmetric=True, group='TI', label=8)\
+        .add_atom(1.48969, 1.64017, 1.51848, 'Ti', asymmetric=True, group='TI', label=9)\
+        .add_atom(1.48969, -0.36011, 1.71256, 'O', asymmetric=True, group='O', label=10)\
+        .add_atom(1.48969, -2.92023, 1.71256, 'O', asymmetric=False, group='O', label=11)\
+        .add_atom(0, 1.64017, 0.407607, 'O', asymmetric=True, group='O', label=12)\
+        .add_atom(0, -1.64017, -0.407607, 'O', asymmetric=False, group='O', label=13)\
+        .add_atom(0, 1.64017, -1.96284, 'Ti', asymmetric=False, group='TI', label=14)\
+        .add_atom(1.48969, -1.64017, -1.51848, 'Ti', asymmetric=False, group='TI', label=15)\
+        .add_atom(1.48969, 2.92023, -1.71256, 'O', asymmetric=False, group='O', label=16)\
+        .add_atom(1.48969, 0.36011, -1.71256, 'O', asymmetric=False, group='O', label=17)\
+        .add_atom(0, -1.64017, -2.98235, 'O', asymmetric=False, group='O', label=18)\
+        .add_atom(0, 1.64017, -3.768, 'O', asymmetric=False, group='O', label=19)\
+        .add_atom(0, -1.64017, -4.7745, 'Ti', asymmetric=False, group='TI', label=20)\
+        .add_atom(1.48969, 1.64017, -5.28628, 'Ti', asymmetric=False, group='TI', label=21)\
+        .add_atom(1.48969, -0.408334, -5.15099, 'O', asymmetric=False, group='O', label=22)\
+        .add_atom(1.48969, -2.872, -5.15099, 'O', asymmetric=False, group='O', label=23)\
+        .add_atom(0, 1.64017, -6.33322, 'O', asymmetric=False, group='O', label=24)\
+        .append(Supercell([[2, 0, 0], [0, 2, 0], [0, 0, 1]]))\
+        .append(InsertAtoms()\
+                  .add_atom(0, -1.64017, 7.33322, 'H'))
+
+  directory = mkdtemp()
+  try:
+    with Changedir(directory) as cwd:
+      write.crystal(structure.initial, 'fort.34')
+      initial = read.crystal('fort.34')
+
+      assert write.crystal(structure.initial, None) == write.crystal(initial, None)
+  finally:
+    try: rmtree(directory)
+    except: pass
+
 if __name__ == '__main__':
   test()
+  test_readwrite()

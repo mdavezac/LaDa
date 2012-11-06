@@ -38,9 +38,9 @@ def layer_iterator(structure, direction, tolerance=1e-12):
       :param structure: 
           :class:`Structure` for which to iterator over atoms.
       :param direction:
-          3d-vector defining the growth direction, e.g. vector perpendicular to the layers.
-          Defaults to the first column vector of the structure.  It is
-          important that two cell-vectors of the structure are (or can be
+          3d-vector defining the growth direction, e.g. vector perpendicular to
+          the layers.  Defaults to the first column vector of the structure.
+          It is important that two cell-vectors of the structure are (or can be
           transformed to be) perpendicular to the growth direction. Otherwise
           it cannot be assured that layers are well defined, i.e. that each
           atom belongs to a single (as in periodic) layer. This condition is
@@ -98,7 +98,7 @@ def equivalence_iterator( structure, operations=None,                          \
   """ Yields iterators over atoms equivalent via space group operations.
   
       Only check that the position are equivalent. Does not check that the
-      occupations are the same.
+      occupations are the same. The sort is stable.
 
       :param structure:
           :class:`Structure` over which to iterate.
@@ -124,7 +124,10 @@ def equivalence_iterator( structure, operations=None,                          \
   from numpy import dot
   from numpy.linalg import inv
 
-  atoms = [u for u in enumerate(structure)]
+  # atoms: list of atoms + index. Pop returns the last item. Since we want
+  # equivalence_iterator to be stable, as much as possible, the list order is
+  # inverted.
+  atoms = [u for u in enumerate(structure)][::-1]
   if operations == None: operations = space_group(structure)
   invcell = inv(structure.cell)
    
@@ -184,8 +187,10 @@ def shell_iterator(structure, center, direction, thickness=0.05):
   if len(structure) <= 1: yield structure; return
 
   # orders position with respect to cylindrical coordinates
-  positions = into_voronoi(array([atom.pos - center for atom in structure]), structure.cell)
-  projs = [(i, norm(pos - dot(pos, direction)*direction)) for i, pos in enumerate(positions)]
+  positions = array([atom.pos - center for atom in structure])
+  positions = into_voronoi(positions, structure.cell)
+  projs = [ (i, norm(pos - dot(pos, direction)*direction))                     \
+            for i, pos in enumerate(positions)]
   projs = sorted(projs, key=itemgetter(1))
 
   # creates classes of positions.
