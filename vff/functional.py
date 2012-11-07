@@ -2,7 +2,7 @@ class Functional(object):
   def __init__(self): 
     super(Functional, self).__init__()
 
-    self._parameters
+    self._parameters = {}
     """ Holds vff parameters. """
 
   def __getitem__(self, index):
@@ -71,28 +71,31 @@ class Functional(object):
     if isinstance(index, str): index = index.split('-')
     index = '-'.join(sorted(str(u) for u in index))
     # special case where the angle is given as "tet"
-    if index.count('-') == 2 and isinstance(value[0], str):
+    maxsize = 7 if index.count('-') == 2 else 6
+    if maxsize == 7 and isinstance(value[0], str):
       if value[0][:3].lower() != 'tet':
         raise ValueError( 'If a string, the first argument to angle '          \
                           'parameters should be "tet". ')
-        value = [-1e0/3e0] + [u for u in value[1:]]
+      value = [-1e0/3e0] + [u for u in value[1:]]
     # special case of a signed quantity.
     elif hasattr(value[0], 'rescale'):
       value = [cos(value[0].rescale(radian).magnitude)]                        \
               + [u for u in value[1:]]
     value = array(value).flatten()
-    if len(value) < 2 or len(value) > 6:
+    if len(value) < 2 or len(value) > maxsize:
       raise ValueError( 'Expects no less than two and no more than 6 '         \
                         'parameters.')
-    self._parameters[index] = array(value.tolist() + [0]*(6 - len(value)))
+    self._parameters[index] = array( value.tolist()
+                                     + [0]*(maxsize - len(value)) )
 
   def __call__(self, structure):
     """ Evaluates energy and forces on a structure. """
     from numpy import zeros
+    from quantities import eV
     from . import build_tree
     # creates result structure.
     result = structure.copy()
-    for atom in result: result.gradient = zeros(3, dtype='float64')
+    for atom in result: atom.gradient = zeros(3, dtype='float64')
     result.stress = zeros((3,3), dtype='float64')
     result.energy = 0e0
    
@@ -100,7 +103,12 @@ class Functional(object):
     # creates tree and loop over structure.
     tree = build_tree(result)
     for node in tree: 
-      energy, grad, stress = self._evaluate_bonds(node, scale2, structure.cell)
+      result.energy += self._evaluate_bonds(node, scale2, result.cell,
+                                              result.stress )
+      result.energy += self._evaluate_angles( node, scale2, result.cell,
+                                              result.stress )
+    result.energy = result.energy / 16.0217733 * eV
+    return result
 
   def _evaluate_bonds(self, node, scale2, cell, stress=None, strain=None,
                       K0=None):
@@ -111,7 +119,7 @@ class Functional(object):
                           3e0*sqrt(3e0)/128e0, 0.00703125 ])
 
     energy = 0
-    for endpoint, vector in self.sc_bond_iter():
+    for endpoint, vector in node.sc_bond_iter():
       vector = dot(cell, vector) + endpoint.pos - node.pos
       params = self[node.type, endpoint.type]
       bond_length = params[0]
@@ -123,17 +131,17 @@ class Functional(object):
 
       if stress is not None: 
         mult = params[1:] * gbondparams * e0
-        e0grad = 2e0 * scale2 / bond_length                                      \
-                 * (mult[0] + e0 * ( mult[1]                                     \
+        e0grad = 2e0 * scale2 / bond_length                                    \
+                 * (mult[0] + e0 * ( mult[1]                                   \
                    + e0 * ( mult[2] + (mult[3] + e0 * mult[4]) ) ))
         hold = e0grad * (dot(strain, vector) if strain is not None else vector)
-        node.gradient += hold
-        endpoint.gradient -= hold
+        node.center.gradient -= hold
+        endpoint.center.gradient += hold
   
         matrix = outer(vector, vector)
         stress += e0grad * 0.5 * (dot(matrix, K0) if K0 is not None else matrix)
                 
-    return energy * 3e0 / 8e0
+    return energy * 3e0 / 8e0 
 
   def _evaluate_angles( self, node, scale2, cell, stress=None, strain=None,
                         K0=None ):
@@ -144,18 +152,19 @@ class Functional(object):
                           3e0*sqrt(3e0)/256e0, 0.003515625 ])
 
     energy = 0
-    for (A,dA), (B, dB) in self.angle_iter():
+    for (A,dA), (B, dB) in node.angle_iter():
       vA = dot(cell, dA) + A.pos - node.pos
-      vB = dot(cell, dB) + A.pos - node.pos
+      vB = dot(cell, dB) + B.pos - node.pos
       paramsA = self[node.type, A.type]
       paramsB = self[node.type, B.type]
       paramsAB = self[A.type, node.type, B.type]
       lengthA, lengthB = paramsA[0], paramsB[0]
-      gamma, sigma =  paramsAB[:1]
+      gamma, sigma =  paramsAB[0], paramsAB[1]
       mean_length = sqrt(lengthA * lengthB)
 
-      e0 = sum(vA*vA) * scale2 / lengthA - lengthA
-      e1 = dot(vA.T, vB) * scale2 / mean_length * gamma 
+      e0 = sum(vA*vA) * scale2 / lengthA - lengthA                             \
+            + sum(vB*vB) * scale2 / lengthB - lengthB
+      e1 = dot(vA, vB) * scale2 / mean_length - mean_length * gamma 
 
       # bond-bending
       mult = paramsAB[2:] * bondparams * e1
@@ -169,9 +178,9 @@ class Functional(object):
                    + e1 * ( mult[2] + (mult[3] + e1 * mult[4]) ) ))
         hold0 = e1grad * (dot(strain, vA) if strain is not None else vA)
         hold1 = e1grad * (dot(strain, vB) if strain is not None else vB)
-        node.gradient -= hold0 + hold1
-        A.gradient += hold0
-        B.gradient += hold1
+        node.center.gradient -= hold0 + hold1
+        A.center.gradient += hold1
+        B.center.gradient += hold0
   
         matrix = outer(vA, vB)
         matrix += matrix.T
@@ -179,26 +188,26 @@ class Functional(object):
         stress += e1grad * 0.5 * matrix
 
       # bond angle 
-      energy += 2e0 * e0 * e1 * sigma
+      energy += e0 * e1 * sigma
       
       if stress is not None: 
         defA = dot(strain, vA) if strain is not None else vA
         defB = dot(strain, vB) if strain is not None else vB
-        hold0 = 1.5 * e1 * sigma / lengthA * scale2 * defA
-        hold1 = 1.5 * e1 * sigma / lengthB * scale2 * defB
-        hold3 = 1.5 * e0 * sigma / mean_length * scale2 * defA
-        hold4 = 1.5 * e0 * sigma / mean_length * scale2 * defB
+        hold0 = 1.5 * e1 * sigma / lengthA * scale2 * defA                     \
+                + 0.75 * e0 * sigma / mean_length * scale2 * defB 
+        hold1 = 1.5 * e1 * sigma / lengthB * scale2 * defB                     \
+                + 0.75 * e0 * sigma / mean_length * scale2 * defA
 
-        node.gradient -= hold0 + hold1 + hold3 + hold4
-        A.gradient += hold0 + hold4
-        B.gradient += hold1 + hold3
+
+        node.center.gradient -= hold0 + hold1
+        A.center.gradient += hold0
+        B.center.gradient += hold1
 
         matrix = outer(vA, vB)
-        matrix += matrix.T
-        matrix *= e0 / mean_length
-        matrix += 2e0 * e1 * (1./lengthA + 1./lengthB) * outer(vA, vB) 
+        matrix = 2e0 * e1 * (outer(vA, vA)/lengthA + outer(vB, vB)/lengthB)    \
+                 + e0 / mean_length * (matrix + matrix.T)
         if K0 is not None: matrix = dot(matrix, K0)
-        stress += 0.375 * sigma * scale2 * matrix
+        stress += matrix * 0.375 * sigma * scale2
 
     return energy * 3e0 / 8e0
 

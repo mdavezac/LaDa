@@ -1,7 +1,7 @@
 #include "LaDaConfig.h"
 
 #include <Python.h>
-#define PY_ARRAY_UNIQUE_SYMBOL lada_ce_ARRAY_API
+#define PY_ARRAY_UNIQUE_SYMBOL lada_math_ARRAY_API
 #include <numpy/arrayobject.h>
 
 #include <algorithm>
@@ -198,12 +198,12 @@ namespace LaDa
 
 PyMODINIT_FUNC initcppwrappers(void) 
 {
-  import_array(); // needed for NumPy 
-  LaDa::error::bp_register();
   if (PyType_Ready(LaDa::ce::productiljiterator_type()) < 0) return;
   Py_INCREF(LaDa::ce::productiljiterator_type());
 
   char const doc[] =  "Wrapper around C++ cluster expansion methods.";
   PyObject* module = Py_InitModule3("cppwrappers", LaDa::ce::methods_table, doc);
+  if(not module) return;
+  import_array(); // needed for NumPy 
   PyModule_AddObject(module, "ProductILJ", (PyObject *)LaDa::ce::productiljiterator_type());
 }

@@ -8,7 +8,7 @@ include_directories(${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDES})
 add_library (pyce SHARED ${CE_CC} ${CE_H})
 set_target_properties(pyce PROPERTIES OUTPUT_NAME cppwrappers)
 set_target_properties(pyce PROPERTIES PREFIX "")
-target_link_libraries(pyce ${PYTHON_LIBRARY} ${Boost_PYTHON_LIBRARY} mathlib)
+target_link_libraries(pyce ${PYTHON_LIBRARY} mathlib)
 install(TARGETS pyce DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/ce)
 
 
