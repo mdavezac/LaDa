@@ -94,7 +94,7 @@ class Process(object):
           Holds information about how to launch an mpi-aware process. 
         :type comm: :py:class:`~process.mpi.Communicator`
 
-        :returns: True if process is alread finished.
+        :returns: True if process is already finished.
         
         :raises MPISizeError:
         

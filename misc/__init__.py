@@ -1,6 +1,7 @@
 """ Miscellaneous ressources. """
 __all__ = ['copyfile', 'Changedir', 'read_input', 'exec_input', 'load',
-           'RelativePath', 'LockFile', 'open_exclusive', 'translate_to_regex']
+	   'RelativePath', 'LockFile', 'open_exclusive', 'translate_to_regex',
+           'mkdtemp']
 
 from types import ModuleType
 
@@ -250,31 +251,59 @@ def translate_to_regex(pat):
           res = res + escape(c)
   return res 
 
-def latest_file(filename, *args):
+def latest_file(*args):
   """ Path of latest file.
 
-      Check in each directory wether a file name ``filename`` exists and is
-      non-empty. If there are more than one, returns the latest. If there are
-      none, returns None.
+      Check each argument if it exists and is non-empty and is a file. If there
+      are more than one, returns the latest. If there are none, returns None.
 
 
-      :param str filename: 
-         Unqualified name of the files.
       :param *args:
-         Directories where to check for the file.
+         Path to files for which to perform comparison.
 
       :returns: path to the latest file or None
   """
-  from os.path import join, exists, getsize
+  from os.path import exists, getsize, isfile
   from os import stat
   from operator import itemgetter
   if len(args) == 0: return None
   dummy = []
-  for directory in args: 
-    path = join(directory, filename)
+  for filename in args: 
+    path = RelativePath(filename).path
     if not exists(path): continue
+    if not isfile(path): continue
     if getsize(path) == 0: continue
     dummy.append((path, stat(path).st_mtime))
   if len(dummy) == 0: return None
   dummy = sorted(dummy, key=itemgetter(1))
   return dummy[-1][0]
+
+def mkdtemp(suffix='', prefix='', dir=None):
+    """ Creates and returns temporary directory. 
+        
+	Makes it easier to get all LaDa tmp directories in the same place,
+	while retaining a certain amount of flexibility when on a
+	supercomputer.  It first checks for a PBS_TMPDIR ernvironment variable.
+	If that does not exist, then it checks for a LADA_TMPDIR environment
+	variable. If that does not exist, it checks wether
+	:py:data:`~lada.global_tmpdir` is not None. If that does not exist,
+        then it uses the directory provided in the input. 
+
+	Once ``dir`` has been determined, it calls python's mkdtemp.
+
+	:param suffix: A suffix to the temporary directory
+	:param prefix: A prefix to the temporary directory. 
+	:param dir: Last alternative for root of tmp directories.
+    """
+    from os import environ
+    from tempfile import mkdtemp as pymkdtemp
+    from datetime import datetime
+    from .. import global_tmpdir
+    rootdir = environ.get( 'PBS_TMPDIR',
+                           environ.get('LADA_TMPDIR', global_tmpdir) )
+    if rootdir is None: rootdir = dir
+    rootdir = RelativePath(rootdir).path
+    if len(prefix) == 0: prefix = str(datetime.today())
+    else: prefix = '{0}_{1}'.format( str(datetime.today()).replace(' ', '-'),
+                                     prefix )
+    return pymkdtemp(prefix=prefix, suffix=suffix, dir=rootdir)

@@ -92,7 +92,8 @@ def poscar(path="POSCAR", types=None):
 def castep(file):
   """ Tries to read a castep structure file. """
   from numpy import array, dot
-  from ..error import GrepError, IOError
+  from ..periodic_table import find as find_specie
+  from ..error import IOError, NotImplementedError, input as InputError
   from ..misc import RelativePath
   from . import Structure
   if isinstance(file, str): 
@@ -101,40 +102,75 @@ def castep(file):
     else: file = file.splitlines()
   
   file = [l for l in file]
-  # Look for BLOCK lattice_cart
-  for i, line in enumerate(file): 
-    line = line.split()
-    if line[0].lower() == '%block' and line[1].lower() == 'lattice_cart': break
-  if i >= len(file) - 1:
-    raise GrepError('Could not find lattice_cart block.')
 
-  cell = array( [ file[i+1].split()[:3], file[i+2].split()[:3],
-                  file[i+3].split()[:3] ], dtype='float64') 
+  def parse_input(input):
+    """ Retrieves blocks from CASTEP input file. """
+    current_block = None
+    result = {}
+    for line in file:
+      if current_block is not None:
+        if line.split()[0].lower() == '%endblock': 
+          current_block = None
+          continue
+        result[current_block] += line
+      elif len(line.split()) == 0: continue
+      elif len(line.split()[0]) == 0: continue 
+      elif line.split()[0].lower() == '%block':
+        name = line.split()[1].lower().replace('.', '').replace('_', '')
+        if name in result:
+          raise InputError('Found two {0} blocks in input.'.format(name))
+        result[name] = ""
+        current_block = name
+      else: 
+        name = line.split()[0].lower().replace('.', '').replace('_', '')
+        if name[-1] in ['=' or ':']: name = name[:-1]
+        if name in result:
+          raise InputError('Found two {0} tags in input.'.format(name))
+        data = line.split()[1:]
+        if len(data) == 0: result[name] = None; continue
+        if data[0] in [':', '=']: data = data[1:]
+        result[name] = ' '.join(data)
+    return result
+
+
+  input = parse_input(file)
+  if 'latticecart' in input:
+    data = input['latticecart'].splitlines()
+    if len(data) == 4:
+      raise NotImplementedError('Units cannot be read from CASTEP file')
+    cell = array([l.split() for l in data], dtype='float64')
+  elif 'latticeabc' in input:
+    raise NotImplementedError('Cannot read lattice in ABC format yet.')
+  else: 
+    raise InputError('Could not find lattice block in input.')
+                      
+  # create structure
   result = Structure(cell)
 
-  # now look 
-  for i, line in enumerate(file):
-    line = line.split()
-    if len(line) < 2: continue
-    if line[0].lower() == '%block' and line[1].lower() == 'positions_frac':
-      break
-  if i >= len(file) - 1:
-    raise GrepError('Could not find positions_frac block.')
-  for line in file[i+1:]:
+  # now look for position block.
+  if 'positionsfrac' in input: posdata, isfrac = input['positionsfrac'], True
+  elif 'positionsabs' in input: posdata, isfrac = input['positionsabs'], False
+  else: raise InputError('Could not find position block in input.')
+  # and parse it
+  for line in posdata.splitlines():
     line = line.split()
     if len(line) < 2: 
       raise IOError( 'Wrong file format: line with less '                      \
-                     'than two items in positions_frac block.')
-    if line[0].lower() == '%endblock' and line[1].lower() == 'positions_frac':
-      break
+                     'than two items in positions block.')
     pos = array(line[1:4], dtype='float64')
-    pos = dot(result.cell, pos)
-    result.add_atom(pos=pos, type=line[0])
+    if isfrac: pos = dot(result.cell, pos)
+    try: dummy = int(line[0])
+    except: type = line[0]
+    else: type = find_specie(atomic_number=dummy).symbol
+    result.add_atom(pos=pos, type=type)
+    if len(line) == 5: result[-1].magmom = float(line[4])
   return result
   
 def crystal(file='fort.34'):
   """ Reads CRYSTAL's external format. """
-  from numpy import array
+  from numpy import array, abs, zeros, any, dot
+  from numpy.linalg import inv
+  from ..crystal import which_site
   from ..misc import RelativePath
   from ..error import IOError
   from ..periodic_table import find as find_specie
@@ -164,6 +200,7 @@ def crystal(file='fort.34'):
     except StopIteration: raise IOError('Premature end of stream.')
     else: op[:3] = op[:3].copy().T
     result.spacegroup.append(op)
+  result.spacegroup = array(result.spacegroup)
 
   # read atoms.
   try: N = int(file.next())
@@ -173,7 +210,18 @@ def crystal(file='fort.34'):
     try: line = file.next().split()
     except StopIteration: raise IOError('Premature end of stream.')
     else: type, pos = int(line[0]), array(line[1:4], dtype='float64')
-    if type < 100: type = find_specie(atomic_number=type)
-    result.add_atom(pos=pos, type=type)
+    if type < 100: type = find_specie(atomic_number=type).symbol
+    result.add_atom(pos=pos, type=type, asymmetric=True)
+
+  # Adds symmetrically equivalent structures.
+  identity = zeros((4, 3), dtype='float64')
+  for i in xrange(3): identity[i, i] == 1
+  symops = [u for u in result.spacegroup if any(abs(u - identity) > 1e-8)]
+  invcell = inv(result.cell)
+  for atom in [u for u in result]:
+    for op in symops:
+      pos = dot(op[:3], atom.pos) + op[3]
+      if which_site(pos, result, invcell=invcell) == -1:
+        result.add_atom(pos=pos, type=atom.type, asymmetric=False)
 
   return result

@@ -163,32 +163,46 @@ debug_queue = "queue", "debug"
 """
 qsub_exe = "sbatch"
 """ Qsub/sbatch executable. """
+qsub_array_exe = None
+""" Qsub for job arrays.
+
+    If not None, if should be a tuple consisting of the command to launch job
+    arrays and the name of the environment variable holding the job index. 
+
+    >>> qsub_array_exe = 'qsub -J 1-{nbjobs}', '$PBS_ARRAY_INDEX'
+
+    The format ``{array}`` will receive the arrays to launch.
+"""
 qdel_exe = 'scancel'
 """ Qdel/scancel executable. """
 
 default_pbs = { 'account': accounts[0], 'walltime': "06:00:00", 'nnodes': 1,
-                'ppn': 1 }
+                'ppn': 1, 'header': "", 'footer': "" }
 """ Defaults parameters filling the pbs script. """
-pbs_string =  "#! /bin/bash/\n"\
-              "#SBATCH --account={account}\n"\
-              "#SBATCH --time={walltime}\n"\
-              "#SBATCH -N={nnodes}\n"\
-              "#SBATCH -e={err}\n"\
-              "#SBATCH -o={out}\n"\
-              "#SBATCH -J={name}\n"\
-              "#SBATCH -D={directory}\n\n"\
-              "python {scriptcommand}\n"
+pbs_string =  "#! /bin/bash/\n"                                                \
+              "#SBATCH --account={account}\n"                                  \
+              "#SBATCH --time={walltime}\n"                                    \
+              "#SBATCH -N={nnodes}\n"                                          \
+              "#SBATCH -e={err}\n"                                             \
+              "#SBATCH -o={out}\n"                                             \
+              "#SBATCH -J={name}\n"                                            \
+              "#SBATCH -D={directory}\n\n"                                     \
+              "{header}\n"                                                     \
+              "python {scriptcommand}\n"                                       \
+              "{footer}\n"
 """ Default pbs/slurm script. """
 
 do_multiple_mpi_programs = True
 """ Whether to get address of host machines at start of calculation. """
 
 figure_out_machines =  'from socket import gethostname\n'                      \
-                       'from boost.mpi import world\n'                         \
-                       'for i in xrange(world.size):\n'                        \
-                       '  if i == world.rank:\n'                               \
-                       '    print "LADA MACHINE HOSTNAME:", gethostname()\n'   \
-                       '  world.barrier()\n'                            
+                       'from boost.mpi import gather, world\n'                 \
+                       'hostname = gethostname()\n'                            \
+                       'results = gather(world, hostname, 0)\n'                \
+                       'if world.rank == 0:\n'                                 \
+                       '  for hostname in results:\n'                          \
+                       '    print "LADA MACHINE HOSTNAME:", hostname\n'        \
+                       'world.barrier()\n'
 """ Figures out machine hostnames for a particular job.
 
     Can be any programs which outputs each hostname (once per processor),

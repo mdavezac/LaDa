@@ -43,13 +43,6 @@ class RelativePath(object):
       ValueError: Cannot set relative with absolute path. 
 
   """
-  global_envvar = "~"
-  """ Global envvar position.
-
-      If envvar is set to None in any single instance, than this value takes
-      over. Since it is a class attribute, it should be global to all instances
-      with ``self.envvar is None``. 
-  """
   def __init__(self, path=None, envvar=None, hook=None):
     """ Initializes the relative directory. 
     
@@ -105,14 +98,27 @@ class RelativePath(object):
     from os import getcwd
     from os.path import expanduser, expandvars, normpath
     from . import Changedir
+    from .. import global_root
     if self._envvar is None:
-       with Changedir(expanduser(self.global_envvar)) as pwd: return getcwd()
+      if global_root is None: return '/'
+      if '$' not in global_root and '~' not in global_root:
+        return normpath(global_root)
+      # Need to figure it out. 
+      try:
+         with Changedir(expanduser(global_root)) as pwd: return getcwd()
+      except OSError as e: 
+        raise IOError( 'Could not figure out directory {0}.\n'
+                       'Caught error OSError {1.errno}: {1.message}'
+                       .format(global_root, e) )
     return normpath(expandvars(expanduser(self._envvar)))
   @envvar.setter
   def envvar(self, value):
+
+    path = self.path if self._relative is not None else None
     if value is None: self._envvar = None
     elif len(value.rstrip().lstrip()) == 0: self._envvar = None
     else: self._envvar = value
+    if path is not None: self.path = path
     self.hook(self.path)
 
   @property 
@@ -123,7 +129,7 @@ class RelativePath(object):
     return normpath(join(self.envvar, self._relative))
   @path.setter
   def path(self, value):
-    from os.path import relpath, expandvars, expanduser
+    from os.path import relpath, expandvars, expanduser, abspath
     from os import getcwd
     if value is None: value = getcwd()
     if isinstance(value, tuple) and len(value) == 2: 
@@ -131,16 +137,21 @@ class RelativePath(object):
       self.relative = value[1]
       return
     if len(value.rstrip().lstrip()) == 0: value = getcwd()
-    self._relative = relpath(expanduser(expandvars(value)), self.envvar) 
+    # This is a python bug where things don't work out if the root path is '/'.
+    # Seems corrected after 2.7.2
+    if self.envvar == '/': 
+      self._relative = abspath(expanduser(expandvars(value)))[1:]
+    else:
+      self._relative = relpath(expanduser(expandvars(value)), self.envvar) 
     self.hook(self.path)
 
   @property
   def unexpanded(self):
     """ Unexpanded path (eg with envvar as is). """
     from os.path import join
-    e = self.global_envvar if self._envvar is None else self._envvar
+    from .. import global_root
+    e = global_root if self._envvar is None else self._envvar
     return e if self._relative is None else join(e, self._relative)
-
 
   @property
   def hook(self):

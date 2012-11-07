@@ -107,7 +107,29 @@ Slab = Slabcut
 """ Alias for :py:class`~lada.dftcrystal.geometry.Slabcut`. """
 
 class DisplaceAtoms(GeomKeyword):
-  """ Displaces atoms. """
+  """ Displaces atoms.
+  
+      This keywords applies a displacement to a set of atoms, identified by
+      their labels:
+
+      >>> from lada.dftcrystal import DisplaceAtoms
+      >>> disp = DisplaceAtoms(keepsym=True)                                   \\
+      ...                     .add_atom(0, 0.01, 0.002, 1)                     \\
+      ...                     .add_atom(0, -0.01, 0.05, 5)
+      >>> structure.append(disp)
+
+
+      The above creates a displacement operations for two atoms, labelled 1 and
+      5, as well as to their symmetric equivalent (``keepsym=True``). The
+      displacements are in cartesian coordinates. It would look as follows in
+      CRYSTAL_'s input:
+
+        | KEEPSYMM
+        | ATOMDISP
+        | 2
+        | 1 0.0 0.01 0.002
+        | 5 0.0 -0.01 0.05
+  """
   keyword = 'atomdisp'
   """ CRYSTAL keyword. """
   def __init__(self, **kwargs):
@@ -476,18 +498,31 @@ class Elastic(GeomKeyword):
   """ CRYSTAL keyword """
   def __init__(self, matrix=None, is_epsilon=True, constvol=False, **kwargs):
     """ Creates cell-shape deformation. """
+    from numpy import array
     super(Elastic, self).__init__(**kwargs)
-    self.matrix = None
-    self.is_epsilon = True
-    self.const_volume = False
+    self.matrix = matrix
+    """ Deformation matrix. 
+
+        It may or may not include the identity, depending on
+        :py:attr:`is_epsilon`.
+    """
+    if matrix is not None: self.matrix = array(matrix)
+    self.is_epsilon = is_epsilon
+    """ Whether the matrix includes the identity. """
+    self.const_volume = constvol
+    """ Whether this is a constant volume deformation. """
   @property
   def raw(self):
     if self.matrix is None: return ""
     type = 2 if self.is_epsilon else 1
     if not self.const_volume: type = -type
     result = str(type) + '\n'
-    for i in xrange(3):
-      result += ' '.join(str(self.matrix[i,j]) for j in xrange(3)) + '\n'
+    if self.is_epsilon:
+      for i in xrange(3):
+        result += ' '.join(str(self.matrix[i,j]) for j in xrange(3)) + '\n'
+    else: 
+      for i in xrange(3):
+        result += ' '.join(str(self.matrix.T[i,j]) for j in xrange(3)) + '\n'
     return result
   @raw.setter
   def raw(self, value):
@@ -497,6 +532,7 @@ class Elastic(GeomKeyword):
     self.is_epsilon = abs(type) == 2
     self.const_volume = type > 0
     self.matrix = array([u.split()[:3] for u in value[1:4]], dtype='float64')
+    if self.is_epsilon: self.matrix = self.matrix.T
 
   def __repr__(self):
     """ Representation of this object. """
@@ -552,7 +588,7 @@ class Supercell(BaseKeyword):
 
   def __repr__(self):
     """ Dumps object to stream. """
-    if self.matrix is None: return '{0.__class__.__name__}'.format(self)
+    if self.matrix is None: return '{0.__class__.__name__}()'.format(self)
     return '{0.__class__.__name__}({1!r})'                                     \
            .format(self, self.matrix.tolist())
 
@@ -588,7 +624,7 @@ class Supercell(BaseKeyword):
   def read_input(self, tree, owner=None):
     from numpy import array
     self.matrix = array(tree.split(), dtype='float64')                      \
-                          .round().astype('int64')
+                       .round().astype('int64')
 
 class Supercon(Supercell):
   keyword = 'supercon'

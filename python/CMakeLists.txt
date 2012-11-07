@@ -1,6 +1,6 @@
 set(PYLADA_HEADERS debug.hpp misc.hpp numpy_types.h std_map.hpp 
                    std_map.impl.hpp std_vector.hpp xml.hpp)
-set(PYLADA_PY error.py)
+set(PYLADA_PY error.py onexit.py)
 
 if(NOT noinstall_headers)
   install(FILES ${PYLADA_HEADERS} DESTINATION include/LaDa/python)
@@ -19,9 +19,9 @@ endif(ipython_interface)
 
 
 set(which_packages "'math', 'opt', 'crystal'") #, 'physics', 'periodic_table'")
-# if(pcm_functional) 
-#   set(which_packages "${which_packages}, 'pcm'")
-# endif(pcm_functional) 
+if(pcm_functional) 
+  set(which_packages "${which_packages}, 'pcm'")
+endif(pcm_functional) 
 if(ce_package) 
   set(which_packages "${which_packages}, 'ce'")
 endif(ce_package) 
@@ -62,7 +62,7 @@ install(FILES ${PYLADA_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada)
 # target_link_libraries(pyerror ${Boost_PYTHON_LIBRARY})
 # set_target_properties(pyerror PROPERTIES PREFIX "")
 # set_target_properties(pyerror PROPERTIES OUTPUT_NAME error)
-set (EXTRA_FILES exceptions.h object.h quantity.h wrap_numpy.h wrap_numpy.h)
+set (EXTRA_FILES exceptions.h object.h wrap_numpy.h wrap_numpy.h)
 
 if(compile_tests OR compile_debug_tests)
   add_subdirectory(tests)

@@ -77,7 +77,7 @@ def explore(self, cmdl):
       print "Path to job folder: ", interactive.jobfolder_path
     return
 
-  options = ['', "errors", "results", "all"]
+  options = ['', "errors", "results", "all", 'running']
   if hasattr(self, "magic_qstat"): options.append("running")
   if args.type not in options: 
     print "Unknown TYPE argument {0}.\nTYPE can be one of {1}."                \
@@ -89,19 +89,24 @@ def explore(self, cmdl):
   except: return
 
   # now does special stuff if requested.
+  # First checks for errors. Errors are jobs which cannot be determined as
+  # running and have failed.
   if args.type == "errors": 
     if interactive.jobfolder_path is None: 
       print "No known path/file for current job-folder.\n"\
             "Please save to file first."
       return
-#   running_jobs = set( self.magic("qstat").fields(-1)) if hasattr(self, "magic_qstat") else set([])
     for name, job in interactive.jobfolder.iteritems():
       directory = join(dirname(interactive.jobfolder_path), name)
       extract = job.functional.Extract(directory)
+      # successful jobs are not errors.
       if extract.success: job.tag()
-#     elif name.replace("/", ".") in running_jobs: job.tag()
+      # running jobs are not errors either.
+      elif getattr(extract, 'is_running', False) is True: job.tag()
+      # what's left is an error.
       else: job.untag()
 
+  # Look only for jobs which are successfull.
   if args.type == "results": 
     if interactive.jobfolder_path is None: 
       print "No known path/file for current job-folder.\n"\
@@ -112,13 +117,19 @@ def explore(self, cmdl):
       if not job.functional.Extract(join(directory,name)).success: job.tag()
       else: job.untag()
 
-# elif args.type == "running": 
-#   running_jobs = set( ip.magic("qstat").fields(-1))                          \
-#                       if hasattr(self, "magic_qstat") else set([] )
-#   for name, job in interactive.jobfolder.iteritems():
-#     if name.replace("/", ".") not in running_jobs: job.tag()
-#     else: job.untag()
+  # Look only for jobs which are running (and can be determined as such).
+  elif args.type == "running": 
+    if interactive.jobfolder_path is None: 
+      print "No known path/file for current job-folder.\n"\
+            "Please save to file first."
+      return
+    for name, job in interactive.jobfolder.iteritems():
+      directory = join(dirname(interactive.jobfolder_path), name)
+      extract = job.functional.Extract(directory)
+      if getattr(extract, 'is_running', False) is True: job.untag()
+      else: job.tag()
 
+  # All jobs without restriction.
   elif args.type == "all": 
     if interactive.jobfolder_path is None: return
     for job in interactive.jobfolder.itervalues(): job.untag()
@@ -129,10 +140,9 @@ def _explore_impl(self, args):
   from ..jobfolder import load, JobFolder
   from ..jobfolder import JobParams, MassExtract as Collect
   from ..misc import LockFile, RelativePath
-  from . import get_shell
   from lada import interactive
 
-  shell = get_shell(self)
+  shell = get_ipython()
 
   # case where we want to change the way the current dictionary is read.
   if len(args.jobfolder) == 0:
@@ -206,7 +216,7 @@ def completer(self, event):
   elif "--expression" in data: data.remove("--expression"); has_expr = True
   else: results = ["--file", "--expression"]
   
-  results.extend(["errors", "results", "all"])
+  results.extend(["errors", "results", "running", "all"])
   if len(data) == 0: data = [''] 
   elif event.line[-1] == ' ': data.append('')
   if not has_file:

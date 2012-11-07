@@ -1,14 +1,66 @@
 """ Provides a quick launch of jmol. """
+jmol_processes = []
+""" List of jmol processes. """
+def atexit_jmol(X):
+  x = X()
+  if x is not None: x.__del__()
+  
+class Jmol(object):
+  """ Holds and manages jmol process. """
+  def __init__(self, structure):
+    """ Creates the jmol process. """
+    from tempfile import NamedTemporaryFile
+    from subprocess import Popen
+    from os import remove 
+    from atexit import register
+    from weakref import ref
+    from ..crystal import write
+    from .. import jmol_program
+    try: 
+      with NamedTemporaryFile(delete=False) as file:
+        name = file.name
+        file.write(write.castep(structure))
+    except:
+      try: remove(name)
+      except: pass
+    else:
+      self.name = name
+      self.stdout = open('/dev/null', 'w')
+      self.stderr = open('/dev/null', 'w')
+      self.process = Popen( jmol_program.split() + [name], stdout=self.stdout,
+                            stderr=self.stderr) #, shell=True )
+      jmol_processes.append(self)
+      register(atexit_jmol, ref(self))
+  def __del__(self):
+    """ Cleans up after process. """
+    if 'process' in self.__dict__:
+      try: self.process.terminate()
+      except: pass
+      finally: del self.process
+    if 'stdout' in self.__dict__:
+      try: self.stdout.close()
+      except: pass
+      finally: del self.stdout
+    if 'stderr' in self.__dict__:
+      try: self.stderr.close()
+      except: pass
+      finally: del self.stderr
+    if 'name' in self.__dict__:
+      try:
+        from os import remove
+        remove(self.name)
+      except: pass
+      finally: del self.name
+    try: 
+      procs = [id(u) for u in jmol_processes]
+      if id(self) in procs:
+        jmol_processes.pop(procs.index(id(self)))
+    except: pass
+    
 def jmol(self, event):
   """ Launches JMOL on a structure. """
   from inspect import ismethod
-  from tempfile import NamedTemporaryFile
-  from subprocess import call
-  from os import remove
   from numpy import all, abs, max, min
-  from ..crystal import write
-  from .. import jmol_program
-  from . import get_shell
 
   if '-h' in event.split() or '--help' in event.split(): 
     print  "usage: %jmol [-h] structure\n"                                     \
@@ -24,7 +76,7 @@ def jmol(self, event):
   if len(event.rstrip().lstrip()) == 0:
     print '%jmol requires at least one argument.'
     return
-  shell = get_shell(self)
+  shell = get_ipython()
   if event.rstrip().lstrip() in shell.user_ns:
     structure = shell.user_ns[event.rstrip().lstrip()]
   else: 
@@ -50,9 +102,4 @@ def jmol(self, event):
     structure.cell[0, 0] = mini + maxi
     structure.cell[0, 0] *= 1.1
 
-  with NamedTemporaryFile(delete=False) as file:
-    name = file.name
-    file.write(write.castep(structure))
-  try: call(jmol_program + ' ' + name, shell=True)
-  except KeyboardInterrupt: pass
-  finally: remove(name)
+  Jmol(structure)

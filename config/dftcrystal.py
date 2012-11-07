@@ -33,7 +33,8 @@ CRYSTAL_filenames = { 'crystal.out':   '{0}.out',      # output file
                       'OPTHESS.DAT':   '{0}.opthess',  # formatted hessian
                       'OPTINFO.DAT':   '{0}.optinfo',  # restart info
                       'PPAN.DAT':      '{0}.ppan',     # Muliken population analysis
-                      'ERROR':         '{0}.err'       # Error file in parallel CRYSTAL
+                      'ERROR':         '{0}.err',      # Error file in parallel CRYSTAL
+                      'SCFOUT.LOG':    '{0}.scflog'    # SCF log
                     }
 """ Filnames of crystal programs. 
 
@@ -51,7 +52,8 @@ CRYSTAL_propnames = { 'fort.25':      '{0}.f25',      # bands, maps, doss data
                       'POTC.DAT':     '{0}.POTC',     # exact electrostatic potential
                       'fort.31':      '{0}.prop3d',   # charge/spin density/potential
                       'fort.8':       '{0}.localwf',  # wannier function
-                      'freqinfo.DAT': '{0}.freqinfo'  # info for freq restart
+                      'freqinfo.DAT': '{0}.freqinfo', # info for freq restart
+                      'BAND.DAT':     '{0}.bands'     # band-structure info
                     }
 CRYSTAL_delpatterns = ['core', 'ERROR.*']
 """ Delete files with these patterns. 
@@ -60,9 +62,6 @@ CRYSTAL_delpatterns = ['core', 'ERROR.*']
     should be removed. This is only applied if the working directory is the
     thesame as the output directory.
 """
-
-crystal_program ='crystal'
-""" Path to crystal executable. """
 
 def crystal_program(self=None, structure=None, comm=None):
   """ Path to serial or mpi or MPP crystal program version. 
@@ -82,3 +81,6 @@ def crystal_program(self=None, structure=None, comm=None):
 
 crystal_inplace = True
 """ Wether to perform calculation in-place or in a tmpdir. """
+
+properties_program = 'properties'
+""" Path to single-electron CRYSTAL properties program. """

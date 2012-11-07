@@ -58,7 +58,7 @@ class ExtractBase(object):
     regex = compile('#+ FUNCTIONAL #+\n((.|\n)*)\n#+ END FUNCTIONAL #+')
     with self.__outcar__() as file: result = regex.search(file.read())
     if result is None: return None
-    return exec_input(result.group(1)).functional
+    return exec_input(result.group(1)).vasp
 
   @property
   def success(self):
@@ -1365,11 +1365,37 @@ class ExtractBase(object):
                    dtype="float64" ) * eV / angstrom
 
 
+  @property
+  @make_cached
+  def errors(self):
+    """ List of errors. 
+    
+        Errors that are encountered more than once are not repeated.
+    """
+    errors = []
+    with self.__outcar__() as file:
+      for line in file:
+        if 'ERROR'.lower() in line.lower() and line[-1] not in errors: 
+          errors.append(line[:-1])
+    return errors
+  @property
+  @make_cached
+  def warnings(self):
+    """ List of warnings. 
+    
+        Warnings that are encountered more than once are not repeated.
+    """
+    warnings = []
+    with self.__outcar__() as file:
+      for line in file:
+        if 'WARNING' in line and line[-1] not in warnings:
+          warnings.append(line[:-1])
+    return warnings
 
   def __dir__(self):
     """ Attributes and members of this class. 
 
-	Removes dft and gw attributes if this is not a dft or gw calculation.
+        Removes dft and gw attributes if this is not a dft or gw calculation.
     """
     result = set([u for u in dir(self.__class__) if u[0] != '_'])              \
              | set([u for u in self.__dict__.iterkeys() if u[0] != '_' ])

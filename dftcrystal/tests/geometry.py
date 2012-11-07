@@ -38,7 +38,45 @@ def test_supercell():
   else: raise Exception()
 
 
+def test_elastic():
+  """ Test elastic keyword. """
+  from numpy import array, all, abs, identity, dot
+  from lada.dftcrystal import Crystal, Elastic
+
+  epsilon = array([[0, 0, 0], [0, 0, 0], [0, 0, 0.1]])
+  crystal = Crystal(227, 5.43).add_atom(0.125, 0.125, 0.125, 'Si')
+  structure = crystal.eval()
+  crystal.append(Elastic([[0, 0, 0], [0, 0, 0], [0, 0, 0.1]], keepsym=False))
+  assert all(abs(dot(identity(3) + epsilon, structure.cell) - crystal.eval().cell) < 1e-8)
+  assert all(abs(crystal.eval()[0].pos - dot(identity(3) + epsilon, structure[0].pos)) < 1e-8)
+  assert all(abs(crystal.eval()[1].pos - dot(identity(3) + epsilon, structure[1].pos)) < 1e-8)
+  assert abs(crystal.eval()[0].pos[1] - crystal.eval()[0].pos[0]) < 1e-8
+  assert abs(crystal.eval()[1].pos[2] / crystal.eval()[1].pos[1] - 1.1) < 1e-8
+  assert abs(crystal.eval()[1].pos[1] - crystal.eval()[1].pos[0]) < 1e-8
+  z = dot(epsilon, structure.cell)
+  crystal[-1].matrix = z
+  crystal[-1].is_epsilon = False
+  assert all(abs(dot(identity(3) + epsilon, structure.cell) - crystal.eval().cell) < 1e-8)
+  assert all(abs(crystal.eval()[0].pos - dot(identity(3) + epsilon, structure[0].pos)) < 1e-8)
+  assert all(abs(crystal.eval()[1].pos - dot(identity(3) + epsilon, structure[1].pos)) < 1e-8)
+
+  epsilon = array([[0, 0, 0], [0, 0, 0], [0, 0.1, 0]])
+  crystal[-1].matrix = epsilon
+  crystal[-1].is_epsilon = True
+  assert all(abs(dot(identity(3) + epsilon, structure.cell) - crystal.eval().cell) < 1e-8)
+  assert all(abs(crystal.eval()[0].pos - dot(identity(3) + epsilon, structure[0].pos)) < 1e-8)
+  assert all(abs(crystal.eval()[1].pos - dot(identity(3) + epsilon, structure[1].pos)) < 1e-8)
+
+  z = dot(epsilon, structure.cell)
+  crystal[-1].matrix = z
+  crystal[-1].is_epsilon = False
+  assert all(abs(dot(identity(3) + epsilon, structure.cell) - crystal.eval().cell) < 1e-8)
+  assert all(abs(crystal.eval()[0].pos - dot(identity(3) + epsilon, structure[0].pos)) < 1e-8)
+  assert all(abs(crystal.eval()[1].pos - dot(identity(3) + epsilon, structure[1].pos)) < 1e-8)
+
+
 
 if __name__ == '__main__':
   test_crystal()
   test_supercell()
+  test_elastic()

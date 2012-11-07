@@ -9,7 +9,7 @@ if(NOT compile_debug_tests)
   add_test(crystal_atom_self python ${CMAKE_CURRENT_SOURCE_DIR}/atom_self.py ${CMAKE_CURRENT_BINARY_DIR})
 
 
-  add_test(crystal_structure python ${CMAKE_CURRENT_SOURCE_DIR}/structure.py ${CMAKE_CURRENT_BINARY_DIR})
+  add_test(crystal_structure python ${CMAKE_CURRENT_SOURCE_DIR}/structure.py)
   add_test(crystal_structure_memory python ${CMAKE_CURRENT_SOURCE_DIR}/structure_memory.py ${CMAKE_CURRENT_BINARY_DIR})
 
   add_test(crystal_utilities python ${CMAKE_CURRENT_SOURCE_DIR}/utilities.py ${CMAKE_CURRENT_BINARY_DIR})

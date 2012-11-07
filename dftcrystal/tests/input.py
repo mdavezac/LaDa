@@ -136,6 +136,41 @@ def test():
   assert otherstring == b.print_input(structure=structure)
   
 
+def test_setprint():
+  from pickle import loads, dumps
+  from numpy import array, all
+  from lada.dftcrystal.input import SetPrint
+  a = SetPrint()
+  assert a.output_map() is None
+  assert len(eval(repr(a), {'SetPrint': SetPrint}).options) == 0
+  assert len(loads(dumps(a)).options) == 0
+  b = SetPrint()
+  b.read_input(a.output_map())
+  assert len(b.options) == 0
+
+  a[0] = 5
+  assert len(a.options) == 1
+  assert a.options[0] == 5
+  assert a[0] == 5
+  assert all(array(a.output_map()['setprint'].split(), dtype='int64') == [1, 0, 5])
+  a[5] = 0
+  assert len(a.options) == 2
+  assert a.options[5] == 0
+  assert a[5] == 0
+  assert all(array(a.output_map()['setprint'].split(), dtype='int64') == [2, 0, 5, 5, 0])
+
+  assert len(eval(repr(a), {'SetPrint': SetPrint}).options) == 2
+  assert eval(repr(a), {'SetPrint': SetPrint}).options[0] == 5
+  assert eval(repr(a), {'SetPrint': SetPrint}).options[5] == 0
+  assert len(loads(dumps(a)).options) == 2
+  assert loads(dumps(a)).options[0] == 5
+  assert loads(dumps(a)).options[5] == 0
+  b = SetPrint()
+  b.read_input(a.output_map()['setprint'])
+  assert len(b.options) == 2
+  assert b[0] == 5 and b[5] == 0
+
 
 if __name__ == '__main__': 
   test()
+  test_setprint()

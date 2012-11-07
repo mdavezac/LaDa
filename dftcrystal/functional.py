@@ -1,6 +1,6 @@
 __docformat__ = "restructuredtext en"
 from ..tools import stateless, assign_attributes
-from .extract import Extract
+from .extract import Extract as ExtractBase
 
 class Functional(object):
   """ Wrapper for the CRYSTAL program. 
@@ -48,7 +48,7 @@ class Functional(object):
           be written as ``functional.scf.tolinteg = ...``.
 
   """
-  Extract = Extract
+  Extract = ExtractBase
   """ Extraction class. """
   __ui_name__ = 'functional'
   """ Name used in user-friendly representation """
@@ -82,9 +82,9 @@ class Functional(object):
 
   def __getattr__(self, name):
     """ Pushes scf stuff into instance namespace. """
-    from ..error import ValueError
+    from ..error import AttributeError
     if name in self.scf._input: return getattr(self.scf, name)
-    raise ValueError('Unknown attribute {0}.'.format(name))
+    raise AttributeError('Unknown attribute {0}.'.format(name))
   def __setattr__(self, name, value):
     """ Pushes scf stuff into instance namespace. """
     from ..tools.input import BaseKeyword
@@ -187,21 +187,17 @@ class Functional(object):
 
   def guess_workdir(self, outdir):
     """ Tries and guess working directory. """
-    from os import environ, getpid
-    from os.path import join
-    from datetime import datetime
+    from ..misc import mkdtemp
     from .. import crystal_inplace
-    if crystal_inplace: return outdir
-    return join( environ.get('PBS_TMPDIR', outdir),
-                 '{0!s}.{1}'.format(datetime.today(), getpid())\
-                            .replace(' ', '_') )
+    return outdir if crystal_inplace else mkdtemp(prefix='dftcrystal') 
 
-  def bringup(self, structure, workdir, restart, test):
+  def bringup(self, structure, outdir, workdir, restart, test):
     """ Creates file environment for run. """
-    from os.path import join
+    from os.path import join, abspath, samefile, lexists
+    from os import symlink, remove
     from ..misc import copyfile, Changedir
     from ..error import ValueError
-    from .. import CRYSTAL_filenames
+    from .. import CRYSTAL_filenames as filenames
 
     # sanity check
     if len(self.basis) == 0:
@@ -210,12 +206,12 @@ class Functional(object):
     with Changedir(workdir) as cwd:
       # first copies file from current working directory
       if restart is not None: 
-        for key, value in CRYSTAL_filenames.iteritems():
+        for key, value in filenames.iteritems():
           copyfile( value.format('crystal'), key, nocopyempty=True,
                     symlink=False, nothrow="never" )
       # then copy files from restart.
       if restart is not None:
-        for key, value in CRYSTAL_filenames.iteritems():
+        for key, value in filenames.iteritems():
           copyfile( join(restart.directory, value.format('crystal')), 
                     key, nocopyempty=True, symlink=False, 
                     nothrow="never" )
@@ -225,6 +221,43 @@ class Functional(object):
                                  workdir=workdir, test=test, filework=True )
       with open('crystal.d12', 'w') as file: file.write(string)
 
+    with Changedir(outdir) as cwd: pass
+    if not samefile(outdir, workdir):
+      # Creates symlink to make sure we keep working directory.
+      with Changedir(outdir) as cwd:
+        with open('crystal.d12', 'w') as file: file.write(string)
+        with open('crystal.out', 'w') as file: pass
+        with open('crystal.err', 'w') as file: pass
+        with open('ERROR', 'w') as file: pass
+        # creates symlink files.
+        for filename in ['crystal.err', 'crystal.out', 'ERROR']:
+          if lexists(join(workdir, filename)):
+            try: remove( join(workdir, filename) )
+            except: pass
+          symlink(abspath(filename), abspath(join(workdir, filename)))
+        # for optgeom, make sure we bring SCFOUT.LOG 
+        if self.optgeom.enabled:
+          if self.optgeom.onelog is None or self.optgeom.onelog == False:
+            outname = filenames['SCFOUT.LOG'].format('crystal')
+            with open(outname, 'w') as file: pass
+            if lexists(join(workdir, 'SCFOUT.LOG')):
+              try: remove(join(workdir, 'SCFOUT.LOG'))
+              except: pass
+            try: 
+              symlink( abspath(outname),
+                       abspath(join(workdir, 'SCFOUT.LOG')) )
+            except: pass
+            
+        if lexists('workdir'): 
+          try: remove('workdir')
+          except: pass
+        try: symlink(workdir, 'workdir')
+        except: pass
+    
+    # creates a file in the directory, to say we are going to work here
+    with open(join(outdir, '.lada_is_running'), 'w') as file: pass
+        
+
   def bringdown(self, structure, workdir, outdir):
     """ Copies files back to output directory. 
     
@@ -233,9 +266,11 @@ class Functional(object):
     """
     from itertools import chain
     from os import remove
-    from os.path import join, samefile
+    from os.path import join, samefile, exists
     from shutil import rmtree
     from glob import iglob
+    from .external import External
+    from ..crystal import write
     from ..misc import copyfile, Changedir
     from .. import CRYSTAL_filenames, CRYSTAL_delpatterns
 
@@ -253,38 +288,53 @@ class Functional(object):
         if input[-1] != '\n': input += '\n'
         file.write(input)
         file.write('{0} END {1} {0}\n'.format(header, 'INPUT FILE'))
+        if isinstance(structure, External):
+          file.write('{0} {1} {0}\n'.format(header, 'INITIAL STRUCTURE'))
+          file.write(write.crystal(structure.initial, None))
+          file.write('{0} END {1} {0}\n'.format(header, 'INITIAL STRUCTURE'))
         file.write(output)
         file.write('\n{0} {1} {0}\n'.format(header, 'FUNCTIONAL'))
         file.write(self.__repr__(defaults=False))
         file.write('\n{0} END {1} {0}\n'.format(header, 'FUNCTIONAL'))
       if len([0 for filename in iglob(join(workdir, 'ERROR.*'))]):
-        with open('crystal.err', 'w') as out:
-          for filename in iglob(join(workdir, 'ERROR.*')):
-            with open(filename, 'r') as file: out.write(file.read() + '\n')
+        string = ""
+        for filename in iglob(join(workdir, 'ERROR.*')):
+          with open(filename, 'r') as file: string += file.read() + '\n'
+        with open('crystal.err', 'w') as out: out.write(string)
         lines = []
         with open('crystal.err', 'r') as out:
           for line in out:
+            if len(line.rstrip().lstrip()) == 0: continue
             if line not in lines: lines.append(line.rstrip().lstrip())
         with open('crystal.out', 'a') as out:
-          out.write('{0} {1} {0}\n'.format(header, 'ERRROR FILE'))
+          out.write('{0} {1} {0}\n'.format(header, 'ERROR FILE'))
           out.write('\n'.join(lines))
-          out.write('{0} END {1} {0}\n'.format(header, 'ERRROR FILE'))
+          if len(lines) > 0: out.write('\n')
+          out.write('{0} END {1} {0}\n'.format(header, 'ERROR FILE'))
+
+      # remove 'is running' file marker.
+      if exists('.lada_is_running'):
+        try: remove('.lada_is_running')
+        except: pass
     
-    if Extract(outdir).success and not samefile(outdir, workdir):
-      rmtree(workdir)
     if samefile(outdir, workdir):
       with Changedir(workdir) as cwd:
         for filepath in chain(*[iglob(u) for u in CRYSTAL_delpatterns]):
           try: remove(filepath)
           except: pass
-      
-
+    elif ExtractBase(outdir).success:
+      try: rmtree(workdir)
+      except: pass
+      try: remove(join(outdir, 'workdir'))
+      except: pass
+    
+    
   
   @assign_attributes(ignore=['overwrite', 'comm', 'workdir'])
   @stateless
   def iter(self, structure, outdir=None, workdir=None, comm=None,
            overwrite=False, test=False, **kwargs):
-    """ Performs a vasp calculation 
+    """ Performs a CRYSTAL calculation 
      
         If successfull results (see :py:attr:`extract.Extract.success`) already
         exist in outdir, calculations are not repeated. Instead, an extraction
@@ -320,10 +370,9 @@ class Functional(object):
         :raise RuntimeError: when computations do not complete.
         :raise IOError: when outdir exists but is not a directory.
     """ 
-    from os.path import abspath
     from os import getcwd
     from ..process.program import ProgramProcess
-    from ..misc import Changedir
+    from ..misc import Changedir, RelativePath
     from .. import crystal_program
 
     # check for pre-existing and successfull run.
@@ -336,12 +385,12 @@ class Functional(object):
     if outdir == None: outdir = getcwd()
     if workdir == None: workdir = self.guess_workdir(outdir)
 
-    outdir = abspath(outdir)
-    workdir = abspath(workdir)
+    outdir = RelativePath(outdir).path
+    workdir = RelativePath(workdir).path
     with Changedir(workdir) as tmpdir: 
 
       # writes/copies files before launching.
-      self.bringup(structure, workdir, restart=self.restart, test=test)
+      self.bringup(structure, outdir, workdir, restart=self.restart, test=test)
       dompi = comm is not None
       if dompi:
         from ..misc import copyfile
@@ -354,14 +403,14 @@ class Functional(object):
 
       # now creates the process, with a callback when finished.
       onfinish = self.OnFinish(self, structure, workdir, outdir)
-      onfail   = self.OnFail(outdir)
+      onfail   = self.OnFail(ExtractBase(outdir))
       yield ProgramProcess( program, outdir=workdir, onfinish=onfinish,
                             stdout=None if dompi else 'crystal.out', 
                             stderr='crystal.out' if dompi else 'crystal.err',
                             stdin=None if dompi else 'crystal.d12', 
                             dompi=dompi, onfail=onfail )
     # yields final extraction object.
-    yield Extract(outdir)
+    yield ExtractBase(outdir)
 
   def __call__( self, structure, outdir=None, workdir=None, comm=None,         \
                 overwrite=False, test=False, **kwargs):
@@ -412,10 +461,288 @@ class Functional(object):
     from copy import deepcopy
     return deepcopy(self)
 
+  def test_basis(self, structure, **kwargs):
+    """ Returns output of test basis run. """
+    from copy import deepcopy
+    from tempfile import mkdtemp
+    from shutil import rmtree
+    try:
+      this = deepcopy(self)
+      this.basis.add_keyword('TEST')
+      tmpdir = mkdtemp()
+
+      result = this(structure, outdir=tmpdir, **kwargs)
+      with result.__stdout__() as file: return file.read()
+    finally:
+      try: rmtree(tmpdir)
+      except: pass
+  def test_hamiltonian(self, structure, **kwargs):
+    """ Returns output of test basis run. """
+    from copy import deepcopy
+    from tempfile import mkdtemp
+    from shutil import rmtree
+    try:
+      this = deepcopy(self)
+      this.add_keyword('TEST')
+      tmpdir = mkdtemp()
+
+      result = this(structure, outdir=tmpdir, **kwargs)
+      with result.__stdout__() as file: return file.read()
+    finally:
+      try: rmtree(tmpdir)
+      except: pass
+
+
+  def _ibz(self, structure):
+    """ Guesses irreducible k-points from input. """
+    from collections import Sequence
+    from numpy import abs, floor, dot, any, identity, zeros, array, all
+    from numpy.linalg import inv, det
+    from ..error import ValueError
+    from ..crystal import HFTransform, into_cell
+  
+    # first figure out supercell and cell in k-space
+    cell = structure.eval().cell
+    # the supercell is the 
+    ksupercell = inv(cell).T
+    periodicity = 3
+    if abs(cell[2, 2] - 500) < 1e-8: 
+      periodicity = 2
+      if abs(cell[1, 1] - 500) < 1e-8: 
+        periodicity = 1
+        if abs(cell[0, 0] - 500) < 1e-8:
+          raise ValueError('Non-periodic system.')
+  
+    mp = self.shrink.mp
+    if not isinstance(mp, Sequence):
+      mp = [mp] * periodicity
+    kcell = ksupercell.copy()
+    if periodicity > 2: kcell[:, 2] /= float(mp[2])
+    if periodicity > 1: kcell[:, 1] /= float(mp[1])
+    if periodicity > 0: kcell[:, 0] /= float(mp[0])
+  
+    # check those symmetries which leave the reciprocal lattice invariant.
+    # also checks for inversion operator.
+    symops = []
+    invkcell = inv(kcell)
+    inverse = -identity(3)
+    for op in structure.symmetry_operators:
+      if inverse is not None and all(abs(op[:3] - inverse) < 1e-8):
+        symops.append(op[:3])
+        continue
+      transform = dot(invkcell, dot(op[:3], kcell))
+      if any(abs(transform - floor(transform)) > 1e-8): continue
+      if abs(det(transform) - 1e0) < 1e-8: symops.append(op[:3])
+    
+    # Now adds inversion operator if it does not exist.
+    if inverse is not None:
+      for op in [u for u in symops]:
+        matrix = dot(op, inverse)
+        if all([all(abs(matrix - u) > 1e-8) for u in symops]):
+          symops.append(matrix)
+        matrix = dot(inverse, op)
+        if all([all(abs(matrix - u) > 1e-8) for u in symops]):
+          symops.append(matrix)
+      if all([all(abs(inverse - u) > 1e-8) for u in symops]):
+        symops.append(inverse)
+   
+    # Now we have a fully consistent symmetry group for the k-mesh.
+    # We can actually the work advertised:
+    # The Hart-Forcade transforms creates a mapping from any point in a lattice
+    # back into a supercell.
+    transform = HFTransform(kcell, ksupercell)
+    # It can be used to quickly index transformd kpoints and figure out which
+    # kpoints are equivalent by symmetry.
+    map = zeros(transform.quotient, dtype='bool')
+  
+    # First we create a list of symmetry operators with the right-hand-side in
+    # the index basis and the left-hand-side in cartesian basis.
+    invtrans = inv(transform.transform)
+    symops = [ dot(op, invtrans) for op in symops 
+               if any(abs(op-identity(3)) > 1e-8) ]
+  
+    # now loop over all k-points an check their symmetries.
+    result = []
+    for i in xrange(transform.quotient[0]):
+      for j in xrange(transform.quotient[1]):
+        for k in xrange(transform.quotient[2]):
+          i_orig = array([i, j, k])
+          if not map[i, j, k]:
+            result.append(dot(invtrans, i_orig))
+            map[i, j, k] = True
+          for op in symops: 
+            u, v, w = transform.indices(dot(op, i_orig))
+            map[u, v, w] = True
+    return into_cell(array(result), ksupercell)
+
+  def _nAOs(self, structure):
+    """ Determins number of orbitals. 
+
+        The number of orbitals is *not* reduced by symmetry. 
+    """ 
+    from ..error import KeyError
+    species = [u.type for u in structure.eval()]
+    result = 0
+    for specie in set(species):
+      if specie not in self.basis:
+        raise KeyError("Unknown specie {0}.".format(specie))
+      dummy = 0
+      for shell in self.basis[specie]:
+        if shell.type == 's': dummy += 1
+        elif shell.type == 'sp': dummy += 4
+        elif shell.type == 'p': dummy += 3
+        elif shell.type == 'd': dummy += 5
+      result += species.count(specie) * dummy
+    return result
+
+  def _nb_real_cmplx_kpoints(self, structure):
+    """ Number of real and complex k-points. """
+    from numpy import dot
+    from numpy.linalg import inv
+    from ..math import is_integer
+    # we need to compute real and complex k-points differently.
+    # real k-points are those which are on the Brillouin zone edege and Gamma.
+    # Their wavefunctions are real through time=reversal and translational
+    # symmetry.
+    invrecipcell = structure.eval().cell.T
+    kpoints = self._ibz(structure)
+    kpoints = dot(invrecipcell, kpoints.T).T
+    nreal, ncmplx = 0, 0
+    for kpoint in kpoints:
+      if is_integer(2.*kpoint): nreal += 1
+      else: ncmplx += 1
+    return nreal, ncmplx
+
+  def mpp_compatible_procs( self, structure, multipleof=1, dof=20,
+                            cmplxfac=None ):
+    """ Returns list of MPP compatible processor counts.
+       
+        Processor counts are compatible if:
+
+        - :math:`N_p < N_{AO} * N_k * N_s // dof
+        - :math:`N_p % multipleof == 0`
+	- the number of processors per k-point is never prime
+
+        Where: 
+
+        - :math:`N_p` is the number of cores
+        - :math:`N_k` is the number of irreducible kpoints 
+	- :math:`N_s` is the number of spins
+	- :math:`N_{AO}` is the number of atomic orbitals
+
+	The last condition is somewhat more complex and depends upon the total
+	number of kpoints, the number of k-points at the Brillouin zone edge,
+	and the particular way CRYSTAL_ assigns procs for each k-point. This
+        decomposition is computed in :py:meth:`kpoint_blocking`.
+
+        :param structure:
+          Crystal structure for which to run the code. 
+        :param int multipleof:
+	  Pars down results to multiple of this number (eg cores per node).
+        :param int dof:
+          Minimum degrees of freedom per processor. 
+    """
+    if cmplxfac is None: cmplxfac = getattr(self, 'cmplxfac', 2) 
+    # computes number of real and complex k-points.
+    kreal, kcmplx = self._nb_real_cmplx_kpoints(structure)
+    # we can now define the max and min number of procs.
+    nAOs = self._nAOs(structure)
+    nspin = 2 if self.dft.spin else 1
+    # the minimum number of procs should be divisible by multipleof
+    weightedprocs = kreal + int(cmplxfac * kcmplx)
+    minprocs = int(weightedprocs * 2)
+    maxprocs = nAOs * minprocs // dof
+    if minprocs % multipleof != 0:
+      minprocs = (minprocs // multipleof + 1) * multipleof
+ 
+    # compute all primes, so as to avoid problems later on.
+    def allprimes(n):
+      """ Computes all primes up to n. """
+      primes = list(xrange(2, n+1))
+      i = 0
+      while i < len(primes):
+        fac = primes[i]
+        primes = primes[:i+1] + [p for p in primes[i+1:] if p % fac != 0]
+        i += 1
+      return set([1] + primes)
+    primes = allprimes(maxprocs)
+
+    # now loop over potential number of procs and append if ok
+    result = []
+    for i in xrange(minprocs, maxprocs+1, multipleof):
+      blocks = self.kpoint_blocking(structure, i, (kreal, kcmplx))
+      if primes.isdisjoint(blocks): result.append(i)
+    return result
+
+       
+  def kpoint_blocking(self, structure, nprocs, nkpoints=None, cmplxfac=None):
+    """ Infers the number of procs per kpoint. 
+
+	This function is helpfull in checking whether MPPcrystal will run
+	correcly or not. It returns a list consisting of the number of procs
+	per k-point. It is a list since CRYSTAL_ may assign some k-points with
+	more processors than others, in order to maximize the number of
+	processors used. However, this approach fails when a k-point is
+	assigned a prime number of processors, because of some bug somewhere
+	(see comment in k_space_MPP.f90: asssing_k_to_proc in CRYSTAL_ code).
+        Unfortunately, MPPCrystal does not recover well from this problem.
+    """
+    # count real and complex k-points in irreducible Brillouin zone.
+    if nkpoints is None:
+      kreal, kimag = self._nb_real_cmplx_kpoints(structure)
+    else: kreal, kimag = nkpoints
+    if self.dft.spin: kreal *= 2; kimag *= 2
+
+    # now perform blocking as in crystal.
+    # cmplxfac: computational cost of a complex k-point w.r.t. real k-point.
+    if cmplxfac is None: cmplxfac = getattr(self, 'cmplxfac', 2)
+    # weight: total compuational weight of real+complex k-points.
+    weight = cmplxfac*kimag + kreal
+    # trivial case where there are more k-points than processors.
+    if weight > nprocs: return 0
+    # avoids round-off errors
+    nreal = int(float(nprocs) / weight)
+    nimag = int(cmplxfac * nreal)
+    if nreal*kreal + nimag*kimag > nprocs:
+      nreal -= 1; nimag = int(cmplxfac * nreal)
+      assert nreal*kreal + nimag*kimag <= nprocs
+    
+    nleft = nprocs - nreal*kreal - nimag*kimag
+    if nleft == 0:
+      if kreal == 0: return [nimag]
+      elif kimag == 0: return [nreal]
+      else: return [nreal, nimag]
+
+    result = []
+    if kimag != 0:
+      imagonly = min(nleft, int(cmplxfac) * kimag)
+      nleft -= imagonly
+      result.append(nimag + imagonly//kimag)
+      if imagonly % kimag != 0: result.append(result[-1] - 1)
+      
+    if kreal != 0:
+      result.append(nreal + nleft // kreal)
+      if nleft % kreal != 0: result.append(result[-1] - 1)
+
+    return sorted(set(result))
+      
+      
+    
+  def nbelectrons(self, structure):
+    """ Number of electrons per formula unit. """
+    species = [u.type for u in structure.eval()]
+    result = 0
+    for specie in set(species):
+      if specie not in self.basis:
+        raise KeyError("Unknown specie {0}.".format(specie))
+      result += sum(u.charge for u in self.basis[species])
+    return result
+    
+
   class OnFinish(object):
     """ Called when a run finishes. 
        
-	Makes sure files are copied and stuff is pasted at the end of a call to
+        Makes sure files are copied and stuff is pasted at the end of a call to
         CRYSTAL.
     """
     def __init__(self, this, *args):
@@ -426,14 +753,16 @@ class Functional(object):
   class OnFail(object):
     """ Checks whether CRYSTAL run succeeded.
 
-	Crystal reports an error when reaching maximum iteration without
-        converging. This is screws up hwo LaDa does things.
+        Crystal reports an error when reaching maximum iteration without
+        converging. This screws up how LaDa does things.
     """
-    def __init__(self, outdir):
-      self.outdir = outdir
+    def __init__(self, extract):
+      self.extract = extract
     def __call__(self, process, error):
+      from os.path import exists
       from ..process import Fail
-      try: success = Extract(self.outdir).success
+      self.extract.uncache()
+      try: success = self.extract.success
       except: success = False
       if not success:
         raise Fail( 'Crystal failed to run correctly.\n'                       \

@@ -8,269 +8,143 @@ from .functional import Vasp
 
 class Extract(ExtractDFT):
   """ Extractor for reciprocal taylor expansion. """
-  def __init__( self, outcar=None, input=None, lstsq=None,                     \
-                order=None, rcond=-1, **kwargs ):
-    """ Initializes the extraction object. 
-    
-        :Parameters:
-          outcar : str or None
-	    Path to OUTCAR file. Can also be the directory if the OUTCAR is
-	    named "OUTCAR". Defaults to None, in which case it uses the
-            current working directory.
-          input : Extract-type
-	    Extractor object for the calculation from which the charge density
-            was obtained. Defaults to None, meaning whatever calculation is
-            contained in the parent directory.
-          lstsq : method
-            Least-square-fit method from which to get taylor coefficients.
-            Defaults to None, i.e. numpy's lstsq method.
-          order : unsigned int or list 
-            Order up to which to compute taylor coefficients.
-    """
-    from os.path import dirname, exists, join
-    from ..misc import RelativePath
-    outcar = RelativePath(outcar).path
-    if exists(join(outcar, 'reciprocal')):
-      outcar = join(outcar, 'reciprocal')
-    super(Extract, self).__init__(outcar, **kwargs)
-    self.input = input if input != None                                        \
-                 else ExtractDFT(dirname(self.directory))
-    """ Extraction object of charge density calculation. """
-    self.lstsq = lstsq 
-    """ Least-square-fit method from which to get Taylor coefficients. """
-    self.order = order
-    self.rcond = rcond
+  def __init__(self, *args, **kwargs):
+     super(Extract, self).__init__(*args, **kwargs)
 
-  @property
+  @property 
   def success(self):
-    """ Check whether calculation was successfull """
-    from os.path import basename
-    if basename(self.directory) != 'reciprocal': return False
+    """ True if successful run. 
+    
+        Checks this is an effective mass calculation.
+    """
+    from .extract import Extract as ExtractDFT
+    try: self._details
+    except: return False
     return ExtractDFT.success.__get__(self)
-      
-
-  @property
-  def rcond(self): return self._rcond
-  @rcond.setter
-  def rcond(self, value):
-    self._rcond = value
-    if hasattr(self, "_parameters"): delattr(self, "_parameters")
-    if hasattr(self, "_measurements"): delattr(self, "_measurements")
-    if hasattr(self, "_fitresults"): delattr(self, "_fitresults")
 
   @property
   @make_cached
   def _details(self):
-    """ Details of emass calculation. """
-    extracted = ''
+    """ Parameters when calling the effective mass routine. """
+    from re import compile
+    from ..misc import exec_input
+    from ..error import GrepError
+    start = compile(r'^#+ EMASS DETAILS #+$')
+    end = compile(r'^#+ END EMASS DETAILS #')
     with self.__outcar__() as file:
-      for line in file: 
-        if line == '################ EMASS DETAILS ################\n':
-          break
+      lines = None
       for line in file:
-        if line == '################ END EMASS DETAILS ################':
-          break
-        extracted += '\n' + line 
-    results = {}
-    exec extracted in results
-    return results
+        if start.match(line): lines = ""; break
+      if lines is None: raise GrepError('Could not find call parameters.')
+      for line in file:
+        if end.match(line):  break
+        lines += line
 
+    input = exec_input(lines)
+    return { 'center': input.center,
+             'nbpoints': input.nbpoints,
+             'input': input.input,
+             'range': input.range }
   @property
-  def order(self):
+  def center(self): return self._details['center']
+  @property
+  def nbpoints(self): return self._details['nbpoints']
+  @property
+  def range(self): return self._details['range']
+  @property
+  def input(self): return self._details['input']
+
+  @staticmethod
+  def _orders(orders):
     """ Order up to which taylor coefficients should be computed. """
-    result = self._order 
-    if result is None: result = self._details['order']
+    result = orders 
+    if result is None: result = [0, 2]
     if not hasattr(result, '__iter__'): result = [result]
-    return result
-
-  @order.setter
-  def order(self, value):
-    """ Order up to which taylor coefficients should be computed. """
-    # case where we want to fit to specific orders only.
-    if value is None: self._order = None
-    elif hasattr(value, "__iter__"):
-      for i in sorted(value):
-        if i < 0: raise ValueError("Order cannot be less than 0.")
-        try: nbpoints = self.nbpoints
-        except: pass
-        else:
-          if i >= nbpoints:
-            raise ValueError( "Size of kpoint mesh implies order cannot "      \
-                              "be larger than {0}.".format(nbpoints-1) )
-      self._order = list(sorted(value))
-    # case where we want all orders up to given input.
-    else: 
-      if value < 0:
-        raise ValueError("Order cannot be less than 0.")
-      try: nbpoints = self.nbpoints
-      except: pass
-      else:
-        if value >= nbpoints:
-          raise ValueError( "Size of kpoint mesh implies order "               \
-                            "cannot be larger than {0}.".format(nbpoints-1) )
-      self._order = list(xrange(value+1))
-    if hasattr(self, "_parameters"): delattr(self, "_parameters")
-    if hasattr(self, "_measurements"): delattr(self, "_measurements")
-    if hasattr(self, "_fitresults"): delattr(self, "_fitresults")
-
-  @property 
-  def lstsq(self): 
-    """ Least square fitting method. """
-    from numpy.linalg import lstsq as nplstsq
-    if self._lstsq is None:  
-      result = self._details['lstsq']
-      return nplstsq if result is None else result
-    return nplstsq if self._lstsq is None else self._lstsq
-  @lstsq.setter
-  def lstsq(self, value):
-    self._lstsq = value
-    if hasattr(self, "_fitresults"): delattr(self, "_fitresults")
+    return sorted(result)
 
   @property
-  def nbpoints(self):
-    """ Number of points per axis involved in calculation. """
-    from math import pow
-    return int(pow(len(self.kpoints), 1./3.))
+  def breakpoints(self):
+    """ Indices for start of each path. """
+    from numpy import any, abs, cross
+    breakpoints, last_dir = [0], None
+    for i, k in enumerate(self.kpoints[1:]):
+      if last_dir is None: last_dir = k - self.kpoints[breakpoints[-1]]
+      elif any( abs(cross(last_dir, k-self.kpoints[breakpoints[-1]])) > 1e-8):
+        breakpoints.append(i+1)
+        last_dir = None
+    return breakpoints + [len(self.kpoints)]
 
   @property
-  def center(self):
-    """ Returns central kpoint. """
-    return self.kpoints[0] if self.nbpoints % 2 == 0                           \
-           else self.kpoints[len(self.kpoints)//2]
-
-  @property
-  def stepsize(self):
-    """ Returns central kpoint. """
-    N = len(self.kpoints)//2
-    return (self.kpoints[N] - self.kpoints[N-1])[2]
-    
-  @property
-  def parameters(self):
-    """ Parameters for the least-square-fit approach. """
-    from numpy import zeros, pi, abs
-    from math import factorial
-
-    if not hasattr(self, "_parameters"): 
-      # computes number of free parameters, accounting for analyticity.
-      u = 0
-      for order in self.order:
-        for p in xrange(order+1):
-          for j in xrange(p+1): u += 1
-      # creates parameter array
-      self._parameters = zeros((len(self.kpoints), u), dtype="float64")
-      # populates it.
-      u = 0
-      kpoints = (self.kpoints - self.center) * 2.0 * pi                        \
-                / self.structure.scale 
-      stepsize = zeros(len(self.kpoints), dtype="float64")
-      for order in self.order:
-        for p in xrange(order+1):
-          for q in xrange(p+1):
-            # constructs array of (x_j-x_0)^q_i, with multiplication over i
-            # representing the cartesian coordinates and j the kpoints.
-            stepsize[:]                                                        \
-              = 1. / (factorial(order-p)*factorial(p-q)*factorial(q))
-            for i, j in zip([order-p, p-q, q], xrange(3)): 
-              if i != 0: stepsize *= kpoints[:,j]**i
-            # fill in the parameters for this expansion.
-            self._parameters[:, u] = stepsize 
-            u += 1
-    return self._parameters
-
-  @property
-  def measurements(self):
-    """ Measurements for the least-square fit approach. 
-    
-        There is currently no attempt at accounting for band-crossing.
-        This is simply the eigenvalues reshaped so spin is unrolled.
-    """
-    if self.ispin == 1:
-      center = self.eigenvalues[0] if self.nbpoints % 2 == 0                   \
-               else self.eigenvalues[len(self.kpoints) // 2]
-      return self.eigenvalues.magnitude - center.magnitude
-    shape = self.eigenvalues.shape[0] * self.eigenvalues.shape[1],             \
-            self.eigenvalues.shape[2]
-    center = self.eigenvalues[0] if self.nbpoints % 2 == 0                     \
-             else self.eigenvalues[len(self.kpoints) // 2]
-    return self.eigenvalues.reshape(*shape).magnitude - center.magnitude
-
-  @property 
-  def fitresults(self):
-    """ Returns all fitted taylor coefficients. """
-    from numpy.linalg import lstsq
-    if not hasattr(self, "_fitresults"): 
-      lstsq = getattr(self, 'lstsq', lstsq)
-      self._fitresults = lstsq(self.parameters, self.measurements, self.rcond)
-    return self._fitresults
-    
-  @property
-  def residues(self):
-    """ Return residues for each band. """
-    return self.fitresults[1]
-  @property
-  def tensors(self):
-    """ Return tensors for each band. """
-    from numpy import zeros
-    from itertools import chain, permutations
+  def directions(self):
+    """ Direction for each path. """
+    from numpy import array
+    from numpy.linalg import norm
     from quantities import angstrom
-    all_xs = self.fitresults[0].T
-    result = [[]]*(len(self.order))
+    results = []
+    breakpoints = self.breakpoints
+    for start, end in zip(breakpoints[:-1], breakpoints[1:]):
+      results.append(self.kpoints[end-1] - self.kpoints[start])
+      results[-1] /= norm(results[-1])
+    return array(results) / angstrom
+
+  def emass(self, orders=None):
+    """ Computes effective mass for each direction. """
+    from numpy import dot, concatenate, pi, array
+    from numpy.linalg import inv, lstsq
+    from math import factorial
+    from quantities import angstrom, emass, h_bar
+    from ..error import ValueError
+
+    orders = self._orders(orders)
+    if 2 not in orders:
+      raise ValueError('Cannot compute effective masses without second order term.')
+
+    results = []
+    breakpoints = self.breakpoints
+    recipcell = inv(self.structure.cell).T * 2e0 * pi / self.structure.scale
+    for start, end, direction in zip( breakpoints[:-1], 
+                                      breakpoints[1:], 
+                                      self.directions ):
+      kpoints = self.kpoints[start:end]
+      x = dot(direction, dot(recipcell, kpoints.T)) 
+      measurements = self.eigenvalues[start:end].copy()
+      parameters = concatenate([x[:, None]**i / factorial(i) for i in orders], axis=1)
+      fit = lstsq(parameters, measurements)
+      results.append(fit[0][orders.index(2)])
+
+    result = (array(results) * self.eigenvalues.units * angstrom**2 / h_bar**2)
+    return 1./result.rescale(1/emass)
+
+  def fit_directions(self, orders=None):
+    """ Returns fit for computed directions.
     
-    current_index, current_order = 0, 0
-    # add results for order 0.
-    if self.order[0] == 0:
-      result[current_order] = all_xs[:, current_index].copy()                  \
-                              * self.eigenvalues.units                         
-      current_index += 1                                                       
-      current_order += 1                                                       
-    # add results for order 1.                                                 
-    if 1 in self.order:                                                        
-      result[current_order] = all_xs[:, current_index:current_index+3]         \
-                              * self.eigenvalues.units * angstrom
-      current_index += 3
-      current_order += 1
+        When dealing with degenerate states, it is better to look at each
+        computed direction separately, since the order of bands might depend on
+        the direction (in which case it is difficult to construct a tensor).
+    """
+    from numpy import dot, concatenate, pi
+    from numpy.linalg import inv, lstsq
+    from math import factorial
+    from ..error import ValueError
 
-    # compute index ranges for subsequent orders.
-    u, indices_range = current_index, [current_index]
-    for order in self.order[current_order:]:
-      for p in xrange(order+1):
-        for q in xrange(p+1): u += 1
-      indices_range.append(u)
+    orders = self._orders(orders)
+    if 2 not in orders:
+      raise ValueError('Cannot compute effective masses without second order term.')
 
-    # loop over remaining orders.
-    for order, startu in zip(self.order[current_order:], indices_range):
-      # loop over results for each band.
-      for band_x in all_xs:
-        u = startu
-        # create tensor from n vector.
-        dummy = zeros([3]*order, dtype="float64")
-        for p in xrange(order+1):
-          for q in xrange(p+1):
-            indices = [ [i]*j for i, j in
-                         zip([0, 1, 2], [order-p, p-q, q]) if j != 0 ]
-            indices = set(permutations(chain(*indices)))
-            for index in indices:
-              dummy[index] = band_x[u] if abs(band_x[u]) > 1e-12 else 0
-            u += 1
-        # add tensor to results for that order.
-        dummy = dummy * self.eigenvalues.units * angstrom**order
-        result[current_order].append(dummy)
-      current_order += 1
+    results = []
+    breakpoints = self.breakpoints
+    recipcell = inv(self.structure.cell).T * 2e0 * pi / self.structure.scale
+    for start, end, direction in zip( breakpoints[:-1], 
+                                      breakpoints[1:], 
+                                      self.directions ):
+      kpoints = self.kpoints[start:end]
+      x = dot(direction, dot(recipcell, kpoints.T)) 
+      measurements = self.eigenvalues[start:end].copy()
+      parameters = concatenate([x[:, None]**i / factorial(i) for i in orders], axis=1)
+      fit = lstsq(parameters, measurements)
+      results.append(fit[0])
 
-    # got it all.
-    return result
-
-  @property
-  def inverse_mass_tensor(self):
-    """ Returns inverse mass tensor, hopefully with right units. """
-    from ..physics import emass, h_bar
-    if 2 not in self.order:
-      raise AttributeError( "Effective mass are not part "                     \
-                            "of the current expansion." )
-    result = self.tensors[self.order.index(2)]
-    for i in xrange(len(result)): 
-      result[i] = (result[i] / h_bar**2).rescale(1./emass)
-    return result
+    return results
 
   def iterfiles(self, **kwargs):
     """ Exports files from both calculations. """
@@ -278,10 +152,31 @@ class Extract(ExtractDFT):
     for file in chain( super(Extract, self).iterfiles(**kwargs),
                        self.input.iterfiles(**kwargs) ):
       yield file
+
+class _OnFinish(object):
+  """ Called when effective mass calculation finishes. 
+  
+      Adds some data to the calculation so we can figure out what the arguments
+      to the call.
+  """
+  def __init__(self, previous, outcar, details):
+    super(_OnFinish, self).__init__()
+    self.details  = details
+    self.outcar   = outcar
+    self.previous = previous
+  def __call__(self, *args, **kwargs):
+    # first calls previous onfinish.
+    if self.previous is not None: self.previous(*args, **kwargs)
+    # then adds data
+    header = ''.join(['#']*20)
+    with open(self.outcar, 'a') as file: 
+      file.write('{0} {1} {0}\n'.format(header, 'EMASS DETAILS'))
+      file.write('{0}\n'.format(self.details))
+      file.write('{0} END {1} {0}\n'.format(header, 'EMASS DETAILS'))
     
-def iter_emass( vasp, structure, outdir=None, order=2, nbpoints=None,
-               stepsize=1e-2, center=None, lstsq=None,
-               emassparams=None, **kwargs ):
+def iter_emass( functional, structure=None, outdir=None, center=None,
+                nbpoints=3, directions=None, range=0.1, emassparams=None,
+                **kwargs ):
   """ Computes k-space taylor expansion of the eigenvalues up to given order.
 
       First runs a vasp calculation using the first input argument, regardless
@@ -292,36 +187,44 @@ def iter_emass( vasp, structure, outdir=None, order=2, nbpoints=None,
       Second, a static non-self-consistent calculation is performed to compute
       the eigenvalues for all relevant kpoints.
 
-      :param vasp: :py:class:`~vasp.Vasp` or derived functional.
-      :type vasp: `vasp.Vasp`
+      :param functional:
+         Two types are accepted: 
+
+         - :py:class:`~vasp.Vasp` or derived functional: a self-consistent  run
+           is performed and the resulting density is used as to define the
+           hamiltonian for which the effective mass is computed.
+         - :py:class:`~vasp.Extract` or derived functional: points to the
+           self-consistent calculations defining the hamiltonian for which the
+           effective mass is computed.
       
       :param structure: The structure for wich to compute effective masses.
       :type structure: `~lada.crystal._cppwrapper.Structure`
 
-      :param str outdir:
-          Root directory where to save results of calculation. Calculations
-	  will be stored in  "reciprocal" subdirectory of this input parameter.
-
-      :param int order: Highest order derivative to perform. Defaults to 1.
-
-      :param int nbpoints:
-          Number of points (in a single direction) with wich to compute
-          taylor expansion.  Should be at least order + 1. Default to order +
-          1. Note that in the case of even nbpoints, an extra kpoint is added
-          so that the center does get computed.
-
-      :param float stepsize:
-          Distance between interpolation points. Default = 1e-2.
-          Units of ``2|pi|/a``, with ``a=structure.scale``.
       :param center:
           Central k-point of the taylor expansion. This should be given in
           **reciprocal** units (eg coefficients to the reciprocal lattice
           vectors). Default is None and means |Gamma|.
       :type center: 3 floats
 
-      :param lstsq:
-          Linear least square method. If None, defaults to numpy.linalg.lstsq_
-      :type lstsq: callable
+      :param str outdir:
+          Root directory where to save results of calculation. Calculations
+          will be stored in  "reciprocal" subdirectory of this input parameter.
+
+      :param int nbpoints:
+          Number of points (in a single direction) with wich to compute
+          taylor expansion.  Should be at least order + 1. Default to 3.
+      
+      :param directions:
+          Array of directions (cartesian coordinates). If None, defaults to a
+          reasonable set of directions: 001, 110, 111 and so forth. Note that
+          if given on input, then the tensors should not be extracted. The
+          directions are normalized. Eventually, the paths will extend from
+          ``directions/norm(directions)*range`` to
+          ``-directions/norm(directions)*range``.
+      :type directions: list of 3d-vectors or None
+
+      :param float range:
+          Extent of the grid around the central k-point.
 
       :param dict emassparams: 
          Parameters for the (non-self-consistent) effective mass caclulation
@@ -334,86 +237,122 @@ def iter_emass( vasp, structure, outdir=None, order=2, nbpoints=None,
 
       :return: Extraction object from which masses can be obtained.
 
-      .. _numpy.linalg.lstsq::
-        http://docs.scipy.org/doc/numpy/reference/generated/numpy.linalg.lstsq.html
       .. |pi|     unicode:: U+003C0 .. GREEK SMALL LETTER PI
       .. |Gamma|  unicode:: U+00393 .. GREEK CAPITAL LETTER GAMMA
   """
-  from inspect import isfunction
   from copy import deepcopy
   from os import getcwd
-  from os.path import join
-  from numpy import array, dot, append
-  from numpy.linalg import inv
+  from os.path import join, samefile, exists
+  from numpy import array, dot, arange, sqrt
+  from numpy.linalg import inv, norm
+  from ..error import input as InputError
+  from ..misc import RelativePath
+  from . import Vasp
 
   # save input details for printing later on.
-  details = "order    = {0!r}\n"                                               \
-            "nbpoints = {1!r}\n"                                               \
-            "stepsize = {2!r}\n"                                               \
-            "center   = {3!r}\n"                                               \
-            .format( order, nbpoints, stepsize,                                \
-                     None if center is None else list(center) )                
-  if isfunction(lstsq):                                                        
-    details =  "from {0.__module__} import {0.__name__} as lstsq\n"            \
-               .format(lstsq) + details
-  elif lstsq is None: 
-    details += "lstsq    = None\n"
-  else:
-    details =  "from {0.__class__.__module__} import "                         \
-                    "{0.__class__.__name__}\n".format(lstsq)                   \
-               + details
-    details += "lstsq    = {0!r}\n".format(lstsq)
+  details = 'directions = {0!r}\n'                                             \
+            'range      = {1!r}\n'                                             \
+            'center     = {2!r}\n'                                             \
+            'nbpoints   = {3!r}\n'                                             \
+            .format(directions, range, center, nbpoints)
  
   # takes care of default parameters.
   if center is None: center = kwargs.pop("kpoint", [0,0,0])
   center = array(center, dtype="float64")
   if outdir is None: outdir = getcwd()
-  if nbpoints == None: nbpoints = order + 1
-  if nbpoints < order + 1:
-    raise ValueError( "Cannot compute taylor expansion of order {0} "          \
-                      "with only {1} points per direction."                    \
-                      .format(order, nbpoints) )
 
-  # first runs vasp.
-  for first in vasp.iter(structure, outdir=outdir, **kwargs): yield first
-  if not first.success:
-    raise RuntimeError('Input run, or relaxation, was not successfull.')
+  # If has an 'iter' function, then calls it. 
+  if hasattr(functional, 'iter'): 
+    if structure is None:
+      raise InputError( 'If the first argument to iter_emass is a functional, '\
+                        'then a structure must also be given on which to '     \
+                        'apply the CRYSTAL functional.' )
+    for input in functional.iter(structure, outdir=outdir, **kwargs):
+      if getattr(input, 'success', False): continue
+      elif hasattr(input, 'success'):
+        yield Extract(outdir)
+        return
+      yield input 
+  # if is callable, then calls it.
+  elif hasattr(functional, '__call__'):
+    input = functional(structure, outdir=outdir, **kwargs)
+  # otherwise, assume it is an extraction object.
+  else: input = functional
+  # creates a new VASP functional from the input.
+  functional = Vasp(copy=input.functional)
+
+  # check that self-consistent run was successful.
+  if not input.success:
+    yield input
+    return
 
   # prepare second run.
-  vasp = deepcopy(vasp)
-  center = dot(inv(first.structure.cell).T, center)
-  kpoints = [ (x, y, z) for x in xrange(nbpoints)                              \
-                        for y in xrange(nbpoints)                              \
-                        for z in xrange(nbpoints) ]                            
-  vasp.kpoints = (array(kpoints, dtype="float64")                              \
-                 - (nbpoints-1)/2.) * stepsize + center
-  if nbpoints % 2 == 0: # adds central point to grid.
-    vasp.kpoints = append(center[None,:], vasp.kpoints, axis=0)
+  center = dot(inv(input.structure.cell).T, center)
+  if directions is None:
+    kpoints = array([ [1, 0, 0], [-1, 0, 0],
+                    [0, 1, 0], [0, -1, 0],
+                    [0, 0, 1], [0, 0, -1],
+                    [1, 0, 1], [-1, 0, -1],
+                    [0, 1, 1], [0, -1, -1],
+                    [1, 1, 0], [-1, -1, 0],
+                    [1, 0, -1], [-1, 0, 1],
+                    [0, -1, 1], [0, 1, -1],
+                    [-1, 1, 0], [1, -1, 0],
+                    [1, 1, 1], [-1, -1, -1],
+                    [1, 1, -1], [-1, -1, 1],
+                    [1, -1, 1], [-1, 1, -1],
+                    [-1, 1, 1], [1, -1, -1] ], dtype='float64')
+    kpoints[6:18] *= 1e0/sqrt(2.)
+    kpoints[18:] *= 1e0/sqrt(3.)
+  else: 
+    directions = array(directions).reshape(-1, 3)
+    directions = array([array(d)/norm(d) for d in directions])
+    points = arange(-0.5, 0.5 + 1e-8, 1.0/float(nbpoints))
+    kpoints = array([d * p for d in directions for p in points])
 
+  functional.kpoints = kpoints * range + center
+  
   # and exectute it.
+  # onfinish is modified so that parameters are always included.
   kwargs = deepcopy(kwargs)
-  kwargs['restart'] = first
+  kwargs['restart'] = input
   kwargs['nonscf']  = True
   kwargs['relaxation']  = None
   if emassparams is not None: kwargs.update(emassparams)
-  directory = join(first.directory, "reciprocal")
-  for u in vasp.iter(first.structure, outdir=directory, **kwargs):
+  if outdir is None: outdir = getcwd()
+  if outdir is not None:
+    if exists(outdir) and samefile(outdir, input.directory): 
+      outdir = join(input.directory, "reciprocal")
+  # saves input calculations into the details
+  if isinstance(getattr(input, '_directory', None), RelativePath):
+    input = deepcopy(input)
+    input._directory.envvar = outdir
+    details += 'from {0.__class__.__module__} import {0.__class__.__name__}\n' \
+               .format(input)
+    details += 'input = {0!r}\n'.format(input)
+  for u in functional.iter(input.structure, outdir=outdir, **kwargs):
+    if getattr(u, 'success', False): continue
+    if hasattr(u, 'success'): yield u; return
+    # modify onfinish so that call arguments are added to the output file.
+    onfinish = _OnFinish(u.onfinish, join(outdir, 'OUTCAR'), details) 
+    u.onfinish = onfinish
     yield u
 
-  # Add computational details here.
-  with open(join(directory, 'OUTCAR'), 'a') as outcar:
-    outcar.write('\n################ EMASS DETAILS ################\n')
-    outcar.write(details)
-    outcar.write('\n################ END EMASS DETAILS ################\n')
-
-  yield iter_emass.Extract(first.directory)
+  yield iter_emass.Extract(outdir)
 
 iter_emass.Extract = Extract
 """ Extractor class for the reciprocal method. """
 EMass = makeclass( 'EMass', Vasp, iter_emass, None, module='lada.vasp.emass',
                     doc='Functional form of the '                              \
-                        ':py:class:`lada.vasp.relax.iter_emass` method.' )
+                        ':py:class:`lada.emass.relax.iter_emass` method.' )
 
 # Function call to effective mass. No iterations. returns when calculations are
 # done or fail.
 effective_mass = makefunc('effective_mass', iter_emass, 'lada.vasp.emass')
+effective_mass.Extract = iter_emass.Extract
+
+del makefunc
+del makeclass
+del ExtractDFT
+del make_cached
+del Vasp

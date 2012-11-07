@@ -557,6 +557,7 @@ class ICharg(AliasKeyword):
       instance.nonscf = False
 
   def output_map(self, **kwargs):
+    from os.path import join
     from ..misc import latest_file, copyfile
     from ..error import ValueError
     from . import files
@@ -574,10 +575,11 @@ class ICharg(AliasKeyword):
       if hasrestart: directories += [vasp.restart.directory]
       # determines which files exist
       last_wfn = None if icharge in [1, 11]                                    \
-                 else latest_file(files.WAVECAR, *directories)
-      last_chg = latest_file(files.CHGCAR, *directories) 
+                 else latest_file( *[ join(u, files.WAVECAR) 
+                                      for u in directories ] )
+      last_chg = latest_file(*[join(u, files.CHGCAR) for u in directories]) 
       last_pot = None if icharge not in [-1, 4, 14]                            \
-                 else latest_file(files.POT, *directories) 
+                 else latest_file(*[join(u, files.POT) for u in directories])
 
       # determines icharge depending on file. 
       if icharge < 0:
@@ -633,7 +635,7 @@ class IStart(AliasKeyword):
     super(IStart, self).__init__(value=value)
 
   def output_map(self, **kwargs):
-    from os.path import dirname
+    from os.path import dirname, join
     from ..misc import latest_file, copyfile
     from ..error import ValueError
     from . import files
@@ -649,10 +651,10 @@ class IStart(AliasKeyword):
       directories = [outdir]
       if hasrestart: directories += [vasp.restart.directory]
       # determines which files exist
-      last_wfn = latest_file(files.WAVECAR, *directories)
+      last_wfn = latest_file(*[join(u, files.WAVECAR) for u in directories])
       # Validity of TMPCAR depends on existence of WAVECAR
       if last_wfn is None: last_tmp = None
-      else: last_tmp = latest_file(files.TMPCAR, dirname(last_wfn))
+      else: last_tmp = latest_file(join(dirname(last_wfn), files.TMPCAR))
 
       # determines icharge depending on file. 
       if last_wfn is None and istart > 0: 
@@ -726,7 +728,7 @@ class IStruc(AliasKeyword):
 
     # determines which CONTCAR is the latest, if any exist.
     if istruc in [-1, 1]: 
-      last_contcar = latest_file(files.CONTCAR, outdir)
+      last_contcar = latest_file(join(outdir, files.CONTCAR))
       # if a contcar exists and we should re-read, then modifies structure
       # accordingly. It is expected that the structures are equivalent, in the
       # sense that they have the same atoms in the same order (more

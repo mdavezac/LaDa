@@ -3,11 +3,13 @@ debug_queue = None
 
 qsub_exe = "qsub"
 """ Qsub executable. """
+qsub_array_exe = "qsub -r y -J 1-{nbjobs}", "$PBS_ARRAY_INDEX"
+""" Launches job-arrays. """
 qdel_exe = "qdel"
 """ Qdel executable. """
           
 default_pbs = { 'walltime': "00:55:00", 'nnodes': 1, 'ppn': 32,
-                'account': 'eO5' }
+                'account': 'eO5', 'header': "", 'footer': '' }
 """ Defaults parameters filling the pbs script. """
 
 def pbs_string(**kwargs):
@@ -23,12 +25,14 @@ def pbs_string(**kwargs):
          "#PBS -l walltime={walltime}\n"                                       \
          "#PBS -A {account}\n"                                                 \
          "#PBS -V \n\n"                                                        \
-         "export TMPDIR=/work/e05/e05/`whoami`/lada_tmp\n"                     \
-         "if [ ! -e $TMPDIR ] ; then\n"                                        \
-         "  mkdir -p $TMPDIR\n"                                                \
+         "export LADA_TMPDIR=/work/e05/e05/`whoami`/lada_tmp\n"                \
+         "if [ ! -e $LADA_TMPDIR ] ; then\n"                                   \
+         "  mkdir -p $LADA_TMPDIR\n"                                           \
          "fi\n"                                                                \
          "cd {directory}\n"                                                    \
-         "python {scriptcommand}\n".format(**kwargs)                           
+         "{header}\n"                                                          \
+         "python {scriptcommand}\n"                                            \
+         "{footer}\n".format(**kwargs)
 
 default_comm = { 'n': 2, 'ppn': default_pbs['ppn']}
 """ Default mpirun parameters. """
@@ -103,11 +107,26 @@ def ipython_qstat(self, arg):
   return SList([ "{0:>10} {1:>4} {2:>3} -- {3}".format(id, mpp, state, name)   \
                  for id, mpp, state, name in zip(ids, mpps, states, names)]) 
 
-def crystal_program(self, comm=None):
-  """ Calls serial or sequential version. """
-  ser = 'crystal'
-  mpi = 'MPPcrystal'
-  if comm is None: return ser
-  if comm['n'] == 1: return ser
+def crystal_program(self=None, structure=None, comm=None):
+  """ Path to serial or mpi or MPP crystal program version. 
+  
+      If comm is None, then returns the path to the serial CRYSTAL_ program.
+      Otherwise, if :py:attr:`dftcrystal.Functional.mpp
+      <lada.dftcrystal.electronic.Electronic.mpp>` is
+      True, then returns the path to the MPP version. If that is False, then
+      returns the path to the MPI version.
+  """
+  ser = getattr(self, 'program_ser', None) 
+  mpi = getattr(self, 'program_mpi', None)
+  mpp = getattr(self, 'program_mpp', None)
+  if ser is None: ser = 'crystal'
+  if mpi is None: mpi = 'Pcrystal'
+  if mpp is None: mpp = 'MPPcrystal'
+
+  if self is None or comm is None: return ser
+  if self.mpp is True: return mpp
   return mpi
 
+crystal_inplace = False
+
+global_tmpdir='$WORK/lada_tmp'

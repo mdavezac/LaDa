@@ -42,8 +42,8 @@ namespace LaDa
       }
       if(PyFloat_Check(_value)) _self->scale = PyFloat_AS_DOUBLE(_value); 
       else if(PyInt_Check(_value)) _self->scale = PyInt_AS_LONG(_value); 
-      else if(python::Quantity::isinstance(_value))
-        try { _self->scale = python::Quantity(_value).get("angstrom"); }
+      else if(math::Quantity::isinstance(_value))
+        try { _self->scale = math::Quantity(_value).get("angstrom"); }
         catch(...) { return -1; }
       else
       {

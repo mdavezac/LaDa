@@ -83,7 +83,6 @@ class ExtractBase(object):
   def convtrans(self):
     """ Transform from primitive to conventional cell. """
     from numpy import identity, array
-    from ..error import GrepError
     with self.__stdout__() as file:
       found = False
       for line in file:
@@ -169,7 +168,6 @@ class ExtractBase(object):
   def end_date(self):
     """ Title of the calculations. """
     from datetime import datetime
-    from ..error import GrepError
     pattern = "E+\s+TERMINATION\s+DATE\s*(\d+)\s+(\d+)\s+(\d+)\s+TIME\s+(\S+)"
     regex = self._find_last_STDOUT(pattern)
     if regex is None: 
@@ -191,7 +189,6 @@ class ExtractBase(object):
   def cputime(self):
     """ Total CPU time. """
     from datetime import timedelta
-    from ..error import GrepError
     regex = self._find_first_STDOUT("TOTAL\s+CPU\s+TIME\s+=\s+(\S+)")
     if regex is None: raise GrepError("Could not grep total cpu time.")
     return timedelta(seconds=float(regex.group(1)))
@@ -303,12 +300,56 @@ class ExtractBase(object):
     
     
 
-  def _parsed_tree(self):
-    """ Returns parsed input tree. """
+  def _parsed_tree(self, doadd_input=False):
+    """ Returns parsed input tree.
+ 
+	Checks first whether an input file exists in the output file, as per
+	Giuseppe Malia's standard script. If it does, parse it and returns it.
+
+	If it doesn't check for a file with the same name and path as the
+	input, but with a d12 extension. If it exists and is parsable, returns
+        that.
+        
+        :param bool doadd_input:
+	  If True and the output file does not have an input file, but a
+          parsable d12 file exist, then prefix the output file with the d12 file.
+
+          .. warning:: Yes, this does change the output file.
+    """
+    from os.path import splitext, exists, join
     from .parse import parse
+    if not exists(join(self.directory, self.STDOUT)):
+      raise GrepError( 'Output file does not exist, {0}.'                      \
+                       .format(join(self.directory, self.STDOUT)) )
     try: 
       with self.__stdout__() as file: tree = parse(file)
     except: raise GrepError("Could not find CRYSTAL input at start of file.")
+    if len(tree) == 0:
+      # Could not find input file, try and see if it exists on its own.
+      root, ext = splitext(self.STDOUT)
+      newfilename = join(self.directory, root + '.d12')
+      if exists(newfilename): 
+        try: 
+          with open(newfilename, 'r') as file: 
+            tree = parse(file)
+        except:
+          raise GrepError("Could not find CRYSTAL input at start of file.")
+      if len(tree) == 0:
+        raise GrepError( 'Could not find CRYSTAL input at start of file '      \
+                         'nor a file with the same name and a .d12 extension.')
+      if doadd_input: 
+        with open(newfilename, 'r') as file: 
+          input = file.read()
+        with self.__stdout__() as file: output = file.read()
+        header = ''.join(['#']*20)
+        with open(join(self.directory, self.STDOUT), 'w') as file:
+          file.write('{0} {1} {0}\n'.format(header, 'INPUT FILE'))
+          input = input.rstrip()
+          if input[-1] != '\n': input += '\n'
+          file.write(input)
+          file.write('{0} END {1} {0}\n'.format(header, 'INPUT FILE'))
+          file.write(output)
+        
     title = tree.keys()[0]
     return tree[title]
 
@@ -334,7 +375,7 @@ class ExtractBase(object):
     if found == False:
       raise IOError('Could not find start of input in file.')
     if starter.lower() == 'external':
-      result = External(copy=self.input_structure)
+      result = External(copy=self._initial_structure)
     elif starter.lower() == 'crystal':
       result = Crystal()
     elif starter.lower() == 'molecule':
@@ -354,7 +395,6 @@ class ExtractBase(object):
     """
     from numpy import array, identity
     from ..crystal import Structure
-    from ..error import GrepError
     from .basis import specie_name
     result = Structure()
     try: 
@@ -382,14 +422,14 @@ class ExtractBase(object):
         try: file.next()
         except StopIteration: raise GrepError('File is incomplete.')
         result.cell = array( [file.next().split() for i in xrange(3)],
-                             dtype='float64' )
+                             dtype='float64' ).T
       
         # Then re-reads atoms, but in cartesian coordinates.
         for i in xrange(6): file.next()
         for atom in result:
-	  # With MPPcrystal, sometimes crap from different processors gets in
-	  # the way of the output. This is a simple hack to avoid that issue.
-	  # Not safe.
+				  # With MPPcrystal, sometimes crap from different processors gets in
+				  # the way of the output. This is a simple hack to avoid that issue.
+				  # Not safe.
           for i in xrange(5):
             try: atom.pos = array(file.next().split()[3:6], dtype='float64')
             except ValueError:
@@ -432,13 +472,50 @@ class ExtractBase(object):
   @make_cached
   def input_structure(self):
     """ Input structure, LaDa format. """
+    # First finds end of structural input. It may be the end-of the file in
+    # testgeom runs.
     with self.__stdout__() as file:
-      pos = None
-      for pos in self._find_structure(file): break
-      if pos is None: raise GrepError('Could extract structure from file')
-      file.seek(pos, 0)
+      while True:
+        line = file.readline()
+        if not line: break
+        if "TYPE OF CALCULATION" in line: break
+      endgeom = file.tell()
+    with self.__stdout__() as file:
+      last, pos = None, None
+      for pos in self._find_structure(file): 
+        if pos > endgeom: break
+        last = pos
+      if last is None: last = pos
+      if last is None: raise GrepError('Could not extract structure from file')
+      file.seek(last, 0)
       return self._grep_structure(file)
 
+  @property
+  @make_cached
+  def _initial_structure(self):
+    """ Initial structure, LaDa format. 
+    
+        This greps the input structure from the output file. CRYSTAL_ does not
+        allow any way to create this file from the outset. As such, it is
+        necessary to add it  by hand to the output. This is generally done by
+        LaDa automatically, unless the run stopped abruptly, e.g by the
+        supercomputer's resource manager. In that case, use the magic function
+        ``%complete_crystal`` with a jobfolder loaded.
+    """
+    from ..crystal import read
+    header = ''.join(['#']*20)
+    regex = '{0} {1} {0}\n'.format(header, 'INITIAL STRUCTURE')
+    with self.__stdout__() as file:
+      found = False
+      for line in file:
+        if line == regex: found = True; break
+      if not found: raise GrepError('No initial structure in output file.')
+      lines = []
+      regex = '{0} END {1} {0}\n'.format(header, 'INITIAL STRUCTURE')
+      for line in file:
+        if line == regex: break
+        lines.append(line)
+      return read.crystal(lines.__iter__())
 
   @property
   @make_cached
@@ -602,6 +679,7 @@ class ExtractBase(object):
     """
     from numpy import dot, identity, abs, array, any, all
     from numpy.linalg import inv, det
+    from ..crystal import into_voronoi
     from ..error import internal 
     from .geometry import DisplaceAtoms, Elastic
     
@@ -634,6 +712,7 @@ class ExtractBase(object):
     field = [ dot(cell, dot(inv_out, a.pos) - dot(inv_in, b.pos))
               for a, b in zip(self.structure, instruct)
               if a.asymmetric ]
+    field = [into_voronoi(u, cell, inv_out) for u in field]
     field = array(field)
 
     # check if changes:
@@ -657,7 +736,31 @@ class ExtractBase(object):
       result.append(a)
     return result
 
+  @property
+  @make_cached
+  def kpoints(self):
+    """ K-points in the calculations (fractional). """
+    from re import M
+    from numpy import array
+    regex = "(?:\d+)-(?:R|C)\(\s*(\d+)\s+(\d+)\s+(\d+)\)(?:\s+|\n)"
+    kpoints = [ array( [k.group(1), k.group(2), k.group(3)], dtype='int64')    \
+                       for k in self._search_STDOUT(regex, M) ]
+    shrink = 1e0/self.kmesh.astype('float64')
+    return array(kpoints, dtype='float64') * shrink
 
+  @property
+  @make_cached
+  def kmesh(self):
+     """ Mesh as grepped from output. 
+
+         This is the calculation's shrinking factor.
+     """
+     from numpy import array
+     regex = "SHRINK\. FACT\.\(MONKH\.\)\s*(\d+)\s+(\d+)\s+(\d+)"
+     regex = self._find_first_STDOUT(regex)
+     if regex is None: raise GrepError('Could not grep shrinking factor.')
+     return array([regex.group(i) for i in xrange(1, 4)], dtype='int64')
+     
   @property
   @make_cached
   def total_energy(self):
@@ -682,31 +785,48 @@ class ExtractBase(object):
 
   @property
   @make_cached
+  def ncycles(self):
+    """ Number of scf cycles. 
+
+	This is mostly to make it easier to known where a running job is at.
+	It is the number of electronic minimization steps as grepped from the
+        the last line 
+ 
+	 | CYC 4 ETOT(AU) -3.200+04 DETOT -2.22E-04 tst  8.13E-03 PX  9.40E-04
+
+        in the output file. In the example above, it would be 4.
+    """
+    pattern = r"^\s*CYC\s+(\d+)\s*ETOT\(AU\)\s+(\S+)\s+DETOT\s*(\S+)\s*tst"
+    regex = self._find_last_STDOUT(pattern)
+    if regex is None: return 0
+    return int(regex.group(1))
+
+  @property
+  @make_cached
   def delta_energy(self):
     """ Difference in energy between last two minimization steps. """
     from quantities import hartree
     pattern = "TOTAL ENERGY\(\S+\)\(AU\)\(\s*\d+\)\s*\S+\s*DE(\S+)\s*tester"
     regex = self._find_last_STDOUT(pattern)
     if regex is None: 
-      raise GrepError( 'Could not grep delta energy from '                     \
-                       '{0.directory}/{0.STDOUT}.'.format(self) )
+      pattern = r"^\s*CYC\s+(\d+)\s*ETOT\(AU\)\s+(\S+)\s+DETOT\s*(\S+)\s*tst"
+      regex = self._find_last_STDOUT(pattern)
+      if regex is None: 
+        raise GrepError( 'Could not grep delta energy from '                     \
+                         '{0.directory}/{0.STDOUT}.'.format(self) )
+      return float(regex.group(3)) * hartree
     return float(regex.group(1)) * hartree
 
-  def iterfiles(self, **kwargs):
-    """ iterates over input/output files. 
-    
-        :param bool input: Include INCAR file
-        :param bool wavefunctions: Include WAVECAR file
-        :param bool structure: Include POSCAR file
-    """
-    from os.path import exists, join
-    files = [self.STDOUT]
-    if kwargs.get('input', False):   files.append('crystal.d12')
-    if kwargs.get('wavefunctions', False): files.append('crystal.f98')
-    if kwargs.get('structure', False):  files.append('crystal.34')
-    for file in files:
-      file = join(self.directory, file)
-      if exists(file): yield file
+  @property
+  @make_cached
+  def delta_energies(self):
+    """ Energy step between minization steps. """
+    from re import M
+    from numpy import array
+    from quantities import hartree
+    pattern = r"^\s*CYC\s+(\d+)\s*ETOT\(AU\)\s+(\S+)\s+DETOT\s*(\S+)\s*tst"
+    result = [float(r.group(3)) for r in self._search_STDOUT(pattern, M)]
+    return array(result) * hartree
 
   @property
   @make_cached
@@ -731,7 +851,6 @@ class ExtractBase(object):
   def surface_area(self):
     """ Surface area of 2d slabs. """
     from quantities import angstrom
-    from ..error import GrepError
     result = self._find_last_STDOUT('AREA\s+OF\s+THE\s+2D\s+CELL\s+(\S+)')
     if result is None: raise GrepError('Likely not a 2D slab')
     return float(result.group(1)) * angstrom * angstrom 
@@ -741,7 +860,6 @@ class ExtractBase(object):
   def slab_height(self):
     """ Height of the slab. """
     from quantities import angstrom
-    from ..error import GrepError
     a = self.surface_area.magnitude
     result = self._find_last_STDOUT('VOLUME\s+OF\s+THE\s+3D\s+CELL\s+(\S+)')
     if result is None: raise GrepError('Likely not a 2D slab')
@@ -832,47 +950,12 @@ class ExtractBase(object):
           isincharge = True
       return array(results) * ec
                    
-
-class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
-  """ Extracts DFT data from an OUTCAR. """
-  def __init__(self, directory=None, **kwargs):
-    """ Initializes extraction object. 
-    
-        :param directory: 
-          Directory where the OUTCAR resides. 
-          It may also be the path to an OUTCAR itself, if the file is not
-          actually called OUTCAR.
-    """
-    from os.path import exists, isdir, basename, dirname
-    from lada.misc import RelativePath
-       
-    self.stdout = 'crystal.out'
-    """ Name of file to grep. """
-    if directory is not None:
-      directory = RelativePath(directory).path
-      if exists(directory) and not isdir(directory):
-        self.STDOUT = basename(directory)
-        directory = dirname(directory)
-    AbstractExtractBase.__init__(self, directory)
-    ExtractBase.__init__(self)
-    OutputSearchMixin.__init__(self)
-
   @property
-  def success(self):
-    from os.path import exists, join
-    if not exists(join(self.directory, self.STDOUT)): 
-      return False
-    try: self.input_crystal
-    except: return False
-    try: self.end_date
-    except: 
-      if self.optgeom_iterations is None: return False
-      return self.optgeom_iterations > 3
-    try: 
-      if self.istest: return False
-    except: return False
-    return True
-
+  def scf_converged(self):
+    """ Checks if SCF cycle converged. """
+    regex = """\s+\=\=\s+SCF\s+ENDED\s+-\s+(TOO MANY CYCLES|CONVERGENCE)"""
+    result = self._find_last_STDOUT(regex)
+    return False if result is None else result.group(1) == 'CONVERGENCE'
   @property
   @make_cached
   def atomic_charges(self):
@@ -926,7 +1009,176 @@ class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
           inner = []
           isincharge = True
       return array(results) * ec if len(results) else None
+  
+  @property
+  @make_cached
+  def nAOs(self):
+    """ Number of atomic orbitals. """
+    from os.path import join
+    regex = self._find_first_STDOUT('NUMBER OF AO\s*(\d+)')
+    if regex is None:
+      raise GrepError( 'Could not grep number of atomic orbitals from {0}'     \
+                       .format(join(self.directory, self.STDOUT)) )
+    return int(regex.group(1))
 
+  @property
+  @make_cached
+  def nIBZ_kpoints(self):
+    """ Number of kpoints in the irreducible Brilloin zone. """
+    pattern = "NUMBER OF K POINTS IN THE IBZ\s+(\d+)\s*$"
+    result = self._find_last_STDOUT(pattern)
+    if result is None:
+      raise GrepError("Could not grep number of irreducible k-points.")
+    return int(result.group(1))
+
+  @property
+  @make_cached
+  def nbelectrons(self):
+    """ Number of electrons per formula unit. """
+    return self.functional.valence(self.structure)
+
+class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
+  """ Extracts DFT data from an OUTCAR. """
+  def __init__(self, directory=None, **kwargs):
+    """ Initializes extraction object. 
+    
+        :param directory: 
+          Directory where the OUTCAR resides. 
+          It may also be the path to an OUTCAR itself, if the file is not
+          actually called OUTCAR.
+    """
+    from os.path import exists, isdir, basename, dirname
+    from lada.misc import RelativePath
+       
+    self.STDOUT = 'crystal.out'
+    """ Name of file to grep. """
+    if directory is not None:
+      directory = RelativePath(directory).path
+      if exists(directory) and not isdir(directory):
+        self.STDOUT = basename(directory)
+        directory = dirname(directory)
+    AbstractExtractBase.__init__(self, directory)
+    ExtractBase.__init__(self)
+    OutputSearchMixin.__init__(self)
+
+  @property
+  def success(self):
+    from os.path import exists, join
+    if not exists(join(self.directory, self.STDOUT)): 
+      return False
+    try: self.input_crystal
+    except: return False
+    try: self.end_date
+    except: 
+      if self.optgeom_iterations is None: return False
+      return self.optgeom_iterations > 1
+    else: 
+      try: return self.scf_converged
+      except: return False
+    try: 
+      if self.istest: return False
+    except: return False
+    return True
+
+  def _complete_output(self, structure):
+    """ Adds stuff to an output so it is complete. 
+
+        A complete file should contain all the information necessary to recreate
+        that file. Unfortunately, this is generally not the case with CRYSTAL's
+        standard output, at least not without thorough double-guessing. 
+
+        This function adds the .d12 file if it not already there, as well as the
+        input structure if it is in "external" format.
+
+        :param structure:
+          The input structure, as it was given to the run.
+        :returns: True if the file was modified.
+    """
+    from os.path import join
+    from ..crystal import write
+    from .external import External
+    from .parse import parse
+    if not hasattr(self, '_parsed_tree'): return False
+    if not hasattr(self, '__stdout__'): return False
+    try: tree = parse(self.__stdout__())
+    except: pass
+    else:
+      dotree = len(tree) == 0
+    if dotree:
+      try: tree = self._parsed_tree(True)
+      except: dotree = False
+    if isinstance(structure, External):
+      try: self._initial_structure
+      except: 
+        with self.__stdout__() as file: out = file.read()
+        with open(join(self.directory, self.STDOUT), 'w') as file:
+          header = ''.join(['#']*20)
+          file.write('{0} {1} {0}\n'.format(header, 'INITIAL STRUCTURE'))
+          file.write(write.crystal(structure.initial, None))
+          file.write('{0} END {1} {0}\n'.format(header, 'INITIAL STRUCTURE'))
+          file.write(out)
+        return True
+    return dotree
+
+  @property
+  def scflog(self):
+    """ SCFLOG file if it exists. """
+    from os.path import exists, join
+    from .. import CRYSTAL_filenames as filenames
+    from ..error import AttributeError, IOError
+    # no geometry optimization, no log.
+    if not self._is_optgeom: 
+      raise AttributeError('Not a geometry optimization.')
+    # if onelog, returns self.
+    if any('ONELOG' in u for u in self.informations): return self
+    # otherwise check if extraction object already exists.
+    result = getattr(self, '_scflog', None)
+    if result is not None: return result
+    # if it doesn't exist, create it if the file exists.
+    path = join(self.directory, filenames['SCFOUT.LOG'].format('crystal'))
+    if not exists(path): raise IOError('Could not find SCFOUT.LOG')
+    self._scflog = self.__class__(path)
+    return self._scflog
+    
+    
+  def iterfiles(self, **kwargs):
+    """ iterates over input/output files. 
+    
+        :param bool input: Include INCAR file
+        :param bool wavefunctions: Include WAVECAR file
+        :param bool structure: Include POSCAR file
+    """
+    from os.path import exists, join
+    from .. import CRYSTAL_filenames as filenames
+    files = [self.STDOUT]
+    if kwargs.get('input', False):
+      files.append(filenames['crystal.d12'].format('crystal'))
+    if kwargs.get('wavefunctions', False):
+      files.append(filenames['fort.98'].format('crystal'))
+    if kwargs.get('structure', False):  
+      files.append(filenames['fort.34'].format('crystal'))
+    try: dummy = self.functional.optgeom.enabled or self._is_optgeom
+    except: dummy = True
+    if dummy: files.append(filenames['SCFOUT.LOG'].format('crystal'))
+    for file in files:
+      file = join(self.directory, file)
+      if exists(file): yield file
+
+        
+  @property
+  def is_running(self):
+    """ True if program is running on this functional. 
+         
+        A file '.lada_is_running' is created in the output folder when it is
+        set-up to run CRYSTAL_. The same file is removed when CRYSTAL_ returns
+        (more specifically, when the :py:class:`lada.process.ProgramProcess` is
+        polled). Hence, this file serves as a marker of those jobs which are
+        currently running.
+    """
+    from os.path import join, exists
+    return exists(join(self.directory, '.lada_is_running'))
+
+    
 
 class MassExtract(AbstractMassExtract):
   """ Extracts all CRYSTAL calculations in directory and sub-directories. 

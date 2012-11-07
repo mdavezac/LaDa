@@ -129,7 +129,10 @@ class Molecule(ListBlock):
       if key.lower() in registered:
         newobject = registered[key.lower()]()
         if hasattr(newobject, 'breaksym'): newobject.breaksym = do_breaksym
-      elif has_breakkeep: newobject = GeomKeyword(keyword=key, breaksym=do_breaksym)
+        if hasattr(newobject, 'read_input'):
+          newobject.read_input(value, owner=self)
+      elif has_breakkeep:
+        newobject = GeomKeyword(keyword=key, breaksym=do_breaksym)
       else: newobject = BaseKeyword(keyword=key)
       if len(value) > 0: 
         try: newobject.raw = getattr(value, 'raw', value)

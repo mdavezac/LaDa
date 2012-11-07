@@ -72,6 +72,8 @@ namespace LaDa
 
         //! Returns type as a python object.
         python::Object type() const { return python::Object::acquire(((AtomData*)object_)->type); }
+        //! Returns type as a python object.
+        PyObject* pytype() const { return ((AtomData*)object_)->type; }
         //! Sets type to python object.
         void type(python::Object const &_in)
         { 
