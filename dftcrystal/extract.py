@@ -398,10 +398,10 @@ class ExtractBase(object):
     from .basis import specie_name
     result = Structure()
     try: 
-      file.next(); file.next() # move to first line.
       for line in file:
         line = line.split()
-        if len(line) != 7: break
+        if len(line) == 0: break
+        if len(line) != 7: continue
         type = specie_name(int(line[2]))
         asymmetric = line[1] == 'T' 
         result.add_atom( pos=array(line[4:7], dtype='float64'),
@@ -518,11 +518,9 @@ class ExtractBase(object):
       return read.crystal(lines.__iter__())
 
   @property
-  @make_cached
   def _is_optgeom(self):
     """ True if a geometry optimization run. """
-    pattern = "STARTING GEOMETRY OPTIMIZATION"
-    return self._find_first_STDOUT(pattern) is not None
+    return self.optgeom_iterations is not None
   @property
   @make_cached
   def _cellinternal_only(self):
