@@ -1,7 +1,7 @@
 #include "LaDaConfig.h"
 
 #include <Python.h>
-#define PY_ARRAY_UNIQUE_SYMBOL lada_models_ARRAY_API
+#define PY_ARRAY_UNIQUE_SYMBOL lada_math_ARRAY_API
 #include <numpy/arrayobject.h>
 
 #include <algorithm>
@@ -30,7 +30,6 @@ namespace LaDa
 PyMODINIT_FUNC initcppwrappers(void) 
 {
   import_array(); // needed for NumPy 
-  LaDa::error::bp_register();
 
   char const doc[] =  "Wrapper around C++/fortan point-ion models methods.";
   PyObject* module = Py_InitModule3("cppwrappers", LaDa::pcm::methods_table, doc);

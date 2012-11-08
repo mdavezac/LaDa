@@ -8,7 +8,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <opt/debug.h>
-#include <opt/types.h>
+#include <misc/types.h>
 #include <math/fuzzy.h>
 
 

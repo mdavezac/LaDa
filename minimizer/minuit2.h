@@ -11,7 +11,7 @@
 
 #include <limits.h>
 
-#include <opt/types.h>
+#include <misc/types.h>
 
 #include "variant.h"
 

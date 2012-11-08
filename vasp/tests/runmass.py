@@ -32,7 +32,7 @@ def test(path):
   try: 
     result = effective_mass(vasp, structure, outdir=directory, comm={'n': 2, 'ppn': 1},
                             emassparams={'ediff': 1e-8})
-    result.inverse_mass_tensor
+    result.emass
     assert result.success
     result = emass(structure, outdir=directory, comm={'n':2, 'ppn': 1},
                    emassparams={'ediff': 1e-8})

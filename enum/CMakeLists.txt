@@ -8,7 +8,7 @@ include_directories(${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDES})
 add_library (pyenum SHARED ${ENUM_CC} ${ENUM_H})
 set_target_properties(pyenum PROPERTIES OUTPUT_NAME cppwrappers)
 set_target_properties(pyenum PROPERTIES PREFIX "")
-target_link_libraries(pyenum ${PYTHON_LIBRARY} ${Boost_PYTHON_LIBRARY} mathlib)
+target_link_libraries(pyenum ${PYTHON_LIBRARY} mathlib)
 install(TARGETS pyenum DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/enum)
 
 if(compile_tests OR compile_debug_tests)

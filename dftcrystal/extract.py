@@ -427,9 +427,9 @@ class ExtractBase(object):
         # Then re-reads atoms, but in cartesian coordinates.
         for i in xrange(6): file.next()
         for atom in result:
-				  # With MPPcrystal, sometimes crap from different processors gets in
-				  # the way of the output. This is a simple hack to avoid that issue.
-				  # Not safe.
+          # With MPPcrystal, sometimes crap from different processors gets in
+          # the way of the output. This is a simple hack to avoid that issue.
+          # Not safe.
           for i in xrange(5):
             try: atom.pos = array(file.next().split()[3:6], dtype='float64')
             except ValueError:

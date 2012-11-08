@@ -5,18 +5,18 @@ namespace LaDa
     extern "C" 
     { 
       //! Function to deallocate a string atom.
-      static void lada_atom_dealloc(AtomData *_self);
+      static void lada_atom_dealloc(PyAtomObject *_self);
       //! Function to initialize a string atom.
-      static int lada_atom_init(AtomData* _self, PyObject* _args, PyObject *_kwargs);
+      static int lada_atom_init(PyAtomObject* _self, PyObject* _args, PyObject *_kwargs);
       //! Traverses to back-reference.
-      static int lada_atom_traverse(AtomData *_self, visitproc visit, void *arg)
+      static int lada_atom_traverse(PyAtomObject *_self, visitproc visit, void *arg)
         { Py_VISIT(_self->pydict); Py_VISIT(_self->type); return 0; }
       //! Clears back reference.
-      static int lada_atom_gcclear(AtomData *self) { Py_CLEAR(self->pydict); Py_CLEAR(self->type); return 0; }
+      static int lada_atom_gcclear(PyAtomObject *self) { Py_CLEAR(self->pydict); Py_CLEAR(self->type); return 0; }
     }
  
     // Function to deallocate a string atom.
-    static void lada_atom_dealloc(AtomData *_self)
+    static void lada_atom_dealloc(PyAtomObject *_self)
     {
       if(_self->weakreflist != NULL)
         PyObject_ClearWeakRefs((PyObject *) _self);
@@ -25,13 +25,13 @@ namespace LaDa
 
       // Calls c++ destructor explicitely.
       PyTypeObject *ob_type = _self->ob_type;
-      _self->~AtomData();
+      _self->~PyAtomObject();
 
       ob_type->tp_free((PyObject*)_self);
     }
  
     // Function to initialize a string atom.
-    static int lada_atom_init(AtomData* _self, PyObject* _args, PyObject *_kwargs)
+    static int lada_atom_init(PyAtomObject* _self, PyObject* _args, PyObject *_kwargs)
     {
       int found_position = 0;
       bool found_type = false;

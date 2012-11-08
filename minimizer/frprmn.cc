@@ -1,6 +1,6 @@
 #include "LaDaConfig.h"
 
-#include <opt/types.h>
+#include <misc/types.h>
 
 #include "frprmn.h"
 

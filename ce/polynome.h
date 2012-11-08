@@ -13,7 +13,7 @@
 
 #include <opt/function_base.h>
 #include <opt/polynome.h>
-#include <opt/types.h>
+#include <misc/types.h>
 
 namespace LaDa
 {

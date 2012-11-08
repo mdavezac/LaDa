@@ -6,7 +6,7 @@
 #include<iostream>
 
 #include "function_base.h"
-#include "opt/types.h"
+#include "misc/types.h"
 
 namespace LaDa
 {

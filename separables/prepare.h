@@ -7,7 +7,7 @@
 #include <vector>
 #include <utility>
 
-#include <opt/types.h>
+#include <misc/types.h>
 #include <crystal/lattice.h>
 #include <crystal/structure.h>
 

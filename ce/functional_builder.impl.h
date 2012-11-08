@@ -2,7 +2,7 @@
 #include <sstream>
 #include <string>
 
-#include <opt/types.h>
+#include <misc/types.h>
 #include <opt/debug.h>
 #include <opt/tinyxml.h>
 #include <math/misc.h>

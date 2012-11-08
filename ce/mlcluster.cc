@@ -7,7 +7,7 @@
 #include <boost/lexical_cast.hpp>
 
 #include <crystal/which_site.h>
-#include <opt/types.h>
+#include <misc/types.h>
 #include <math/fuzzy.h>
 
 #include "mlcluster.h"

@@ -6,7 +6,7 @@
 #include <vector>
 #include <utility>
 
-#include <opt/types.h>
+#include <misc/types.h>
 
 #include "structure/structure.h"
 

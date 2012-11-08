@@ -78,6 +78,17 @@ def test_pickle(Class):
   b = loads(dumps((a, a)))
   assert b[0] is b[1]
 
+def test_resize(Class):
+  """ Tests that numpy does not allow resizing. """
+  a = Class(pos=[0, 1, 4], type='Au')
+  try: a.pos.resize(5)
+  except ValueError: pass
+  else: raise Exception()
+  b = a.pos.reshape((1,3,1))
+  b[0,1,0] = 0
+  assert abs(a.pos[1]) < 1e-8
+
+
 if __name__ == "__main__":
   from sys import argv, path 
   if len(argv) > 0: path.extend(argv[1:])
@@ -90,6 +101,7 @@ if __name__ == "__main__":
   test_copy(Atom) 
   test_todict(Atom) 
   test_pickle(Atom) 
+  test_resize(Atom)
  
   # tries to run test with other class. 
   # check passage through init.

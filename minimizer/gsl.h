@@ -9,7 +9,7 @@
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_matrix.h>
 
-#include <opt/types.h>
+#include <misc/types.h>
 #include <opt/debug.h>
 
 namespace LaDa

@@ -1,32 +1,22 @@
-set( LIBVFF_HEADERS 
-     data.h exceptions.h atomic_center.h functional.h layered.h with_minimizer.h vff.h )
-set( LIBVFF_SOURCES 
-     atomic_center.cc build_tree_smith.cc build_tree_sort.cc build_tree_partial_sort_dnc.cc 
-     build_tree_sort_dnc.cc functional.cc initialize_centers.cc layered.cc vff.cc )
+set( PYVFF_HEADERS 
+     node/pybase.h node/sequence.hpp node/iterator.hpp
+     edge/pybase.h )
+set( PYVFF_SOURCES 
+     module.cc
+     node/pybase.cc 
+     edge/pybase.cc )
+set( PYVFF_PY __init__.py functional.py )
 
+install(FILES ${PYVFF_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/vff)
 
 include_directories(${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDES})
-add_library (vff SHARED ${LIBVFF_SOURCES} ${LIBVFF_HEADERS})
-set_target_properties(vff PROPERTIES OUTPUT_NAME lada_vff)
-target_link_libraries(vff crystal minimizer)
-install(TARGETS vff DESTINATION lib64)
+add_library (pyvff SHARED ${PYVFF_SOURCES} ${PYVFF_HEADERS})
+set_target_properties(pyvff PROPERTIES OUTPUT_NAME cppwrappers)
+set_target_properties(pyvff PROPERTIES PREFIX "")
+target_link_libraries(pyvff ${PYTHON_LIBRARY} ${Boost_PYTHON_LIBRARY} crystal)
+install(TARGETS pyvff DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/vff)
 
-if(NOT noinstall_headers)
-  install(FILES ${LIBVFF_HEADERS} DESTINATION include/LaDa/vff)
-endif(NOT noinstall_headers)
 
-if (MPI_FOUND)
-  include_directories(${MPI_INCLUDE_PATH})
-  target_link_libraries(vff ${MPI_LIBRARY} ${Boost_MPI_LIBRARY})
-endif (MPI_FOUND)
-if (GSL_FOUND)
-  include_directories(${GSL_INCLUDE_DIRS}/../)
-endif(GSL_FOUND)
-if (MINUIT2_FOUND)
-  include_directories(${minuit2_INCLUDE_DIRS})
-endif(MINUIT2_FOUND)
-
-if(python_bindings)
-  add_subdirectory(python)
-endif(python_bindings)
-
+# if(compile_tests OR compile_debug_tests)
+#   add_subdirectory(tests)
+# endif(compile_tests OR compile_debug_tests)

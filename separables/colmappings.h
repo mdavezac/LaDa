@@ -7,7 +7,7 @@
 #include<boost/numeric/ublas/vector.hpp>
 #include<vector>
 
-#include <opt/types.h>
+#include <misc/types.h>
 #include <opt/debug.h>
 
 namespace LaDa

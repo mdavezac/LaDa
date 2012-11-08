@@ -3,11 +3,6 @@
 
 #include "LaDaConfig.h"
 
-#define PY_ARRAY_UNIQUE_SYMBOL lada_crystal_ARRAY_API
-#define NO_IMPORT_ARRAY
-#include <numpy/arrayobject.h>
-
-
 #include "pybase.h"
 
 
@@ -177,7 +172,7 @@ namespace LaDa
         //! \brief Acquires new reference to an object.
         //! \details incref's reference first, unless null.
         //!          If non-null checks that it is a subtype of Structure.
-        //! \throws error::TypeError if not an Structure or subtype, both cpp and python.
+        //! \returns A valid or invalid Structure object.
         static Structure acquire(PyObject *_str) 
         {
           if(_str == NULL) return Structure((StructureData*)_str);
@@ -186,7 +181,7 @@ namespace LaDa
             LADA_PYERROR_FORMAT( TypeError,
                                  "Expected an Structure or subtype, not %.200s",
                                  _str->ob_type->tp_name );
-            BOOST_THROW_EXCEPTION(error::TypeError());
+            return Structure();
           }
           Py_INCREF(_str);
           return Structure((StructureData*)_str);

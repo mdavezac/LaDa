@@ -4,7 +4,7 @@
 #include "LaDaConfig.h"
 
 
-#include <opt/types.h>
+#include <misc/types.h>
 #include <math/misc.h>
 #include "atom/atom.h"
 

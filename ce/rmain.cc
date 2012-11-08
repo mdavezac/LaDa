@@ -15,7 +15,7 @@
 
 # include <opt/mpi.h>
 # include <opt/mpi.h>
-#include <opt/types.h>
+#include <misc/types.h>
 #include <opt/debug.h>
 #include <math/random.h>
 #include <opt/bpo_macros.h>

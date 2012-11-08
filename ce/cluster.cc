@@ -10,7 +10,7 @@
 
 #include <crystal/neighbors.h>
 #include <crystal/symmetry_operator.h>
-#include <opt/types.h>
+#include <misc/types.h>
 #include <math/fuzzy.h>
 #include <math/compare_norms.h>
 #include <math/misc.h>
