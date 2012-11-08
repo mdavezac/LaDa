@@ -1,0 +1,676 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Computational and Hamiltonian parameters &mdash; LaDa 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="author" title="About these documents" href="../../about.html" />
+    <link rel="top" title="LaDa 1.0 documentation" href="../../index.html" />
+    <link rel="up" title="Functional class and attributes" href="functional.html" />
+    <link rel="next" title="Crystal structure à la CRYSTAL" href="crystal.html" />
+    <link rel="prev" title="Basis sets" href="basis.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="crystal.html" title="Crystal structure à la CRYSTAL"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="basis.html" title="Basis sets"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+          <li><a href="../../pyapi.html" >Python API</a> &raquo;</li>
+          <li><a href="../dftcrystal.html" >CRYSTAL wrapper module</a> &raquo;</li>
+          <li><a href="functional.html" accesskey="U">Functional class and attributes</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="computational-and-hamiltonian-parameters">
+<h1>Computational and Hamiltonian parameters<a class="headerlink" href="#computational-and-hamiltonian-parameters" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="lada.dftcrystal.electronic.Electronic">
+<em class="property">class </em><tt class="descclassname">lada.dftcrystal.electronic.</tt><tt class="descname">Electronic</tt><a class="reference internal" href="../../_modules/lada/dftcrystal/electronic.html#Electronic"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.electronic.Electronic" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">lada.dftcrystal.input.AttrBlock</span></tt></p>
+<p>DFT attribute block.</p>
+<dl class="method">
+<dt id="lada.dftcrystal.electronic.Electronic.add_keyword">
+<tt class="descname">add_keyword</tt><big>(</big><em>name</em>, <em>value=None</em><big>)</big><a class="headerlink" href="#lada.dftcrystal.electronic.Electronic.add_keyword" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds/Sets input keyword.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.electronic.Electronic.dft">
+<tt class="descname">dft</tt><a class="headerlink" href="#lada.dftcrystal.electronic.Electronic.dft" title="Permalink to this definition">¶</a></dt>
+<dd><p>Attribute block which holds parameters defining the Hamiltonian used in
+the calculation. It is an instance of
+<a class="reference internal" href="#lada.dftcrystal.hamiltonian.Dft" title="lada.dftcrystal.hamiltonian.Dft"><tt class="xref py py-class docutils literal"><span class="pre">Dft</span></tt></a>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.electronic.Electronic.anderson">
+<tt class="descname">anderson</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.electronic.Electronic.anderson" title="Permalink to this definition">¶</a></dt>
+<dd><p>Applies Anderson mixing method.</p>
+<p>Andersen mixing does not require any input.
+It expects None (default, does nothing), True or False. The latter is
+equivalent to None.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.electronic.Electronic.atomspin">
+<tt class="descname">atomspin</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.electronic.Electronic.atomspin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Atomic spins.</p>
+<p>Defines the atomic spins.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span><span class="o">.</span><span class="n">atomspin</span><span class="o">.</span><span class="n">up</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span><span class="o">*</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">1</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span><span class="o">.</span><span class="n">atomspin</span><span class="o">.</span><span class="n">down</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span><span class="o">*</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">2</span>
+</pre></div>
+</div>
+<p>For spin-polarized calculations, this would result in the <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a>
+input:</p>
+<blockquote>
+<div><div class="line-block">
+<div class="line">ATOMSPIN</div>
+<div class="line">8</div>
+<div class="line">2 1 4 1 6 1 8 1</div>
+<div class="line">1 -1 3 -1 5 -1 7 -1</div>
+</div>
+</div></blockquote>
+<p>There are two main variables, <tt class="docutils literal"><span class="pre">up</span></tt> and <tt class="docutils literal"><span class="pre">down</span></tt>, which are lists of
+atomic labels. <tt class="docutils literal"><span class="pre">up</span></tt> contains the atoms which at the start of the
+calculation should have an up spin, and <tt class="docutils literal"><span class="pre">down</span></tt> those atoms with a
+down spin. A third variable, <tt class="docutils literal"><span class="pre">other</span></tt>, corresponds to the
+&#8216;&#8217;irrelevant&#8217;&#8217; atoms, as per <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a>&#8216;s input.</p>
+<p>Alternatively, the <tt class="docutils literal"><span class="pre">up</span></tt> and <tt class="docutils literal"><span class="pre">down</span></tt> variables can be reached via indexing:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span><span class="o">.</span><span class="n">atomspin</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">is</span> <span class="n">functional</span><span class="o">.</span><span class="n">atomspin</span><span class="o">.</span><span class="n">up</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span><span class="o">.</span><span class="n">atomspin</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">is</span> <span class="n">functional</span><span class="o">.</span><span class="n">atomspin</span><span class="o">.</span><span class="n">down</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span><span class="o">.</span><span class="n">atomspin</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="n">functional</span><span class="o">.</span><span class="n">atomspin</span><span class="o">.</span><span class="n">other</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">py:attr:<cite>~lada.dftcrystal.functional.dft.spin</cite> should be set to True
+for this parameter to take effect.</p>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.electronic.Electronic.betalock">
+<tt class="descname">betalock</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.electronic.Electronic.betalock" title="Permalink to this definition">¶</a></dt>
+<dd><p>Locks in the number of beta electrons.</p>
+<p>This tag presents the same user-interface as <a class="reference internal" href="#lada.dftcrystal.electronic.Electronic.spinlock" title="lada.dftcrystal.electronic.Electronic.spinlock"><tt class="xref py py-attr docutils literal"><span class="pre">spinlock</span></tt></a>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.electronic.Electronic.biposize">
+<tt class="descname">biposize</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.electronic.Electronic.biposize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Size of buffer for Coulomb integrals bipolar expansions.</p>
+<p>Should be None(default), True, or False.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.electronic.Electronic.broyden">
+<tt class="descname">broyden</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.electronic.Electronic.broyden" title="Permalink to this definition">¶</a></dt>
+<dd><p>Applies broyden mixing method.</p>
+<p>Broyden takes three inputs:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span><span class="o">.</span><span class="n">broyden</span><span class="o">.</span><span class="n">w0</span>     <span class="o">=</span> <span class="mf">1e-4</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span><span class="o">.</span><span class="n">broyden</span><span class="o">.</span><span class="n">imix</span>   <span class="o">=</span> <span class="mi">50</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span><span class="o">.</span><span class="n">broyden</span><span class="o">.</span><span class="n">istart</span> <span class="o">=</span> <span class="mi">2</span>
+</pre></div>
+</div>
+<p>The above results in:</p>
+<blockquote>
+<div><div class="line-block">
+<div class="line">BROYDEN</div>
+<div class="line">0.0001 50 2</div>
+</div>
+</div></blockquote>
+<p>The first attribute should be a floating point, whereas the second and
+third should be integers. The second item should be between 0 and 100,
+excluded, and the third larger than two.
+The input can also be set and accessed as an array:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span><span class="o">.</span><span class="n">broyden</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1e-4</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span><span class="o">.</span><span class="n">broyden</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">25</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span><span class="o">.</span><span class="n">broyden</span><span class="o">.</span><span class="n">imix</span>
+<span class="go">25</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.electronic.Electronic.cmplxfac">
+<tt class="descname">cmplxfac</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.electronic.Electronic.cmplxfac" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computaional weight of complex vs real k-points.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.electronic.Electronic.exchsize">
+<tt class="descname">exchsize</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.electronic.Electronic.exchsize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Size of buffer for exchange integrals bipolar expansions.</p>
+<p>Should be None(default), True, or False.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.electronic.Electronic.fmixing">
+<tt class="descname">fmixing</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.electronic.Electronic.fmixing" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fock mixing during electronic minimiztion.</p>
+<p>Should be None(default) or an integer.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.electronic.Electronic.guessp">
+<tt class="descname">guessp</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.electronic.Electronic.guessp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads density matrix from disk.</p>
+<ul class="simple">
+<li>If True <em>and</em>
+<a class="reference internal" href="functional.html#lada.dftcrystal.functional.Functional.restart" title="lada.dftcrystal.functional.Functional.restart"><tt class="xref py py-attr docutils literal"><span class="pre">restart</span></tt></a> is not
+None, then copies crystal.f9 to fort.20 in the working directory and
+adds GUESSP keyword to the input.</li>
+<li>If True but <a class="reference internal" href="functional.html#lada.dftcrystal.functional.Functional.restart" title="lada.dftcrystal.functional.Functional.restart"><tt class="xref py py-attr docutils literal"><span class="pre">restart</span></tt></a>
+is None or the file crystal.f9 does not exist, then does nothing.
+This is not an error, however.</li>
+<li>If False or None, does nothing. Since GuessP can lead to bizarre
+problems, it is <em>False</em> by default.</li>
+</ul>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.electronic.Electronic.levshift">
+<tt class="descname">levshift</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.electronic.Electronic.levshift" title="Permalink to this definition">¶</a></dt>
+<dd><p>Artificial shift between the valence and conduction band.</p>
+<p>Opens the gap between occupied and unoccupied bands for better
+numerical behavior. It can be set as follows:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span><span class="o">.</span><span class="n">levshift</span> <span class="o">=</span> <span class="mi">5</span> <span class="o">*</span> <span class="n">decihartree</span><span class="p">,</span> <span class="bp">False</span>
+</pre></div>
+</div>
+<p>The first parameter is the amount by which to open the gap. It should
+either an integer, or a signed energy quantity (see <a class="reference external" href="http://packages.python.org/quantities/index.html">quantities</a>). In
+the latter case, the input is converted to decihartree and rounded to
+the nearest integer.</p>
+<p>The second parameter specifies whether to keep (True) or remove (False)
+the shift after diagonalization.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.electronic.Electronic.maxcycle">
+<tt class="descname">maxcycle</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.electronic.Electronic.maxcycle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Maximum number of electronic minimization steps.</p>
+<p>Should be None(default) or an integer.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.electronic.Electronic.mpp">
+<tt class="descname">mpp</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.electronic.Electronic.mpp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether to use MPP or Pcrystal when running mpi.</p>
+<p>If True and more than one process is requested, switches to using
+MPPcrystal as opposed to Pcrystal.
+This only works under the assumption that
+<tt class="xref py py-data docutils literal"><span class="pre">lada.crystal_program</span></tt> is implemented correctly.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.electronic.Electronic.nobipcou">
+<tt class="descname">nobipcou</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.electronic.Electronic.nobipcou" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether to compute bielectronic Coulomb integrals exactly.</p>
+<p>Should be None(default), True, or False.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.electronic.Electronic.nobipexc">
+<tt class="descname">nobipexc</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.electronic.Electronic.nobipexc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether to compute bielectronic exchange integrals exactly.</p>
+<p>Should be None(default), True, or False.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.electronic.Electronic.nobipola">
+<tt class="descname">nobipola</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.electronic.Electronic.nobipola" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether to compute bielectronic integrals exactly.</p>
+<p>Should be None(default), True, or False.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.electronic.Electronic.nofmwf">
+<tt class="descname">nofmwf</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.electronic.Electronic.nofmwf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether to print formatted wavefunctions to disk.</p>
+<p>Should be None(default), True, or False.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.electronic.Electronic.nomondir">
+<tt class="descname">nomondir</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.electronic.Electronic.nomondir" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether store monoelectronic integrals to disk.</p>
+<p>If True, the monoelctronic integrals are computed once at the start of
+the SCF calculation and re-read from disk at each geometric
+optimization step. Should be None(default), True, or False.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.electronic.Electronic.nosymada">
+<tt class="descname">nosymada</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.electronic.Electronic.nosymada" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether to not use symmetry adapted functions.</p>
+<p>Should be None(default), True, or False.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.electronic.Electronic.poleordr">
+<tt class="descname">poleordr</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.electronic.Electronic.poleordr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Coulomb intergrals pole truncation.</p>
+<p>Should be None(default), or an integer between 0 and 6 included.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.electronic.Electronic.ppan">
+<tt class="descname">ppan</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.electronic.Electronic.ppan" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mulliken population analysis.</p>
+<p>Should None(default), True, or False.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.electronic.Electronic.savewf">
+<tt class="descname">savewf</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.electronic.Electronic.savewf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether to save wavefunctions at each step.</p>
+<p>Should be None(default), True, or False.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.electronic.Electronic.scfdir">
+<tt class="descname">scfdir</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.electronic.Electronic.scfdir" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether to reevaluate integrals at each electronic step.</p>
+<p>Should be None(default), True, or False.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.electronic.Electronic.setprint">
+<tt class="descname">setprint</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.electronic.Electronic.setprint" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extended printing request.</p>
+<p>Printing options consists of (keyword, value) pairs. As such, they can
+be inputed much like arrays:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span><span class="o">.</span><span class="n">setprint</span><span class="p">[</span><span class="mi">66</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">5</span>
+</pre></div>
+</div>
+<p>Will result in the output:</p>
+<blockquote>
+<div><div class="line-block">
+<div class="line">SETPRINT</div>
+<div class="line">1</div>
+<div class="line">66 -5</div>
+</div>
+</div></blockquote>
+<p>which prints the eigenvalues of the first five k-points at the end of
+the electronic minimization loop only. The print-out options can be
+found in the <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a> user-guide.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.electronic.Electronic.shrink">
+<tt class="descname">shrink</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.electronic.Electronic.shrink" title="Permalink to this definition">¶</a></dt>
+<dd><p>k-point description &#8211; SHRINK</p>
+<p>The IS (or IS1, IS2, IS3) and ISP keywords are mapped to
+<tt class="xref py py-attr docutils literal"><span class="pre">mp</span></tt> and <tt class="xref py py-attr docutils literal"><span class="pre">gallat</span></tt>.</p>
+<p>They can be used as follows:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">functional</span><span class="o">.</span><span class="n">shrink</span><span class="o">.</span><span class="n">mp</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="n">functional</span><span class="o">.</span><span class="n">shrink</span><span class="o">.</span><span class="n">gallat</span> <span class="o">=</span> <span class="mi">10</span>
+</pre></div>
+</div>
+<p>This will map IS to 5 and ISP to 10.
+ISP automatically set to equal IS (or IS1) when <tt class="xref py py-attr docutils literal"><span class="pre">gallat</span></tt>
+is set to None:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">functional</span><span class="o">.</span><span class="n">shrink</span><span class="o">.</span><span class="n">mp</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">functional</span><span class="o">.</span><span class="n">shrink</span><span class="o">.</span><span class="n">gallat</span> <span class="o">=</span> <span class="bp">None</span>
+</pre></div>
+</div>
+<p>This will print in the CRYSTAL input:</p>
+<blockquote>
+<div><div class="line-block">
+<div class="line">SHRINK</div>
+<div class="line">5 5</div>
+</div>
+</div></blockquote>
+<p>Finally, setting <tt class="xref py py-attr docutils literal"><span class="pre">mp</span></tt> to a sequence of at most three
+integers will set IS to 0 and IS1, IS2 (defaults to 1), and IS3 (defaults
+to 1) to the relevant values:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">functional</span><span class="o">.</span><span class="n">shrink</span><span class="o">.</span><span class="n">mp</span> <span class="o">=</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">]</span>
+<span class="n">functional</span><span class="o">.</span><span class="n">shrink</span><span class="o">.</span><span class="n">gallat</span> <span class="o">=</span> <span class="bp">None</span>
+</pre></div>
+</div>
+<p>This will lead to the following input, where ISP defaulted automatically
+to IS1:</p>
+<blockquote>
+<div><div class="line-block">
+<div class="line">SHRINK</div>
+<div class="line">0 5</div>
+<div class="line">5 6 1</div>
+</div>
+</div></blockquote>
+<p>Another option it to set <tt class="xref py py-attr docutils literal"><span class="pre">mp</span></tt> and
+<tt class="xref py py-attr docutils literal"><span class="pre">gallat</span></tt> directly:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">functional</span><span class="o">.</span><span class="n">shrink</span> <span class="o">=</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">8</span>
+</pre></div>
+</div>
+<p>would result in the following ouput</p>
+<blockquote>
+<div><div class="line-block">
+<div class="line">SHRINK</div>
+<div class="line">8 8</div>
+</div>
+</div></blockquote>
+<p><tt class="xref py py-attr docutils literal"><span class="pre">mp</span></tt> will be set to the first item. and
+<tt class="xref py py-attr docutils literal"><span class="pre">gallat</span></tt> to the second. There should always be two
+items.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.electronic.Electronic.smear">
+<tt class="descname">smear</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.electronic.Electronic.smear" title="Permalink to this definition">¶</a></dt>
+<dd><p>Smearing energy, if any.</p>
+<p>Expects None (default, does nothing) or an energy wich defines the
+width of the smearing function.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.electronic.Electronic.spinlock">
+<tt class="descname">spinlock</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.electronic.Electronic.spinlock" title="Permalink to this definition">¶</a></dt>
+<dd><p>Difference in occupation between the two spin-channels.</p>
+<p>This object takes two values, the difference between of occupations
+between the two spin channels, and the number of electronic
+minimization steps during which the lock is maintained.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span><span class="o">.</span><span class="n">spinlock</span><span class="o">.</span><span class="n">nspin</span>   <span class="o">=</span> <span class="mi">2</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span><span class="o">.</span><span class="n">spinlock</span><span class="o">.</span><span class="n">ncycles</span> <span class="o">=</span> <span class="mi">30</span>
+</pre></div>
+</div>
+<p>The above sets the <span class="math">\(\alpha\)</span> and <span class="math">\(\beta\)</span> occupations to
+<span class="math">\(\frac{N+2}{2}\)</span> and  <span class="math">\(\frac{N-2}{2}\)</span> respectively, for 30
+iterations of the electronic structure minimization algorithm. It
+results in the input:</p>
+<blockquote>
+<div><div class="line-block">
+<div class="line">SPINLOCK</div>
+<div class="line">2 30</div>
+</div>
+</div></blockquote>
+<p>Alternatively, the same could be done with the 2-tuple syntax:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span><span class="o">.</span><span class="n">spinlock</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">30</span>
+</pre></div>
+</div>
+<p>If either the occupation or the cycle-lock is None, then <tt class="docutils literal"><span class="pre">SPINLOCK</span></tt> is
+<em>disabled</em>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.electronic.Electronic.symadapt">
+<tt class="descname">symadapt</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.electronic.Electronic.symadapt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Symmetry adapted bloch wavefunctions.</p>
+<p>Should be None(default), True, or False.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.electronic.Electronic.test">
+<tt class="descname">test</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.electronic.Electronic.test" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stop after printing ressource requirement.</p>
+<p>Should be None(default), True, or False.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.electronic.Electronic.testpdim">
+<tt class="descname">testpdim</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.electronic.Electronic.testpdim" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stop after processing input and performing symmetry analysis.</p>
+<p>Should be None(default), True, or False.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.electronic.Electronic.toldee">
+<tt class="descname">toldee</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.electronic.Electronic.toldee" title="Permalink to this definition">¶</a></dt>
+<dd><p>Total energy convergence criteria.</p>
+<p>Should be None(default) or an integer.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.electronic.Electronic.toldep">
+<tt class="descname">toldep</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.electronic.Electronic.toldep" title="Permalink to this definition">¶</a></dt>
+<dd><p>Density matrix convergence criteria.</p>
+<p>Should be None(default) or an integer.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.electronic.Electronic.tolinteg">
+<tt class="descname">tolinteg</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.electronic.Electronic.tolinteg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Integration truncation criteria.</p>
+<p>Should be None(default) or a sequence of 5 integers.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.electronic.Electronic.tolpseud">
+<tt class="descname">tolpseud</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.electronic.Electronic.tolpseud" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pseudopotential truncation criteria.</p>
+<p>Should be None(default) or an integer.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="lada.dftcrystal.hamiltonian.Dft">
+<em class="property">class </em><tt class="descclassname">lada.dftcrystal.hamiltonian.</tt><tt class="descname">Dft</tt><a class="reference internal" href="../../_modules/lada/dftcrystal/hamiltonian.html#Dft"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.hamiltonian.Dft" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">lada.dftcrystal.input.AttrBlock</span></tt></p>
+<p>DFT attribute block.</p>
+<p>Holds parameters relative to the Hamiltonian used in the calculation.
+These parameters can be accessed indirectly in tha functional:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span><span class="o">.</span><span class="n">dft</span><span class="o">.</span><span class="n">b3lyp</span> <span class="o">=</span> <span class="bp">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span><span class="o">.</span><span class="n">dft</span><span class="o">.</span><span class="n">xxlgrid</span> <span class="o">=</span> <span class="bp">True</span>
+</pre></div>
+</div>
+<p>The above would set the Hamiltonian to the B3LYP exchange-correlation
+functional and the integration grid to 64 fl.oz.</p>
+<dl class="method">
+<dt id="lada.dftcrystal.hamiltonian.Dft.add_keyword">
+<tt class="descname">add_keyword</tt><big>(</big><em>name</em>, <em>value=None</em><big>)</big><a class="headerlink" href="#lada.dftcrystal.hamiltonian.Dft.add_keyword" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds/Sets input keyword.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.hamiltonian.Dft.exchange">
+<tt class="descname">exchange</tt><a class="headerlink" href="#lada.dftcrystal.hamiltonian.Dft.exchange" title="Permalink to this definition">¶</a></dt>
+<dd><p>Name of the exchange functional to use.  It should be one of the
+following: &#8216;becke&#8217;, &#8216;lda&#8217;, &#8216;pbe&#8217;, &#8216;pbesol&#8217;, &#8216;pwgga&#8217;, &#8216;sogga&#8217;, &#8216;vbh&#8217;,
+&#8216;wcgga&#8217;, or None(default).</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.hamiltonian.Dft.correlat">
+<tt class="descname">correlat</tt><a class="headerlink" href="#lada.dftcrystal.hamiltonian.Dft.correlat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Name of the correlation functional to use. It can be one of the
+following: &#8216;lyp&#8217;, &#8216;p86&#8217;, &#8216;pbe&#8217;, &#8216;pbesol&#8217;, &#8216;pwgga&#8217;, &#8216;pwlsd&#8217;, &#8216;pz&#8217;,
+&#8216;vbh&#8217;, &#8216;wl&#8217;, &#8216;vwn&#8217;, or None.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.hamiltonian.Dft.hybrid">
+<tt class="descname">hybrid</tt><a class="headerlink" href="#lada.dftcrystal.hamiltonian.Dft.hybrid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Amount of exchange to add to functional. It should be a floating point or
+None.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.hamiltonian.Dft.nonlocal">
+<tt class="descname">nonlocal</tt><a class="headerlink" href="#lada.dftcrystal.hamiltonian.Dft.nonlocal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Non-local weights on exchange-correlation. A tuple of two floating point
+which sets the weights of the non-local part of the exchange (first) and
+of the correlations (second). It can also be None.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.hamiltonian.Dft.spin">
+<tt class="descname">spin</tt><a class="headerlink" href="#lada.dftcrystal.hamiltonian.Dft.spin" title="Permalink to this definition">¶</a></dt>
+<dd><p>If True, then perform spin-polarized calculation. It should be
+None(default), True, or False.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.hamiltonian.Dft.b3lyp">
+<tt class="descname">b3lyp</tt><a class="headerlink" href="#lada.dftcrystal.hamiltonian.Dft.b3lyp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets <a class="reference internal" href="#lada.dftcrystal.hamiltonian.Dft.exchange" title="lada.dftcrystal.hamiltonian.Dft.exchange"><tt class="xref py py-attr docutils literal"><span class="pre">exchange</span></tt></a>, <a class="reference internal" href="#lada.dftcrystal.hamiltonian.Dft.correlat" title="lada.dftcrystal.hamiltonian.Dft.correlat"><tt class="xref py py-attr docutils literal"><span class="pre">correlat</span></tt></a>, <a class="reference internal" href="#lada.dftcrystal.hamiltonian.Dft.nonlocal" title="lada.dftcrystal.hamiltonian.Dft.nonlocal"><tt class="xref py py-attr docutils literal"><span class="pre">nonlocal</span></tt></a>
+to the B3LIP functional. Since it acts on/checks upon other attributes,
+it can only be set to True.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.hamiltonian.Dft.pbe0">
+<tt class="descname">pbe0</tt><a class="headerlink" href="#lada.dftcrystal.hamiltonian.Dft.pbe0" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets <a class="reference internal" href="#lada.dftcrystal.hamiltonian.Dft.exchange" title="lada.dftcrystal.hamiltonian.Dft.exchange"><tt class="xref py py-attr docutils literal"><span class="pre">exchange</span></tt></a>, <a class="reference internal" href="#lada.dftcrystal.hamiltonian.Dft.correlat" title="lada.dftcrystal.hamiltonian.Dft.correlat"><tt class="xref py py-attr docutils literal"><span class="pre">correlat</span></tt></a>, <a class="reference internal" href="#lada.dftcrystal.hamiltonian.Dft.nonlocal" title="lada.dftcrystal.hamiltonian.Dft.nonlocal"><tt class="xref py py-attr docutils literal"><span class="pre">nonlocal</span></tt></a>
+correctly for the PBE0 functional. Since it acts on/checks upon other
+attributes, it can only be set to True.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.hamiltonian.Dft.soggaxc">
+<tt class="descname">soggaxc</tt><a class="headerlink" href="#lada.dftcrystal.hamiltonian.Dft.soggaxc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets <a class="reference internal" href="#lada.dftcrystal.hamiltonian.Dft.exchange" title="lada.dftcrystal.hamiltonian.Dft.exchange"><tt class="xref py py-attr docutils literal"><span class="pre">exchange</span></tt></a>, <a class="reference internal" href="#lada.dftcrystal.hamiltonian.Dft.correlat" title="lada.dftcrystal.hamiltonian.Dft.correlat"><tt class="xref py py-attr docutils literal"><span class="pre">correlat</span></tt></a>, <a class="reference internal" href="#lada.dftcrystal.hamiltonian.Dft.nonlocal" title="lada.dftcrystal.hamiltonian.Dft.nonlocal"><tt class="xref py py-attr docutils literal"><span class="pre">nonlocal</span></tt></a>
+correctly for the SOGGAXC functional. Since it acts on/checks upon other
+attributes, it can only be set to True.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.hamiltonian.Dft.angular">
+<tt class="descname">angular</tt><a class="headerlink" href="#lada.dftcrystal.hamiltonian.Dft.angular" title="Permalink to this definition">¶</a></dt>
+<dd><p>Contains two attributes <tt class="docutils literal"><span class="pre">intervals</span></tt> and <tt class="docutils literal"><span class="pre">levels</span></tt> which can be used
+to set the angular grid.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.hamiltonian.Dft.radial">
+<tt class="descname">radial</tt><a class="headerlink" href="#lada.dftcrystal.hamiltonian.Dft.radial" title="Permalink to this definition">¶</a></dt>
+<dd><p>Contains two attributes <tt class="docutils literal"><span class="pre">intervals</span></tt> and <tt class="docutils literal"><span class="pre">nbpoints</span></tt> which can be used
+to set the radial integration grid.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.hamiltonian.Dft.lgrid">
+<tt class="descname">lgrid</tt><a class="headerlink" href="#lada.dftcrystal.hamiltonian.Dft.lgrid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Preset large integration grid.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.hamiltonian.Dft.xlgrid">
+<tt class="descname">xlgrid</tt><a class="headerlink" href="#lada.dftcrystal.hamiltonian.Dft.xlgrid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Preset extra large integration grid.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.hamiltonian.Dft.xxlgrid">
+<tt class="descname">xxlgrid</tt><a class="headerlink" href="#lada.dftcrystal.hamiltonian.Dft.xxlgrid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Preset extra extra large integration grid.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.hamiltonian.Dft.tollgrid">
+<tt class="descname">tollgrid</tt><a class="headerlink" href="#lada.dftcrystal.hamiltonian.Dft.tollgrid" title="Permalink to this definition">¶</a></dt>
+<dd><p>DFT grid weight tolerance. Should be None(default) or an integer.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.hamiltonian.Dft.tolldens">
+<tt class="descname">tolldens</tt><a class="headerlink" href="#lada.dftcrystal.hamiltonian.Dft.tolldens" title="Permalink to this definition">¶</a></dt>
+<dd><p>DFT density tolerance Should be None(default) or an integer.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="basis.html"
+                        title="previous chapter">Basis sets</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="crystal.html"
+                        title="next chapter">Crystal structure à la CRYSTAL</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../../_sources/pyapi/dftcrystal/comp.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="crystal.html" title="Crystal structure à la CRYSTAL"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="basis.html" title="Basis sets"
+             >previous</a> |</li>
+        <li><a href="../../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+          <li><a href="../../pyapi.html" >Python API</a> &raquo;</li>
+          <li><a href="../dftcrystal.html" >CRYSTAL wrapper module</a> &raquo;</li>
+          <li><a href="functional.html" >Functional class and attributes</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Mayeul d&#39;Avezac.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

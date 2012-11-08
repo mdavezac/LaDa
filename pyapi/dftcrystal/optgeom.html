@@ -1,0 +1,457 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Geometry optimization block &mdash; LaDa 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="author" title="About these documents" href="../../about.html" />
+    <link rel="top" title="LaDa 1.0 documentation" href="../../index.html" />
+    <link rel="up" title="Functional class and attributes" href="functional.html" />
+    <link rel="next" title="Basis sets" href="basis.html" />
+    <link rel="prev" title="Functional class and attributes" href="functional.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="basis.html" title="Basis sets"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="functional.html" title="Functional class and attributes"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+          <li><a href="../../pyapi.html" >Python API</a> &raquo;</li>
+          <li><a href="../dftcrystal.html" >CRYSTAL wrapper module</a> &raquo;</li>
+          <li><a href="functional.html" accesskey="U">Functional class and attributes</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="geometry-optimization-block">
+<h1>Geometry optimization block<a class="headerlink" href="#geometry-optimization-block" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="lada.dftcrystal.optgeom.OptGeom">
+<em class="property">class </em><tt class="descclassname">lada.dftcrystal.optgeom.</tt><tt class="descname">OptGeom</tt><a class="reference internal" href="../../_modules/lada/dftcrystal/optgeom.html#OptGeom"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.optgeom.OptGeom" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#lada.dftcrystal.optgeom.ExclAttrBlock" title="lada.dftcrystal.optgeom.ExclAttrBlock"><tt class="xref py py-class docutils literal"><span class="pre">lada.dftcrystal.optgeom.ExclAttrBlock</span></tt></a></p>
+<p>Geometry Optimization block.</p>
+<p>Defines the input block for geometry optimization. Geometry optimization
+must be explicitely enabled:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span><span class="o">.</span><span class="n">optgeom</span><span class="o">.</span><span class="n">enabled</span> <span class="o">=</span> <span class="bp">True</span>
+</pre></div>
+</div>
+<p>It is disabled by default. When enabled, other sub-blocks within
+<a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a>&#8216;s first input block are automatically disabled (e.g. <tt class="docutils literal"><span class="pre">freqcalc</span></tt> <a class="footnote-reference" href="#id2" id="id1">[*]</a>). 
+The full set of geometry optimization parameters can be accessed by the
+user within the <a class="reference internal" href="functional.html#lada.dftcrystal.functional.Functional.optgeom" title="lada.dftcrystal.functional.Functional.optgeom"><tt class="xref py py-attr docutils literal"><span class="pre">optgeom</span></tt></a>
+attribute of an <a class="reference internal" href="functional.html#lada.dftcrystal.functional.Functional" title="lada.dftcrystal.functional.Functional"><tt class="xref py py-class docutils literal"><span class="pre">Functional</span></tt></a>
+instance:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span><span class="o">.</span><span class="n">optgeom</span><span class="o">.</span><span class="n">fulloptg</span> <span class="o">=</span> <span class="bp">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span><span class="o">.</span><span class="n">optgeom</span><span class="o">.</span><span class="n">maxcycle</span> <span class="o">=</span> <span class="mi">300</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span><span class="o">.</span><span class="n">optgeom</span><span class="o">.</span><span class="n">enabled</span>  <span class="o">=</span> <span class="bp">True</span>
+</pre></div>
+</div>
+<p>The above would set the optimization method to <tt class="docutils literal"><span class="pre">FULLOPTG</span></tt> and the
+number of geometry optimization to 300. The third line would enable the
+block so that the geomtry optimization can happen.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Inner keywords can be modified when the block is disabled. However, the
+block will not appear in the input until is is explicitely enabled.</p>
+</div>
+<table class="docutils footnote" frame="void" id="id2" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id1">[*]</a></td><td>Currently, <a class="reference internal" href="functional.html#lada.dftcrystal.functional.Functional" title="lada.dftcrystal.functional.Functional"><tt class="xref py py-class docutils literal"><span class="pre">Functional</span></tt></a> only
+contains the <a class="reference internal" href="functional.html#lada.dftcrystal.functional.Functional.optgeom" title="lada.dftcrystal.functional.Functional.optgeom"><tt class="xref py py-attr docutils literal"><span class="pre">optgeom</span></tt></a>
+attribute. If implemented, other sub-blocks should derive from
+<a class="reference internal" href="#lada.dftcrystal.optgeom.ExclAttrBlock" title="lada.dftcrystal.optgeom.ExclAttrBlock"><tt class="xref py py-class docutils literal"><span class="pre">ExclAttrBlock</span></tt></a>.</td></tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="lada.dftcrystal.optgeom.OptGeom.add_keyword">
+<tt class="descname">add_keyword</tt><big>(</big><em>name</em>, <em>value=None</em><big>)</big><a class="headerlink" href="#lada.dftcrystal.optgeom.OptGeom.add_keyword" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a new parameter. The parameter will appear in the input within
+the <tt class="docutils literal"><span class="pre">OPTGEOM</span></tt> block. If <tt class="docutils literal"><span class="pre">value</span></tt> is <tt class="docutils literal"><span class="pre">None</span></tt> or True, then it will
+result in the following input:</p>
+<blockquote>
+<div><div class="line-block">
+<div class="line">OPTGEOM</div>
+<div class="line">NAME</div>
+<div class="line">END OPTGEOM</div>
+</div>
+</div></blockquote>
+<p>The name is automatically in capital letters. Other keywords from the
+block were removed for clarity.
+If <cite>value</cite> is a string, then it is printed as is:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span><span class="o">.</span><span class="n">optgeom</span><span class="o">.</span><span class="n">add_keyword</span><span class="p">(</span><span class="s">&#39;hello&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span><span class="o">.</span><span class="n">optgeom</span><span class="o">.</span><span class="n">hello</span> <span class="o">=</span> <span class="s">&quot;This</span><span class="se">\n</span><span class="s">is</span><span class="se">\n</span><span class="s">a string&quot;</span>
+</pre></div>
+</div>
+<p>The above will create the formatted output:</p>
+<blockquote>
+<div><div class="line-block">
+<div class="line">OPTGEOM</div>
+<div class="line">HELLO</div>
+<div class="line">THIS</div>
+<div class="line">IS</div>
+<div class="line">A STRING</div>
+<div class="line">END OPTGEOM</div>
+</div>
+</div></blockquote>
+<p>By formatting a string, any input, however complex, can be given.
+However, simple cases such as an integer, are handled sensibly:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span><span class="o">.</span><span class="n">optgeom</span><span class="o">.</span><span class="n">hello</span> <span class="o">=</span> <span class="mi">2</span><span class="o">*</span><span class="mi">5</span>
+</pre></div>
+</div>
+<blockquote>
+<div><div class="line-block">
+<div class="line">OPTGEOM</div>
+<div class="line">HELLO</div>
+<div class="line">10</div>
+<div class="line">END OPTGEOM</div>
+</div>
+</div></blockquote>
+<p>Floating point numbers, and mixed lists of integers, floating points, and
+strings are also handled sensibly.</p>
+<p>This function makes it easy to add new keywords to the <tt class="docutils literal"><span class="pre">OPTGEOM</span></tt> block.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.optgeom.OptGeom.fulloptg">
+<tt class="descname">fulloptg</tt><a class="headerlink" href="#lada.dftcrystal.optgeom.OptGeom.fulloptg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Optimization of all degrees of freedom: volume, cell-shape, ionic
+positions.</p>
+<p>This is an instance of <tt class="xref py py-class docutils literal"><span class="pre">GeometryOpt</span></tt>. It excludes
+<a class="reference internal" href="#lada.dftcrystal.optgeom.OptGeom.cellonly" title="lada.dftcrystal.optgeom.OptGeom.cellonly"><tt class="xref py py-attr docutils literal"><span class="pre">cellonly</span></tt></a>, <a class="reference internal" href="#lada.dftcrystal.optgeom.OptGeom.itatocell" title="lada.dftcrystal.optgeom.OptGeom.itatocell"><tt class="xref py py-attr docutils literal"><span class="pre">itatocell</span></tt></a>, <a class="reference internal" href="#lada.dftcrystal.optgeom.OptGeom.interdun" title="lada.dftcrystal.optgeom.OptGeom.interdun"><tt class="xref py py-attr docutils literal"><span class="pre">interdun</span></tt></a>.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span><span class="o">.</span><span class="n">optgeom</span><span class="o">.</span><span class="n">fulloptg</span> <span class="o">=</span> <span class="bp">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span><span class="o">.</span><span class="n">optgeom</span><span class="o">.</span><span class="n">cellonly</span><span class="p">,</span> <span class="n">functional</span><span class="o">.</span><span class="n">optgeom</span><span class="o">.</span><span class="n">itatocell</span><span class="p">,</span> <span class="n">functional</span><span class="o">.</span><span class="n">optgeom</span><span class="o">.</span><span class="n">interdun</span>
+<span class="go">False, False, False</span>
+</pre></div>
+</div>
+<p>It can also be made to optimize at constant volume if <a class="reference internal" href="#lada.dftcrystal.optgeom.OptGeom.cvolopt" title="lada.dftcrystal.optgeom.OptGeom.cvolopt"><tt class="xref py py-attr docutils literal"><span class="pre">cvolopt</span></tt></a> is True.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.optgeom.OptGeom.cellonly">
+<tt class="descname">cellonly</tt><a class="headerlink" href="#lada.dftcrystal.optgeom.OptGeom.cellonly" title="Permalink to this definition">¶</a></dt>
+<dd><p>Optimization of cell-shape at constant atomic-position.</p>
+<p>This is an instance of <tt class="xref py py-class docutils literal"><span class="pre">GeometryOpt</span></tt>. It excludes
+<a class="reference internal" href="#lada.dftcrystal.optgeom.OptGeom.fulloptg" title="lada.dftcrystal.optgeom.OptGeom.fulloptg"><tt class="xref py py-attr docutils literal"><span class="pre">fulloptg</span></tt></a>, <a class="reference internal" href="#lada.dftcrystal.optgeom.OptGeom.itatocell" title="lada.dftcrystal.optgeom.OptGeom.itatocell"><tt class="xref py py-attr docutils literal"><span class="pre">itatocell</span></tt></a>, <a class="reference internal" href="#lada.dftcrystal.optgeom.OptGeom.interdun" title="lada.dftcrystal.optgeom.OptGeom.interdun"><tt class="xref py py-attr docutils literal"><span class="pre">interdun</span></tt></a>.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span><span class="o">.</span><span class="n">optgeom</span><span class="o">.</span><span class="n">cellonly</span> <span class="o">=</span> <span class="bp">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span><span class="o">.</span><span class="n">optgeom</span><span class="o">.</span><span class="n">fulloptg</span><span class="p">,</span> <span class="n">functional</span><span class="o">.</span><span class="n">optgeom</span><span class="o">.</span><span class="n">itatocell</span><span class="p">,</span> <span class="n">functional</span><span class="o">.</span><span class="n">optgeom</span><span class="o">.</span><span class="n">interdun</span>
+<span class="go">False, False, False</span>
+</pre></div>
+</div>
+<p>It can also be made to optimize at constant volume if <a class="reference internal" href="#lada.dftcrystal.optgeom.OptGeom.cvolopt" title="lada.dftcrystal.optgeom.OptGeom.cvolopt"><tt class="xref py py-attr docutils literal"><span class="pre">cvolopt</span></tt></a> is True.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.optgeom.OptGeom.itatocell">
+<tt class="descname">itatocell</tt><a class="headerlink" href="#lada.dftcrystal.optgeom.OptGeom.itatocell" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterative optimization of cell-shape &lt;&#8211;&gt; atomic positions.</p>
+<p>This is an instance of <tt class="xref py py-class docutils literal"><span class="pre">GeometryOpt</span></tt>. It excludes
+<a class="reference internal" href="#lada.dftcrystal.optgeom.OptGeom.cellonly" title="lada.dftcrystal.optgeom.OptGeom.cellonly"><tt class="xref py py-attr docutils literal"><span class="pre">cellonly</span></tt></a>, <a class="reference internal" href="#lada.dftcrystal.optgeom.OptGeom.fulloptg" title="lada.dftcrystal.optgeom.OptGeom.fulloptg"><tt class="xref py py-attr docutils literal"><span class="pre">fulloptg</span></tt></a>, <a class="reference internal" href="#lada.dftcrystal.optgeom.OptGeom.interdun" title="lada.dftcrystal.optgeom.OptGeom.interdun"><tt class="xref py py-attr docutils literal"><span class="pre">interdun</span></tt></a>.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span><span class="o">.</span><span class="n">optgeom</span><span class="o">.</span><span class="n">itatocell</span> <span class="o">=</span> <span class="bp">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span><span class="o">.</span><span class="n">optgeom</span><span class="o">.</span><span class="n">fulloptg</span><span class="p">,</span> <span class="n">functional</span><span class="o">.</span><span class="n">optgeom</span><span class="o">.</span><span class="n">cellonly</span><span class="p">,</span> <span class="n">functional</span><span class="o">.</span><span class="n">optgeom</span><span class="o">.</span><span class="n">interdun</span>
+<span class="go">False, False, False</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.optgeom.OptGeom.interdun">
+<tt class="descname">interdun</tt><a class="headerlink" href="#lada.dftcrystal.optgeom.OptGeom.interdun" title="Permalink to this definition">¶</a></dt>
+<dd><p>If True, turns on constrained optimization. See <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a> manual.</p>
+<p>This is an instance of <tt class="xref py py-class docutils literal"><span class="pre">GeometryOpt</span></tt>. It excludes
+<a class="reference internal" href="#lada.dftcrystal.optgeom.OptGeom.cellonly" title="lada.dftcrystal.optgeom.OptGeom.cellonly"><tt class="xref py py-attr docutils literal"><span class="pre">cellonly</span></tt></a>, <a class="reference internal" href="#lada.dftcrystal.optgeom.OptGeom.fulloptg" title="lada.dftcrystal.optgeom.OptGeom.fulloptg"><tt class="xref py py-attr docutils literal"><span class="pre">fulloptg</span></tt></a>, <a class="reference internal" href="#lada.dftcrystal.optgeom.OptGeom.interdun" title="lada.dftcrystal.optgeom.OptGeom.interdun"><tt class="xref py py-attr docutils literal"><span class="pre">interdun</span></tt></a>.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span><span class="o">.</span><span class="n">optgeom</span><span class="o">.</span><span class="n">itatocell</span> <span class="o">=</span> <span class="bp">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span><span class="o">.</span><span class="n">optgeom</span><span class="o">.</span><span class="n">fulloptg</span><span class="p">,</span> <span class="n">functional</span><span class="o">.</span><span class="n">optgeom</span><span class="o">.</span><span class="n">cellonly</span><span class="p">,</span> <span class="n">functional</span><span class="o">.</span><span class="n">optgeom</span><span class="o">.</span><span class="n">interdun</span>
+<span class="go">False, False, False</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.optgeom.OptGeom.cvolopt">
+<tt class="descname">cvolopt</tt><a class="headerlink" href="#lada.dftcrystal.optgeom.OptGeom.cvolopt" title="Permalink to this definition">¶</a></dt>
+<dd><p>If True <em>and</em> if one of <a class="reference internal" href="#lada.dftcrystal.optgeom.OptGeom.fulloptg" title="lada.dftcrystal.optgeom.OptGeom.fulloptg"><tt class="xref py py-attr docutils literal"><span class="pre">fulloptg</span></tt></a> or <a class="reference internal" href="#lada.dftcrystal.optgeom.OptGeom.cellonly" title="lada.dftcrystal.optgeom.OptGeom.cellonly"><tt class="xref py py-attr docutils literal"><span class="pre">cellonly</span></tt></a> is
+True, then performs constant volume optimization.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.optgeom.OptGeom.bhor">
+<tt class="descname">bhor</tt><a class="headerlink" href="#lada.dftcrystal.optgeom.OptGeom.bhor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bhor radius, defined as in <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a>, 0.5291772083 angstrom.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.optgeom.OptGeom.bohr">
+<tt class="descname">bohr</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.optgeom.OptGeom.bohr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bhor radius as defined by CRYSTAL</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<tt class="descname">cvolopt</tt><em class="property"> = None</em></dt>
+<dd><p>Constant volume optimization keyword.</p>
+<p>Only appears if FULLOPTG or CELLONLY exist.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.optgeom.OptGeom.enabled">
+<tt class="descname">enabled</tt><a class="headerlink" href="#lada.dftcrystal.optgeom.OptGeom.enabled" title="Permalink to this definition">¶</a></dt>
+<dd><p>True  if this block is enabled.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.optgeom.OptGeom.extpress">
+<tt class="descname">extpress</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.optgeom.OptGeom.extpress" title="Permalink to this definition">¶</a></dt>
+<dd><p>Hydrostatic pressure in <span class="math">\(\frac{\text{hartree}}{\text{bohr}^{3}}\)</span>.</p>
+<p>Sets the hydrostatic pressure for which an structural relaxation is
+performed.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.optgeom.OptGeom.extstress">
+<tt class="descname">extstress</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.optgeom.OptGeom.extstress" title="Permalink to this definition">¶</a></dt>
+<dd><p>External stress in <span class="math">\(\frac{\text{hartree}}{\text{bohr}^{3}}\)</span>.</p>
+<p>Sets the stress for which a structural relaxation is performed.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.optgeom.OptGeom.fixcell">
+<tt class="descname">fixcell</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.optgeom.OptGeom.fixcell" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constant volume optimization keyword.</p>
+<p>When used in conjunction with <a class="reference internal" href="#lada.dftcrystal.optgeom.OptGeom.intredun" title="lada.dftcrystal.optgeom.OptGeom.intredun"><tt class="xref py py-attr docutils literal"><span class="pre">intredun</span></tt></a> optimization method,
+keeps the cell-external degrees of freedom constant. Only appears for
+<a class="reference internal" href="#lada.dftcrystal.optgeom.OptGeom.intredun" title="lada.dftcrystal.optgeom.OptGeom.intredun"><tt class="xref py py-attr docutils literal"><span class="pre">intredun</span></tt></a> relaxations.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.optgeom.OptGeom.intredun">
+<tt class="descname">intredun</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.optgeom.OptGeom.intredun" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constrained optimization.</p>
+<p>Relaxes the strain energy by optimizing a complete and redundant set of
+chemically intuitive parameters, such as bond-length and bond-angles.
+This option is not compatible with other optimization methods.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span><span class="o">.</span><span class="n">optgeom</span><span class="o">.</span><span class="n">intredun</span> <span class="o">=</span> <span class="bp">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span><span class="o">.</span><span class="n">fulloptg</span><span class="p">,</span> <span class="n">functional</span><span class="o">.</span><span class="n">itatocell</span>
+<span class="go">False, False</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.optgeom.OptGeom.keyword">
+<tt class="descname">keyword</tt><em class="property"> = 'optgeom'</em><a class="headerlink" href="#lada.dftcrystal.optgeom.OptGeom.keyword" title="Permalink to this definition">¶</a></dt>
+<dd><p>CRYSTAL input keyword (class-attribute)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.optgeom.OptGeom.maxcycle">
+<tt class="descname">maxcycle</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.optgeom.OptGeom.maxcycle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Maxium number of iterations in geometry optimization loop.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.optgeom.OptGeom.nosymmops">
+<tt class="descname">nosymmops</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.optgeom.OptGeom.nosymmops" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether to print symmetry operations at the end of optimization.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.optgeom.OptGeom.noxyz">
+<tt class="descname">noxyz</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.optgeom.OptGeom.noxyz" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether to print cartesian coordinates at the end of optimization.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.optgeom.OptGeom.onelog">
+<tt class="descname">onelog</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.optgeom.OptGeom.onelog" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether to print electronic minimization at each geometry step.</p>
+<p>The electronic minimization steps can be printed to the same file as
+the geometry optimization step (e.g. the standard output). By default,
+LaDa prefers to print to the same file, in contrast to <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a>&#8216;s
+default.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.optgeom.OptGeom.printforces">
+<tt class="descname">printforces</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.optgeom.OptGeom.printforces" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether to print forces at the end of optimization.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.optgeom.OptGeom.printhess">
+<tt class="descname">printhess</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.optgeom.OptGeom.printhess" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether to print Hessian at the end of optimization.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.optgeom.OptGeom.printopt">
+<tt class="descname">printopt</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.optgeom.OptGeom.printopt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether to print extended optimization information.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.optgeom.OptGeom.toldee">
+<tt class="descname">toldee</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.optgeom.OptGeom.toldee" title="Permalink to this definition">¶</a></dt>
+<dd><p>Electronic structure minimization convergence criteria.</p>
+<p>The criteria is with respect to the total energy. It is logarithmic and
+should be an integer: <span class="math">\(|\Delta E| &lt; 10^{-\mathrm{toldee}}\)</span>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.optgeom.OptGeom.toldeg">
+<tt class="descname">toldeg</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.optgeom.OptGeom.toldeg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Structural relaxation convergence criteria.</p>
+<p>Convergence criteria for the root mean square gradient of the total energy
+with respect to the displacements. Should be a floating point.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.optgeom.OptGeom.toldex">
+<tt class="descname">toldex</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.optgeom.OptGeom.toldex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Structural relaxation convergence criteria.</p>
+<p>Convergence criteria as the root mean square of the displacements
+during structural relaxation. Should be a floating point.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.optgeom.OptGeom.verbose">
+<tt class="descname">verbose</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.optgeom.OptGeom.verbose" title="Permalink to this definition">¶</a></dt>
+<dd><p>Verbose printint.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="lada.dftcrystal.optgeom.ExclAttrBlock">
+<em class="property">class </em><tt class="descclassname">lada.dftcrystal.optgeom.</tt><tt class="descname">ExclAttrBlock</tt><a class="reference internal" href="../../_modules/lada/dftcrystal/optgeom.html#ExclAttrBlock"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.optgeom.ExclAttrBlock" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">lada.dftcrystal.input.AttrBlock</span></tt></p>
+<p>An attribute block set up to exclude others.</p>
+<p>Expects both &#8220;keyword&#8221; and &#8220;excludegroup&#8221; attributes (or class
+attributes) to exist in derived instances. This class makes it convenient
+to describe mutually exclusive blocks such as optgeom and freqcalc.</p>
+<dl class="attribute">
+<dt id="lada.dftcrystal.optgeom.ExclAttrBlock.enabled">
+<tt class="descname">enabled</tt><a class="reference internal" href="../../_modules/lada/dftcrystal/optgeom.html#ExclAttrBlock.enabled"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.optgeom.ExclAttrBlock.enabled" title="Permalink to this definition">¶</a></dt>
+<dd><p>True  if this block is enabled.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.optgeom.ExclAttrBlock.excludegroup">
+<tt class="descname">excludegroup</tt><em class="property"> = ('optgeom', 'freqcalc', 'anharm', 'confcnt', 'cphf', 'elastcon', 'eos')</em><a class="headerlink" href="#lada.dftcrystal.optgeom.ExclAttrBlock.excludegroup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Groups of blocks of which only one should be enabled.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lada.dftcrystal.optgeom.ExclAttrBlock.output_map">
+<tt class="descname">output_map</tt><big>(</big><em>**kwargs</em><big>)</big><a class="headerlink" href="#lada.dftcrystal.optgeom.ExclAttrBlock.output_map" title="Permalink to this definition">¶</a></dt>
+<dd><p>Does not print if disabled.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lada.dftcrystal.optgeom.ExclAttrBlock.read_input">
+<tt class="descname">read_input</tt><big>(</big><em>tree</em>, <em>owner=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../_modules/lada/dftcrystal/optgeom.html#ExclAttrBlock.read_input"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.optgeom.ExclAttrBlock.read_input" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads from input.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="functional.html"
+                        title="previous chapter">Functional class and attributes</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="basis.html"
+                        title="next chapter">Basis sets</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../../_sources/pyapi/dftcrystal/optgeom.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="basis.html" title="Basis sets"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="functional.html" title="Functional class and attributes"
+             >previous</a> |</li>
+        <li><a href="../../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+          <li><a href="../../pyapi.html" >Python API</a> &raquo;</li>
+          <li><a href="../dftcrystal.html" >CRYSTAL wrapper module</a> &raquo;</li>
+          <li><a href="functional.html" >Functional class and attributes</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Mayeul d&#39;Avezac.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

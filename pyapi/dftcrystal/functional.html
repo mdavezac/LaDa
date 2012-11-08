@@ -1,0 +1,468 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Functional class and attributes &mdash; LaDa 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="author" title="About these documents" href="../../about.html" />
+    <link rel="top" title="LaDa 1.0 documentation" href="../../index.html" />
+    <link rel="up" title="CRYSTAL wrapper module" href="../dftcrystal.html" />
+    <link rel="next" title="Geometry optimization block" href="optgeom.html" />
+    <link rel="prev" title="CRYSTAL wrapper module" href="../dftcrystal.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="optgeom.html" title="Geometry optimization block"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../dftcrystal.html" title="CRYSTAL wrapper module"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+          <li><a href="../../pyapi.html" >Python API</a> &raquo;</li>
+          <li><a href="../dftcrystal.html" accesskey="U">CRYSTAL wrapper module</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-lada.dftcrystal.functional">
+<span id="functional-class-and-attributes"></span><h1>Functional class and attributes<a class="headerlink" href="#module-lada.dftcrystal.functional" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="lada.dftcrystal.functional.Functional">
+<em class="property">class </em><tt class="descclassname">lada.dftcrystal.functional.</tt><tt class="descname">Functional</tt><big>(</big><em>copy=None</em>, <em>program=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../_modules/lada/dftcrystal/functional.html#Functional"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.functional.Functional" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Wrapper for the CRYSTAL program.</p>
+<p>This object provides a pythonic interface to the <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a> program. It is
+modelled loosely after <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a>&#8216;s input:</p>
+<blockquote>
+<div><ul>
+<li><p class="first">The OPTGEOM keyword of the first code block can be accessed through
+the <a class="reference internal" href="optgeom.html#lada.dftcrystal.optgeom.OptGeom" title="lada.dftcrystal.optgeom.OptGeom"><tt class="xref py py-class docutils literal"><span class="pre">optgeom</span></tt></a>
+<a class="reference internal" href="#lada.dftcrystal.functional.Functional.optgeom" title="lada.dftcrystal.functional.Functional.optgeom"><tt class="xref py py-attr docutils literal"><span class="pre">attribute</span></tt></a>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># enable geometry optimization</span>
+<span class="n">functional</span><span class="o">.</span><span class="n">optgeom</span><span class="o">.</span><span class="n">enabled</span> <span class="o">=</span> <span class="bp">True</span>
+<span class="c"># change some of the keywords</span>
+<span class="n">functional</span><span class="o">.</span><span class="n">optgeom</span><span class="o">.</span><span class="n">maxcycle</span> <span class="o">=</span> <span class="bp">True</span>
+</pre></div>
+</div>
+<p>Geometry optimization must be explicitly enabled, as is done in the
+first line above.</p>
+</li>
+<li><p class="first">The interface to the second block of input (basis-functions) can be
+accessed through the <a class="reference internal" href="basis.html#lada.dftcrystal.basis.BasisSet" title="lada.dftcrystal.basis.BasisSet"><tt class="xref py py-class docutils literal"><span class="pre">basis</span></tt></a> <a class="reference internal" href="#lada.dftcrystal.functional.Functional.basis" title="lada.dftcrystal.functional.Functional.basis"><tt class="xref py py-attr docutils literal"><span class="pre">attribute</span></tt></a>. It
+allows to set the basis set itself, as well as keywords specific to
+the basis set:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">functional</span><span class="o">.</span><span class="n">basis</span><span class="p">[</span><span class="s">&#39;H&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">Shell</span><span class="p">(</span><span class="s">&#39;s&#39;</span><span class="p">,</span> <span class="n">a0</span><span class="o">=</span><span class="p">(</span><span class="mf">15.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span> <span class="n">a1</span><span class="o">=</span><span class="p">(</span><span class="mf">8.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)),</span> <span class="o">...</span><span class="p">]</span>
+<span class="n">functional</span><span class="o">.</span><span class="n">basis</span><span class="o">.</span><span class="n">ghosts</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">6</span><span class="p">],</span> <span class="bp">False</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">The third input block (Hamiltonian and miscellaneous) can be accessed
+directly through the functional, or, alternatively, <em>via</em> the
+<a class="reference internal" href="comp.html#lada.dftcrystal.electronic.Electronic" title="lada.dftcrystal.electronic.Electronic"><tt class="xref py py-class docutils literal"><span class="pre">scf</span></tt></a>
+<a class="reference internal" href="#lada.dftcrystal.functional.Functional.scf" title="lada.dftcrystal.functional.Functional.scf"><tt class="xref py py-attr docutils literal"><span class="pre">attribute</span></tt></a>.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">functional</span><span class="o">.</span><span class="n">scf</span><span class="o">.</span><span class="n">dft</span><span class="o">.</span><span class="n">b3lyp</span> <span class="o">=</span> <span class="bp">True</span>
+<span class="n">functional</span><span class="o">.</span><span class="n">dft</span><span class="o">.</span><span class="n">b3lyp</span> <span class="o">=</span> <span class="bp">True</span>
+
+<span class="n">functional</span><span class="o">.</span><span class="n">tolinteg</span> <span class="o">=</span> <span class="p">[</span><span class="mi">8</span><span class="p">]</span> <span class="o">*</span> <span class="mi">4</span> <span class="o">+</span> <span class="p">[</span><span class="mi">14</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>The first two lines are exactly equivalent. The third line could also
+be written as <tt class="docutils literal"><span class="pre">functional.scf.tolinteg</span> <span class="pre">=</span> <span class="pre">...</span></tt>.</p>
+</li>
+</ul>
+</div></blockquote>
+<p>Following the pattern of <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a>&#8216;s input, the parameters are separated into sub-blocs:</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="optgeom.html">Geometry optimization block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="basis.html">Basis block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="comp.html">Computational and Hamiltonian parameters</a></li>
+</ul>
+</div>
+<dl class="attribute">
+<dt id="lada.dftcrystal.functional.Functional.Extract">
+<tt class="descname">Extract</tt><em class="property"> = &lt;class 'lada.dftcrystal.extract.Extract'&gt;</em><a class="headerlink" href="#lada.dftcrystal.functional.Functional.Extract" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extraction class.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lada.dftcrystal.functional.Functional.__call__">
+<tt class="descname">__call__</tt><big>(</big><em>structure</em>, <em>outdir=None</em>, <em>workdir=None</em>, <em>comm=None</em>, <em>overwrite=False</em>, <em>test=False</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../_modules/lada/dftcrystal/functional.html#Functional.__call__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.functional.Functional.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs a CRYSTAL calculation</p>
+<p>If successfull results (see <tt class="xref py py-attr docutils literal"><span class="pre">extract.Extract.success</span></tt>) already
+exist in outdir, calculations are not repeated. Instead, an extraction
+object for the stored results are given.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>structure</strong> &#8211; <tt class="xref py py-class docutils literal"><span class="pre">Structure</span></tt> structure to compute.</li>
+<li><strong>outdir</strong> &#8211; Output directory where the results should be stored.  This
+directory will be checked for restart status, eg whether
+calculations already exist. If None, then results are stored in
+current working directory.</li>
+<li><strong>comm</strong> &#8211; Holds arguments for executing CRYSTAL externally.</li>
+<li><strong>overwrite</strong> &#8211; If True, will overwrite pre-existing results. 
+If False, will check whether a successfull calculation exists. If
+one does, then does not execute.</li>
+<li><strong>test</strong> &#8211; If True, TEST is inserted at the very end of the run. This makes it
+easier to check that the input is correct.</li>
+<li><strong>kwargs</strong> &#8211; Any attribute of the VASP instance can be overidden for
+the duration of this call by passing it as keyword argument.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Yields an extractor object if a prior successful run exists.
+Otherwise, yields a tuple object for executing an external
+program.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Note :</th><td class="field-body"><p class="first">This functor is stateless as long as self and structure can be
+deepcopied correctly.</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
+<li><strong>RuntimeError</strong> &#8211; when computations do not complete.</li>
+<li><strong>IOError</strong> &#8211; when outdir exists but is not a directory.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>This version performs a blocking call to the <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a> program. It works as
+follows:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">lada.dftcrystal</span> <span class="kn">import</span> <span class="n">Crystal</span><span class="p">,</span> <span class="n">Functional</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c"># create an object</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span> <span class="o">=</span> <span class="n">Functional</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c"># initialize it</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span><span class="o">.</span><span class="n">basis</span><span class="p">[</span><span class="s">&#39;H&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="o">...</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c"># call the functional on a Crystal structure.</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">result</span> <span class="o">=</span> <span class="n">functional</span><span class="p">(</span><span class="n">crystal</span><span class="p">,</span> <span class="n">outdir</span><span class="o">=</span><span class="s">&#39;ther&#39;</span><span class="p">,</span> <span class="n">comm</span><span class="o">=</span><span class="n">comm</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">result</span><span class="o">.</span><span class="n">total_energy</span>
+<span class="go">-666 eV</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="lada.dftcrystal.functional.Functional.iter">
+<tt class="descname">iter</tt><big>(</big><em>structure</em>, <em>outdir=None</em>, <em>comm=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../_modules/lada/dftcrystal/functional.html#Functional.iter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.functional.Functional.iter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs a CRYSTAL calculation</p>
+<p>If successfull results (see <tt class="xref py py-attr docutils literal"><span class="pre">extract.Extract.success</span></tt>) already
+exist in outdir, calculations are not repeated. Instead, an extraction
+object for the stored results are given.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>structure</strong> &#8211; <tt class="xref py py-class docutils literal"><span class="pre">Structure</span></tt> structure to compute.</li>
+<li><strong>outdir</strong> &#8211; Output directory where the results should be stored.  This
+directory will be checked for restart status, eg whether
+calculations already exist. If None, then results are stored in
+current working directory.</li>
+<li><strong>comm</strong> &#8211; Holds arguments for executing CRYSTAL externally.</li>
+<li><strong>overwrite</strong> &#8211; If True, will overwrite pre-existing results. 
+If False, will check whether a successfull calculation exists. If
+one does, then does not execute.</li>
+<li><strong>test</strong> &#8211; If True, TEST is inserted at the very end of the run. This makes it
+easier to check that the input is correct.</li>
+<li><strong>kwargs</strong> &#8211; Any attribute of the VASP instance can be overidden for
+the duration of this call by passing it as keyword argument.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Yields an extractor object if a prior successful run exists.
+Otherwise, yields a tuple object for executing an external
+program.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Note :</th><td class="field-body"><p class="first">This functor is stateless as long as self and structure can be
+deepcopied correctly.</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
+<li><strong>RuntimeError</strong> &#8211; when computations do not complete.</li>
+<li><strong>IOError</strong> &#8211; when outdir exists but is not a directory.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>This version does not perform the actual call to the <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a>. Rather, it
+is a generator which yields two types of objects:</p>
+<blockquote>
+<div><ul class="simple">
+<li><a class="reference internal" href="#lada.dftcrystal.functional.Functional.Extract" title="lada.dftcrystal.functional.Functional.Extract"><tt class="xref py py-attr docutils literal"><span class="pre">Extract</span></tt></a> instances refering to finished <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a> calculations</li>
+<li><a class="reference internal" href="../process.html#module-lada.process" title="lada.process"><tt class="xref py py-mod docutils literal"><span class="pre">Processes</span></tt></a> which allow the user to call the
+<a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a> code at leisure</li>
+</ul>
+</div></blockquote>
+<p>The last object yielded should be an extraction object refering to the
+final calculation. In practice, <a class="reference internal" href="#lada.dftcrystal.functional.Functional.iter" title="lada.dftcrystal.functional.Functional.iter"><tt class="xref py py-meth docutils literal"><span class="pre">iter()</span></tt></a> is used as follows:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">for</span> <span class="n">process</span> <span class="ow">in</span> <span class="n">functional</span><span class="o">.</span><span class="n">iter</span><span class="p">(</span><span class="n">crystal</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span>
+  <span class="c"># check whether the generator yielded a process or not</span>
+  <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">process</span><span class="p">,</span> <span class="s">&#39;success&#39;</span><span class="p">):</span>
+    <span class="c"># This is an extraction object</span>
+    <span class="c"># Do something</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="c"># This is a process</span>
+    <span class="c"># call it somehow</span>
+    <span class="n">process</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">comm</span><span class="p">)</span>
+    <span class="n">process</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+<span class="k">print</span> <span class="n">process</span><span class="o">.</span><span class="n">some_result</span> <span class="c"># last process should be an extractor</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="lada.dftcrystal.functional.Functional.add_keyword">
+<tt class="descname">add_keyword</tt><big>(</big><em>name</em>, <em>value=None</em><big>)</big><a class="reference internal" href="../../_modules/lada/dftcrystal/functional.html#Functional.add_keyword"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.functional.Functional.add_keyword" title="Permalink to this definition">¶</a></dt>
+<dd><p>Passes on to <a class="reference internal" href="#lada.dftcrystal.functional.Functional.scf" title="lada.dftcrystal.functional.Functional.scf"><tt class="xref py py-attr docutils literal"><span class="pre">scf</span></tt></a></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.functional.Functional.optgeom">
+<tt class="descname">optgeom</tt><a class="headerlink" href="#lada.dftcrystal.functional.Functional.optgeom" title="Permalink to this definition">¶</a></dt>
+<dd><p>Geometry relaxation parameters.</p>
+<p>This is an instance of <a class="reference internal" href="optgeom.html#lada.dftcrystal.optgeom.OptGeom" title="lada.dftcrystal.optgeom.OptGeom"><tt class="xref py py-class docutils literal"><span class="pre">OptGeom</span></tt></a>. Once
+enabled with</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span><span class="o">.</span><span class="n">optgeom</span><span class="o">.</span><span class="n">enable</span> <span class="o">=</span> <span class="bp">True</span>
+</pre></div>
+</div>
+<p>it will print out the geometry subblock into the input.
+It controls the structural relaxation:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span><span class="o">.</span><span class="n">optgeom</span><span class="o">.</span><span class="n">intredun</span> <span class="o">=</span> <span class="bp">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span><span class="o">.</span><span class="n">optgeom</span><span class="o">.</span><span class="n">maxcycle</span> <span class="o">=</span> <span class="mi">10</span>
+</pre></div>
+</div>
+<div class="admonition-see-also admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="optgeom.html#lada.dftcrystal.optgeom.OptGeom" title="lada.dftcrystal.optgeom.OptGeom"><tt class="xref py py-class docutils literal"><span class="pre">OptGeom</span></tt></a>,
+<tt class="xref py py-class docutils literal"><span class="pre">Relax</span></tt></p>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.functional.Functional.basis">
+<tt class="descname">basis</tt><a class="headerlink" href="#lada.dftcrystal.functional.Functional.basis" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.functional.Functional.dft">
+<tt class="descname">dft</tt><a class="headerlink" href="#lada.dftcrystal.functional.Functional.dft" title="Permalink to this definition">¶</a></dt>
+<dd><p>It is an instance of <a class="reference internal" href="comp.html#lada.dftcrystal.hamiltonian.Dft" title="lada.dftcrystal.hamiltonian.Dft"><tt class="xref py py-class docutils literal"><span class="pre">Dft</span></tt></a>.
+Parameters from <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a>&#8216;s sub-block can be set here, for instance as:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span><span class="o">.</span><span class="n">dft</span><span class="o">.</span><span class="n">b3lyp</span> <span class="o">=</span> <span class="bp">True</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<tt class="descname">basis</tt><em class="property"> = None</em></dt>
+<dd><p>Holds definition of basis functions &#8211; block 2.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lada.dftcrystal.functional.Functional.kpoint_blocking">
+<tt class="descname">kpoint_blocking</tt><big>(</big><em>structure</em>, <em>nprocs</em>, <em>nkpoints=None</em>, <em>cmplxfac=None</em><big>)</big><a class="headerlink" href="#lada.dftcrystal.functional.Functional.kpoint_blocking" title="Permalink to this definition">¶</a></dt>
+<dd><p>Infers the number of procs per kpoint.</p>
+<p>This function is helpfull in checking whether MPPcrystal will run
+correcly or not. It returns a list consisting of the number of procs
+per k-point. It is a list since <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a> may assign some k-points with
+more processors than others, in order to maximize the number of
+processors used. However, this approach fails when a k-point is
+assigned a prime number of processors, because of some bug somewhere
+(see comment in k_space_MPP.f90: asssing_k_to_proc in <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a> code).
+Unfortunately, MPPCrystal does not recover well from this problem.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lada.dftcrystal.functional.Functional.mpp_compatible_procs">
+<tt class="descname">mpp_compatible_procs</tt><big>(</big><em>structure</em>, <em>multipleof=1</em>, <em>dof=20</em>, <em>cmplxfac=None</em><big>)</big><a class="headerlink" href="#lada.dftcrystal.functional.Functional.mpp_compatible_procs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns list of MPP compatible processor counts.</p>
+<p>Processor counts are compatible if:</p>
+<ul class="simple">
+<li><span class="math">\(N_p &lt; N_{AO} * N_k * N_s // dof\)</span></li>
+<li><span class="math">\(N_p % multipleof == 0\)</span></li>
+<li>the number of processors per k-point is never prime</li>
+</ul>
+<p>Where:</p>
+<ul class="simple">
+<li><span class="math">\(N_p\)</span> is the number of cores</li>
+<li><span class="math">\(N_k\)</span> is the number of irreducible kpoints</li>
+<li><span class="math">\(N_s\)</span> is the number of spins</li>
+<li><span class="math">\(N_{AO}\)</span> is the number of atomic orbitals</li>
+</ul>
+<p>The last condition is somewhat more complex and depends upon the total
+number of kpoints, the number of k-points at the Brillouin zone edge,
+and the particular way <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a> assigns procs for each k-point. This
+decomposition is computed in <a class="reference internal" href="#lada.dftcrystal.functional.Functional.kpoint_blocking" title="lada.dftcrystal.functional.Functional.kpoint_blocking"><tt class="xref py py-meth docutils literal"><span class="pre">kpoint_blocking()</span></tt></a>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>structure</strong> &#8211; Crystal structure for which to run the code.</li>
+<li><strong>multipleof</strong> (<em>int</em>) &#8211; Pars down results to multiple of this number (eg cores per node).</li>
+<li><strong>dof</strong> (<em>int</em>) &#8211; Minimum degrees of freedom per processor.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="lada.dftcrystal.functional.Functional.nbelectrons">
+<tt class="descname">nbelectrons</tt><big>(</big><em>structure</em><big>)</big><a class="headerlink" href="#lada.dftcrystal.functional.Functional.nbelectrons" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of electrons per formula unit.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<tt class="descname">optgeom</tt><em class="property"> = None</em></dt>
+<dd><p>Holds definition of geometry optimization &#8211; part of block 1.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.functional.Functional.program">
+<tt class="descname">program</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.functional.Functional.program" title="Permalink to this definition">¶</a></dt>
+<dd><p>Path to crystal program.</p>
+<p>If this attribute is None, then <tt class="xref py py-data docutils literal"><span class="pre">crystal_program</span></tt> is
+used.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.functional.Functional.restart">
+<tt class="descname">restart</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.functional.Functional.restart" title="Permalink to this definition">¶</a></dt>
+<dd><p>Place holder.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.functional.Functional.scf">
+<tt class="descname">scf</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.functional.Functional.scf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Holds scf/electronic keywords &#8211; block 3.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lada.dftcrystal.functional.Functional.test_basis">
+<tt class="descname">test_basis</tt><big>(</big><em>structure</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#lada.dftcrystal.functional.Functional.test_basis" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns output of test basis run.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lada.dftcrystal.functional.Functional.test_hamiltonian">
+<tt class="descname">test_hamiltonian</tt><big>(</big><em>structure</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#lada.dftcrystal.functional.Functional.test_hamiltonian" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns output of test basis run.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.functional.Functional.title">
+<tt class="descname">title</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.functional.Functional.title" title="Permalink to this definition">¶</a></dt>
+<dd><p>Title of the calculation.</p>
+<p>Overriden by the name of the input structure, if it exists.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="../dftcrystal.html"
+                        title="previous chapter">CRYSTAL wrapper module</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="optgeom.html"
+                        title="next chapter">Geometry optimization block</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../../_sources/pyapi/dftcrystal/functional.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="optgeom.html" title="Geometry optimization block"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../dftcrystal.html" title="CRYSTAL wrapper module"
+             >previous</a> |</li>
+        <li><a href="../../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+          <li><a href="../../pyapi.html" >Python API</a> &raquo;</li>
+          <li><a href="../dftcrystal.html" >CRYSTAL wrapper module</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Mayeul d&#39;Avezac.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,222 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>CRYSTAL wrapper module &mdash; LaDa 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="author" title="About these documents" href="../about.html" />
+    <link rel="top" title="LaDa 1.0 documentation" href="../index.html" />
+    <link rel="up" title="Python API" href="../pyapi.html" />
+    <link rel="next" title="Functional class and attributes" href="dftcrystal/functional.html" />
+    <link rel="prev" title="lada.vasp.extract.mixin" href="vasp/mixin.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="dftcrystal/functional.html" title="Functional class and attributes"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="vasp/mixin.html" title="lada.vasp.extract.mixin"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+          <li><a href="../pyapi.html" accesskey="U">Python API</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-lada.dftcrystal">
+<span id="crystal-wrapper-module"></span><h1>CRYSTAL wrapper module<a class="headerlink" href="#module-lada.dftcrystal" title="Permalink to this headline">¶</a></h1>
+<p>This module creates wrappers around the <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a> code. It is main focus are
+three kinds of objects:</p>
+<blockquote>
+<div><ul class="simple">
+<li><a class="reference internal" href="dftcrystal/crystal.html#lada.dftcrystal.crystal.Crystal" title="lada.dftcrystal.crystal.Crystal"><tt class="xref py py-class docutils literal"><span class="pre">Crystal</span></tt></a>, <tt class="xref py py-class docutils literal"><span class="pre">Molecule</span></tt>, which define
+the structure to be optimized in a functional manner (as opposed to the
+declarative approach of <tt class="xref py py-class docutils literal"><span class="pre">Structure</span></tt>)</li>
+<li><a class="reference internal" href="dftcrystal/functional.html#lada.dftcrystal.functional.Functional" title="lada.dftcrystal.functional.Functional"><tt class="xref py py-class docutils literal"><span class="pre">Functional</span></tt></a>, which handles writing the input and
+calling <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a> itself</li>
+<li><tt class="xref py py-class docutils literal"><span class="pre">Extract</span></tt>, which handles grepping values from the output</li>
+</ul>
+</div></blockquote>
+<p>It strives to reproduce the input style of <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a>, while still providing a
+pythonic interface. As such, the structure <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a>&#8216;s input is mirrored by the
+structure of <a class="reference internal" href="dftcrystal/functional.html#lada.dftcrystal.functional.Functional" title="lada.dftcrystal.functional.Functional"><tt class="xref py py-class docutils literal"><span class="pre">Functional</span></tt></a>&#8216;s attributes.</p>
+<p>Content:</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="dftcrystal/functional.html">Functional class and attributes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dftcrystal/optgeom.html">Geometry optimization block</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dftcrystal/basis.html">Basis block</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dftcrystal/comp.html">Computational and Hamiltonian parameters</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="dftcrystal/crystal.html">Crystal structure à la CRYSTAL</a></li>
+</ul>
+</div>
+<div class="section" id="others">
+<h2>Others<a class="headerlink" href="#others" title="Permalink to this headline">¶</a></h2>
+<dl class="data">
+<dt id="lada.dftcrystal.registered">
+<tt class="descclassname">lada.dftcrystal.</tt><tt class="descname">registered</tt><a class="headerlink" href="#lada.dftcrystal.registered" title="Permalink to this definition">¶</a></dt>
+<dd><p>Map of geometry keywords to their LaDa implementation.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="lada.dftcrystal.read">
+<tt class="descclassname">lada.dftcrystal.</tt><tt class="descname">read</tt><big>(</big><em>path</em><big>)</big> &rarr; structure, functional<a class="reference internal" href="../_modules/lada/dftcrystal.html#read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.read" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads CRYSTAL input from file</p>
+<p>Reads a file and finds the <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a> input within. It then parses the file
+and creates a <a class="reference internal" href="dftcrystal/functional.html#lada.dftcrystal.functional.Functional" title="lada.dftcrystal.functional.Functional"><tt class="xref py py-class docutils literal"><span class="pre">Functional</span></tt></a> and
+<tt class="xref py py-class docutils literal"><span class="pre">Molecule</span></tt> (or derived) object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>path</strong> &#8211; <p>Can be one of the following:</p>
+<blockquote>
+<div><ul class="simple">
+<li>a file object obtained from <a class="reference external" href="http://docs.python.org/library/functions.html#open">open</a></li>
+<li>a string without &#8216;n&#8217; in which case it should be a path</li>
+<li>a string with &#8216;n&#8217;, in whcih case it should be the input itself</li>
+<li>an iterator over the lines of an input file</li>
+</ul>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A two-tuple containing the structure and the functional</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">(<tt class="xref py py-class docutils literal"><span class="pre">Molecule</span></tt>, <a class="reference internal" href="dftcrystal/functional.html#lada.dftcrystal.functional.Functional" title="lada.dftcrystal.functional.Functional"><tt class="xref py py-class docutils literal"><span class="pre">Functional</span></tt></a>)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="lada.dftcrystal.read_gaussian_basisset">
+<tt class="descclassname">lada.dftcrystal.</tt><tt class="descname">read_gaussian_basisset</tt><big>(</big><em>path</em><big>)</big> &rarr; structure, functional<a class="reference internal" href="../_modules/lada/dftcrystal.html#read_gaussian_basisset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.read_gaussian_basisset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads a GAUSSIAN94 basis set</p>
+<p>This is meant to read input files from the <a class="reference external" href="https://bse.pnl.gov/bse/portal">basis set exchange website</a>
+in the <a class="reference external" href="http://www.gaussian.com/">GAUSSIAN94</a> format.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>path</strong> &#8211; <p>Can be one of the following:</p>
+<blockquote>
+<div><ul class="simple">
+<li>a file object obtained from <a class="reference external" href="http://docs.python.org/library/functions.html#open">open</a></li>
+<li>a string without &#8216;n&#8217; in which case it should be a path</li>
+<li>a string with &#8216;n&#8217;, in whcih case it should be the input itself</li>
+<li>an iterator over the lines of an input file</li>
+</ul>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">CRYSTAL wrapper module</a><ul>
+<li><a class="reference internal" href="#others">Others</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="vasp/mixin.html"
+                        title="previous chapter">lada.vasp.extract.mixin</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="dftcrystal/functional.html"
+                        title="next chapter">Functional class and attributes</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/pyapi/dftcrystal.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="dftcrystal/functional.html" title="Functional class and attributes"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="vasp/mixin.html" title="lada.vasp.extract.mixin"
+             >previous</a> |</li>
+        <li><a href="../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+          <li><a href="../pyapi.html" >Python API</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Mayeul d&#39;Avezac.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

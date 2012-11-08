@@ -1,0 +1,193 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Setting up the PBS/Slurm ressources &mdash; LaDa 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="author" title="About these documents" href="../../about.html" />
+    <link rel="top" title="LaDa 1.0 documentation" href="../../index.html" />
+    <link rel="up" title="Compiling, installing, and setup" href="../installation.html" />
+    <link rel="next" title="Setting up the ipython interface" href="ipython.html" />
+    <link rel="prev" title="Setting up MPI" href="mpi.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="ipython.html" title="Setting up the ipython interface"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="mpi.html" title="Setting up MPI"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+          <li><a href="../../userguide.html" >User Guide</a> &raquo;</li>
+          <li><a href="../installation.html" accesskey="U">Compiling, installing, and setup</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="setting-up-the-pbs-slurm-ressources">
+<span id="install-pbs-ug"></span><h1>Setting up the PBS/Slurm ressources<a class="headerlink" href="#setting-up-the-pbs-slurm-ressources" title="Permalink to this headline">¶</a></h1>
+<p>A ressource manager, such as pbs or slurm, takes care of allocating
+supercomputing ressources for submitted jobs. LaDa interfaces with these <cite>via</cite>
+a few global data variables:</p>
+<blockquote>
+<div><ul class="simple">
+<li><tt class="xref py py-data docutils literal"><span class="pre">qsub_exe</span></tt></li>
+<li><tt class="xref py py-data docutils literal"><span class="pre">pbs_string</span></tt></li>
+<li><tt class="xref py py-data docutils literal"><span class="pre">default_pbs</span></tt></li>
+<li><tt class="xref py py-data docutils literal"><span class="pre">queues</span></tt></li>
+<li><tt class="xref py py-data docutils literal"><span class="pre">accounts</span></tt></li>
+<li><tt class="xref py py-data docutils literal"><span class="pre">debug_queue</span></tt></li>
+</ul>
+</div></blockquote>
+<p><tt class="xref py py-data docutils literal"><span class="pre">lada.qsub</span></tt> defines the executable to submit jobs.</p>
+<blockquote>
+<div># openpbs
+qsub_exe = &#8220;qsub&#8221;
+# slurn
+qsub_exe = &#8220;sbatch&#8221;</div></blockquote>
+<p>The scripts themselves are defined <cite>via</cite> the <a class="reference external" href="http://docs.python.org/library/stdtypes.html#str.format">format string</a>
+<a class="reference internal" href="../config.html#lada.pbs_string" title="lada.pbs_string"><tt class="xref py py-data docutils literal"><span class="pre">lada.pbs_string</span></tt></a>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">pbs_string</span> <span class="o">=</span>  <span class="s">&quot;#! /bin/bash/</span><span class="se">\n</span><span class="s">&quot;</span>\
+<span class="gp">... </span>              <span class="s">&quot;#SBATCH --account={account}</span><span class="se">\n</span><span class="s">&quot;</span>\
+<span class="gp">... </span>              <span class="s">&quot;#SBATCH --time={walltime}</span><span class="se">\n</span><span class="s">&quot;</span>\
+<span class="gp">... </span>              <span class="s">&quot;#SBATCH -N={nnodes}</span><span class="se">\n</span><span class="s">&quot;</span>\
+<span class="gp">... </span>              <span class="s">&quot;#SBATCH -e={err}</span><span class="se">\n</span><span class="s">&quot;</span>\
+<span class="gp">... </span>              <span class="s">&quot;#SBATCH -o={out}</span><span class="se">\n</span><span class="s">&quot;</span>\
+<span class="gp">... </span>              <span class="s">&quot;#SBATCH -J={name}</span><span class="se">\n</span><span class="s">&quot;</span>\
+<span class="gp">... </span>              <span class="s">&quot;#SBATCH -D={directory}</span><span class="se">\n\n</span><span class="s">&quot;</span>\
+<span class="gp">... </span>              <span class="s">&quot;python {scriptcommand}</span><span class="se">\n</span><span class="s">&quot;</span>
+</pre></div>
+</div>
+<p>Again, there are few reserved keywords which LaDa will use to fill in the string.</p>
+<blockquote>
+<div><ul class="simple">
+<li>account: defines the relevant account to which the calculation is submitted.</li>
+<li>queue: defines the relevant queue to which the calculation is submitted.</li>
+<li>walltime: maximum time for which the calculation will run</li>
+<li>n: Number of processes to run the job on.</li>
+<li>ppn: Number of processes per node.</li>
+<li>nnodes: number of nodes the calculation will run. This is generally
+computed from &#8220;ppn&#8221; and &#8220;n&#8221;.</li>
+<li>err: Standard error file. Generated by LaDa.</li>
+<li>out: Standard output file. Generated by LaDa.</li>
+<li>name: Name of the job. Generated by LaDa.</li>
+<li>directory: Directory where the job is launched. Generated by LaDa.</li>
+<li>scriptcommand: Script to launch. Generated by LaDa.</li>
+</ul>
+</div></blockquote>
+<p>Most of the keywords are automatically generated by LaDa. Is is for the user to
+provide a script where the requisite number of keywords make sense for any
+particular ressource manager.</p>
+<p>Default keyword values should be stored in the dictionary
+<a class="reference internal" href="../config.html#lada.default_pbs" title="lada.default_pbs"><tt class="xref py py-data docutils literal"><span class="pre">lada.default_pbs</span></tt></a>.</p>
+<p>The different queues (accounts) accessible to the users can be listed in
+<a class="reference internal" href="../config.html#lada.queues" title="lada.queues"><tt class="xref py py-data docutils literal"><span class="pre">lada.queues</span></tt></a> (<a class="reference internal" href="../config.html#lada.accounts" title="lada.accounts"><tt class="xref py py-data docutils literal"><span class="pre">lada.accounts</span></tt></a>). These will be made available
+to the users <cite>via</cite> <a class="reference internal" href="../ipython.html#ipython-launch-ug"><em>%launch</em></a>. If &#8220;queue&#8221; is not
+relevant to a particular supercomputer, <a class="reference internal" href="../config.html#lada.queues" title="lada.queues"><tt class="xref py py-data docutils literal"><span class="pre">lada.queues</span></tt></a> can be set to
+the empty tuple.</p>
+<p>The debug/interactive queue can be made more easily accessible <cite>via</cite>
+<a class="reference internal" href="../config.html#lada.debug_queue" title="lada.debug_queue"><tt class="xref py py-data docutils literal"><span class="pre">lada.debug_queue</span></tt></a>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">lada</span><span class="o">.</span><span class="n">debug_queue</span> <span class="o">=</span> <span class="s">&#39;queue&#39;</span><span class="p">,</span> <span class="s">&#39;debug&#39;</span>
+</pre></div>
+</div>
+<p>The first item of the tuple is the keyword that should be set to access the
+relevant resource. The second is the relevant value. These will differ from
+supercomputer to supercomputer. In practice, the first is generally &#8220;queue&#8221; or
+&#8220;account&#8221;, and the second is something like &#8220;debug&#8221;.</p>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="mpi.html"
+                        title="previous chapter">Setting up MPI</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="ipython.html"
+                        title="next chapter">Setting up the ipython interface</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../../_sources/userguide/installation/ressources.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="ipython.html" title="Setting up the ipython interface"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="mpi.html" title="Setting up MPI"
+             >previous</a> |</li>
+        <li><a href="../../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+          <li><a href="../../userguide.html" >User Guide</a> &raquo;</li>
+          <li><a href="../installation.html" >Compiling, installing, and setup</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Mayeul d&#39;Avezac.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

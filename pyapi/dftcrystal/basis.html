@@ -1,0 +1,397 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Basis sets &mdash; LaDa 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="author" title="About these documents" href="../../about.html" />
+    <link rel="top" title="LaDa 1.0 documentation" href="../../index.html" />
+    <link rel="up" title="Functional class and attributes" href="functional.html" />
+    <link rel="next" title="Computational and Hamiltonian parameters" href="comp.html" />
+    <link rel="prev" title="Geometry optimization block" href="optgeom.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="comp.html" title="Computational and Hamiltonian parameters"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="optgeom.html" title="Geometry optimization block"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+          <li><a href="../../pyapi.html" >Python API</a> &raquo;</li>
+          <li><a href="../dftcrystal.html" >CRYSTAL wrapper module</a> &raquo;</li>
+          <li><a href="functional.html" accesskey="U">Functional class and attributes</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="basis-sets">
+<h1>Basis sets<a class="headerlink" href="#basis-sets" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="lada.dftcrystal.basis.BasisSet">
+<em class="property">class </em><tt class="descclassname">lada.dftcrystal.basis.</tt><tt class="descname">BasisSet</tt><a class="reference internal" href="../../_modules/lada/dftcrystal/basis.html#BasisSet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.basis.BasisSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">lada.dftcrystal.input.AttrBlock</span></tt></p>
+<p>Basis set block.</p>
+<p>Sub-block defining the basis set of the <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a> calculation. In
+practice, it is composed of a dictionary which holds the description of
+each specie-dependent sets of guassians, and of keyword parameters, such
+as <a class="reference internal" href="#lada.dftcrystal.basis.BasisSet.ghosts" title="lada.dftcrystal.basis.BasisSet.ghosts"><tt class="xref py py-attr docutils literal"><span class="pre">ghosts</span></tt></a>.</p>
+<p>Currently, only the general basis sets have been implemented, via the
+<a class="reference internal" href="#lada.dftcrystal.basis.Shell" title="lada.dftcrystal.basis.Shell"><tt class="xref py py-class docutils literal"><span class="pre">Shell</span></tt></a>. The input looks as follows:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">functional</span><span class="o">.</span><span class="n">basis</span><span class="p">[</span><span class="s">&#39;Si&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span> <span class="n">Shell</span><span class="p">(</span><span class="s">&#39;s&#39;</span><span class="p">,</span> <span class="n">a0</span><span class="o">=</span><span class="p">[</span><span class="mf">16120.0</span><span class="p">,</span>  <span class="mf">0.001959</span><span class="p">],</span>
+                                      <span class="n">a1</span><span class="o">=</span><span class="p">[</span> <span class="mf">2426.0</span><span class="p">,</span>  <span class="mf">0.01493</span><span class="p">],</span> 
+                                      <span class="n">a2</span><span class="o">=</span><span class="p">[</span>  <span class="mf">553.9</span><span class="p">,</span>  <span class="mf">0.07285</span><span class="p">],</span>
+                                      <span class="n">a3</span><span class="o">=</span><span class="p">[</span>  <span class="mf">156.3</span><span class="p">,</span>  <span class="mf">0.2461</span><span class="p">],</span> 
+                                      <span class="n">a4</span><span class="o">=</span><span class="p">[</span>   <span class="mf">50.07</span><span class="p">,</span> <span class="mf">0.4859</span><span class="p">],</span>
+                                      <span class="n">a5</span><span class="o">=</span><span class="p">[</span>   <span class="mf">17.02</span><span class="p">,</span> <span class="mf">0.325</span><span class="p">]),</span>
+                           <span class="n">Shell</span><span class="p">(</span><span class="s">&#39;sp&#39;</span><span class="p">,</span> <span class="n">a0</span><span class="o">=</span><span class="p">[</span><span class="mf">292.7</span><span class="p">,</span>   <span class="o">-</span><span class="mf">0.002781</span><span class="p">,</span> <span class="mf">0.004438</span><span class="p">],</span>
+                                       <span class="n">a1</span><span class="o">=</span><span class="p">[</span> <span class="mf">69.87</span><span class="p">,</span>  <span class="o">-</span><span class="mf">0.03571</span><span class="p">,</span>  <span class="mf">0.03267</span><span class="p">],</span>
+                                       <span class="n">a2</span><span class="o">=</span><span class="p">[</span> <span class="mf">22.34</span><span class="p">,</span>  <span class="o">-</span><span class="mf">0.115</span><span class="p">,</span>    <span class="mf">0.1347</span><span class="p">],</span>
+                                       <span class="n">a3</span><span class="o">=</span><span class="p">[</span>  <span class="mf">8.15</span><span class="p">,</span>   <span class="mf">0.09356</span><span class="p">,</span>  <span class="mf">0.3287</span><span class="p">],</span>
+                                       <span class="n">a4</span><span class="o">=</span><span class="p">[</span>  <span class="mf">3.135</span><span class="p">,</span>  <span class="mf">0.603</span><span class="p">,</span>    <span class="mf">0.4496</span><span class="p">]),</span> 
+                           <span class="n">Shell</span><span class="p">(</span><span class="s">&#39;sp&#39;</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">,</span> <span class="n">a0</span><span class="o">=</span><span class="p">[</span><span class="mf">1.22</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">]),</span>
+                           <span class="n">Shell</span><span class="p">(</span><span class="s">&#39;sp&#39;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">a0</span><span class="o">=</span><span class="p">[</span><span class="mf">0.55</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">]),</span>
+                           <span class="n">Shell</span><span class="p">(</span><span class="s">&#39;sp&#39;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">a0</span><span class="o">=</span><span class="p">[</span><span class="mf">0.27</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">])</span> <span class="p">]</span>
+
+ <span class="n">functional</span><span class="o">.</span><span class="n">basis</span><span class="o">.</span><span class="n">atomsymm</span> <span class="o">=</span> <span class="bp">True</span>
+</pre></div>
+</div>
+<p>There are few moving parts to the code above.</p>
+<p><em>Indexing</em>: The basis set of each atomic function can be accessed
+<em>equivalently</em> via its atomic symbol (&#8216;Si&#8217;), its name (&#8216;Silicon&#8217;, first
+letter capitalized), or its atomic number. To create basis-sets with
+numbers greater than 100, then one should use the integer format only
+(e.g.  201, 301, ...) In practice, the indexing codes for same
+information as the first record of a basis set description.</p>
+<p><em>List  of orbitals</em>: Each item of the list is a single set of orbitals.
+At present, only the general basis set has been implemented. The full
+description is given in <a class="reference internal" href="#lada.dftcrystal.basis.Shell" title="lada.dftcrystal.basis.Shell"><tt class="xref py py-class docutils literal"><span class="pre">Shell</span></tt></a>.</p>
+<p><em>Usage and keywords</em>:Unlike <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a>, any number of species can be
+defined. Which should actually enter the input is determined at run-time.
+This makes it somewhat easier to define functionals for a whole set of
+calculations.  Finally, other parameters from the basis-block are defined
+simply as attributes (see last line of code above). As with other
+input-blocks, additional keywords can be defined via
+<a class="reference internal" href="#lada.dftcrystal.basis.BasisSet.add_keyword" title="lada.dftcrystal.basis.BasisSet.add_keyword"><tt class="xref py py-meth docutils literal"><span class="pre">add_keyword()</span></tt></a>.</p>
+<dl class="method">
+<dt id="lada.dftcrystal.basis.BasisSet.add_keyword">
+<tt class="descname">add_keyword</tt><big>(</big><em>name</em>, <em>value=None</em><big>)</big><a class="headerlink" href="#lada.dftcrystal.basis.BasisSet.add_keyword" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds/Sets input keyword.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lada.dftcrystal.basis.BasisSet.add_specie">
+<tt class="descname">add_specie</tt><big>(</big><em>string</em><big>)</big><a class="reference internal" href="../../_modules/lada/dftcrystal/basis.html#BasisSet.add_specie"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.basis.BasisSet.add_specie" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add specie using CRYSTAL string input.</p>
+<p>Just a convenience function to quickly add species by copy/pasting
+crystal input.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>string</strong> (<em>str</em>) &#8211; Full <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a> input for an atomic specie.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="lada.dftcrystal.basis.BasisSet.append">
+<tt class="descname">append</tt><big>(</big><em>specie</em>, <em>shell</em><big>)</big><a class="reference internal" href="../../_modules/lada/dftcrystal/basis.html#BasisSet.append"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.basis.BasisSet.append" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds shell to set.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lada.dftcrystal.basis.BasisSet.items">
+<tt class="descname">items</tt><big>(</big><big>)</big><a class="reference internal" href="../../_modules/lada/dftcrystal/basis.html#BasisSet.items"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.basis.BasisSet.items" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tuples (specie, basis-functions)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lada.dftcrystal.basis.BasisSet.iteritems">
+<tt class="descname">iteritems</tt><big>(</big><big>)</big><a class="reference internal" href="../../_modules/lada/dftcrystal/basis.html#BasisSet.iteritems"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.basis.BasisSet.iteritems" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterates over tuple (key, basis-functions).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lada.dftcrystal.basis.BasisSet.keys">
+<tt class="descname">keys</tt><big>(</big><big>)</big><a class="reference internal" href="../../_modules/lada/dftcrystal/basis.html#BasisSet.keys"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.basis.BasisSet.keys" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of species.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lada.dftcrystal.basis.BasisSet.iterkeys">
+<tt class="descname">iterkeys</tt><big>(</big><big>)</big><a class="reference internal" href="../../_modules/lada/dftcrystal/basis.html#BasisSet.iterkeys"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.basis.BasisSet.iterkeys" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterates over species.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lada.dftcrystal.basis.BasisSet.values">
+<tt class="descname">values</tt><big>(</big><big>)</big><a class="reference internal" href="../../_modules/lada/dftcrystal/basis.html#BasisSet.values"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.basis.BasisSet.values" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of basis functions,</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lada.dftcrystal.basis.BasisSet.itervalues">
+<tt class="descname">itervalues</tt><big>(</big><big>)</big><a class="reference internal" href="../../_modules/lada/dftcrystal/basis.html#BasisSet.itervalues"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.basis.BasisSet.itervalues" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterates over basis-functions.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lada.dftcrystal.basis.BasisSet.update">
+<tt class="descname">update</tt><big>(</big><em>basis</em><big>)</big><a class="reference internal" href="../../_modules/lada/dftcrystal/basis.html#BasisSet.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.basis.BasisSet.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates dictionary of basis-sets.</p>
+<p>Overwrites existing species.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.basis.BasisSet.atomsymm">
+<tt class="descname">atomsymm</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.basis.BasisSet.atomsymm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prints point symmetry for each atomic position.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.basis.BasisSet.charged">
+<tt class="descname">charged</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.basis.BasisSet.charged" title="Permalink to this definition">¶</a></dt>
+<dd><p>Allows charged system.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.basis.BasisSet.chemod">
+<tt class="descname">chemod</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.basis.BasisSet.chemod" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets initial electronic occupation.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.basis.BasisSet.gaussian94">
+<tt class="descname">gaussian94</tt><a class="reference internal" href="../../_modules/lada/dftcrystal/basis.html#BasisSet.gaussian94"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.basis.BasisSet.gaussian94" title="Permalink to this definition">¶</a></dt>
+<dd><p>Basis set in GAUSSIAN94 format</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.basis.BasisSet.ghosts">
+<tt class="descname">ghosts</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.basis.BasisSet.ghosts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes atoms but keeps basis functions.</p>
+<p>This keyword should be in the basis subsection of the input.
+In practice, it can be set as follows:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span><span class="o">.</span><span class="n">basis</span><span class="o">.</span><span class="n">ghosts</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="bp">False</span>
+</pre></div>
+</div>
+<p>The second item means that symmetries are <em>kept</em>.
+This results in the following crystal input:</p>
+<blockquote>
+<div><div class="line-block">
+<div class="line">KEEPSYMM</div>
+<div class="line">GHOSTS</div>
+<div class="line">3</div>
+<div class="line">1 3 5</div>
+</div>
+</div></blockquote>
+<p>The first item in the tuple is a sequence of atomic lables (e.g.
+integers). The second is whether or not to break symmetries. It is True
+by default. In the above, symmetries are kept. Hence atoms equivalent
+those explicitely given are also removed.</p>
+<p>The two attributes can also be obtained and set using
+<tt class="xref py py-attr docutils literal"><span class="pre">value</span></tt> and <tt class="xref py py-attr docutils literal"><span class="pre">breaksym</span></tt>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span><span class="o">.</span><span class="n">basis</span><span class="o">.</span><span class="n">ghosts</span><span class="o">.</span><span class="n">breaksym</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span><span class="o">.</span><span class="n">basis</span><span class="o">.</span><span class="n">ghosts</span><span class="o">.</span><span class="n">value</span>
+<span class="go">[1, 3, 5],</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.basis.BasisSet.noprint">
+<tt class="descname">noprint</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.basis.BasisSet.noprint" title="Permalink to this definition">¶</a></dt>
+<dd><p>Disable basis set printing.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.basis.BasisSet.paramprt">
+<tt class="descname">paramprt</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.basis.BasisSet.paramprt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Print code dimensions parameters.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.basis.BasisSet.symmops">
+<tt class="descname">symmops</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.basis.BasisSet.symmops" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prints point symmetry operators/</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="lada.dftcrystal.basis.Shell">
+<em class="property">class </em><tt class="descclassname">lada.dftcrystal.basis.</tt><tt class="descname">Shell</tt><big>(</big><em>type='s'</em>, <em>charge=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../_modules/lada/dftcrystal/basis.html#Shell"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.basis.Shell" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Defines a general gaussian basis set for a specific orbital shell.</p>
+<p>This class encodes a set of basis functions as follows.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">Shell</span><span class="p">(</span><span class="s">&#39;s&#39;</span><span class="p">,</span> <span class="n">a0</span><span class="o">=</span><span class="p">[</span><span class="mf">16120.0</span><span class="p">,</span>  <span class="mf">0.001959</span><span class="p">],</span>
+           <span class="n">a1</span><span class="o">=</span><span class="p">[</span> <span class="mf">2426.0</span><span class="p">,</span>  <span class="mf">0.01493</span><span class="p">],</span> 
+           <span class="n">a2</span><span class="o">=</span><span class="p">[</span>  <span class="mf">553.9</span><span class="p">,</span>  <span class="mf">0.07285</span><span class="p">],</span>
+           <span class="n">a3</span><span class="o">=</span><span class="p">[</span>  <span class="mf">156.3</span><span class="p">,</span>  <span class="mf">0.2461</span><span class="p">],</span> 
+           <span class="n">a4</span><span class="o">=</span><span class="p">[</span>   <span class="mf">50.07</span><span class="p">,</span> <span class="mf">0.4859</span><span class="p">],</span>
+           <span class="n">a5</span><span class="o">=</span><span class="p">[</span>   <span class="mf">17.02</span><span class="p">,</span> <span class="mf">0.325</span><span class="p">],</span> <span class="n">charge</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span> 
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>type</strong> (<em>str</em>) &#8211; The first argument can be &#8216;s&#8217;, &#8216;p&#8217;, &#8216;d&#8217;, or &#8216;sp&#8217; and defines the
+channel for the set of orbitals.</li>
+<li><strong>charge</strong> (<em>float</em>) &#8211; Number of electrons assigned to this orbital at the start of the
+calculation. It should not be greater than the number of electrons
+that particular orbital channel can accomodate. For &#8216;s&#8217; it defaults
+to 2.0, for &#8216;p&#8217; to 6, for &#8216;d&#8217; to 10, and for &#8216;sp&#8217; to 8.</li>
+<li><strong>a0</strong> &#8211; First set of paramaters. For &#8216;s&#8217;, &#8216;p&#8217;, &#8216;d&#8217; channels, this should be a
+sequence of two floats, where the first float is the exponent of the
+gaussian and the second the contraction coefficient.
+In the case of &#8216;sp&#8217; orbitals, it should be a sequence of three
+floats, where the first is the common exponent, and the second and
+third are the contraction coefficients for &#8216;s&#8217; and &#8216;p&#8217; orbitals
+respectively.</li>
+<li><strong>aN</strong> &#8211; N-th set of orbital parameters.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="lada.dftcrystal.basis.Shell.append">
+<tt class="descname">append</tt><big>(</big><em>alpha</em>, <em>coef1</em>, <em>coef2=None</em><big>)</big><a class="reference internal" href="../../_modules/lada/dftcrystal/basis.html#Shell.append"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.basis.Shell.append" title="Permalink to this definition">¶</a></dt>
+<dd><p>Appends a gaussian to the basis set.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.basis.Shell.charge">
+<tt class="descname">charge</tt><a class="reference internal" href="../../_modules/lada/dftcrystal/basis.html#Shell.charge"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.basis.Shell.charge" title="Permalink to this definition">¶</a></dt>
+<dd><p>Nominal charge of the shell</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.basis.Shell.functions">
+<tt class="descname">functions</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.basis.Shell.functions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Radial functions description</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.basis.Shell.raw">
+<tt class="descname">raw</tt><a class="reference internal" href="../../_modules/lada/dftcrystal/basis.html#Shell.raw"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.basis.Shell.raw" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prints CRYSTAL input.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.basis.Shell.type">
+<tt class="descname">type</tt><a class="reference internal" href="../../_modules/lada/dftcrystal/basis.html#Shell.type"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.basis.Shell.type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Orbital type of this shell</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lada.dftcrystal.basis.Shell.type_as_int">
+<tt class="descname">type_as_int</tt><a class="reference internal" href="../../_modules/lada/dftcrystal/basis.html#Shell.type_as_int"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.basis.Shell.type_as_int" title="Permalink to this definition">¶</a></dt>
+<dd><p>Orbital type as CRYSTAL input.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="optgeom.html"
+                        title="previous chapter">Geometry optimization block</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="comp.html"
+                        title="next chapter">Computational and Hamiltonian parameters</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../../_sources/pyapi/dftcrystal/basis.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="comp.html" title="Computational and Hamiltonian parameters"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="optgeom.html" title="Geometry optimization block"
+             >previous</a> |</li>
+        <li><a href="../../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+          <li><a href="../../pyapi.html" >Python API</a> &raquo;</li>
+          <li><a href="../dftcrystal.html" >CRYSTAL wrapper module</a> &raquo;</li>
+          <li><a href="functional.html" >Functional class and attributes</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Mayeul d&#39;Avezac.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,159 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Compiling, installing, and setup &mdash; LaDa 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="author" title="About these documents" href="../about.html" />
+    <link rel="top" title="LaDa 1.0 documentation" href="../index.html" />
+    <link rel="up" title="User Guide" href="../userguide.html" />
+    <link rel="next" title="Setting up MPI" href="installation/mpi.html" />
+    <link rel="prev" title="User Guide" href="../userguide.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="installation/mpi.html" title="Setting up MPI"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../userguide.html" title="User Guide"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+          <li><a href="../userguide.html" accesskey="U">User Guide</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="compiling-installing-and-setup">
+<span id="install-ug"></span><h1>Compiling, installing, and setup<a class="headerlink" href="#compiling-installing-and-setup" title="Permalink to this headline">¶</a></h1>
+<p>A large subset of the LaDa&#8217;s functionality needs to be configured for your
+specific system, for instance depending on your resource manager, mpi library,
+and so forth. In practice, configuration by reading files from one of three places:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li>Files located in the config sub-directory where LaDa is installed</li>
+<li>Files located in one of the directories specified by LADA_CONFIG_DIR</li>
+<li>In the user configuration file ~/.lada</li>
+</ol>
+</div></blockquote>
+<p>Each file is executed and whatever is declared within is placed directly at the
+root of the lada package. The files are read in that order. Within a given
+directory, files are read alphabetically. Later files will override previous
+files, e.g. ~/.lada will override any configuration done previously.</p>
+<p>Within an  IPython session, or during an actual calculation, the configuration
+variables all reside at the root of the <tt class="xref py py-mod docutils literal"><span class="pre">lada</span></tt> package.</p>
+<p>The following files, located in the &#8216;&#8217;config&#8217;&#8217; subdirectory of the source tree,
+are examples of different configurations:</p>
+<blockquote>
+<div><ul class="simple">
+<li>cx1.py: PBSpro + intel mpi</li>
+<li>redmesa.py: SLURM + openmpi</li>
+</ul>
+</div></blockquote>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation/mpi.html">Setting up MPI</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation/mpi.html#single-call-to-mpi-program">single call to mpi program</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation/mpi.html#multiple-mpi-programs-in-parallel">multiple mpi programs in parallel</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="installation/ressources.html">Setting up the PBS/Slurm ressources</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation/ipython.html">Setting up the ipython interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation/vasp.html">Setting up VASP</a></li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="../userguide.html"
+                        title="previous chapter">User Guide</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="installation/mpi.html"
+                        title="next chapter">Setting up MPI</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/userguide/installation.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="installation/mpi.html" title="Setting up MPI"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../userguide.html" title="User Guide"
+             >previous</a> |</li>
+        <li><a href="../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+          <li><a href="../userguide.html" >User Guide</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Mayeul d&#39;Avezac.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

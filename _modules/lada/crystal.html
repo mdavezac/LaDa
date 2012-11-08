@@ -1,0 +1,271 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>lada.crystal &mdash; LaDa 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="author" title="About these documents" href="../../about.html" />
+    <link rel="top" title="LaDa 1.0 documentation" href="../../index.html" />
+    <link rel="up" title="lada" href="../lada.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../lada.html" accesskey="U">lada</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for lada.crystal</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot; Contains basic data type and methods for crystal structures. &quot;&quot;&quot;</span>
+<span class="n">__docformat__</span> <span class="o">=</span> <span class="s">&quot;restructuredtext en&quot;</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span> <span class="s">&#39;Structure&#39;</span><span class="p">,</span> <span class="s">&#39;Atom&#39;</span><span class="p">,</span> <span class="s">&#39;SmithTransform&#39;</span><span class="p">,</span> <span class="s">&#39;zero_centered&#39;</span><span class="p">,</span> <span class="s">&#39;into_voronoi&#39;</span><span class="p">,</span>
+            <span class="s">&#39;into_cell&#39;</span><span class="p">,</span> <span class="s">&#39;supercell&#39;</span><span class="p">,</span> <span class="s">&#39;primitive&#39;</span><span class="p">,</span> <span class="s">&#39;is_primitive&#39;</span><span class="p">,</span> <span class="s">&#39;space_group&#39;</span><span class="p">,</span>
+            <span class="s">&#39;transform&#39;</span><span class="p">,</span> <span class="s">&#39;periodic_dnc&#39;</span><span class="p">,</span> <span class="s">&#39;neighbors&#39;</span><span class="p">,</span> 
+            <span class="s">&#39;coordination_shells&#39;</span><span class="p">,</span> <span class="s">&#39;splitconfigs&#39;</span><span class="p">,</span> <span class="s">&#39;vasp_ordered&#39;</span><span class="p">,</span> <span class="s">&#39;layer_iterator&#39;</span><span class="p">,</span>
+            <span class="s">&#39;equivalence_iterator&#39;</span><span class="p">,</span> <span class="s">&#39;shell_iterator&#39;</span><span class="p">,</span> <span class="s">&#39;specieset&#39;</span><span class="p">,</span> <span class="s">&#39;map_sites&#39;</span> <span class="p">]</span>
+<span class="kn">from</span> <span class="nn">cppwrappers</span> <span class="kn">import</span> <span class="n">Structure</span><span class="p">,</span> <span class="n">Atom</span><span class="p">,</span> <span class="n">SmithTransform</span><span class="p">,</span> <span class="n">zero_centered</span><span class="p">,</span> <span class="n">into_voronoi</span><span class="p">,</span> \
+                        <span class="n">into_cell</span><span class="p">,</span> <span class="n">supercell</span><span class="p">,</span> <span class="n">primitive</span><span class="p">,</span> <span class="n">is_primitive</span><span class="p">,</span> <span class="n">space_group</span><span class="p">,</span>   \
+                        <span class="n">transform</span><span class="p">,</span> <span class="n">periodic_dnc</span><span class="p">,</span> <span class="n">neighbors</span><span class="p">,</span> <span class="n">coordination_shells</span><span class="p">,</span>      \
+                        <span class="n">splitconfigs</span><span class="p">,</span> <span class="n">map_sites</span>
+
+<div class="viewcode-block" id="specieset"><a class="viewcode-back" href="../../pyapi/crystal/methods.html#lada.crystal.specieset">[docs]</a><span class="k">def</span> <span class="nf">specieset</span><span class="p">(</span><span class="n">structure</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot; Returns ordered set of species.</span>
+<span class="sd">  </span>
+<span class="sd">      Especially usefull with VASP since we are sure what the list of species</span>
+<span class="sd">      is always ordered the same way.</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+  <span class="k">return</span> <span class="nb">set</span><span class="p">([</span><span class="n">a</span><span class="o">.</span><span class="n">type</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">structure</span><span class="p">])</span>
+</div>
+<div class="viewcode-block" id="vasp_ordered"><a class="viewcode-back" href="../../pyapi/crystal/methods.html#lada.crystal.vasp_ordered">[docs]</a><span class="k">def</span> <span class="nf">vasp_ordered</span><span class="p">(</span><span class="n">structure</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot; Returns a structure with correct VASP order of ions.</span>
+<span class="sd">  </span>
+<span class="sd">      :param structure:</span>
+<span class="sd">          :class:`Structure` for which to reorder atoms.</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+
+  <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+  <span class="n">result</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">structure</span><span class="p">)</span>
+  <span class="k">def</span> <span class="nf">sortme</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="k">return</span> <span class="n">a</span><span class="o">.</span><span class="n">type</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+  <span class="n">result</span><span class="p">[:]</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">sortme</span><span class="p">)</span>
+  <span class="k">return</span> <span class="n">result</span>
+</div>
+<div class="viewcode-block" id="layer_iterator"><a class="viewcode-back" href="../../pyapi/crystal/methods.html#lada.crystal.layer_iterator">[docs]</a><span class="k">def</span> <span class="nf">layer_iterator</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">direction</span><span class="p">,</span> <span class="n">tolerance</span><span class="o">=</span><span class="mf">1e-12</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot; Iterates over layers and atoms in a layer. </span>
+
+<span class="sd">      :param structure: </span>
+<span class="sd">          :class:`Structure` for which to iterator over atoms.</span>
+<span class="sd">      :param direction:</span>
+<span class="sd">          3d-vector defining the growth direction, e.g. vector perpendicular to the layers.</span>
+<span class="sd">          Defaults to the first column vector of the structure.  It is</span>
+<span class="sd">          important that two cell-vectors of the structure are (or can be</span>
+<span class="sd">          transformed to be) perpendicular to the growth direction. Otherwise</span>
+<span class="sd">          it cannot be assured that layers are well defined, i.e. that each</span>
+<span class="sd">          atom belongs to a single (as in periodic) layer. This condition is</span>
+<span class="sd">          *not* enforced (no assertion) since it is not necessary, only</span>
+<span class="sd">          sufficient.  Note that the third vector need not be parallel to the</span>
+<span class="sd">          growth direction.</span>
+<span class="sd">      :param tolerance: </span>
+<span class="sd">          Maximum difference between two atoms in the same layer.</span>
+
+<span class="sd">      :returns: Yields iterators over atoms in a single epitaxial layer.</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+  <span class="kn">from</span> <span class="nn">operator</span> <span class="kn">import</span> <span class="n">itemgetter</span>
+  <span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">array</span><span class="p">,</span> <span class="n">dot</span>
+
+  <span class="n">direction</span> <span class="o">=</span> <span class="n">array</span><span class="p">(</span><span class="n">direction</span><span class="p">)</span>
+  <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">structure</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span> <span class="k">yield</span> <span class="nb">list</span><span class="p">(</span><span class="n">structure</span><span class="p">);</span> <span class="k">return</span>
+
+  <span class="c"># orders position with respect to direction.</span>
+  <span class="n">positions</span> <span class="o">=</span> <span class="n">into_cell</span><span class="p">(</span><span class="n">array</span><span class="p">([</span><span class="n">atom</span><span class="o">.</span><span class="n">pos</span> <span class="k">for</span> <span class="n">atom</span> <span class="ow">in</span> <span class="n">structure</span><span class="p">]),</span> <span class="n">structure</span><span class="o">.</span><span class="n">cell</span><span class="p">)</span>
+  <span class="n">projs</span> <span class="o">=</span> <span class="p">[(</span><span class="n">i</span><span class="p">,</span> <span class="n">dot</span><span class="p">(</span><span class="n">pos</span><span class="p">,</span> <span class="n">direction</span><span class="p">))</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">pos</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">positions</span><span class="p">)]</span>
+  <span class="n">projs</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">projs</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">itemgetter</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+
+  <span class="c"># creates classes of positions.</span>
+  <span class="n">result</span> <span class="o">=</span> <span class="p">[[</span><span class="n">projs</span><span class="p">[</span><span class="mi">0</span><span class="p">]]]</span>
+  <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">proj</span> <span class="ow">in</span> <span class="n">projs</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+    <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">proj</span> <span class="o">-</span> <span class="n">result</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">&lt;</span> <span class="n">tolerance</span><span class="p">:</span> <span class="n">result</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">i</span><span class="p">,</span><span class="n">proj</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span> <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">([(</span><span class="n">i</span><span class="p">,</span><span class="n">proj</span><span class="p">)])</span>
+
+  <span class="c"># only one layer.</span>
+  <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span> <span class="k">yield</span> <span class="n">structure</span><span class="p">;</span> <span class="k">return</span>
+  <span class="c"># Finds if first and last have atoms in common through periodicity</span>
+  <span class="n">first</span><span class="p">,</span> <span class="n">last</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">result</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+  <span class="n">centered</span> <span class="o">=</span> <span class="n">into_voronoi</span><span class="p">(</span><span class="n">positions</span><span class="p">[[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">last</span><span class="p">]],</span> <span class="n">structure</span><span class="o">.</span><span class="n">cell</span><span class="p">,</span> <span class="n">positions</span><span class="p">[</span><span class="n">first</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]])</span>
+  <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">pos</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">centered</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]):</span>
+    <span class="n">a0</span> <span class="o">=</span> <span class="n">dot</span><span class="p">(</span><span class="n">pos</span><span class="p">,</span> <span class="n">direction</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">u</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="n">a0</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">tolerance</span> <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="n">first</span><span class="p">):</span> <span class="k">continue</span>
+    <span class="n">first</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="n">last</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">centered</span><span class="p">)</span><span class="o">-</span><span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">)</span>
+
+  <span class="c"># last layer got depleted.</span>
+  <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">last</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> <span class="n">result</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> 
+  <span class="c"># only one layer.</span>
+  <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span> <span class="k">yield</span> <span class="n">structure</span><span class="p">;</span> <span class="k">return</span>
+  <span class="c"># yield layer iterators.</span>
+  <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">result</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">inner_layer_iterator</span><span class="p">():</span>
+      <span class="sd">&quot;&quot;&quot; Iterates over atoms in a single layer. &quot;&quot;&quot;</span>
+      <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">norm</span> <span class="ow">in</span> <span class="n">layer</span><span class="p">:</span> <span class="k">yield</span> <span class="n">structure</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+    <span class="k">yield</span> <span class="n">inner_layer_iterator</span> <span class="p">()</span>
+
+</div>
+<div class="viewcode-block" id="equivalence_iterator"><a class="viewcode-back" href="../../pyapi/crystal/methods.html#lada.crystal.equivalence_iterator">[docs]</a><span class="k">def</span> <span class="nf">equivalence_iterator</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">operations</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span> <span class="n">tolerance</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot; Yields iterators over atoms equivalent via space group operations.</span>
+<span class="sd">  </span>
+<span class="sd">      Only check that the position are equivalent. Does not check that the</span>
+<span class="sd">      occupations are the same.</span>
+
+<span class="sd">      :param structure:</span>
+<span class="sd">          :class:`Structure` over which to iterate.</span>
+<span class="sd">      :param operations: </span>
+<span class="sd">          List of symmetry operations.</span>
+<span class="sd">          A symmetry operation is 4x4 matrix where the upper block is a</span>
+<span class="sd">          rotation and the lower block a translation. The translation is</span>
+<span class="sd">          applied *after* the rotation. If None, the operations are obtained</span>
+<span class="sd">          using:class:`space_group`.</span>
+<span class="sd">      :param tolerance:</span>
+<span class="sd">          Two positions closer than ``tolerance`` are considered equivalent.</span>
+<span class="sd">      </span>
+<span class="sd">      :returns: Yields iterators over atoms linked by space-group operations.</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+  <span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">array</span><span class="p">,</span> <span class="n">dot</span>
+  <span class="kn">from</span> <span class="nn">numpy.linalg</span> <span class="kn">import</span> <span class="n">norm</span>
+  <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">into_cell</span>
+
+  <span class="n">atoms</span> <span class="o">=</span> <span class="p">[</span><span class="n">u</span> <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">structure</span><span class="p">)]</span>
+  <span class="k">if</span> <span class="n">operations</span> <span class="o">==</span> <span class="bp">None</span><span class="p">:</span> <span class="n">operations</span> <span class="o">=</span> <span class="n">space_group</span><span class="p">(</span><span class="n">structure</span><span class="p">)</span>
+   
+  <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">atoms</span><span class="p">):</span>
+    <span class="n">i</span><span class="p">,</span> <span class="n">atom</span> <span class="o">=</span> <span class="n">atoms</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+    <span class="n">equivs</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">atoms</span><span class="p">):</span> 
+      <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">operations</span><span class="p">:</span>
+        <span class="n">others</span> <span class="o">=</span> <span class="n">into_cell</span><span class="p">(</span><span class="n">array</span><span class="p">([</span><span class="n">u</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">pos</span> <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="n">atoms</span><span class="p">]),</span>     \
+                 <span class="n">structure</span><span class="o">.</span><span class="n">cell</span><span class="p">,</span> <span class="n">dot</span><span class="p">(</span><span class="n">op</span><span class="p">[:</span><span class="mi">3</span><span class="p">],</span> <span class="n">atom</span><span class="o">.</span><span class="n">pos</span><span class="p">))</span> <span class="o">+</span> <span class="n">op</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+        <span class="n">others</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">pos</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">others</span><span class="p">)</span> <span class="k">if</span> <span class="n">norm</span><span class="p">(</span><span class="n">pos</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">tolerance</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="n">others</span><span class="p">:</span>
+          <span class="n">i</span><span class="p">,</span> <span class="n">pos</span> <span class="o">=</span> <span class="n">atoms</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+          <span class="n">equivs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">inner_equivalence_iterator</span><span class="p">():</span>
+      <span class="sd">&quot;&quot;&quot; Iterates over equivalent atoms in a structure. &quot;&quot;&quot;</span>
+      <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">equivs</span><span class="p">:</span> <span class="k">yield</span> <span class="n">structure</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+    <span class="k">yield</span> <span class="n">inner_equivalence_iterator</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="shell_iterator"><a class="viewcode-back" href="../../pyapi/crystal/methods.html#lada.crystal.shell_iterator">[docs]</a><span class="k">def</span> <span class="nf">shell_iterator</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">center</span><span class="p">,</span> <span class="n">direction</span><span class="p">,</span> <span class="n">thickness</span><span class="o">=</span><span class="mf">0.05</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot; Iterates over cylindrical shells of atoms.</span>
+<span class="sd">  </span>
+<span class="sd">      It allows to rapidly create core-shell nanowires.</span>
+<span class="sd">  </span>
+<span class="sd">      :param structure: </span>
+<span class="sd">          :class:`Structure` over which to iterate.</span>
+<span class="sd">      :param center: </span>
+<span class="sd">          3d-vector defining the growth direction of the nanowire.</span>
+<span class="sd">      :param thickness: </span>
+<span class="sd">          Thickness in units of ``structure.scale`` of an individual shell.</span>
+<span class="sd">      </span>
+<span class="sd">      :returns: Yields iterators over atoms in a single shell.</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+  <span class="kn">from</span> <span class="nn">operator</span> <span class="kn">import</span> <span class="n">itemgetter</span>
+  <span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">array</span><span class="p">,</span> <span class="n">dot</span>
+  <span class="kn">from</span> <span class="nn">numpy.linalg</span> <span class="kn">import</span> <span class="n">norm</span>
+  <span class="kn">from</span> <span class="nn">operator</span> <span class="kn">import</span> <span class="n">into_voronoi</span>
+
+  <span class="n">direction</span> <span class="o">=</span> <span class="n">array</span><span class="p">(</span><span class="n">direction</span><span class="p">)</span><span class="o">/</span><span class="n">norm</span><span class="p">(</span><span class="n">array</span><span class="p">(</span><span class="n">direction</span><span class="p">))</span>
+  <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">structure</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span> <span class="k">yield</span> <span class="n">structure</span><span class="p">;</span> <span class="k">return</span>
+
+  <span class="c"># orders position with respect to cylindrical coordinates</span>
+  <span class="n">positions</span> <span class="o">=</span> <span class="n">into_voronoi</span><span class="p">(</span><span class="n">array</span><span class="p">([</span><span class="n">atom</span><span class="o">.</span><span class="n">pos</span> <span class="o">-</span> <span class="n">center</span> <span class="k">for</span> <span class="n">atom</span> <span class="ow">in</span> <span class="n">structure</span><span class="p">]),</span> <span class="n">structure</span><span class="o">.</span><span class="n">cell</span><span class="p">)</span>
+  <span class="n">projs</span> <span class="o">=</span> <span class="p">[(</span><span class="n">i</span><span class="p">,</span> <span class="n">norm</span><span class="p">(</span><span class="n">pos</span> <span class="o">-</span> <span class="n">dot</span><span class="p">(</span><span class="n">pos</span><span class="p">,</span> <span class="n">direction</span><span class="p">)</span><span class="o">*</span><span class="n">direction</span><span class="p">))</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">pos</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">positions</span><span class="p">)]</span>
+  <span class="n">projs</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">projs</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">itemgetter</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+
+  <span class="c"># creates classes of positions.</span>
+  <span class="n">result</span> <span class="o">=</span> <span class="p">{}</span>
+  <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">projs</span><span class="p">:</span>
+    <span class="n">index</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">r</span><span class="o">/</span><span class="n">thickness</span><span class="o">+</span><span class="mf">1e-12</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">index</span> <span class="ow">in</span> <span class="n">result</span><span class="p">:</span> <span class="n">result</span><span class="p">[</span><span class="n">index</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span> <span class="n">result</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+  <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">layer</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">iteritems</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="n">itemgetter</span><span class="p">(</span><span class="mi">0</span><span class="p">)):</span>
+    <span class="k">def</span> <span class="nf">inner_layer_iterator</span><span class="p">():</span>
+      <span class="sd">&quot;&quot;&quot; Iterates over atoms in a single layer. &quot;&quot;&quot;</span>
+      <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="n">layer</span><span class="p">:</span> <span class="k">yield</span> <span class="n">structure</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+    <span class="k">yield</span> <span class="n">inner_layer_iterator</span><span class="p">()</span>
+</pre></div></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../lada.html" >lada</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Mayeul d&#39;Avezac.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>
