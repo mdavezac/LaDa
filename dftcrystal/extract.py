@@ -537,7 +537,6 @@ class ExtractBase(object):
     from ..error import NotImplementedError
     if not self._is_optgeom: result = self.input_structure
     elif self.dimensionality == 0: result = self._update_pos_only
-    elif self._cellinternal_only: result = self._update_pos_only
     else: 
       try:
         with self.__stdout__() as file:
@@ -552,6 +551,7 @@ class ExtractBase(object):
       # different way. 
       except GrepError: 
         if self.dimensionality == 3: result = self._final_structure
+        elif self._cellinternal_only: result = self._update_pos_only
         elif self._no_change_in_params: result = self._update_pos_only
         else: raise NotImplementedError('Cannot grep output structure')
     try: charges = self.atomic_charges

@@ -1327,7 +1327,6 @@ def test():
     with open(join(directory, 'OUTCAR'), 'w') as file: file.write(string)
 
     result = Extract(join(directory, 'OUTCAR'))
-    assert not result._is_optgeom 
     assert len(result.input_structure) == 66
   finally:
     try: rmtree(directory)
