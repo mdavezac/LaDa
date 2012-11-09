@@ -1,6 +1,6 @@
 def functional():
-  from lada.vff import Functional
-  vff = Functional()
+  from lada.vff.vff import Vff
+  vff = Vff()
   vff["In", "As"] = 2.62332, 21.6739, -112.0, 150.0
   vff["Ga", "As"] = 2.44795, 32.1530, -105.0, 150.0
   vff["As", "Ga", "As"] = "tet", -4.099, 9.3703
@@ -34,11 +34,14 @@ def test_inas():
   for atom in structure: atom.pos = dot(epsilon, atom.pos)
   out = vff(structure)
   assert abs(out.energy - 0.527010806043 * eV) < 1e-8
+  assert abs(out.energy - vff.energy(structure)) < 1e-8
   assert all(abs(out.stress - [[ -2.50890474e-02,  -2.95278697e-02,  0],
                                [ -2.95278697e-02,  -2.50890474e-02,  0],
                                [ 0, 0,  -1.85427515e-02]] * eV / angstrom**3) < 1e-6)
+  assert all(abs(out.stress - vff.jacobian(structure)[0]) < 1e-8)
   assert all(abs(out[0].gradient - [0, 0, 1.09205526] * eV / angstrom) < 1e-6)
   assert all(abs(out[1].gradient - [0, 0, -1.09205526] * eV / angstrom) < 1e-6)
+  assert all(abs([u.gradient for u in out] - vff.jacobian(structure)[1]) < 1e-8)
 
 def test_ingaas():
   from numpy import abs, all, dot, array
@@ -105,4 +108,4 @@ def test_ingaas():
 
 if __name__ == '__main__': 
   test_inas()
-  test_ingaas()
+# test_ingaas()

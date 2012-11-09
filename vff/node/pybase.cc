@@ -30,6 +30,7 @@ namespace LaDa
       NodeData* result = (NodeData*) node_type()->tp_alloc(node_type(), 0);
       if(not result) return NULL;
       result->weakreflist = NULL;
+      result->gradient    = NULL;
       new(&result->bonds) std::vector<EdgeData*>;
       new(&result->center) crystal::Atom;
       return result;
@@ -41,6 +42,7 @@ namespace LaDa
     static int traverse(NodeData *self, visitproc visit, void *arg)
     {
       Py_VISIT(self->center.borrowed());
+      Py_VISIT(self->gradient);
       std::vector<EdgeData*>::const_iterator i_first = self->bonds.begin();
       std::vector<EdgeData*>::const_iterator const i_end = self->bonds.end();
       for(; i_first != i_end; ++i_first) Py_VISIT(*i_first);
@@ -50,6 +52,12 @@ namespace LaDa
     static int gcclear(NodeData *self)
     { 
       self->center.release();
+      if(self->gradient)
+      {
+        PyObject *dummy = self->gradient;
+        self->gradient = NULL;
+        Py_DECREF(dummy);
+      }
       std::vector<EdgeData*>::iterator i_first = self->bonds.begin();
       std::vector<EdgeData*>::iterator const i_end = self->bonds.end();
       for(; i_first != i_end; ++i_first) Py_CLEAR(*i_first);
@@ -140,6 +148,29 @@ namespace LaDa
       { return crystal::lada_atom_settype((crystal::PyAtomObject*)_self->center.borrowed(), _value, closure); }
     static PyObject* getcenter(NodeData* _self, void *closure)
       { return _self->center.new_ref(); }
+    static PyObject* getgradient(NodeData* _self, void *closure)
+    {
+      if(not _self->gradient)
+      {
+        LADA_PYERROR(AttributeError, "No gradient attribute.");
+        return NULL;
+      }
+      Py_INCREF(_self->gradient);
+      return _self->gradient;
+    }
+    static int setgradient(NodeData* _self, PyObject* _value, void *closure)
+    {
+      if(_self->gradient)
+      {
+        PyObject * dummy = _self->gradient;
+        _self->gradient = NULL;
+        Py_DECREF(dummy);
+      }
+      if(not _value) return 0;
+      Py_INCREF(_value);
+      _self->gradient = _value;
+      return 0;
+    }
 
     static int init(PyObject* _self, PyObject *_args, PyObject *_kwargs)
     {
@@ -199,6 +230,9 @@ namespace LaDa
       static PyGetSetDef getsetters[] = {
           LADA_DECLARE(pos,  "Alias to wrapped atom's position."),
           LADA_DECLARE(type, "Alias to wrapped atom's type."),
+          LADA_DECLARE(gradient, "Optional gradient vector.\n\n"
+                                 "Should be first set to something.\n"
+                                 "Works as a slot."),
           { const_cast<char*>("center"), (getter) getcenter, 
             NULL, const_cast<char*>("Wrapped atom.") },
           {NULL}  /* Sentinel */

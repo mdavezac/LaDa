@@ -5,7 +5,7 @@
 """
 __all__ = ['Node', 'Functional']
 from .cppwrappers import Node
-from .functional import Functional
+# from .functional import Functional
 
 
 def build_tree(structure, overlap=1.2, **kwargs):

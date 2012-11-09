@@ -1,9 +1,9 @@
 def test():
   import gc
-  from numpy import all, abs
+  from numpy import all, abs, ones
   from sys import getrefcount
   from lada.crystal.binary import zinc_blende
-  from lada.error import ValueError
+  from lada.error import ValueError, AttributeError
   from lada.vff import Node
 
   structure = zinc_blende()
@@ -104,6 +104,17 @@ def test():
   assert all(abs(nodeA[0][1] + nodeB[0][1]) < 1e-8)
   assert not nodeA.link(nodeB, [-1, 0, 0])
   
+  # check we can set gradient
+  try: nodeA.gradient
+  except AttributeError: pass
+  else: raise Exception()
+  nodeA.gradient = ones(3, dtype='float64')
+  assert all(abs(nodeA.gradient-1e0) < 1e-8)
+  del nodeA.gradient
+  try: nodeA.gradient
+  except AttributeError: pass
+  else: raise Exception()
+
 
 if __name__ == '__main__':
   test()

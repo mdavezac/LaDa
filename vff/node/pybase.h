@@ -28,6 +28,8 @@ namespace LaDa
         PyObject_HEAD 
         //! Holds list of weak pointers.
         PyObject *weakreflist;
+        //! Holds possible gradient object.
+        PyObject *gradient;
         //! Holds reference to other bonds.
         std::vector<EdgeData*> bonds;
         //! Holds reference to other an atom.

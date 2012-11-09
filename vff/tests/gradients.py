@@ -1,6 +1,6 @@
 def functional():
-  from lada.vff import Functional
-  vff = Functional()
+  from lada.vff.vff import Vff
+  vff = Vff()
   vff["In", "As"] = 2.62332, 21.6739, -112.0, 150.0
   vff["Ga", "As"] = 2.44795, 32.1530, -105.0, 150.0
   vff["As", "Ga", "As"] = "tet", -4.099, 9.3703
@@ -90,9 +90,9 @@ def test_stress(epsilon = 1e-4):
     assert abs(stress - out.stress[i, i]) < 1e2 * epsilon
 
 
-  strain = array([[1e0, 0.1, 0.2], [0.1, 1e0, -0.05], [0.2, -0.05, 1e0]])
-  structure.cell = dot(strain, structure.cell)
-  for atom in structure: atom.pos = dot(strain, atom.pos)
+  ostrain = array([[1e0, 0.1, 0.2], [0.1, 1e0, -0.05], [0.2, -0.05, 1e0]])
+  structure.cell = dot(ostrain, structure.cell)
+  for atom in structure: atom.pos = dot(ostrain, atom.pos)
   out = vff(structure)
   for i in xrange(3):
     for j in xrange(i, 3):
@@ -121,6 +121,7 @@ def test_stress(epsilon = 1e-4):
                * -1e0 / det(structure.cell*structure.scale)*angstrom**(-3)
       assert abs(out.stress[i,j]-out.stress[j,i]) < 1e-8
       assert abs(stress - out.stress[i, j]) < 1e2 * epsilon
+
       
 if __name__ == '__main__':
   test_gradients(1e-9)
