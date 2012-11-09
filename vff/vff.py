@@ -96,7 +96,7 @@ class Vff(object):
     from . import build_tree
 
     # first, build tree
-    tree = build_tree(structure) if _tree is None else tree
+    tree = build_tree(structure) if _tree is None else _tree
     # Then create list of bonds
     bondparams, lambda_ij = [], []
     scale2, factor = structure.scale * structure.scale, sqrt(3) / 2e0

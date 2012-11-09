@@ -20,7 +20,7 @@ def test_inas(epsilon = 1e-4):
   structure = zinc_blende()
   structure[0].type = 'In'
   structure[1].type = 'As'
-  structure.scale = 6.5 #2.62332 * 2 / sqrt(3)  / 0.529177
+  structure.scale = 6.8 #2.62332 * 2 / sqrt(3)  / 0.529177
 
   out = vff(structure)
   print out

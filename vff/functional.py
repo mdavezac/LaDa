@@ -44,11 +44,11 @@ class Functional(Vff):
   def _relax_all(self, structure):
     from numpy import dot, array, zeros
     from numpy.linalg import inv, det
-    from scipy.optimize import minimize
+    from scipy.optimize import fmin_bfgs as minimize
     from . import build_tree
 
     structure = structure.copy()
-    cell0 = structure.copy()
+    cell0 = structure.cell.copy()
     tree = build_tree(structure)
 
     def xtostrain(x0):
@@ -73,21 +73,21 @@ class Functional(Vff):
 
     def energy(x0):
       strain = xtostrain(x0)
-      update_structure(x0, strain)
-      return self.energy(structure, _tree=tree)
+      update_structure(x0[6:], strain)
+      return self.energy(structure, _tree=tree).magnitude
 
     def jacobian(x0):
       strain = xtostrain(x0)
-      update_structure(x0, strain)
+      update_structure(x0[6:], strain)
 
       stress, forces = self.jacobian(structure, _tree=tree)
       stress *= -det(structure.scale * structure.cell)
-      return gradient_tox(stress.magnitude, forces.magnitude, strain)
+      return gradient_tox(stress, forces, strain)
 
     x = zeros(6+len(structure)*3, dtype='float64')
     x[:6] = 0e0
     frac = inv(structure.cell)
     for i, atom in enumerate(structure): x[6+3*i:9+3*i] = dot(frac, atom.pos)
 
-    return minimize( energy, jac=jacobian, x0=x, method=self.method, 
-                     tol=self.tol, options = {'maxiter': self.maxiter} )
+    return minimize( energy, fprime=jacobian, x0=x, 
+                     gtol=self.tol, maxiter=self.maxiter )
