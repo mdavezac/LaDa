@@ -88,37 +88,113 @@ class Functional(object):
     self._parameters[index] = array( value.tolist()
                                      + [0]*(maxsize - len(value)) )
 
+  def energy(self, structure):
+    """ Evaluates energy alone. """
+    from numpy import array, sum, dot, sqrt, zeros
+    from quantities import newton, angstrom, meter, eV
+    from . import build_tree
+
+    # first, build tree
+    tree = build_tree(structure)
+    # Then create list of bonds
+    bondparams, lambda_ij = [], []
+    scale2, factor = structure.scale * structure.scale, sqrt(3) / 2e0
+    for node in tree: 
+      for endpoint, vector in node.sc_bond_iter():
+        params = self[node.type, endpoint.type]
+        pos = dot(structure.cell, vector) + endpoint.pos - node.pos
+        lam = sum(pos*pos) * scale2 / params[0] - params[0]
+        lambda_ij.append(lam * factor)
+        bondparams.append(params[1:])
+    bondparams = array(bondparams).T.copy()
+    lambda_ij = array(lambda_ij)
+    lambdas = lambda_ij.copy()
+    factorial = 1e0
+    # sum bond-stretching orders.
+    bondenergy = zeros(lambda_ij.shape[0], dtype='float64')
+    for i, params in enumerate(bondparams):
+      factorial /= float(i+2)
+      lambdas *= lambda_ij
+      bondenergy += params * lambdas * factorial
+
+
+    # now create betas for angles and recreate lambdas for bond-angles.
+    angleparams, sigmas, beta_ijk, lambda_ijk = [], [], [], []
+    for node in tree: 
+      for (centerA, vectorA), (centerB, vectorB)  in node.angle_iter():
+        posA = dot(structure.cell, vectorA) + centerA.pos - node.pos
+        posB = dot(structure.cell, vectorB) + centerB.pos - node.pos
+        meanlength = sqrt( self[centerA.type, node.type][0]                    \
+                           * self[centerB.type, node.type][0] )
+        params = self[centerA.type, node.type, centerB.type]
+        angle = dot(posA, posB) * scale2 / meanlength - meanlength * params[0]
+        paramsA = self[centerA.type, node.type][0]
+        paramsB = self[centerB.type, node.type][0]
+        meanlambda = dot(posA, posA) * scale2 / paramsA - paramsA              \
+                     + dot(posB, posB) * scale2 / paramsB - paramsB
+        beta_ijk.append(angle*factor)
+        lambda_ijk.append(meanlambda*factor)
+        sigmas.append(params[1])
+        angleparams.append(params[2:])
+
+    angleparams = array(angleparams).T.copy()
+    sigmas = array(sigmas)
+    beta_ijk = array(beta_ijk)
+    lambda_ijk = array(lambda_ijk)
+    betas = beta_ijk.copy()
+    factorial = 1e0
+    # sum angle orders
+    angleenergy = zeros(beta_ijk.shape[0], dtype='float64')
+    for i, params in enumerate(angleparams):
+      factorial /= float(i+2)
+      betas *= beta_ijk
+      angleenergy += params * betas * factorial
+
+    # now bond-angle energies
+    bondangleenergy =  beta_ijk * lambda_ijk * sigmas * 0.5
+
+    return ( sum(bondenergy) + sum(angleenergy) + sum(bondangleenergy) )       \
+           * (newton/meter*angstrom**2).rescale(eV)
+
   def __call__(self, structure):
     """ Evaluates energy and forces on a structure. """
     from numpy import zeros
-    from quantities import eV
+    from numpy.linalg import det
+    from quantities import eV, angstrom
     from . import build_tree
     # creates result structure.
     result = structure.copy()
-    for atom in result: atom.gradient = zeros(3, dtype='float64')
-    result.stress = zeros((3,3), dtype='float64')
-    result.energy = 0e0
+    for atom in result:
+      atom.gradient = zeros(3, dtype='float64') * eV / angstrom
+    result.stress = zeros((3,3), dtype='float64') * eV 
+    result.energy = 0e0 * eV
    
-    scale2 = result.scale ** 2
     # creates tree and loop over structure.
     tree = build_tree(result)
     for node in tree: 
-      result.energy += self._evaluate_bonds(node, scale2, result.cell,
+      result.energy += self._evaluate_bonds( node, result.scale, result.cell,
+                                             result.stress )
+      result.energy += self._evaluate_angles( node, result.scale, result.cell,
                                               result.stress )
-      result.energy += self._evaluate_angles( node, scale2, result.cell,
-                                              result.stress )
-    result.energy = result.energy / 16.0217733 * eV
+    result.energy = result.energy
+    result.stress *= -1e0/det(result.cell*result.scale) * angstrom**(-3)
     return result
 
-  def _evaluate_bonds(self, node, scale2, cell, stress=None, strain=None,
-                      K0=None):
-    """ Evaluates bond-stretching modes. """
+  def _evaluate_bonds(self, node, scale, cell, stress=None):
+    """ Evaluates bond-stretching modes.
+    
+        .. note:: stress is not normalized by -1/volume yet.
+    """
     from numpy import dot, sum, array, sqrt, outer
+    from quantities import newton, meter, angstrom, eV
     bondparams = array([1e0, 5e-1/sqrt(3e0), 1e0/16e0, sqrt(3e0)/8e0, 1e0/640])
     gbondparams = array([ 1.5e0, 3e0*sqrt(3e0)/8.0, 3e0/16e0,
                           3e0*sqrt(3e0)/128e0, 0.00703125 ])
+    scale2 = scale * scale
 
     energy = 0
+    stressunits = (newton / meter * angstrom * angstrom).rescale(eV)
+    gradunits = (newton / meter * angstrom).rescale(eV/angstrom) / scale * 0.5
     for endpoint, vector in node.sc_bond_iter():
       vector = dot(cell, vector) + endpoint.pos - node.pos
       params = self[node.type, endpoint.type]
@@ -134,24 +210,30 @@ class Functional(object):
         e0grad = 2e0 * scale2 / bond_length                                    \
                  * (mult[0] + e0 * ( mult[1]                                   \
                    + e0 * ( mult[2] + (mult[3] + e0 * mult[4]) ) ))
-        hold = e0grad * (dot(strain, vector) if strain is not None else vector)
+        hold = e0grad * vector * gradunits
         node.center.gradient -= hold
         endpoint.center.gradient += hold
   
         matrix = outer(vector, vector)
-        stress += e0grad * 0.5 * (dot(matrix, K0) if K0 is not None else matrix)
+        stress += e0grad * 0.5 * matrix * stressunits
                 
-    return energy * 3e0 / 8e0 
+    return energy * 3e0 / 8e0 * (newton/meter*angstrom*angstrom).rescale(eV)
 
-  def _evaluate_angles( self, node, scale2, cell, stress=None, strain=None,
-                        K0=None ):
-    """ Evaluates bond-angle and bond-bending modes. """
+  def _evaluate_angles(self, node, scale, cell, stress=None):
+    """ Evaluates bond-angle and bond-bending modes. 
+
+        .. note:: stress is not normalized by -1/volume yet.
+    """
     from numpy import dot, sum, array, sqrt, outer
+    from quantities import newton, meter, angstrom, eV
     bondparams = array([1e0, 5e-1/sqrt(3e0), 1e0/16e0, sqrt(3e0)/8e0, 1e0/640])
     gbondparams = array([ 0.75e0, 3e0*sqrt(3e0)/16.0, 3e0/32e0,
                           3e0*sqrt(3e0)/256e0, 0.003515625 ])
+    scale2 = scale * scale
 
     energy = 0
+    stressunits = (newton / meter * angstrom * angstrom).rescale(eV)
+    gradunits = (newton / meter * angstrom).rescale(eV/angstrom) / scale * 0.5
     for (A,dA), (B, dB) in node.angle_iter():
       vA = dot(cell, dA) + A.pos - node.pos
       vB = dot(cell, dB) + B.pos - node.pos
@@ -176,27 +258,26 @@ class Functional(object):
         e1grad = 2e0 * scale2 / mean_length                                    \
                  * (mult[0] + e1 * ( mult[1]                                   \
                    + e1 * ( mult[2] + (mult[3] + e1 * mult[4]) ) ))
-        hold0 = e1grad * (dot(strain, vA) if strain is not None else vA)
-        hold1 = e1grad * (dot(strain, vB) if strain is not None else vB)
+        hold0 = e1grad * vA * gradunits
+        hold1 = e1grad * vB * gradunits
         node.center.gradient -= hold0 + hold1
         A.center.gradient += hold1
         B.center.gradient += hold0
   
         matrix = outer(vA, vB)
         matrix += matrix.T
-        if K0 is not None: matrix = dot(matrix, K0)
-        stress += e1grad * 0.5 * matrix
+        stress += e1grad * 0.5 * matrix * stressunits
 
       # bond angle 
       energy += e0 * e1 * sigma
       
       if stress is not None: 
-        defA = dot(strain, vA) if strain is not None else vA
-        defB = dot(strain, vB) if strain is not None else vB
-        hold0 = 1.5 * e1 * sigma / lengthA * scale2 * defA                     \
-                + 0.75 * e0 * sigma / mean_length * scale2 * defB 
-        hold1 = 1.5 * e1 * sigma / lengthB * scale2 * defB                     \
-                + 0.75 * e0 * sigma / mean_length * scale2 * defA
+        hold0 = 1.5 * e1 * sigma / lengthA * scale2 * vA                       \
+                + 0.75 * e0 * sigma / mean_length * scale2 * vB 
+        hold0 = hold0 * gradunits
+        hold1 = 1.5 * e1 * sigma / lengthB * scale2 * vB                       \
+                + 0.75 * e0 * sigma / mean_length * scale2 * vA  
+        hold1 = hold1 * gradunits
 
 
         node.center.gradient -= hold0 + hold1
@@ -206,8 +287,7 @@ class Functional(object):
         matrix = outer(vA, vB)
         matrix = 2e0 * e1 * (outer(vA, vA)/lengthA + outer(vB, vB)/lengthB)    \
                  + e0 / mean_length * (matrix + matrix.T)
-        if K0 is not None: matrix = dot(matrix, K0)
-        stress += matrix * 0.375 * sigma * scale2
+        stress += matrix * 0.375 * sigma * scale2 * stressunits
 
-    return energy * 3e0 / 8e0
+    return energy * 3e0 / 8e0 * (newton/meter*angstrom*angstrom).rescale(eV)
 

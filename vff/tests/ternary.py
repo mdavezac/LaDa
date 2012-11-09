@@ -14,7 +14,7 @@ def functional():
 def test_inas():
   from numpy import identity, abs, all, dot, array
   from lada.crystal.binary import zinc_blende
-  from quantities import eV
+  from quantities import eV, angstrom
 
   vff = functional()
 
@@ -24,8 +24,8 @@ def test_inas():
   structure.scale = 6.5 #2.62332 * 2 / sqrt(3)  / 0.529177
 
   out = vff(structure)
-  assert abs(out.energy - 0.349587514524 * eV) < 1e-8
-  assert all(abs(out.stress - identity(3) * 45.06322056) < 1e-8)
+  assert abs(out.energy - 0.34958768908 * eV) < 1e-8
+  assert all(abs(out.stress - identity(3) * -0.04096678 * eV/angstrom**3) < 1e-8)
   assert all(abs(out[0].gradient) < 1e-8)
   assert all(abs(out[1].gradient) < 1e-8)
 
@@ -33,16 +33,16 @@ def test_inas():
   structure.cell = dot(epsilon, structure.cell)
   for atom in structure: atom.pos = dot(epsilon, atom.pos)
   out = vff(structure)
-  assert abs(out.energy - 0.527010542895 * eV) < 1e-8
-  assert all(abs(out.stress - [[  2.73218316e+01,   3.21556841e+01,  0],
-                               [  3.21556841e+01,   2.73218316e+01,  0],
-                               [ 0, 0,   2.01929521e+01]]) < 1e-6)
-  assert all(abs(out[0].gradient - [0, 0, 2.27456489e+02]) < 1e-6)
-  assert all(abs(out[1].gradient - [0, 0, -2.27456489e+02]) < 1e-6)
+  assert abs(out.energy - 0.527010806043 * eV) < 1e-8
+  assert all(abs(out.stress - [[ -2.50890474e-02,  -2.95278697e-02,  0],
+                               [ -2.95278697e-02,  -2.50890474e-02,  0],
+                               [ 0, 0,  -1.85427515e-02]] * eV / angstrom**3) < 1e-6)
+  assert all(abs(out[0].gradient - [0, 0, 1.09205526] * eV / angstrom) < 1e-6)
+  assert all(abs(out[1].gradient - [0, 0, -1.09205526] * eV / angstrom) < 1e-6)
 
 def test_ingaas():
   from numpy import abs, all, dot, array
-  from quantities import eV
+  from quantities import eV, angstrom
   from lada.crystal import Structure
 
   vff = functional()
@@ -75,32 +75,32 @@ def test_ingaas():
   structure.cell = dot(epsilon, structure.cell)
   for atom in structure: atom.pos = dot(epsilon, atom.pos)
   out = vff(structure)
-  assert abs(out.energy - 12.7962077582*eV) < 1e-8
-  assert all(abs(out.stress - [[ 767.82859534,  529.5647546 ,    2.75173374],
-       [ 529.5647546 ,  767.82859534,   -2.75173374],
-       [   2.75173374,   -2.75173374,  661.42954253]]) < 1e-6)
+  assert abs(out.energy - 12.7962141476*eV) < 1e-8
+  stress = array([[ 0.07050804,  0.04862879,  0.00025269],
+                  [ 0.04862879,  0.07050804, -0.00025269],
+                  [ 0.00025269, -0.00025269,  0.06073765]]) * eV/angstrom**3
+  assert all(abs(out.stress - stress) < 1e-6)
   gradients = array([u.gradient for u in out])
-  check_gradients = array( 
-      [[  1.56319402e-13,  -1.19726451e-12,   2.34055741e+02],
-       [  0.00000000e+00,  -1.98241423e-12,  -2.34055741e+02],
-       [  1.29119153e+01,  -1.29119153e+01,   2.09353996e+02],
-       [ -1.21502808e-12,   4.83169060e-13,  -2.34055741e+02],
-       [  1.59658154e+01,  -1.59658154e+01,   2.12736578e+02],
-       [  7.96493276e+01,  -7.96493276e+01,  -3.44662597e+02],
-       [ -3.95230085e+00,   3.95230085e+00,   2.41290573e+02],
-       [ -1.77635684e-14,   1.90070182e-13,  -2.27456489e+02],
-       [ -1.57183976e+01,   1.57183976e+01,   2.37666101e+02],
-       [ -7.59444445e+01,   7.59444445e+01,  -1.19574166e+02],
-       [  1.59658154e+01,  -1.59658154e+01,   2.12736578e+02],
-       [  7.96493276e+01,  -7.96493276e+01,  -3.44662597e+02],
-       [ -3.95230085e+00,   3.95230085e+00,   2.41290573e+02],
-       [ -2.49222865e-12,  -4.83879603e-12,  -2.27456489e+02],
-       [ -2.86303129e+01,   2.86303129e+01,   2.62367846e+02],
-       [ -7.59444445e+01,   7.59444445e+01,  -1.19574166e+02],
-       [ -1.70530257e-13,  -6.89226454e-13,   2.34055741e+02],
-       [  1.72128978e-12,   2.13162821e-14,  -2.34055741e+02],
-       [  7.10542736e-13,   1.53477231e-12,   2.34055741e+02],
-       [ -1.42108547e-13,   1.54187774e-12,  -2.34055741e+02]] )
+  check_gradients = array( [[  9.15933995e-16,  -5.96744876e-15,   1.12373933e+00],
+                            [  2.22044605e-16,  -9.43689571e-15,  -1.12373933e+00],
+                            [  6.19921859e-02,  -6.19921859e-02,   1.00514227e+00],
+                            [ -5.99520433e-15,   2.19269047e-15,  -1.12373933e+00],
+                            [  7.66544525e-02,  -7.66544525e-02,   1.02138259e+00],
+                            [  3.82409256e-01,  -3.82409256e-01,  -1.65478066e+00],
+                            [ -1.89756333e-02,   1.89756333e-02,   1.15847492e+00],
+                            [ -4.16333634e-17,   8.81239526e-16,  -1.09205526e+00],
+                            [ -7.54665596e-02,   7.54665596e-02,   1.14107325e+00],
+                            [ -3.64621516e-01,   3.64621516e-01,  -5.74094841e-01],
+                            [  7.66544525e-02,  -7.66544525e-02,   1.02138259e+00],
+                            [  3.82409256e-01,  -3.82409256e-01,  -1.65478066e+00],
+                            [ -1.89756333e-02,   1.89756333e-02,   1.15847492e+00],
+                            [ -1.19973476e-14,  -2.32591724e-14,  -1.09205526e+00],
+                            [ -1.37458746e-01,   1.37458746e-01,   1.25967031e+00],
+                            [ -3.64621516e-01,   3.64621516e-01,  -5.74094841e-01],
+                            [ -7.77156117e-16,  -3.10862447e-15,   1.12373933e+00],
+                            [  8.29891711e-15,   0.00000000e+00,  -1.12373933e+00],
+                            [  3.33066907e-15,   7.16093851e-15,   1.12373933e+00],
+                            [ -4.44089210e-16,   7.85482790e-15,  -1.12373933e+00]])
   assert all(abs(gradients - check_gradients) < 1e-6)
 
 if __name__ == '__main__': 
