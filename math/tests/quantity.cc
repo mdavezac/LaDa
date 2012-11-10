@@ -1,31 +1,36 @@
 #include "LaDaConfig.h"
 
-#include <Python.h>
-#include <boost/exception/get_error_info.hpp>
-#include <boost/exception/diagnostic_information.hpp>
-
-#include <opt/debug.h>
-
 #include "../quantity.h"
 
 
 using namespace LaDa::math;
-PyObject* get_static_object()
+PyObject* is_quantity(PyObject *_module, PyObject *_in)
 { 
-  try { return Quantity(1, "m").new_ref(); }
-  catch(...) { return NULL; }
+  if(not PyQuantity_Check(_in)) Py_RETURN_FALSE;
+  Py_RETURN_TRUE;
 }
-PyObject* check_get() 
+PyObject* fromC(PyObject *_module, PyObject *_args)
 {
-  LADA_DOASSERT( std::abs(Quantity(1, "m").get("cm") -1e-2) < 1e-12, "Did not get correct scale."); 
-  LADA_DOASSERT( std::abs(Quantity(1, "m").get() -1e0) < 1e-12, "Did not get correct scale."); 
-  Py_RETURN_NONE;
+  double pynumber;
+  char *pyunits;
+  if(not PyArg_ParseTuple(_args, "ds", &pynumber, &pyunits)) return NULL;
+  return PyQuantity_FromC(pynumber, std::string(pyunits));
 }
-
-PyObject* giveinRy(PyObject* _module, PyObject* _in)
+PyObject* fromPy(PyObject *_module, PyObject *_args)
 {
-  LaDa::types::t_real const result = convert_toreal(_in, "Ry", -666.667);
-  if(std::abs(result) < 1e-12 and PyErr_Occurred()) return NULL;
+  PyObject *number;
+  PyObject *units;
+  if(not PyArg_ParseTuple(_args, "OO", &number, &units)) return NULL;
+  return PyQuantity_FromPy(number, units);
+}
+PyObject* get_angstrom(PyObject *_module, PyObject *_in)
+{
+  LaDa::types::t_real result(PyQuantity_Get(_in, "angstrom"));
+  if(std::abs(result) < 1e-8 and PyErr_Occurred())
+  {
+    PyErr_Clear();
+    Py_RETURN_NONE;
+  }
   return PyFloat_FromDouble(result);
 }
 
@@ -39,9 +44,10 @@ PyObject* giveinRy(PyObject* _module, PyObject* _in)
 #define LADA_DECLARE(name, args) {#name, (PyCFunction)name, METH_ ## args, ""} 
 
 static PyMethodDef methods[] = { 
-  LADA_DECLARE(get_static_object, NOARGS),
-  LADA_DECLARE(check_get, NOARGS),
-  LADA_DECLARE(giveinRy, O),
+  LADA_DECLARE(is_quantity, O),
+  LADA_DECLARE(fromC, VARARGS),
+  LADA_DECLARE(fromPy, VARARGS),
+  LADA_DECLARE(get_angstrom, O),
   {NULL},
 };
 
@@ -49,9 +55,5 @@ static PyMethodDef methods[] = {
 
 PyMODINIT_FUNC init_quantity(void) 
 {
-  {
-    LaDa::python::Object o(PyImport_ImportModule("lada.error")); 
-    if(not o) return;
-  }
   PyObject* module = Py_InitModule("_quantity", methods);
 }

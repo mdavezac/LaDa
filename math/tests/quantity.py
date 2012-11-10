@@ -1,19 +1,25 @@
 """ Checks atom methods and attributes. """
 def test():
   """ Test atom initialization. """
-  from _quantity import get_static_object, giveinRy
+  from _quantity import is_quantity, fromC, fromPy, get_angstrom
   from numpy import abs
-  from quantities import meter, eV, Ry
+  from quantities import meter, angstrom, eV# , Ry
 
-  a = get_static_object()
-  assert a.__class__ is (1*meter).__class__
-  assert abs(a - (1*meter)) < 1e-12
+  assert not is_quantity("a");
+  assert not is_quantity(0);
+  assert not is_quantity(0.4);
+  assert is_quantity(eV)
+  assert is_quantity(5*eV)
 
-  assert abs(giveinRy(1.0) - 1e0) < 1e-8
-  assert abs(giveinRy(1L) - 1e0) < 1e-8
-  assert abs(giveinRy(2*eV) - (2*eV).rescale("Ry").magnitude.tolist()) < 1e-8
-  assert abs(giveinRy(2*Ry) - 2.) < 1e-8
-
+  assert abs(fromC(5, 'meter') - 5*meter) < 1e-8
+  assert abs(fromC(float((5*meter).rescale(angstrom)), 'angstrom') - 5*meter) < 1e-8
+  assert abs(fromC(float((4*meter).rescale(angstrom)), 'angstrom') - 5*meter) > 1e-8
+  assert abs(fromPy(5, meter) - 5*meter) < 1e-8
+  assert hasattr(fromPy(5, meter), 'rescale')
+  assert abs(get_angstrom(5*meter) - float(5*meter.rescale(angstrom))) < 1e-8
+  assert abs(get_angstrom(5) - 5) < 1e-8
+  assert abs(get_angstrom(5.5) - 5.5) < 1e-8
+  assert get_angstrom(4*eV) is None
 
 if __name__ == "__main__":
   from sys import argv, path 
