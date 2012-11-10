@@ -14,13 +14,16 @@ def functional():
 def test_inas(epsilon = 1e-4):
   from numpy import abs, dot, array, sqrt
   from lada.crystal.binary import zinc_blende
+  from quantities import a0
+
 
   vff = functional()
 
   structure = zinc_blende()
   structure[0].type = 'In'
   structure[1].type = 'As'
-  structure.scale = 6.8 #2.62332 * 2 / sqrt(3)  / 0.529177
+  structure.scale = 2.62332 * 2 / sqrt(3)  * a0
+  print structure.scale
 
   out = vff(structure)
   print out
