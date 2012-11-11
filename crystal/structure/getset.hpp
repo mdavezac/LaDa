@@ -15,7 +15,11 @@ namespace LaDa
       static int structure_setscale(StructureData *_self, PyObject *_value, void *_closure);
       //! Gets the volume of the structure
       static PyObject* structure_getvolume(StructureData *_self, void *_closure)
-        { return PyFloat_FromDouble( std::abs(_self->cell.determinant()) * std::pow(_self->scale,3)); }
+      {
+        types::t_real const scale = math::PyQuantity_AsReal(_self->scale);
+        types::t_real const result = std::abs(_self->cell.determinant() * std::pow(scale, 3));
+        return math::PyQuantity_FromCWithTemplate(result, _self->scale);
+      }
     }
   
     // Sets cell from a sequence of three numbers.
@@ -31,7 +35,10 @@ namespace LaDa
   
     // Returns the scale of the structure.
     static PyObject* structure_getscale(StructureData *_self, void *closure)
-      { return PyFloat_FromDouble(_self->scale); }
+    {
+      Py_INCREF(_self->scale); 
+      return _self->scale;
+    }
     // Sets the scale of the structure from a number.
     static int structure_setscale(StructureData *_self, PyObject *_value, void *_closure)
     {
@@ -40,16 +47,11 @@ namespace LaDa
         LADA_PYERROR(TypeError, "Cannot delete scale attribute.");
         return -1;
       }
-      if(PyFloat_Check(_value)) _self->scale = PyFloat_AS_DOUBLE(_value); 
-      else if(PyInt_Check(_value)) _self->scale = PyInt_AS_LONG(_value); 
-      else if(math::Quantity::isinstance(_value))
-        try { _self->scale = math::Quantity(_value).get("angstrom"); }
-        catch(...) { return -1; }
-      else
-      {
-        LADA_PYERROR(TypeError, "Input to scale is not an acceptable type.");
-        return -1;
-      }
+      PyObject *result = math::PyQuantity_FromPy(_value, _self->scale);
+      if(not result) return -1;
+      PyObject *dummy = _self->scale;
+      _self->scale = result;
+      Py_DECREF(dummy);
       return 0;
     }
   }

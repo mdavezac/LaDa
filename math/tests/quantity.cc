@@ -34,6 +34,29 @@ PyObject* get_angstrom(PyObject *_module, PyObject *_in)
   return PyFloat_FromDouble(result);
 }
 
+PyObject* as_real(PyObject *_module, PyObject *_in)
+{
+  LaDa::types::t_real result(PyQuantity_AsReal(_in));
+  if(std::abs(result) < 1e-8 and PyErr_Occurred())
+  {
+    PyErr_Clear();
+    Py_RETURN_NONE;
+  }
+  return PyFloat_FromDouble(result);
+}
+PyObject* get_as(PyObject *_module, PyObject *_args)
+{
+  PyObject *number;
+  PyObject *units;
+  if(not PyArg_ParseTuple(_args, "OO", &number, &units)) return NULL;
+  LaDa::types::t_real result(PyQuantity_GetPy(number, units));
+  if(std::abs(result) < 1e-8 and PyErr_Occurred())
+  {
+    PyErr_Clear();
+    Py_RETURN_NONE;
+  }
+  return PyFloat_FromDouble(result);
+}
 #ifndef PyMODINIT_FUNC	/* declarations for DLL import/export */
 # define PyMODINIT_FUNC void
 #endif
@@ -48,6 +71,8 @@ static PyMethodDef methods[] = {
   LADA_DECLARE(fromC, VARARGS),
   LADA_DECLARE(fromPy, VARARGS),
   LADA_DECLARE(get_angstrom, O),
+  LADA_DECLARE(as_real, O),
+  LADA_DECLARE(get_as, VARARGS),
   {NULL},
 };
 

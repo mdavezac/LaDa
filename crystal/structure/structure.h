@@ -3,6 +3,7 @@
 
 #include "LaDaConfig.h"
 
+#include <math/quantity.h>
 #include "pybase.h"
 
 
@@ -61,10 +62,12 @@ namespace LaDa
         //! Returns reference to cell.
         math::rMatrix3d::Scalar & cell(size_t i, size_t j)
           { return ((StructureData*)object_)->cell(i, j); }
-        //! Returns const reference to scale.
-        types::t_real const & scale() const { return ((StructureData*)object_)->scale; }
-        //! Returns reference to scale.
-        types::t_real & scale() { return ((StructureData*)object_)->scale; }
+        //! Returns scale as real number in current units.
+        types::t_real scale() const
+          { return math::PyQuantity_AsReal(((StructureData*)object_)->scale); }
+        //! Returns scale as real number in given units.
+        types::t_real scale(std::string const &_units) const
+          { return math::PyQuantity_Get(((StructureData*)object_)->scale, _units); }
 
         //! Deep copy of a structure.
         Structure copy() const { return Structure(PyStructure_Copy((StructureData*)object_)); }
@@ -154,10 +157,10 @@ namespace LaDa
         //! \details Does not compare values, just memory objects.
         bool is_same(Structure const &_in) { return object_ == _in.object_; }
 
-        //! Returns  structure volume.
+        //! Returns structure volume in current units.
         types::t_real volume() const
           { return std::abs(((StructureData*)object_)->cell.determinant()) 
-                   * std::pow(((StructureData*)object_)->scale, 3); }
+                   * std::pow(math::PyQuantity_AsReal(((StructureData*)object_)->scale), 3); }
 
         //! Transforms a structure according to an affine transformation.
         void transform(Eigen::Matrix<types::t_real, 4, 3> const &_affine);

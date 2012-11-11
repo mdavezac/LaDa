@@ -49,7 +49,7 @@ namespace LaDa
              << ", " << _self->cell(2, 1) 
              << ", " << _self->cell(2, 2)
              << ",\n" << std::string(name.size()+2, ' ')
-             << "scale=" << _self->scale;
+             << "scale=" << math::PyQuantity_Get(_self->scale, "angstrom");
           
       // Including python dynamic attributes.
       if(_self->pydict != NULL)
@@ -157,15 +157,12 @@ namespace LaDa
       // get cell attribute.
       python::Object cell = structure_getcell(_self, NULL);
       if(not cell) return NULL;
-      // get scale attribute.
-      python::Object scale = structure_getscale(_self, NULL);
-      if(not scale) return NULL;
       // get python dynamic attributes.
       python::Object dict = _self->pydict == NULL ? python::Object::acquire(Py_None): PyDict_New();
       if(not dict) return NULL;
       if(_self->pydict != NULL and PyDict_Merge(dict.borrowed(), _self->pydict, 0) < 0) return NULL;
 
-      return PyTuple_Pack(3, cell.borrowed(), scale.borrowed(), dict.borrowed());
+      return PyTuple_Pack(3, cell.borrowed(), _self->scale, dict.borrowed());
     }
 
     // Implements setstate for pickling.
@@ -183,7 +180,8 @@ namespace LaDa
       }
       // first cell and scale.
       if(structure_setcell(_self, PyTuple_GET_ITEM(_tuple, 0), NULL) < 0) return NULL;
-      if(structure_setscale(_self, PyTuple_GET_ITEM(_tuple, 1), NULL) < 0) return NULL;
+      _self->scale = PyTuple_GET_ITEM(_tuple, 1); 
+      Py_INCREF(_self->scale);
 
       // finally, dictionary, so we can return without issue on error.
       PyObject *dict = PyTuple_GET_ITEM(_tuple, 2);

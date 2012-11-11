@@ -99,7 +99,8 @@ class Vff(object):
     tree = build_tree(structure) if _tree is None else _tree
     # Then create list of bonds
     bondparams, lambda_ij = [], []
-    scale2, factor = structure.scale * structure.scale, sqrt(3) / 2e0
+    scale = float(structure.scale.rescale(angstrom))
+    scale2, factor = scale * scale, sqrt(3) / 2e0
     for node in tree: 
       for endpoint, vector in node.sc_bond_iter():
         params = self[node.type, endpoint.type]
@@ -173,11 +174,12 @@ class Vff(object):
 
     gbondparams = array([ 1.5e0, 3e0*sqrt(3e0)/8.0, 3e0/16e0,
                           3e0*sqrt(3e0)/128e0, 0.00703125 ])
-    scale2 = structure.scale * structure.scale
+    scale = float(structure.scale.rescale(angstrom))
+    scale2 = scale * scale
 
     stressunits = (newton / meter * angstrom * angstrom).rescale(eV)
     gradunits = (newton / meter * angstrom).rescale(eV/angstrom)               \
-                / structure.scale * 0.5
+                / float(structure.scale.rescale(angstrom)) * 0.5
 
     stress = zeros((3,3), dtype='float64') * eV
     forces = zeros((len(structure), 3), dtype='float64')
@@ -250,7 +252,7 @@ class Vff(object):
                  + e0 / mean_length * (matrix + matrix.T)
         stress += matrix * 0.375 * sigma * scale2 * stressunits
 
-    volume = det(structure.scale*structure.cell) * angstrom ** 3
+    volume = det(structure.scale.rescale(angstrom)*structure.cell) * angstrom**3
     return -stress/volume, forces
 
   def __call__(self, structure):
@@ -268,10 +270,11 @@ class Vff(object):
    
     # creates tree and loop over structure.
     tree = build_tree(result)
+    scale = float(result.scale.rescale(angstrom))
     for node in tree: 
-      result.energy += self._evaluate_bonds( node, result.scale, result.cell,
+      result.energy += self._evaluate_bonds( node, scale, result.cell,
                                              result.stress )
-      result.energy += self._evaluate_angles( node, result.scale, result.cell,
+      result.energy += self._evaluate_angles( node, scale, result.cell,
                                               result.stress )
     result.energy = result.energy
     result.stress *= -1e0/det(result.cell*result.scale) * angstrom**(-3)

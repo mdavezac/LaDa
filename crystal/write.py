@@ -36,6 +36,7 @@ def poscar(structure, file='POSCAR', vasp5=None, substitute=None):
       "z", corresponding to freezing the first, second, or third fractional
       coordinates. Combinations of these are also allowed.
   """
+  from quantities import angstrom
   if file is None:
     with open('POSCAR', 'w') as fileobj: return poscar(structure, fileobj, vasp5, substitute)
   elif not hasattr(file, 'write'):
@@ -48,7 +49,8 @@ def poscar(structure, file='POSCAR', vasp5=None, substitute=None):
     import lada 
     vasp5 = not getattr(lada, 'is_vasp_4', True)
 
-  string = "{0}\n{1}\n".format(getattr(structure, 'name', ''), structure.scale)
+  string = "{0}\n{1}\n".format(getattr(structure, 'name', ''),
+                               float(structure.scale.rescale(angstrom)))
   for i in range(3):
     string += "  {0[0]} {0[1]} {0[2]}\n".format(structure.cell[:,i])
   species = specieset(structure)
@@ -83,15 +85,18 @@ def poscar(structure, file='POSCAR', vasp5=None, substitute=None):
 
 def castep(structure, file=None):
   """ Writes castep input. """
+  from quantities import angstrom
+  cell = structure.cell * float(structure.scale.rescale(angstrom))
   string = "%BLOCK LATTICE_CART\n" \
            "  {0[0]} {0[1]} {0[2]}\n" \
            "  {1[0]} {1[1]} {1[2]}\n" \
            "  {2[0]} {2[1]} {2[2]}\n" \
            "%ENDBLOCK LATTICE_CART\n\n"\
-           "%BLOCK POSITIONS_ABS\n".format(*(structure.cell.T*structure.scale))
+           "%BLOCK POSITIONS_ABS\n".format(*(cell.T))
   for atom in structure:
+    pos = atom.pos * float(structure.scale.rescale(angstrom))
     string += "  {0} {1[0]} {1[1]} {1[2]}\n"\
-              .format(atom.type, atom.pos * structure.scale)
+              .format(atom.type, pos)
   string += "%ENDBLOCK POSITION_ABS\n"
   if file == None: return string
   elif isinstance(file, str): 
@@ -130,6 +135,7 @@ def crystal( structure, file='fort.34',
   """
   from StringIO import StringIO
   from numpy import zeros
+  from quantities import angstrom
   from ..crystal import equivalence_iterator
   from ..periodic_table import find as find_specie
   from . import space_group
@@ -170,10 +176,11 @@ def crystal( structure, file='fort.34',
   # write first line
   file.write('{0} {1} {2}\n'.format(dimensionality, centering, type))
   # write cell
+  cell = structure.cell * float(structure.scale.rescale(angstrom))
   file.write( '{0[0]: > 18.12f} {0[1]: > 18.12f} {0[2]: > 18.12f}\n'           \
               '{1[0]: > 18.12f} {1[1]: > 18.12f} {1[2]: > 18.12f}\n'           \
               '{2[0]: > 18.12f} {2[1]: > 18.12f} {2[2]: > 18.12f}\n'           \
-              .format( *(structure.cell*structure.scale) ) )
+              .format( *(cell) ) )
   # write symmetry operators
   file.write('{0}\n'.format(len(spacegroup)))
   for op in spacegroup:
@@ -200,5 +207,6 @@ def crystal( structure, file='fort.34',
                           .format(type) )
       else: type = n.atomic_number
     else: type = n
+    pos = atom.pos * float(structure.scale.rescale(angstrom))
     file.write( '{0: >5} {1[0]: > 18.12f} {1[1]: > 18.12f} {1[2]: > 18.12f}\n' \
-                .format(type, atom.pos*structure.scale) )
+                .format(type, pos) )

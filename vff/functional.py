@@ -44,7 +44,7 @@ class Functional(Vff):
   def _relax_all(self, structure):
     from numpy import dot, array, zeros
     from numpy.linalg import inv, det
-    from scipy.optimize import fmin_bfgs as minimize
+    from scipy.optimize import minimize
     from . import build_tree
 
     structure = structure.copy()
@@ -89,5 +89,9 @@ class Functional(Vff):
     frac = inv(structure.cell)
     for i, atom in enumerate(structure): x[6+3*i:9+3*i] = dot(frac, atom.pos)
 
-    return minimize( energy, fprime=jacobian, x0=x, 
-                     gtol=self.tol, maxiter=self.maxiter )
+    result = minimize( energy, jac=jacobian, x0=x, 
+                       tol=self.tol, options={'maxiter': self.maxiter} )
+    strain = xtostrain(result.x)
+    update_structure(result.x[6:], strain)
+    structure.optimize = result
+    return super(Functional, self).__call__(structure)

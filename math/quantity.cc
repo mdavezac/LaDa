@@ -4,18 +4,20 @@
 #include <python/exceptions.h>
 #include "quantity.h"
 
+#include <iostream>
+
 
 namespace LaDa
 {
   namespace math
   {
-    PyObject* UnitQuantityClass()
+    static PyObject* UnitQuantityClass()
     {
       python::Object quant( PyImport_ImportModule("quantities") );
       if(not quant) return NULL;
       return PyObject_GetAttrString(quant.borrowed(), "UnitQuantity");
     }
-    PyObject* QuantityClass()
+    static PyObject* QuantityClass()
     {
       python::Object quant( PyImport_ImportModule("quantities") );
       if(not quant) return NULL;
@@ -66,13 +68,35 @@ namespace LaDa
       return result.release();
     }
 
-    bool PyQuantity_Convertible(PyObject *_a, PyObject *_b)
+    PyObject *PyQuantity_FromCWithTemplate(types::t_real const &_double, PyObject *_unittemplate)
+    {
+      // creates global/local dictionary in order to run code.
+      python::Object const globals = PyImport_ImportModule("quantities");
+      if(not globals) return NULL;
+      python::Object locals = PyDict_New();
+      if(not locals) return NULL;
+      python::Object number = PyFloat_FromDouble(_double);
+      if(not number) return NULL;
+      if(PyDict_SetItemString(locals.borrowed(), "number", number.borrowed()) < 0)
+        return NULL;
+      if(PyDict_SetItemString(locals.borrowed(), "units", _unittemplate) < 0)
+        return NULL;
+      python::Object result(PyRun_String( "quantity.Quantity(number, units.units)", Py_eval_input,
+                                  PyModule_GetDict(globals.borrowed()), 
+                                  locals.borrowed() ));
+      if(not result) return NULL;
+      return result.release();
+    }
+
+    static bool PyQuantity_Convertible(PyObject *_a, PyObject *_b)
     {
       if(not PyQuantity_Check(_a)) return false;
       if(not PyQuantity_Check(_b)) return false;
       char rescale_str[] = "rescale";
       char s_str[] = "O";
-      PyObject *result = PyObject_CallMethod(_a, rescale_str, s_str, _b);
+      python::Object units = PyObject_GetAttrString(_b, "units");
+      if(not units) return false;
+      PyObject *result = PyObject_CallMethod(_a, rescale_str, s_str, units.borrowed());
       if(PyErr_Occurred())
       {
         PyErr_Clear();
@@ -97,7 +121,7 @@ namespace LaDa
           return NULL;
         }
         Py_INCREF(_number);
-        return NULL;
+        return _number;
       }
       
       // creates global/local dictionary in order to run code.
@@ -109,7 +133,8 @@ namespace LaDa
         return NULL;
       if(PyDict_SetItemString(locals.borrowed(), "unitdims", _units) < 0)
         return NULL;
-      python::Object result(PyRun_String( "number * unitdims.units", Py_eval_input,
+      python::Object result(PyRun_String( "Quantity(number, unitdims.units)",
+                                  Py_eval_input,
                                   PyModule_GetDict(globals.borrowed()), 
                                   locals.borrowed() ));
       if(not result) return NULL;
@@ -145,6 +170,52 @@ namespace LaDa
       if(PyErr_Occurred()) return types::t_real(0);
       return realresult;
     }
+    types::t_real PyQuantity_GetPy(PyObject *_number, PyObject *_units)
+    {
+      if(not PyQuantity_Check(_number))
+      {
+        LADA_PYERROR(TypeError, "PyQuantity_GetPy: First argument should be a quantity.");
+        return types::t_real(0);
+      }
+      if(not PyQuantity_Check(_units))
+      {
+        LADA_PYERROR(TypeError, "PyQuantityGetPy: Second argument should be a quantity.");
+        return types::t_real(0);
+      }
+      // creates global/local dictionary in order to run code.
+      python::Object const globals = PyImport_ImportModule("quantities");
+      if(not globals) return types::t_real(0);
+      python::Object locals = PyDict_New();
+      if(not locals) return types::t_real(0);
+      if(PyDict_SetItemString(locals.borrowed(), "number", _number) < 0)
+        return types::t_real(0);
+      if(PyDict_SetItemString(locals.borrowed(), "units", _units) < 0)
+        return types::t_real(0);
+      python::Object const result(PyRun_String( "float(number.rescale(units.units))",
+                                        Py_eval_input,
+                                        PyModule_GetDict(globals.borrowed()), 
+                                        locals.borrowed() ));
+      if(not result) return types::t_real(0);
+      types::t_real const realresult = PyFloat_AsDouble(result.borrowed());
+      if(PyErr_Occurred()) return types::t_real(0);
+      return realresult;
+    }
 
+    types::t_real PyQuantity_AsReal(PyObject *_in)
+    {
+      PyObject *globals = PyEval_GetBuiltins();
+      if(not globals) return types::t_real(0);
+      python::Object locals = PyDict_New();
+      if(not locals) return types::t_real(0);
+      if(PyDict_SetItemString(locals.borrowed(), "number", _in) < 0)
+        return types::t_real(0);
+      python::Object const result(PyRun_String( "float(number)", Py_eval_input,
+                                        globals, 
+                                        locals.borrowed() ));
+      if(not result) return types::t_real(0);
+      types::t_real const realresult = PyFloat_AsDouble(result.borrowed());
+      if(PyErr_Occurred()) return types::t_real(0);
+      return realresult;
+    }
   }
 }

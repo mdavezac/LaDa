@@ -105,12 +105,12 @@ namespace LaDa
       static PyGetSetDef getsetters[] = {
           LADA_DECLARE(pos,  "Position in cartesian coordinates.\n\n"
                              "The position does not yet have units. "
-                             "Units depend upon `lada.crystal.Structure.scale`. "
-                             "Across lada, it is expected that a position time "
-                             "this scale are angstroms. Finally, the position "
-                             "is owned internally by the atom. It cannot be set to "
-                             "reference an object (say a list or numpy array). "
-                             "``atom.pos = some_list`` will copy the values of ``some_list``. "),
+                             "Units depend upon `lada.crystal.Structure.scale`.\n"
+                             "Finally, the position is owned internally by the "
+                             "atom. It cannot be set to reference an object\n"
+                             "(say a list or numpy array). ``atom.pos = "
+                             "some_list`` will copy the values of"
+                             "``some_list``.\n"),
           LADA_DECLARE(type, "Occupation of this atomic site.\n\n"
                              "Can be any object whatsoever."),
           {NULL}  /* Sentinel */
