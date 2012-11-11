@@ -5,7 +5,7 @@ set( PYVFF_SOURCES
      module.cc
      node/pybase.cc 
      edge/pybase.cc )
-set( PYVFF_PY __init__.py functional.py vff.py )
+set( PYVFF_PY __init__.py functional.py vff.py extract.py )
 
 install(FILES ${PYVFF_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/vff)
 

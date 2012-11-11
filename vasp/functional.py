@@ -1058,3 +1058,10 @@ class Vasp(AttrBlock):
     super(Vasp, self).__setstate__(args)
     for key, value in self.__class__().__dict__.iteritems():
        if not hasattr(self, key): setattr(self, key, value)
+
+
+del stateless
+del assign_attributes
+del AttrBlock
+del add_setter
+del Extract

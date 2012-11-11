@@ -1,5 +1,10 @@
+from ..tools import stateless, assign_attributes
 from .vff import Vff
+from .extract import Extract as ExtractVFF
+
 class Functional(Vff): 
+  Extract = ExtractVFF
+  """ Extraction object for Vff. """
   def __init__(self, relax=True, method='BFGS', tol=1e-8, maxiter=50): 
     super(Functional, self).__init__()
 
@@ -30,15 +35,45 @@ class Functional(Vff):
     return relax.lower() == 'static'
 
 
-  def __call__(self, structure, **kwargs):
+  @assign_attributes(ignore=['overwrite', 'comm'])
+  @stateless
+  def __call__(self, structure, outdir=None, overwrite=False, **kwargs):
     """ Evaluates energy and forces on a structure. """
-    if self._is_static(**kwargs):
-      result = super(self, Functional).__init__(structure)
-
-    else: 
-      result = self._relax_all(structure)
-
-    return result
+    from datetime import datetime
+    from os.path import join
+    from ..misc import Changedir, RelativePath
+    from .extract import Extract as ExtractVFF
+    outdir = RelativePath(outdir).path
+    header = ''.join(['#']*20)
+    with open(join(outdir, 'vff.out'), 'w') as file:
+      file.write('Start date: {0!s}\n'.format(datetime.today()))
+      file.write('{0} {1} {0}\n'.format(header, 'STARTING STRUCTURE'))
+      file.write(repr(structure) + '\n')
+      file.write('{0} END {1} {0}\n'.format(header, 'STARTING STRUCTURE'))
+      file.write('{0} {1} {0}\n'.format(header, 'FUNCTIONAL'))
+      file.write(repr(self) + '\n')
+      file.write('{0} END {1} {0}\n\n'.format(header, 'FUNCTIONAL'))
+    minimization, result = None, None
+    try: 
+      if self._is_static(**kwargs):
+        result = super(self, Functional).__init__(structure)
+      else: 
+        result, minimization = self._relax_all(structure)
+    finally: 
+      with open(join(outdir, 'vff.out'), 'a') as file:
+        if minimization is not None:
+          file.write('{0} {1} {0}\n'.format(header, 'MINIMIZATION'))
+          file.write(repr(minimization) + '\n')
+          file.write('{0} END {1} {0}\n\n'.format(header, 'MINIMIZATION'))
+        if result is not None:
+          file.write('{0} {1} {0}\n'.format(header, 'STRUCTURE'))
+          file.write( 'from {0.__class__.__module__} '                         \
+                      'import {0.__class__.__name__}'.format(result) )
+          string = repr(result).replace('\n', '\n            ')
+          file.write('structure = ' + string + '\n')
+          file.write('{0} END {1} {0}\n'.format(header, 'STRUCTURE'))
+        file.write('End date: {0!s}\n'.format(datetime.today()))
+    return ExtractVFF(outdir)
 
 
   def _relax_all(self, structure):
@@ -93,5 +128,9 @@ class Functional(Vff):
                        tol=self.tol, options={'maxiter': self.maxiter} )
     strain = xtostrain(result.x)
     update_structure(result.x[6:], strain)
-    structure.optimize = result
-    return super(Functional, self).__call__(structure)
+    return super(Functional, self).__call__(structure), result
+
+del stateless
+del assign_attributes
+del Vff
+del ExtractVFF

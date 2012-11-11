@@ -66,28 +66,44 @@ class Vff(object):
         this is not checked in anyway.
     """
     from numpy import cos, array
-    from quantities import radian
+    from quantities import radian, meter, angstrom, newton
     from ..error import ValueError
 
     if isinstance(index, str): index = index.split('-')
     index = '-'.join(sorted(str(u) for u in index))
     # special case where the angle is given as "tet"
+    value = list(value)
     maxsize = 7 if index.count('-') == 2 else 6
-    if maxsize == 7 and isinstance(value[0], str):
-      if value[0][:3].lower() != 'tet':
-        raise ValueError( 'If a string, the first argument to angle '          \
-                          'parameters should be "tet". ')
-      value = [-1e0/3e0] + [u for u in value[1:]]
-    # special case of a signed quantity.
-    elif hasattr(value[0], 'rescale'):
-      value = [cos(value[0].rescale(radian).magnitude)]                        \
-              + [u for u in value[1:]]
-    value = array(value).flatten()
     if len(value) < 2 or len(value) > maxsize:
       raise ValueError( 'Expects no less than two and no more than 6 '         \
                         'parameters.')
+    if maxsize == 7:
+      if isinstance(value[0], str):
+        if value[0][:3].lower() != 'tet':
+          raise ValueError( 'If a string, the first argument to angle '        \
+                            'parameters should be "tet". ')
+        value[0] = -1e0/3e0
+      elif hasattr(value[0], 'rescale'):
+        value[0] = cos(value[0].rescale(radian).magnitude)
+      if hasattr(value[1], 'rescale'):
+        value[1] = float(value[1].rescale(newton/meter))
+      for i in xrange(2, len(value)):
+        if hasattr(value[i], 'rescale'):
+          value[i] = float(value[i].rescale(newton/meter/angstrom**(i-2)))
+    else:
+      for i in xrange(1, len(value)):
+        if hasattr(value[i], 'rescale'):
+          value[i] = float(value[i].rescale(newton/meter/angstrom**(i-1)))
+    value = array(value).flatten()
+    
     self._parameters[index] = array( value.tolist()
                                      + [0]*(maxsize - len(value)) )
+
+  def __contains__(self, index):
+    """ True if bond or angle parameters are declared. """
+    if isinstance(index, str): index = index.split('-')
+    index = '-'.join(sorted(str(u) for u in index))
+    return index in self._parameters
 
   def energy(self, structure, _tree=None):
     """ Evaluates energy alone. """
@@ -391,3 +407,21 @@ class Vff(object):
 
     return energy * 3e0 / 8e0 * (newton/meter*angstrom*angstrom).rescale(eV)
 
+  def __ui_repr__(self, imports, name=None, defaults=None, exclude=None):
+    """ User-friendly representation of the functional. """
+    from ..tools.uirepr import template_ui_repr
+    results = template_ui_repr(self, imports, name, defaults, ['_parameters'])
+    if name is None:
+      name = getattr(self, '__ui_name__', self.__class__.__name__.lower())
+    for key, value in self._parameters.iteritems():
+      index = ', '.join(repr(u) for u in key.split('-'))
+      key = "{0}[{1}]".format(name, index)
+      results[key] = ', '.join(str(u) for u in value)
+    return results
+
+  def __repr__(self, defaults=True, name=None):
+    """ Returns representation of this instance """
+    from ..tools.uirepr import uirepr
+    defaults = self.__class__() if defaults else None
+    return uirepr(self, name=name, defaults=defaults)
+    

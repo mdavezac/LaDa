@@ -1261,3 +1261,7 @@ class MassExtract(AbstractMassExtract):
     """ Returns __dir__ set special to the extraction itself. """
     return list(set( [ u for u in dir(self.DefaultExtract) if u[0] != '_' ] 
                      + ['details'] ))
+
+del make_cached
+del search_factory
+del AbstractMassExtract
