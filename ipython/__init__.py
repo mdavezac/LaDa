@@ -17,6 +17,7 @@ def load_ipython_extension(ip):
     from .showme import showme, completer as showme_completer
     from .launch import launch, completer as launch_completer
     from .export import export, completer as export_completer
+    from .copyfolder import copy_folder, completer as copy_completer
     import lada
     __lada_is_loaded__ = True
     lada.interactive = ModuleType('interactive')
@@ -28,14 +29,17 @@ def load_ipython_extension(ip):
     ip.define_magic('explore', explore)
     ip.define_magic('goto', goto)
     ip.define_magic('listfolders', listfolders)
+    ip.define_magic('fl', listfolders) # shorter alias to listfolders.
     ip.define_magic('showme', showme)
     ip.define_magic('launch', launch)
     ip.define_magic('export', export)
+    ip.define_magic('copyfolder', copy_folder)
     ip.set_hook('complete_command', explore_completer, str_key = '%explore')
     ip.set_hook('complete_command', goto_completer, str_key = '%goto')
     ip.set_hook('complete_command', showme_completer, str_key = '%showme')
     ip.set_hook('complete_command', launch_completer, str_key = '%launch')
     ip.set_hook('complete_command', export_completer, str_key = '%export')
+    ip.set_hook('complete_command', copy_completer, str_key = '%copyfolder')
     if lada.ipython_verbose_representation is not None:
       lada.verbose_representation = lada.ipython_verbose_representation
     if hasattr(lada, 'ipython_qstat'):

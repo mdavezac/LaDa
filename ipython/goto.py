@@ -51,13 +51,16 @@ def goto(self, cmdl):
       good = not value.is_tagged
       if good: break
   if not good:
-    print '**** Current job-folders and sub-folders are all off; '\
+    print '**** Current job-folders and sub-folders are all off; '             \
           'jobparams (except onoff) and collect will not work.'
     return
   if interactive.jobfolder_path is None: return
-  dir = join(splitpath(interactive.jobfolder_path)[0], interactive.jobfolder.name[1:]) 
+  dir = join( splitpath(interactive.jobfolder_path)[0], 
+              interactive.jobfolder.name[1:] ) 
   if exists(dir): chdir(dir)
-  else: print "No corresponding directory on disk."
+  else: 
+    print "In {0}, but no corresponding directory on disk."                    \
+          .format(dir.split('/')[-1])
   return
 
 
@@ -104,20 +107,19 @@ def iterate(self, event):
 
 
 def completer(self, event):
-  from os.path import exists, isdir
   from IPython import TryNext
   from lada import interactive
-  if len(event.line.split()) > 2: raise TryNext
+  if len(event.line.split()) > 2: raise TryNext()
 
   if '/' in event.symbol:
     subkey = ""
     for key in event.symbol.split('/')[:-1]: subkey += key + "/"
     try: subdict = interactive.jobfolder[subkey]
-    except KeyError: raise TryNext
+    except KeyError: raise TryNext()
     if hasattr(subdict, "children"): 
       if hasattr(subdict.children, "keys"):
         return [subkey + a + "/" for a in subdict.children.keys()]
-    raise TryNext
+    raise TryNext()
   else:
     result = [a + "/" for a in interactive.jobfolder.children.keys()]
     result.extend(["/", "next", "reset"])
