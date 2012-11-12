@@ -5,7 +5,7 @@ __all__ = ['Vasp']
 from ..tools import stateless, assign_attributes
 from ..tools.input import AttrBlock
 from ..misc import add_setter
-from extract import Extract
+from .extract import Extract as ExtractVasp
 
 
 class Vasp(AttrBlock):
@@ -76,7 +76,7 @@ class Vasp(AttrBlock):
       The best way to use this functional is in conjunction with the
       high-throughput interface :py:mod:`lada.jobfolder`.
   """
-  Extract = staticmethod(Extract)
+  Extract = staticmethod(ExtractVasp)
   """ Extraction class.
   
       This extraction class is used to grep output from an OUTCAR file.
@@ -895,6 +895,7 @@ class Vasp(AttrBlock):
     """ 
     from .. import vasp_program
     from ..process.program import ProgramProcess
+    from .extract import Extract as ExtractVasp
 
     # check for pre-existing and successful run.
     if not overwrite:
@@ -917,7 +918,7 @@ class Vasp(AttrBlock):
                           onfinish=onfinish, stdout='stdout', stderr='stderr',
                           dompi=comm is not None )
     # yields final extraction object.
-    yield Extract(outdir)
+    yield ExtractVasp(outdir)
 
   def bringup(self, structure, outdir, **kwargs):
     """ Creates all input files necessary to run results.
@@ -1064,4 +1065,4 @@ del stateless
 del assign_attributes
 del AttrBlock
 del add_setter
-del Extract
+del ExtractVasp
