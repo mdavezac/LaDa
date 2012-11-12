@@ -820,8 +820,8 @@ class Vasp(AttrBlock):
       raise RuntimeError("Vasp failed to execute correctly.")
     return program
 
-  @assign_attributes(ignore=['overwrite', 'comm'])
   @stateless
+  @assign_attributes(ignore=['overwrite', 'comm'])
   def iter(self, structure, outdir=None, comm=None, overwrite=False, **kwargs):
     """ Allows asynchronous vasp calculations
      

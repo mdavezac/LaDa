@@ -34,29 +34,32 @@ class Functional(Vff):
     if not isinstance(relax, str): return False
     return relax.lower() == 'static'
 
-
-  @assign_attributes(ignore=['overwrite', 'comm'])
   @stateless
+  @assign_attributes(ignore=['overwrite', 'comm'])
   def __call__(self, structure, outdir=None, overwrite=False, **kwargs):
     """ Evaluates energy and forces on a structure. """
     from datetime import datetime
     from os.path import join
-    from ..misc import Changedir, RelativePath
     from .extract import Extract as ExtractVFF
-    outdir = RelativePath(outdir).path
+
+    if ExtractVFF(outdir).success and not overwrite: return ExtractVFF(outdir)
+
     header = ''.join(['#']*20)
     with open(join(outdir, 'vff.out'), 'w') as file:
       file.write('Start date: {0!s}\n'.format(datetime.today()))
-      file.write('{0} {1} {0}\n'.format(header, 'STARTING STRUCTURE'))
-      file.write(repr(structure) + '\n')
-      file.write('{0} END {1} {0}\n'.format(header, 'STARTING STRUCTURE'))
+      file.write('{0} {1} {0}\n'.format(header, 'INITIAL STRUCTURE'))
+      file.write( 'from {0.__class__.__module__} '                             \
+                  'import {0.__class__.__name__}\n'.format(structure) )
+      string = repr(structure).replace('\n', '\n            ')
+      file.write('structure = ' + string + '\n')
+      file.write('{0} END {1} {0}\n'.format(header, 'INITIAL STRUCTURE'))
       file.write('{0} {1} {0}\n'.format(header, 'FUNCTIONAL'))
-      file.write(repr(self) + '\n')
+      file.write(self.__repr__(defaults=False) + '\n')
       file.write('{0} END {1} {0}\n\n'.format(header, 'FUNCTIONAL'))
     minimization, result = None, None
     try: 
       if self._is_static(**kwargs):
-        result = super(self, Functional).__init__(structure)
+        result = super(Functional, self).__call__(structure)
       else: 
         result, minimization = self._relax_all(structure)
     finally: 
@@ -68,7 +71,7 @@ class Functional(Vff):
         if result is not None:
           file.write('{0} {1} {0}\n'.format(header, 'STRUCTURE'))
           file.write( 'from {0.__class__.__module__} '                         \
-                      'import {0.__class__.__name__}'.format(result) )
+                      'import {0.__class__.__name__}\n'.format(result) )
           string = repr(result).replace('\n', '\n            ')
           file.write('structure = ' + string + '\n')
           file.write('{0} END {1} {0}\n'.format(header, 'STRUCTURE'))
@@ -80,11 +83,13 @@ class Functional(Vff):
     from numpy import dot, array, zeros
     from numpy.linalg import inv, det
     from scipy.optimize import minimize
+    from quantities import angstrom
     from . import build_tree
 
     structure = structure.copy()
     cell0 = structure.cell.copy()
     tree = build_tree(structure)
+    invscale = 1e0 / float(structure.scale.rescale(angstrom))
 
     def xtostrain(x0):
       return array([[x0[0] + 1e0, x0[1], x0[2]],
@@ -93,18 +98,8 @@ class Functional(Vff):
       
     def update_structure(x0, strain):
       structure.cell = dot(strain, cell0)
-      for i, atom in enumerate(structure):
+      for i, atom in enumerate(structure[1:]):
         atom.pos = dot(structure.cell, x0[i*3:3+i*3])
-
-    def gradient_tox(stress, forces, strain):
-      from numpy import dot
-      from numpy.linalg import inv
-
-      stress = dot(stress, inv(strain))
-      result = stress[0].tolist() + stress[1,1:].tolist() + [stress[2,2]]
-      result += dot(inv(structure.cell), forces.T).T.flatten().tolist()
-      return array(result)
-
 
     def energy(x0):
       strain = xtostrain(x0)
@@ -117,12 +112,16 @@ class Functional(Vff):
 
       stress, forces = self.jacobian(structure, _tree=tree)
       stress *= -det(structure.scale * structure.cell)
-      return gradient_tox(stress, forces, strain)
 
-    x = zeros(6+len(structure)*3, dtype='float64')
+      stress = dot(stress, inv(strain))
+      result = stress[0].tolist() + stress[1,1:].tolist() + [stress[2,2]]
+      result += dot(inv(structure.cell)*invscale, forces[1:].T).T.flatten().tolist()
+      return array(result)
+
+    x = zeros(3+len(structure)*3, dtype='float64')
     x[:6] = 0e0
     frac = inv(structure.cell)
-    for i, atom in enumerate(structure): x[6+3*i:9+3*i] = dot(frac, atom.pos)
+    for i, atom in enumerate(structure[1:]): x[6+3*i:9+3*i] = dot(frac, atom.pos)
 
     result = minimize( energy, jac=jacobian, x0=x, 
                        tol=self.tol, options={'maxiter': self.maxiter} )

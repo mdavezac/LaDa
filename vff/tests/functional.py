@@ -15,7 +15,8 @@ def test_inas(epsilon = 1e-4):
   from tempfile import mkdtemp
   from shutil import rmtree
   from os.path import exists
-  from numpy import abs, dot, array, sqrt, all, abs
+  from numpy import abs, dot, array, sqrt, all, abs, identity
+  from numpy.linalg import inv
   from lada.crystal.binary import zinc_blende
   from quantities import a0, angstrom
   from lada.misc import Changedir
@@ -32,22 +33,71 @@ def test_inas(epsilon = 1e-4):
     structure[0].type = 'In'
     structure[1].type = 'As'
     structure.scale = 2.62332 * 4 / sqrt(3)  * angstrom
-    out = vff(structure, outdir=directory)
-    print out.start_date
-    print out.end_date
-#   assert out.optimize.success
-#   assert all(abs(out.cell - structure.cell) < 1e-8)
-#   assert all(abs(out[0].pos - structure[0].pos) < 1e-8)
-#   assert all(abs(out[1].pos - structure[1].pos) < 1e-8)
+    out = vff(structure, outdir=directory, tol=1e-9, overwrite=True)
+    startdate = out.start_date
+    enddate   = out.end_date
+    assert out.success
+    assert all(abs(out.structure.cell - structure.cell) < 1e-8)
+    assert all(abs(out.structure[0].pos - structure[0].pos) < 1e-8)
+    assert all(abs(out.structure[1].pos - structure[1].pos) < 1e-8)
+    out = vff(structure, outdir=directory, tol=1e-9, overwrite=False)
+    assert out.start_date == startdate
+    assert out.end_date == enddate
+    assert startdate != enddate
+    out = vff(structure, outdir=directory, tol=1e-9, overwrite=True)
+    assert out.start_date != startdate
+
+  # diff = structure.copy()
+  # epsilon = identity(3, dtype='float64')                                     \
+  #           + [[0.02, 0.03, -0.1], [0.03, -0.05, -0.05], [-0.1, -0.05, 0.06]]
+  # epsilon = identity(3, dtype='float64') * 1.1
+  # diff.cell = dot(epsilon, diff.cell)
+  # for atom in diff: atom.pos = dot(epsilon, atom.pos)
+  # newout = vff(diff, outdir=directory, tol=1e-10, overwrite=True)
+  # assert all(abs(newout.structure.cell - structure.cell) < 1e-8)
+  # assert all(abs(newout.structure[0].pos - structure[0].pos) < 1e-8)
+  # assert all(abs(newout.structure[1].pos - structure[1].pos) < 1e-8)
+  # assert abs(newout.structure.energy) < 1e-8
+
+  # diff = structure.copy()
+  # epsilon = identity(3, dtype='float64')                                     \
+  #           + [[0.02, 0, 0], [0, -0.05, 0], [0, 0, 0.06]]
+  # diff.cell = dot(epsilon, diff.cell)
+  # for atom in diff: atom.pos = dot(epsilon, atom.pos)
+  # newout = vff(diff, outdir=directory, tol=1e-10, overwrite=True)
+  # assert all(abs(newout.structure.cell - structure.cell) < 1e-8)
+  # assert all(abs(newout.structure[0].pos - structure[0].pos) < 1e-8)
+  # assert all(abs(newout.structure[1].pos - structure[1].pos) < 1e-8)
+  # assert abs(newout.structure.energy) < 1e-8
+
+  # diff = structure.copy()
+  # epsilon = identity(3, dtype='float64')                                     \
+  #           + [[0.02, 0.05, 0], [0.05, -0.05, 0], [0, 0, 0.06]]
+  # diff.cell = dot(epsilon, diff.cell)
+  # for atom in diff: atom.pos = dot(epsilon, atom.pos)
+  # newout = vff(diff, outdir=directory, tol=1e-10, overwrite=True)
+  # assert all(abs(newout.structure.cell - structure.cell) < 1e-8)
+  # assert all(abs(newout.structure[0].pos - structure[0].pos) < 1e-8)
+  # assert all(abs(newout.structure[1].pos - structure[1].pos) < 1e-8)
+  # assert abs(newout.structure.energy) < 1e-8
+
+    diff = structure.copy()
+#   epsilon = identity(3, dtype='float64')                                     \
+#             + [[0.02, 0.05, 0], [0.05, -0.05, 0], [0, 0, 0.06]]
+#   diff.cell = dot(epsilon, diff.cell)
+#   for atom in diff: atom.pos = dot(epsilon, atom.pos)
+    diff[1].pos += [0.01, -0.005, 0.03]
+    newout = vff(diff, outdir=directory, tol=1e-10, overwrite=True)
+    print newout.energy
+    print newout.structure
+    print newout.optimize
+#   assert all(abs(newout.structure.cell - structure.cell) < 1e-8)
+    assert all(abs(newout.structure[1].pos - structure[0].pos - [0.25, 0.25, 0.25]) < 1e-8)
+#   assert all(abs(newout.structure[1].pos - structure[1].pos) < 1e-8)
+    assert abs(newout.structure.energy) < 1e-8
   finally:
     if directory != '/tmp/test': rmtree(directory)
     
-#   diff = structure.copy()
-#   diff[0].pos += [0.02, -0.03, -0.04]
-#   diff.scale += 0.5 * diff.scale.units
-#   out = vff(structure)
-#   print out
-#   #print out
       
 if __name__ == '__main__':
   test_inas(1e-9)
