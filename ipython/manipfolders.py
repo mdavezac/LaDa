@@ -83,7 +83,7 @@ def copy_folder(self, event):
   rootsource = source
   pairs = []
   if cjf[rootsource].is_executable and not cjf[rootsource].is_tagged:
-    pairs = [(source, destination)]
+    pairs = [(source, relpath(destination, rootsource))]
   if args.recursive:
     for source in jobparams[rootsource]:
       if not cjf[source].is_executable: continue

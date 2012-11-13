@@ -79,6 +79,8 @@ def crystal_change_spinedit(line):
       It then sets edits the
       :py:attr:`~lada.dftcrystal.functional.scf.atomspin` tag to reproduce the
       computed spin density configuration. 
+
+      The option '--print' will only print the changes without effecting them.
   """
   from operator import attrgetter
   shell = get_ipython()
@@ -95,16 +97,23 @@ def crystal_change_spinedit(line):
     line = line.replace('--print', '').rstrip().lstrip()
     doprint = True
   else: doprint = False
+  if '-h' in line.split() or '--help' in line.split():
+    print globals()['crystal_change_spinedit'].__doc__
+    return
   if len(line) == 0: cutoff = 0e0
   elif line in shell.user_ns: cutoff = float(shell.user_ns[line])
   else: cutoff = float(eval(line, shell.user_ns.copy()))
 
   for name, params in jobparams.iteritems():
+    if params.is_tagged: continue
     if not params.functional.dft.spin: continue
     doup = params.functional.atomspin.up is not None
     dodown = params.functional.atomspin.down is not None
     if not (doup or dodown): continue
-    details = collect[name].details
+    try: details = collect[name].details
+    except: 
+      print 'bypassing', name
+      continue
 
     if len(details) == 0: continue
     candidates = [n for n, u in details.iteritems() if u.success]
@@ -119,7 +128,7 @@ def crystal_change_spinedit(line):
       target = len(params.functional.atomspin.up)
       if len(atomup) > target: 
         result = atomup[:target]
-        for u in atomup[target+1:]:
+        for u in atomup[target:]:
           if abs(u.spin - result[-1].spin) < 1e-4: result.append(u)
         atomup = result
       atomup = sorted(atomup, key=attrgetter('label'))
@@ -135,7 +144,7 @@ def crystal_change_spinedit(line):
       target = len(params.functional.atomspin.down)
       if len(atomdown) > target: 
         result = atomdown[:target]
-        for u in atomdown[target+1:]:
+        for u in atomdown[target:]:
           if abs(u.spin - result[-1].spin) < 1e-4: result.append(u)
         atomdown = result
       if doprint:
@@ -143,3 +152,49 @@ def crystal_change_spinedit(line):
         print "{0} (down): {1} -> {2}"                                         \
               .format(name, params.functional.atomspin.down, atomdown)
       else: params.functional.atomspin.down = [u.label for u in atomdown]
+
+
+@register_line_magic
+def crystal_equivlabels(line):
+  """ Atomic labels equivalent to those in input. 
+  
+      Prints the labels which are symmetric equivalent to those given on input.
+      
+      >>> %crystal_equivlabels 5 6
+      5 -> 6, 31, 32
+      6 -> 5, 31, 32 
+
+      The above prints the atoms which equivalent to atom 5 in the CRYSTAL_
+      structure, and to atom 6.
+  """
+  from re import split
+  from ..crystal import equivalence_iterator
+  from ..dftcrystal import Molecule
+  from ..interactive import jobfolder as cjf
+
+  if 'structure' not in cjf.params:
+    print 'No structure in ', cjf.name
+    return
+
+  try: labels = [int(u) for u in split('\s*,?', line) if len(u)]
+  except: 
+    print "Could not translate input to integers."
+    print line
+    return
+
+  structure = cjf.structure
+  if not isinstance(structure, Molecule):
+    print "Structure in current folder is not for CRYSTAL."
+    return 
+  symops = structure.symmetry_operators
+  structure = structure.eval()
+  atoms = [ [structure[u].label for u in v]
+            for v in equivalence_iterator(structure, symops)]
+
+  for label in labels:
+    for group in atoms:
+      if label in group: 
+        print label, '->', ', '.join(str(u) for u in group if u != label)
+        break
+  return
+

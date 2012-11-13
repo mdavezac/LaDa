@@ -140,6 +140,7 @@ def _set_list(name):
         except:
           raise TypeError( 'Wrong type in list when setting AtomSpin.{0}.'     \
                            'The list should be all integers.'.format(name) )
+      if len(value) == 0: value = None
     setattr(this, '_' + name, value)
   return setme
 
