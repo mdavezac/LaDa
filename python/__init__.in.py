@@ -31,22 +31,28 @@ version = "{0[0]}.{0[1]}".format(version_info)
 
 # reads stuff from global configuration files.
 # doing it in a function makes it easier to keep the lada namespace clean.
-def _config_files():
+def _config_files(dointeractive=False):
   from os.path import exists, expanduser, expandvars, dirname, join
   from glob import iglob
   from os import environ
 
+  # pattern to distinguish files to run only in interactive mode.
+  # these files are loaded by the lada-ipython extension itself.
+  pattern = "*.py" if not dointeractive else "ipy_*.py"
   # dictionary with stuff we want defined when reading config files.
   global_dict = {"ladamodules": __all__}
   local_dict = {}
   # first configuration files installed with lada.
-  for filename in iglob(join(join(dirname(__file__), "config"), "*.py")):
+  for filename in iglob(join(join(dirname(__file__), "config"), pattern)):
+    if dointeractive == False and filename[:4] == 'ipy_': continue
     execfile(filename, global_dict, local_dict)
 
   # then configuration files installed in a global config directory.
   if "LADA_CONFIG_DIR" in environ: 
-    for filename in iglob(join(environ["LADA_CONFIG_DIR"], "*.py")):
-      execfile(filename, global_dict, local_dict)
+    for directory in environ["LADA_CONFIG_DIR"].split(':'):
+      for filename in iglob(join(directory, pattern)):
+        if dointeractive == Fales and filename[:4] == 'ipy_': continue
+        execfile(filename, global_dict, local_dict)
 
   # then user configuration file.
   if exists(expandvars(expanduser('~/.lada'))):
@@ -55,6 +61,3 @@ def _config_files():
 
 # does actual config call.
 locals().update((k, v) for k, v in _config_files().iteritems() if k[0] != '_')
-
-# clean up namespace
-del _config_files

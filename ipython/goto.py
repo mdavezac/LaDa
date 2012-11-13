@@ -60,7 +60,7 @@ def goto(self, cmdl):
   if exists(dir): chdir(dir)
   else: 
     print "In {0}, but no corresponding directory on disk."                    \
-          .format(dir.split('/')[-1])
+          .format(interactive.jobfolder.name.split('/')[-2])
   return
 
 

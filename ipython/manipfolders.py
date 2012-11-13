@@ -1,4 +1,6 @@
 """ Magic function to copy a functional or subtree. """
+
+__docformat__ = "restructuredtext en"
 def copy_folder(self, event):
   """ Copies a jobfolder somewhere. 
 
@@ -98,7 +100,7 @@ def copy_folder(self, event):
     jobsource = root[source]
     # gets the jobfolder destination.
     jobdest = cjf
-    for name in destination.split(): jobdest = jobdest / name
+    for name in destination.split('/'): jobdest = jobdest / name
     # something already exists here
     if jobdest.is_executable and not args.force: 
       print 'Copying', jobsource.name, 'to', jobdest.name
@@ -113,9 +115,97 @@ def copy_folder(self, event):
     for key, value in jobdest.__dict__.iteritems(): 
       if key not in ['children', 'parent', 'param']:
         jobdest.__dict__[key] = value
+    jobdest._functional = jobsource._functional
     jobdest.params = jobsource.params.copy()
 
-def completer(self, event):
+def delete_folder(self, event):
+  """ Deletes a job-folder.
+  
+      By default, only the job itself is delete. If there are no sub-folders,
+      then jobfolder itself is also deleted. Suppose we have a jobfolder
+      '/JobA' and '/JobA/JobB' and both contain actual jobs. 
+
+      >>> deletefolder /JobA
+
+      This would remove the job-parameters from 'JobA' but leave '/JobA/JobB'
+      unscathed. However, 
+
+      >>> deletefolder /JobA/JobB
+
+      will remove the branch 'JobB' completely, since there are no sub-folders
+      there.
+
+      It is also possible to remove all folders of a branch recursively:
+
+      >>> deletefolder -r /JobA
+
+      This will now remove JobA and all its subfolders.
+
+      .. warning::
+      
+        This magic function does not check whether job-folders are 'on' or
+        'off'. The recursive option should be used with care.
+  """
+  from argparse import ArgumentParser
+  from os.path import join, normpath
+  from ..interactive import jobfolder as cjf
+
+  parser = ArgumentParser(prog='%deletefolder',
+               description='Deletes a job-folder.')
+  parser.add_argument('-f', '--force', action='store_true', dest='force',
+               help='Does not prompt before deleting folders.')
+  parser.add_argument('-r', '--recursive', action='store_true',
+               dest='recursive', help='Whether to delete subfolders as well.')
+  parser.add_argument('folder', type=str, metavar='JOBFOLDER',
+               help='Jobfolder to delete')
+
+  try: args = parser.parse_args(event.split())
+  except SystemExit: return None
+
+  shell = get_ipython()
+
+  # normalize  folders to delete
+  if args.folder[0] != ['/']:
+    folder = normpath(join(cjf.name, args.folder))
+  else: folder = normpath(args.folder)
+  if folder not in cjf: 
+    print "Folder", folder, "does not exist."
+    return
+  # deletes jobfolder recursively.
+  if args.recursive:
+    if not args.force:
+      a = ''
+      while a not in ['n', 'y']:
+        a = raw_input( "Delete {0} and its subfolders? [y/n]"
+                       .format(cjf[folder].name) )
+      if a == 'n':
+        print cjf[folder].name, "not deleted."
+        return
+    jobfolder = cjf[folder]
+    if jobfolder.parent is None: 
+      jobfolder = jobfolder.parent
+      jobfolder._functional = None
+      jobfolder.children = {}
+      jobfolder.params = {}
+    else: del jobfolder.parent[jobfolder.name.split('/')[-2]]
+  # only delete specified jobfolder.
+  else:
+    if not args.force:
+      a = ''
+      while a not in ['n', 'y']:
+        a = raw_input("Delete {0}? [y/n]".format(cjf[folder].name))
+      if a == 'n':
+        print cjf[folder].name, "not deleted."
+        return
+    jobfolder = cjf[folder]
+    if len(jobfolder.children) == 0 and jobfolder.parent is not None:
+      del jobfolder.parent[jobfolder.name.split('/')[-2]]
+    else:
+      jobfolder._functional = None
+      jobfolder.params = {}
+
+
+def copy_completer(self, event):
   from IPython import TryNext
   from lada import interactive
 
@@ -126,6 +216,36 @@ def completer(self, event):
 
   noop = [k for k in line if k[0] != '-']
   if len(noop) > 2: raise TryNext()
+
+  if '/' in event.symbol:
+    subkey = ""
+    for key in event.symbol.split('/')[:-1]: subkey += key + "/"
+    try: subdict = interactive.jobfolder[subkey]
+    except KeyError: raise TryNext
+    if hasattr(subdict, "children"): 
+      if hasattr(subdict.children, "keys"):
+        return [subkey + a + "/" for a in subdict.children.keys()]
+    raise TryNext()
+  else:
+    result += [a + "/" for a in interactive.jobfolder.children.keys()]
+    result.extend(["/"])
+    if interactive.jobfolder.parent is not None: result.append("../")
+    if len(getattr(interactive, "_lada_subjob_iterated", [])) != 0:
+      result.append("previous")
+    return result
+
+def delete_completer(self, event):
+  from IPython import TryNext
+  from lada import interactive
+
+  line = event.line.split()[1:]
+  result = []
+  if '-h' not in line and '--help' not in line: result.append('-h')
+  if '-r' not in line and '--recursive' not in line: result.append('-r')
+
+  noop = [k for k in line if k[0] != '-']
+  if len(noop) > 1: return result
+  elif len(noop) == 1 and len(event.symbol) == 0: return result
 
   if '/' in event.symbol:
     subkey = ""
