@@ -550,9 +550,13 @@ class ExtractBase(object):
       # maximum number of iterations. This tries to get the structure in a
       # different way. 
       except GrepError: 
-        if self.dimensionality == 3: result = self._final_structure
-        elif self._cellinternal_only: result = self._update_pos_only
-        elif self._no_change_in_params: result = self._update_pos_only
+        if self.dimensionality == 3:
+          try: result = self._final_structure
+          except GrepError: 
+            if self._cellinternal_only or self._nochange_in_params:
+              result = self._update_pos_only
+        elif self._cellinternal_only or self._no_change_in_params: 
+          result = self._update_pos_only
         else: raise NotImplementedError('Cannot grep output structure')
     try: charges = self.atomic_charges
     except: pass
