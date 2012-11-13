@@ -283,7 +283,7 @@ class ProgramProcess(Process):
     self.poll()
 
   def _onexit_callback(self):
-    """ Registered callback for killing a process. """
+    """ Registers callback for killing a process. """
     # First deletes this callback from the list.
     if self._onexit_id is not None: 
       from ..onexit import del_callback

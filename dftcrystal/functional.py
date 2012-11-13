@@ -275,6 +275,11 @@ class Functional(object):
     from .. import CRYSTAL_filenames, CRYSTAL_delpatterns
 
     with Changedir(outdir) as cwd:
+      # remove 'is running' file marker.
+      if exists('.lada_is_running'):
+        try: remove('.lada_is_running')
+        except: pass
+
       for key, value in CRYSTAL_filenames.iteritems():
         copyfile( join(workdir, key), value.format('crystal'),
                   nocopyempty=True, symlink=False, nothrow="never" )
@@ -311,22 +316,18 @@ class Functional(object):
           out.write('\n'.join(lines))
           if len(lines) > 0: out.write('\n')
           out.write('{0} END {1} {0}\n'.format(header, 'ERROR FILE'))
-
-      # remove 'is running' file marker.
-      if exists('.lada_is_running'):
-        try: remove('.lada_is_running')
-        except: pass
     
-    if samefile(outdir, workdir):
-      with Changedir(workdir) as cwd:
-        for filepath in chain(*[iglob(u) for u in CRYSTAL_delpatterns]):
-          try: remove(filepath)
-          except: pass
-    elif ExtractBase(outdir).success:
-      try: rmtree(workdir)
-      except: pass
-      try: remove(join(outdir, 'workdir'))
-      except: pass
+    if exists(workdir):
+      if samefile(outdir, workdir):
+        with Changedir(workdir) as cwd:
+          for filepath in chain(*[iglob(u) for u in CRYSTAL_delpatterns]):
+            try: remove(filepath)
+            except: pass
+      elif ExtractBase(outdir).success:
+        try: rmtree(workdir)
+        except: pass
+        try: remove(join(outdir, 'workdir'))
+        except: pass
     
     
   

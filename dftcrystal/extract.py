@@ -323,7 +323,9 @@ class ExtractBase(object):
                        .format(join(self.directory, self.STDOUT)) )
     try: 
       with self.__stdout__() as file: tree = parse(file)
-    except: raise GrepError("Could not find CRYSTAL input at start of file.")
+    except: 
+      raise GrepError( "Could not find CRYSTAL input at start of {0}."         \
+                       .format(join(self.directory, self.STDOUT)) )
     if len(tree) == 0:
       # Could not find input file, try and see if it exists on its own.
       root, ext = splitext(self.STDOUT)
@@ -333,10 +335,12 @@ class ExtractBase(object):
           with open(newfilename, 'r') as file: 
             tree = parse(file)
         except:
-          raise GrepError("Could not find CRYSTAL input at start of file.")
+          raise GrepError( "Could not find CRYSTAL input at start of {0}."     \
+                           .format(join(self.directory, self.STDOUT)) )
       if len(tree) == 0:
-        raise GrepError( 'Could not find CRYSTAL input at start of file '      \
-                         'nor a file with the same name and a .d12 extension.')
+        raise GrepError( 'Could not find CRYSTAL input at start of {0} '       \
+                         'nor a file with the same name and a .d12 extension.' \
+                         .format(join(self.directory, self.STDOUT)) )
       if doadd_input: 
         with open(newfilename, 'r') as file: 
           input = file.read()
@@ -1037,6 +1041,23 @@ class ExtractBase(object):
     """ Number of electrons per formula unit. """
     return self.functional.valence(self.structure)
 
+  @property
+  @make_cached
+  def mpp(self):
+    """ True if an mpp run.
+
+	This returns True whether or not k-point parallelization was achieved.
+    """
+    return self._find_first_STDOUT(r'\sMPP') is not None
+
+  @property
+  @make_cached
+  def nbprocs(self):
+    """ Number of processors used in run. """
+    result = self._find_first_STDOUT(r'(\d+)\s*PROCESSORS\s+WORKING')
+    if result is None: return 1
+    return int(result.group(1))
+
 class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
   """ Extracts DFT data from an OUTCAR. """
   def __init__(self, directory=None, **kwargs):
@@ -1101,9 +1122,8 @@ class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
     if not hasattr(self, '_parsed_tree'): return False
     if not hasattr(self, '__stdout__'): return False
     try: tree = parse(self.__stdout__())
-    except: pass
-    else:
-      dotree = len(tree) == 0
+    except: dotree = True; pass
+    else: dotree = len(tree) == 0
     if dotree:
       try: tree = self._parsed_tree(True)
       except: dotree = False

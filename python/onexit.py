@@ -34,7 +34,7 @@ def _onexit_signal(signum, stackframe):
   else: signal(SIGABRT, SIG_DFL)
   raise SystemExit(signum)
 
-# delete register from atexit
+# delete register from module
 del register
 
 def add_callback(callback, *args, **kwargs):
