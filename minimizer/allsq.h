@@ -8,7 +8,7 @@
 #include <vector>
 
 
-#include <opt/types.h>
+#include <misc/types.h>
 #include <opt/debug.h>
 #include <tinyxml/tinyxml.h>
 #include <boost/numeric/ublas/vector.hpp>

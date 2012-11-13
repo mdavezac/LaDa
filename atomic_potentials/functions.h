@@ -15,7 +15,7 @@
 #include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include <opt/types.h>
+#include <misc/types.h>
 #include <opt/debug.h>
 
 #include "numeric_types.h"

@@ -177,7 +177,7 @@ namespace LaDa
               LADA_PYERROR(internal, "Yielded was not initialized.");
               return NULL;
             }
-            if(_self->yielded->data != &_self->counter[0])
+            if(_self->yielded->data != (char*)&_self->counter[0])
             {
               LADA_PYERROR(internal, "Yielded does not reference counter.");
               return NULL;

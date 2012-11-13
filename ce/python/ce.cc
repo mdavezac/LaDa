@@ -8,7 +8,7 @@
 #include <boost/python/def.hpp>
 #include <boost/python/errors.hpp>
 
-#include <opt/types.h>
+#include <misc/types.h>
 #include <opt/debug.h>
 
 #include "ce.hpp"

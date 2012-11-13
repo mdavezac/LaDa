@@ -46,7 +46,7 @@ namespace LaDa
       if(result == NULL) return NULL;
       result->parent = _in;
       Py_INCREF(result->parent);
-      result->i_first = _in->atoms.begin();
+      new(&result->i_first) std::vector<Atom>::iterator(_in->atoms.begin());
       result->is_first = true;
       return (PyObject*) result;
     }

@@ -402,10 +402,10 @@ class ExtractBase(object):
     from .basis import specie_name
     result = Structure()
     try: 
-      file.next(); file.next() # move to first line.
       for line in file:
         line = line.split()
-        if len(line) != 7: break
+        if len(line) == 0: break
+        if len(line) != 7: continue
         type = specie_name(int(line[2]))
         asymmetric = line[1] == 'T' 
         result.add_atom( pos=array(line[4:7], dtype='float64'),
@@ -431,9 +431,9 @@ class ExtractBase(object):
         # Then re-reads atoms, but in cartesian coordinates.
         for i in xrange(6): file.next()
         for atom in result:
-				  # With MPPcrystal, sometimes crap from different processors gets in
-				  # the way of the output. This is a simple hack to avoid that issue.
-				  # Not safe.
+          # With MPPcrystal, sometimes crap from different processors gets in
+          # the way of the output. This is a simple hack to avoid that issue.
+          # Not safe.
           for i in xrange(5):
             try: atom.pos = array(file.next().split()[3:6], dtype='float64')
             except ValueError:
@@ -522,11 +522,9 @@ class ExtractBase(object):
       return read.crystal(lines.__iter__())
 
   @property
-  @make_cached
   def _is_optgeom(self):
     """ True if a geometry optimization run. """
-    pattern = "STARTING GEOMETRY OPTIMIZATION"
-    return self._find_first_STDOUT(pattern) is not None
+    return self.optgeom_iterations is not None
   @property
   @make_cached
   def _cellinternal_only(self):
@@ -543,7 +541,6 @@ class ExtractBase(object):
     from ..error import NotImplementedError
     if not self._is_optgeom: result = self.input_structure
     elif self.dimensionality == 0: result = self._update_pos_only
-    elif self._cellinternal_only: result = self._update_pos_only
     else: 
       try:
         with self.__stdout__() as file:
@@ -557,8 +554,13 @@ class ExtractBase(object):
       # maximum number of iterations. This tries to get the structure in a
       # different way. 
       except GrepError: 
-        if self.dimensionality == 3: result = self._final_structure
-        elif self._no_change_in_params: result = self._update_pos_only
+        if self.dimensionality == 3:
+          try: result = self._final_structure
+          except GrepError: 
+            if self._cellinternal_only or self._nochange_in_params:
+              result = self._update_pos_only
+        elif self._cellinternal_only or self._no_change_in_params: 
+          result = self._update_pos_only
         else: raise NotImplementedError('Cannot grep output structure')
     try: charges = self.atomic_charges
     except: pass

@@ -9,7 +9,7 @@
 #include <boost/numeric/ublas/vector.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
 
-#include <opt/types.h>
+#include <misc/types.h>
 
 namespace LaDa
 {

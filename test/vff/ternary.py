@@ -1,3 +1,4 @@
+from numpy import dot, array
 from lada.mpi import world
 from lada.vff import Vff
 from lada.crystal import Structure, FreezeCell
@@ -14,11 +15,16 @@ vff.add_angle = "As", "In", "As", ("tet", -5.753, 5.7599)
 vff.add_angle = "Ga", "As", "In", (-0.35016, -4.926, 7.5651)
 vff.minimizer.verbose = True
 vff.minimizer.type = "gsl_bfgs2"
-vff.minimizer.itermax = 4000
+vff.minimizer.itermax = 1
 vff.minimizer.tolerance = 1e-5
 vff.minimizer.uncertainties = 1e-3
 
 structure = Structure()
+# structure.set_cell = (00.0, 0.5, 0.5),\
+#                      (0.50, 0.0, 0.5),\
+#                      (0.50, 0.5, 0.0)
+# structure.add_atoms = ((0.00, 0.00, 0.00), "In"),\
+#                       ((0.25, 0.25, 0.25), "As")
 structure.set_cell = (10.0, 0.5, 0.5),\
                      (0.00, 0.0, 0.5),\
                      (0.00, 0.5, 0.0)
@@ -42,13 +48,18 @@ structure.add_atoms = ((0.00, 0.00, 0.00), "Ga"),\
                       ((8.25, 0.25, 0.25), "As"),\
                       ((9.00, 0.00, 0.00), "Ga"),\
                       ((9.25, 0.25, 0.25), "As"), 
-structure.scale = vff.lattice.scale + 0.1
+structure.scale = vff.lattice.scale # + 0.1
 
 # vff.direction = FreezeCell.a0 | FreezeCell.a1
 
 # print vff
 # print structure
 
-out = vff(structure, outdir = "work", comm = world, relax=True, overwrite=True)
+epsilon = array([[1e0, 0.1, 0], [0.1, 1e0, 0], [0, 0, 1e0]])
+structure.cell = dot(epsilon, structure.cell)
+for atom in structure.atoms: atom.pos = dot(epsilon, atom.pos)
+
+out = vff(structure, outdir = "work", comm = world, relax=False, overwrite=True)
 print out.energy
 print out.structure
+print repr(out.stress)

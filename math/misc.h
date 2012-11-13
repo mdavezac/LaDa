@@ -5,7 +5,7 @@
 
 #include <limits>
 
-#include <opt/types.h>
+#include <misc/types.h>
 #include "eigen.h"
 #include "fuzzy.h"
 #include "exceptions.h"

@@ -41,24 +41,23 @@ def test_init(Class):
   assert abs(eval(repr(a), {'Structure': Structure}).scale - a.scale) < 1e-8
   assert getattr(eval(repr(a), {'Structure': Structure}), 'm', False) 
   assert all(abs(eval(repr(a), {'Structure': Structure})[0].pos - a[0].pos) < 1e-8)
-  assert eval(repr(a), {'Structure': Structure})[0].type == 'Au'
+  assert eval(repr(a), {'Structure': Structure})[0].type == a[0].type
   assert all(abs(eval(repr(a), {'Structure': Structure})[1].pos - a[1].pos) < 1e-8)
-  assert eval(repr(a), {'Structure': Structure})[1].type == ['Au', 'Pd']
-  assert getattr(eval(repr(a), {'Structure': Structure})[1], 'm', False)
+  assert eval(repr(a), {'Structure': Structure})[1].type == a[1].type
+  assert getattr(eval(repr(a), {'Structure': Structure})[1], 'm', 6) == 5
   # make sure that add_atom did not increase a's ref count innapropriately.
   a.cell[0,0] = 1e0
   a.cell[1,:] = 1e0
+  assert all(abs(a.cell - [[1, 0, 0], [1, 1, 1], [0, 0, 2.5]]) < 1e-8)
   assert all(abs(eval(repr(a), {'Structure': Structure}).cell - a.cell) < 1e-8)
-  assert abs(eval(repr(a), {'Structure': Structure}).cell[0,0] - 1e0) < 1e-8
-  assert abs(eval(repr(a), {'Structure': Structure}).cell[1,0] - 1e0) < 1e-8
   assert abs(eval(repr(a), {'Structure': Structure}).scale - a.scale) < 1e-8
   assert getattr(eval(repr(a), {'Structure': Structure}), 'm', False) 
   assert all(abs(eval(repr(a), {'Structure': Structure})[0].pos - a[0].pos) < 1e-8)
-  assert eval(repr(a), {'Structure': Structure})[0].type == 'Au'
+  assert eval(repr(a), {'Structure': Structure})[0].type == a[0].type
   assert all(abs(eval(repr(a), {'Structure': Structure})[1].pos - a[1].pos) < 1e-8)
-  assert eval(repr(a), {'Structure': Structure})[1].type == ['Au', 'Pd']
-  assert getattr(eval(repr(a), {'Structure': Structure})[1], 'm', False)
-                   
+  assert eval(repr(a), {'Structure': Structure})[1].type == a[1].type
+  assert getattr(eval(repr(a), {'Structure': Structure})[1], 'm', 6) == 5
+
 def test_initerror(Class, AtomClass):
   """ Checks initialization throws appropriately. """
   from numpy import identity

@@ -5,19 +5,19 @@ namespace LaDa
     extern "C"
     {
       //! Returns position as a numpy array. 
-      static PyObject* lada_atom_getpos(AtomData *_self, void *closure);
+      static PyObject* lada_atom_getpos(PyAtomObject *_self, void *closure);
       //! Sets position from a sequence of three numbers.
-      static int lada_atom_setpos(AtomData *_self, PyObject *_value, void *_closure);
+      static int lada_atom_setpos(PyAtomObject *_self, PyObject *_value, void *_closure);
       //! Returns type python object.
-      static PyObject* lada_atom_gettype(AtomData *_self, void *closure);
+      static PyObject* lada_atom_gettype(PyAtomObject *_self, void *closure);
       //! Sets type python object.
-      static int lada_atom_settype(AtomData *_self, PyObject *_value, void *_closure);
+      static int lada_atom_settype(PyAtomObject *_self, PyObject *_value, void *_closure);
     }
   
     // Returns position as a numpy array. 
     // Numpy does not implement python's cyclic garbage, hence new wrapper need be
     // created each call.
-    static PyObject* lada_atom_getpos(AtomData *_self, void *closure)
+    static PyObject* lada_atom_getpos(PyAtomObject *_self, void *closure)
     {
       npy_intp dims[1] = {3};
       int const value = math::numpy::type<math::rVector3d::Scalar>::value;
@@ -28,7 +28,7 @@ namespace LaDa
       return (PyObject*)result;
     }
     // Sets position from a sequence of three numbers.
-    static int lada_atom_setpos(AtomData *_self, PyObject *_value, void *_closure)
+    static int lada_atom_setpos(PyAtomObject *_self, PyObject *_value, void *_closure)
     {
       if(_value == NULL)
       {
@@ -38,11 +38,11 @@ namespace LaDa
       return python::convert_to_vector(_value, _self->pos) ? 0: -1;
     }
     // Returns type python object.
-    PyObject* lada_atom_gettype(AtomData *_self, void *closure)
+    PyObject* lada_atom_gettype(PyAtomObject *_self, void *closure)
       { Py_INCREF(_self->type); return _self->type; }
       
     // Sets type python object.
-    int lada_atom_settype(AtomData *_self, PyObject *_value, void *_closure)
+    int lada_atom_settype(PyAtomObject *_self, PyObject *_value, void *_closure)
     {
       if(_value == NULL)
       {

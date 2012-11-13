@@ -147,10 +147,10 @@ class ProgramProcess(Process):
     self.onfail = onfail
     """ Called if program fails. 
 
-				Some program, such as CRYSTAL, return error codes when unconverged.
-				However, does not necessarily mean the program failed to run. This
-				function is called when a failure occurs, to make sure it is real or
-				not. It should raise Fail if an error has occurred and return normally
+        Some program, such as CRYSTAL, return error codes when unconverged.
+        However, does not necessarily mean the program failed to run. This
+        function is called when a failure occurs, to make sure it is real or
+        not. It should raise Fail if an error has occurred and return normally
         otherwise.
     """ 
 

@@ -1,7 +1,6 @@
 #include "LaDaConfig.h"
 
 #include <Python.h>
-// #include <numpy/arrayobject.h>
 #include <boost/exception/get_error_info.hpp>
 #include <boost/exception/diagnostic_information.hpp>
 
@@ -10,7 +9,6 @@
 #include "../quantity.h"
 
 
-namespace bp = boost::python;
 using namespace LaDa::math;
 PyObject* get_static_object()
 { 
@@ -51,7 +49,6 @@ static PyMethodDef methods[] = {
 
 PyMODINIT_FUNC init_quantity(void) 
 {
- // import_array();
   {
     LaDa::python::Object o(PyImport_ImportModule("lada.error")); 
     if(not o) return;

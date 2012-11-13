@@ -7,7 +7,7 @@
 #include <vector>
 #include <algorithm>
 
-#include "opt/types.h"
+#include "misc/types.h"
 
 
 namespace LaDa

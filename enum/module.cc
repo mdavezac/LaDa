@@ -131,7 +131,6 @@ namespace LaDa
 PyMODINIT_FUNC initcppwrappers(void) 
 {
   import_array(); // needed for NumPy 
-  LaDa::error::bp_register();
 
   if (PyType_Ready(LaDa::enumeration::ndimiterator_type()) < 0) return;
   Py_INCREF(LaDa::enumeration::ndimiterator_type());

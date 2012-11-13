@@ -620,7 +620,7 @@ class Functional(object):
        
         Processor counts are compatible if:
 
-        - :math:`N_p < N_{AO} * N_k * N_s // dof
+        - :math:`N_p < N_{AO} * N_k * N_s // dof`
         - :math:`N_p % multipleof == 0`
 	- the number of processors per k-point is never prime
 

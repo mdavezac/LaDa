@@ -215,7 +215,7 @@ namespace LaDa
 #       else 
 #         define LADA_MACRO NPY_C_CONTIGUOUS
 #       endif
-        if(not (_in->flags && NPY_C_CONTIGUOUS) )
+        if(not (((PyArrayObject*)_in)->flags && NPY_C_CONTIGUOUS) )
         {
           LADA_PYERROR( TypeError, 
                         "second argument should be a c-contiguous numpy array." );

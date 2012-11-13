@@ -1,7 +1,7 @@
 #include "LaDaConfig.h"
 
 #include <Python.h>
-#define PY_ARRAY_UNIQUE_SYMBOL lada_crystal_ARRAY_API
+#define PY_ARRAY_UNIQUE_SYMBOL lada_math_ARRAY_API
 #define NO_IMPORT_ARRAY
 #include <numpy/arrayobject.h>
 
@@ -219,7 +219,10 @@ namespace LaDa
                      bool with_scale, bool with_cartesian, types::t_real _tol )
     {
       if(with_cartesian)
-        LADA_PYTHROW(NotImplementedError, "Equivalence in different cartesian coordinates not implemented.");
+      {
+        LADA_PYERROR(NotImplementedError, "Equivalence in different cartesian coordinates not implemented.");
+        return false;
+      }
       return with_cartesian ? equivalent_crystals(_a, _b, with_scale, _tol):
                               equivalent_lattices(_a, _b, with_scale, _tol);
     }

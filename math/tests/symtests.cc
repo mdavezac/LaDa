@@ -2,12 +2,6 @@
 
 #include<iostream>
 
-#include <opt/debug.h>
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/serialization/serialization.hpp>
-
-#include "../serialize.h"
 #include "../misc.h"
 #include "../symmetry_operator.h"
 

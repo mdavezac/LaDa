@@ -6,8 +6,7 @@
 
 #include <iostream>
 
-#include <boost/python/errors.hpp>
-#include <opt/types.h>
+#include <misc/types.h>
 
 #include <python/object.h>
 #include <python/exceptions.h>

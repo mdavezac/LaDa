@@ -4,7 +4,7 @@
 #include <boost/python/docstring_options.hpp>
 #include <boost/python/scope.hpp>
 
-#include <opt/types.h>
+#include <misc/types.h>
 #include "redirect.hpp"
 
 
