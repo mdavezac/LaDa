@@ -198,7 +198,10 @@ class Vff(object):
     stress, forces = _zb_jacobian(self, structure, tree) 
     volume = det(structure.scale.rescale(angstrom)*structure.cell) * angstrom**3
     stress = -stress / volume * (newton / meter * angstrom * angstrom).rescale(eV)
+    forces = forces * ( (newton / meter * angstrom).rescale(eV/angstrom)
+                        / float(structure.scale.rescale(angstrom)) )
     for i, node in enumerate(tree): node.gradient = forces[i]
+
     return stress, forces
 
 #   from numpy import zeros, dot, sqrt, array, outer
@@ -351,7 +354,6 @@ class Vff(object):
   
         matrix = outer(vector, vector)
         stress += e0grad * 0.5 * matrix * stressunits
-        print e0grad
                 
     return energy * 3e0 / 8e0 * (newton/meter*angstrom*angstrom).rescale(eV)
 
@@ -402,7 +404,7 @@ class Vff(object):
   
         matrix = outer(vA, vB)
         matrix += matrix.T
-     #  stress += e1grad * 0.5 * matrix * stressunits
+        stress += e1grad * 0.5 * matrix * stressunits
 
       # bond angle 
       energy += e0 * e1 * sigma
@@ -423,7 +425,7 @@ class Vff(object):
         matrix = outer(vA, vB)
         matrix = 2e0 * e1 * (outer(vA, vA)/lengthA + outer(vB, vB)/lengthB)    \
                  + e0 / mean_length * (matrix + matrix.T)
-      # stress += matrix * 0.375 * sigma * scale2 * stressunits
+        stress += matrix * 0.375 * sigma * scale2 * stressunits
 
     return energy * 3e0 / 8e0 * (newton/meter*angstrom*angstrom).rescale(eV)
 

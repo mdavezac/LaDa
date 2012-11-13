@@ -229,7 +229,7 @@ namespace LaDa
               if(not angle_params) return NULL;
               types::t_real const bondlength1 = LADA_BONDLENGTH(bond1_params);
               types::t_real const lambda1 = vector1.dot(vector1) * scale2 / bondlength1 - bondlength1;
-              types::t_real const mean_length = std::sqrt(bondlength0*bondlength0); 
+              types::t_real const mean_length = std::sqrt(bondlength0*bondlength1); 
               types::t_real const beta = vector0.dot(vector1) * scale2 / mean_length
                                          - mean_length * LADA_GAMMA(angle_params);
 
@@ -306,22 +306,22 @@ namespace LaDa
           
             // get bond parameters.
             PyArrayObject * const bond0_params = get_bond_params( self, 
-                                                                  bond0->a->center->type, 
-                                                                  bond0->b->center->type );
+                                                                  pynode->center->type, 
+                                                                  endpoint0->center->type );
             if(not bond0_params) {Py_DECREF(pyforces); return NULL;}
             
             // compute e0 
             types::t_real const bondlength0 = LADA_BONDLENGTH(bond0_params);
             types::t_real const lambda0 = vector0.dot(vector0) * scale2 / bondlength0 - bondlength0;
+            types::t_real const e0grad0 = 2e0 * scale2 / bondlength0 * lambda0 * ( 
+                                          2e0 * LADA_ALPHA2(bond0_params) 
+                                           + lambda0 * (3e0 * LADA_ALPHA3(bond0_params) 
+                                             + lambda0 * (4e0 * LADA_ALPHA4(bond0_params) 
+                                              + lambda0 * (5e0 * LADA_ALPHA5(bond0_params) 
+                                               + lambda0 * (6e0 * LADA_ALPHA6(bond0_params) )))));
             if(bond_direction)
             {
-              types::t_real const e0grad = 2e0 * scale2 / bondlength0 * lambda0 * ( 
-                           2e0 * LADA_ALPHA2(bond0_params)
-                           + 3e0 *lambda0 * (LADA_ALPHA3(bond0_params) 
-                             + 4e0 *lambda0 * (LADA_ALPHA4(bond0_params) 
-                              + 5e0 * lambda0 * (LADA_ALPHA5(bond0_params) 
-                               + 6e0 *lambda0 * (LADA_ALPHA6(bond0_params) )))));
-              math::rVector3d const hold = vector0 * e0grad;
+              math::rVector3d const hold = vector0 * e0grad0;
               *(types::t_real*) PyArray_GETPTR2(pyforces, pynode->index, 0) -= hold[0];
               *(types::t_real*) PyArray_GETPTR2(pyforces, pynode->index, 1) -= hold[1];
               *(types::t_real*) PyArray_GETPTR2(pyforces, pynode->index, 2) -= hold[2];
@@ -330,8 +330,12 @@ namespace LaDa
               *(types::t_real*) PyArray_GETPTR2(pyforces, endpoint0->index, 1) += hold[1];
               *(types::t_real*) PyArray_GETPTR2(pyforces, endpoint0->index, 2) += hold[2];
 
-              std::cout << e0grad << std::endl;
-              stress += vector0 * vector0.transpose() * e0grad;
+              stress += (vector0 * vector0.transpose()) * e0grad0;
+              energy +=  lambda0 * lambda0 * ( LADA_ALPHA2(bond0_params)
+                           + lambda0 * (LADA_ALPHA3(bond0_params) 
+                             + lambda0 * (LADA_ALPHA4(bond0_params) 
+                              + lambda0 * (LADA_ALPHA5(bond0_params) 
+                               + lambda0 * (LADA_ALPHA6(bond0_params) )))));
             }
 
             std::vector<EdgeData*> :: const_iterator i_angle = i_bond + 1;
@@ -339,25 +343,56 @@ namespace LaDa
             {
               EdgeData* const bond1 = *i_angle;
               bool const angle_direction = bond1->a == pynode;
+              NodeData* const endpoint1 = angle_direction ? bond1->b: bond1->a;
               math::rVector3d const vector1 = angle_direction ?
-                math::rVector3d(bond1->b->center->pos - pynode->center->pos + structure->cell * bond1->translation):
-                math::rVector3d(bond1->a->center->pos - pynode->center->pos - structure->cell * bond1->translation);
+                math::rVector3d(endpoint1->center->pos - pynode->center->pos + structure->cell * bond1->translation):
+                math::rVector3d(endpoint1->center->pos - pynode->center->pos - structure->cell * bond1->translation);
               // get bond and angle parameters.
               PyArrayObject * const bond1_params = get_bond_params( self, 
-                                                                    bond1->a->center->type, 
-                                                                    bond1->b->center->type );
-              if(not bond0_params) {Py_DECREF(pyforces); return NULL;}
+                                                                    pynode->center->type, 
+                                                                    endpoint1->center->type );
+              if(not bond1_params) {Py_DECREF(pyforces); return NULL;}
               PyArrayObject * const angle_params =
                   get_angle_params( self,
-                                    angle_direction? bond1->b->center->type: bond1->a->center->type,
+                                    endpoint0->center->type,
                                     pynode->center->type,
-                                    bond_direction? bond0->b->center->type: bond0->a->center->type );
+                                    endpoint1->center->type );
               if(not angle_params) {Py_DECREF(pyforces); return NULL;}
               types::t_real const bondlength1 = LADA_BONDLENGTH(bond1_params);
               types::t_real const lambda1 = vector1.dot(vector1) * scale2 / bondlength1 - bondlength1;
-              types::t_real const mean_length = std::sqrt(bondlength0*bondlength0); 
+              types::t_real const mean_length = std::sqrt(bondlength0*bondlength1); 
               types::t_real const beta = vector0.dot(vector1) * scale2 / mean_length
                                          - mean_length * LADA_GAMMA(angle_params);
+              types::t_real const e0grad1 = 2e0 * scale2 / bondlength1 * lambda1 * ( 
+                                            2e0 * LADA_ALPHA2(bond1_params) 
+                                             + lambda1 * (3e0 * LADA_ALPHA3(bond1_params) 
+                                               + lambda1 * (4e0 * LADA_ALPHA4(bond1_params) 
+                                                + lambda1 * (5e0 * LADA_ALPHA5(bond1_params) 
+                                                 + lambda1 * (6e0 * LADA_ALPHA6(bond1_params) )))));
+              // add stress/forces from angle bending.
+              types::t_real const e1grad = scale2 / mean_length * beta * ( 
+                                           2e0 * LADA_BETA2(angle_params) 
+                                            + beta * (3e0 * LADA_BETA3(angle_params) 
+                                              + beta * (4e0 * LADA_BETA4(angle_params) 
+                                               + beta * (5e0 * LADA_BETA5(angle_params) 
+                                                + beta * (6e0 * LADA_BETA6(angle_params) )))));
+              math::rVector3d const anglegrad0 = e1grad * vector0;
+              math::rVector3d const anglegrad1 = e1grad * vector1;
+              *(types::t_real*) PyArray_GETPTR2(pyforces, pynode->index, 0) -= anglegrad0[0] + anglegrad1[0];
+              *(types::t_real*) PyArray_GETPTR2(pyforces, pynode->index, 1) -= anglegrad0[1] + anglegrad1[1];
+              *(types::t_real*) PyArray_GETPTR2(pyforces, pynode->index, 2) -= anglegrad0[2] + anglegrad1[2];
+
+              *(types::t_real*) PyArray_GETPTR2(pyforces, endpoint0->index, 0) += anglegrad1[0];
+              *(types::t_real*) PyArray_GETPTR2(pyforces, endpoint0->index, 1) += anglegrad1[1];
+              *(types::t_real*) PyArray_GETPTR2(pyforces, endpoint0->index, 2) += anglegrad1[2];
+
+              *(types::t_real*) PyArray_GETPTR2(pyforces, endpoint1->index, 0) += anglegrad0[0];
+              *(types::t_real*) PyArray_GETPTR2(pyforces, endpoint1->index, 1) += anglegrad0[1];
+              *(types::t_real*) PyArray_GETPTR2(pyforces, endpoint1->index, 2) += anglegrad0[2];
+
+              math::rMatrix3d const _nonsym = vector0 * vector1.transpose();
+              math::rMatrix3d const nonsym = _nonsym + _nonsym.transpose();
+              stress += nonsym * e1grad;
 
               // add angle energy.
               energy +=  beta * beta * ( LADA_BETA2(angle_params)
@@ -367,6 +402,33 @@ namespace LaDa
                                + beta * (LADA_BETA6(angle_params) )))));
               // add bond-angle energy
               energy += beta * (lambda0 + lambda1) * fac2 * LADA_SIGMA(angle_params);
+
+              // add forces.
+              math::rVector3d const bagrad0 
+                  = ( (4e0 * beta / bondlength0) * vector0 
+                      + (2e0 * (lambda0 + lambda1) / mean_length) * vector1 ) 
+                    * (scale2 * fac2 * LADA_SIGMA(angle_params));
+              math::rVector3d const bagrad1 
+                  = ( (4e0 * beta / bondlength1) * vector1 
+                      + (2e0 * (lambda0 + lambda1) / mean_length) * vector0 ) 
+                    * (scale2 * fac2 * LADA_SIGMA(angle_params));
+              *(types::t_real*) PyArray_GETPTR2(pyforces, pynode->index, 0) -= bagrad0[0] + bagrad1[0];
+              *(types::t_real*) PyArray_GETPTR2(pyforces, pynode->index, 1) -= bagrad0[1] + bagrad1[1];
+              *(types::t_real*) PyArray_GETPTR2(pyforces, pynode->index, 2) -= bagrad0[2] + bagrad1[2];
+
+              *(types::t_real*) PyArray_GETPTR2(pyforces, endpoint0->index, 0) += bagrad0[0];
+              *(types::t_real*) PyArray_GETPTR2(pyforces, endpoint0->index, 1) += bagrad0[1];
+              *(types::t_real*) PyArray_GETPTR2(pyforces, endpoint0->index, 2) += bagrad0[2];
+
+              *(types::t_real*) PyArray_GETPTR2(pyforces, endpoint1->index, 0) += bagrad1[0];
+              *(types::t_real*) PyArray_GETPTR2(pyforces, endpoint1->index, 1) += bagrad1[1];
+              *(types::t_real*) PyArray_GETPTR2(pyforces, endpoint1->index, 2) += bagrad1[2];
+
+              // now add stress.
+              stress += (scale2 * fac2 * LADA_SIGMA(angle_params)) 
+                        * ( 2e0 * beta * ( vector0*vector0.transpose()/bondlength0 
+                                           + vector1*vector1.transpose()/bondlength1 )
+                            + (lambda0 + lambda1) / mean_length * nonsym ); 
             }
           } // loop over bonds
         } // loop over nodes
