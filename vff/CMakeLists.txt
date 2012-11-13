@@ -1,6 +1,7 @@
 set( PYVFF_HEADERS 
      node/pybase.h node/sequence.hpp node/iterator.hpp
-     edge/pybase.h )
+     edge/pybase.h 
+     zb.hpp )
 set( PYVFF_SOURCES 
      module.cc
      node/pybase.cc 

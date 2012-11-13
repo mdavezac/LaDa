@@ -8,7 +8,7 @@ def test():
 
   structure = zinc_blende()
   assert getrefcount(structure[0]) == 2 # structure, getrefcount arg.
-  nodeA = Node(structure[0])
+  nodeA = Node(structure[0], 0)
   assert getrefcount(structure[0]) == 3 # structure, node, getrefcount arg.
 
   assert nodeA.center is structure[0]
@@ -22,7 +22,7 @@ def test():
 
   assert len(nodeA) == 0
   assert getrefcount(structure[1]) == 2 # structure, getrefcount arg.
-  nodeB = Node(structure[1])
+  nodeB = Node(structure[1], 0)
   assert len(nodeB) == 0
   assert getrefcount(structure[0]) == 3 # structure, node, getrefcount arg.
   assert getrefcount(structure[1]) == 3 # structure, node, getrefcount arg.

@@ -55,7 +55,7 @@ def build_tree(structure, overlap=1.2, **kwargs):
   # net: map of atom id to the nodes in the the first neighbor net which
   #      wraps them.
   net = {}
-  for atom in structure: net[id(atom)] = Node(atom)
+  for i, atom in enumerate(structure): net[id(atom)] = Node(atom, i)
   
   # invcell: transform from cartesian to fractional coordinates.
   invcell = inv(structure.cell)

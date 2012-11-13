@@ -14,6 +14,7 @@
 
 #include "node/pybase.h"
 #include "edge/pybase.h"
+#include "vff/zb.hpp"
 
 namespace LaDa
 {
@@ -21,6 +22,18 @@ namespace LaDa
   {
     //! Methods table for vff module.
     static PyMethodDef methods_table[] = {
+        { "_zb_energy", (PyCFunction) zincblende::energy, METH_VARARGS,
+          "Computes energy for zinc-blende\n\n"
+          "This is a very specialized function to compute energies for\n"
+          "zinc-blende. It expects 6 bond-parameters and 7 angle-parameters in\n"
+          "numpy arrays of type 'float64'. Anything else may have unpredictable\n"
+          "results." },
+        { "_zb_jacobian", (PyCFunction) zincblende::jacobian, METH_VARARGS,
+          "Computes jacobian for zinc-blende\n\n"
+          "This is a very specialized function to compute jacobian for\n"
+          "zinc-blende. It expects 6 bond-parameters and 7 angle-parameters in\n"
+          "numpy arrays of type 'float64'. Anything else may have unpredictable\n"
+          "results." },
         {NULL, NULL, 0, NULL}        /* Sentinel */
     };
   }

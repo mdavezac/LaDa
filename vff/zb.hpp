@@ -1,0 +1,397 @@
+// Special methods for zinc-blende VFF.
+#include <crystal/structure/pybase.h>
+#include <math/quantity.h>
+#include <python/wrap_numpy.h>
+namespace LaDa
+{
+  namespace vff
+  {
+    namespace zincblende
+    {
+      static PyArrayObject *get_bond_params(PyObject *_self, PyObject *_a, PyObject *_b)
+      {
+        PyObject *name = PyString_FromString("__getitem__");
+        if(not name) return NULL;
+        PyObject *args = PyTuple_Pack(2, _a, _b);
+        if(not args) { Py_DECREF(name); return NULL; }
+        PyArrayObject *result = (PyArrayObject*)PyObject_CallMethodObjArgs(_self, name, args, NULL);
+        Py_DECREF(name);
+        Py_DECREF(args);
+        if(not result) return NULL;
+#       ifdef LADA_DEBUG
+          if(not PyArray_Check(result)) 
+          {
+            Py_DECREF(result); 
+            LADA_PYERROR(TypeError, "Unexpected bond-parameters in vff.");
+            return NULL;
+          }
+          if(result->descr->type_num != math::numpy::type<types::t_real>::value)
+          {
+            Py_DECREF(result); 
+            LADA_PYERROR(TypeError, "Unexpected array kind for bond-parameters.");
+            return NULL;
+          }
+          if(result->nd != 1)
+          {
+            Py_DECREF(result); 
+            LADA_PYERROR(TypeError, "Unexpected number of bond-parameters in vff.");
+            return NULL;
+          }
+          if(result->dimensions[0] != 6)
+          {
+            Py_DECREF(result); 
+            LADA_PYERROR(TypeError, "Unexpected number of bond-parameters in vff.");
+            return NULL;
+          }
+#       endif
+        return (PyArrayObject*) result;
+      }
+      static PyArrayObject *get_angle_params(PyObject *_self, PyObject *_a, PyObject *_b, PyObject *_c)
+      {
+        PyObject *name = PyString_FromString("__getitem__");
+        if(not name) return NULL;
+        PyObject *args = PyTuple_Pack(3, _a, _b, _c);
+        if(not args) { Py_DECREF(name); return NULL; }
+        PyArrayObject *result = (PyArrayObject*)PyObject_CallMethodObjArgs(_self, name, args, NULL);
+        Py_DECREF(name); 
+        Py_DECREF(args); 
+        if(not result) return NULL;
+#       ifdef LADA_DEBUG
+          if(not PyArray_Check(result)) 
+          {
+            Py_DECREF(result); 
+            LADA_PYERROR(TypeError, "Unexpected bond-parameters in vff.");
+            return NULL;
+          }
+          if(result->descr->type_num != math::numpy::type<types::t_real>::value)
+          {
+            Py_DECREF(result); 
+            LADA_PYERROR(TypeError, "Unexpected array kind for bond-parameters.");
+            return NULL;
+          }
+          if(result->nd != 1)
+          {
+            Py_DECREF(result); 
+            LADA_PYERROR(TypeError, "Unexpected number of bond-parameters in vff.");
+            return NULL;
+          }
+          if(result->dimensions[0] != 7)
+          {
+            Py_DECREF(result); 
+            LADA_PYERROR(TypeError, "Unexpected number of bond-parameters in vff.");
+            return NULL;
+          }
+#       endif
+        return (PyArrayObject*) result;
+      }
+      const types::t_real fac6 = std::pow(std::sqrt(3e0)/2e0, 6) / types::t_real(6*5*4*3*2*1); 
+      const types::t_real fac5 = std::pow(std::sqrt(3e0)/2e0, 5) / types::t_real(5*4*3*2*1); 
+      const types::t_real fac4 = std::pow(std::sqrt(3e0)/2e0, 4) / types::t_real(4*3*2*1); 
+      const types::t_real fac3 = std::pow(std::sqrt(3e0)/2e0, 3) / types::t_real(3*2*1); 
+      const types::t_real fac2 = std::pow(std::sqrt(3e0)/2e0, 2) / types::t_real(2*1); 
+      const types::t_real gfac6 = std::pow(std::sqrt(3e0)/2e0, 6) / types::t_real(5*4*3*2*1); 
+      const types::t_real gfac5 = std::pow(std::sqrt(3e0)/2e0, 5) / types::t_real(4*3*2*1); 
+      const types::t_real gfac4 = std::pow(std::sqrt(3e0)/2e0, 4) / types::t_real(3*2*1); 
+      const types::t_real gfac3 = std::pow(std::sqrt(3e0)/2e0, 3);
+      const types::t_real gfac2 = std::pow(std::sqrt(3e0)/2e0, 2);
+#     ifdef LADA_BONDLENGTH
+#       error LADA_BONDLENGTH already defined
+#     endif 
+#     ifdef LADA_ALPHA2
+#       error LADA_ALPHA2 already defined
+#     endif 
+#     ifdef LADA_ALPHA3
+#       error LADA_ALPHA3 already defined
+#     endif 
+#     ifdef LADA_ALPHA4
+#       error LADA_ALPHA4 already defined
+#     endif 
+#     ifdef LADA_ALPHA5
+#       error LADA_ALPHA5 already defined
+#     endif 
+#     ifdef LADA_ALPHA6
+#       error LADA_ALPHA6 already defined
+#     endif 
+#     define LADA_BONDLENGTH(ARRAY) *(types::t_real*)PyArray_GETPTR1(ARRAY, 0)
+#     define LADA_ALPHA2(ARRAY) fac2 * (*(types::t_real*)PyArray_GETPTR1(ARRAY, 1))
+#     define LADA_ALPHA3(ARRAY) fac3 * (*(types::t_real*)PyArray_GETPTR1(ARRAY, 2))
+#     define LADA_ALPHA4(ARRAY) fac4 * (*(types::t_real*)PyArray_GETPTR1(ARRAY, 3))
+#     define LADA_ALPHA5(ARRAY) fac5 * (*(types::t_real*)PyArray_GETPTR1(ARRAY, 4))
+#     define LADA_ALPHA6(ARRAY) fac6 * (*(types::t_real*)PyArray_GETPTR1(ARRAY, 5))
+#     ifdef LADA_GAMMA
+#       error LADA_GAMMA already defined
+#     endif 
+#     ifdef LADA_SIGMA
+#       error LADA_SIGMA already defined
+#     endif 
+#     ifdef LADA_BETA2
+#       error LADA_BETA2 already defined
+#     endif 
+#     ifdef LADA_BETA3
+#       error LADA_BETA3 already defined
+#     endif 
+#     ifdef LADA_BETA4
+#       error LADA_BETA4 already defined
+#     endif 
+#     ifdef LADA_BETA5
+#       error LADA_BETA5 already defined
+#     endif 
+#     ifdef LADA_BETA6
+#       error LADA_BETA6 already defined
+#     endif 
+#     define LADA_GAMMA(ARRAY) *(types::t_real*)PyArray_GETPTR1(ARRAY, 0)
+#     define LADA_SIGMA(ARRAY) *(types::t_real*)PyArray_GETPTR1(ARRAY, 1)
+#     define LADA_BETA2(ARRAY) fac2 * (*(types::t_real*)PyArray_GETPTR1(ARRAY, 2))
+#     define LADA_BETA3(ARRAY) fac3 * (*(types::t_real*)PyArray_GETPTR1(ARRAY, 3))
+#     define LADA_BETA4(ARRAY) fac4 * (*(types::t_real*)PyArray_GETPTR1(ARRAY, 4))
+#     define LADA_BETA5(ARRAY) fac5 * (*(types::t_real*)PyArray_GETPTR1(ARRAY, 5))
+#     define LADA_BETA6(ARRAY) fac6 * (*(types::t_real*)PyArray_GETPTR1(ARRAY, 6))
+      static PyObject *energy(PyObject *_module, PyObject *_args)
+      {
+        PyObject *self, *tree, *pystructure;
+        if(not PyArg_ParseTuple(_args, "OOO", &self, &pystructure, &tree))
+          return NULL;
+        if(not PyStructure_Check(pystructure))
+        {
+          LADA_PYERROR(TypeError, "vff-energy: second argument should be a structure.");
+          return NULL;
+        }
+        crystal::StructureData* const structure = (crystal::StructureData*)pystructure;
+        if(not PyList_Check(tree)) 
+        {
+          LADA_PYERROR(TypeError, "vff-energy: third argument should be a list of nodes.");
+          return NULL;
+        }
+        types::t_real const scale = math::PyQuantity_Get(structure->scale, "angstrom");
+        types::t_real const scale2 = scale * scale;
+        types::t_real energy = 0e0;
+
+        // first loop over each atom in the structure.
+        Py_ssize_t const N = PySequence_Size(tree);
+        for(Py_ssize_t i(0); i < N; ++i)
+        {
+          NodeData *pynode = (NodeData*)PyList_GET_ITEM(tree, i);
+#         ifdef LADA_DEBUG
+            if(not PyNodeData_Check(pynode))
+            {
+              LADA_PYERROR(TypeError, "vff-energy: exepected a list of nodes as input.");
+              return NULL;
+            }
+#         endif
+
+          // for each atom, loop over each bond.
+          std::vector<EdgeData*> :: const_iterator i_bond = pynode->bonds.begin();
+          std::vector<EdgeData*> :: const_iterator const i_bond_end = pynode->bonds.end();
+          for(; i_bond != i_bond_end; ++i_bond)
+          {
+            EdgeData* const bond0 = *i_bond;
+
+            // bond_direction: avoid double-counting bonds
+            bool const bond_direction = bond0->a == pynode;
+            math::rVector3d const vector0 = bond_direction ?
+              math::rVector3d(bond0->b->center->pos - pynode->center->pos + structure->cell * bond0->translation):
+              math::rVector3d(bond0->a->center->pos - pynode->center->pos - structure->cell * bond0->translation);
+          
+            // get bond parameters.
+            PyArrayObject * const bond0_params = get_bond_params( self, 
+                                                                  bond0->a->center->type, 
+                                                                  bond0->b->center->type );
+            if(not bond0_params) return NULL;
+            
+            // compute e0 
+            types::t_real const bondlength0 = LADA_BONDLENGTH(bond0_params);
+            types::t_real const lambda0 = vector0.dot(vector0) * scale2 / bondlength0 - bondlength0;
+            if(bond_direction) 
+              energy +=  lambda0 * lambda0 * ( LADA_ALPHA2(bond0_params)
+                           + lambda0 * (LADA_ALPHA3(bond0_params) 
+                             + lambda0 * (LADA_ALPHA4(bond0_params) 
+                              + lambda0 * (LADA_ALPHA5(bond0_params) 
+                               + lambda0 * (LADA_ALPHA6(bond0_params) )))));
+
+            std::vector<EdgeData*> :: const_iterator i_angle = i_bond + 1;
+            for(; i_angle != i_bond_end; ++i_angle)
+            {
+              EdgeData* const bond1 = *i_angle;
+              bool const angle_direction = bond1->a == pynode;
+              math::rVector3d const vector1 = angle_direction ?
+                math::rVector3d(bond1->b->center->pos - pynode->center->pos + structure->cell * bond1->translation):
+                math::rVector3d(bond1->a->center->pos - pynode->center->pos - structure->cell * bond1->translation);
+              // get bond and angle parameters.
+              PyArrayObject * const bond1_params = get_bond_params( self, 
+                                                                    bond1->a->center->type, 
+                                                                    bond1->b->center->type );
+              if(not bond0_params) return NULL;
+              PyArrayObject * const angle_params =
+                  get_angle_params( self,
+                                    angle_direction? bond1->b->center->type: bond1->a->center->type,
+                                    pynode->center->type,
+                                    bond_direction? bond0->b->center->type: bond0->a->center->type );
+              if(not angle_params) return NULL;
+              types::t_real const bondlength1 = LADA_BONDLENGTH(bond1_params);
+              types::t_real const lambda1 = vector1.dot(vector1) * scale2 / bondlength1 - bondlength1;
+              types::t_real const mean_length = std::sqrt(bondlength0*bondlength0); 
+              types::t_real const beta = vector0.dot(vector1) * scale2 / mean_length
+                                         - mean_length * LADA_GAMMA(angle_params);
+
+              // add angle energy.
+              energy +=  beta * beta * ( LADA_BETA2(angle_params)
+                            + beta * (LADA_BETA3(angle_params) 
+                             + beta * (LADA_BETA4(angle_params) 
+                              + beta * (LADA_BETA5(angle_params) 
+                               + beta * (LADA_BETA6(angle_params) )))));
+              // add bond-angle energy
+              energy += beta * (lambda0 + lambda1) * fac2 * LADA_SIGMA(angle_params);
+            }
+          } // loop over bonds
+        } // loop over nodes
+        return PyFloat_FromDouble(energy);
+      } // energy function
+     
+
+
+      static PyObject *jacobian(PyObject *_module, PyObject *_args)
+      {
+        PyObject *self, *tree, *pystructure;
+        if(not PyArg_ParseTuple(_args, "OOO", &self, &pystructure, &tree))
+          return NULL;
+        if(not PyStructure_Check(pystructure))
+        {
+          LADA_PYERROR(TypeError, "vff-energy: second argument should be a structure.");
+          return NULL;
+        }
+        crystal::StructureData* const structure = (crystal::StructureData*)pystructure;
+        if(not PyList_Check(tree)) 
+        {
+          LADA_PYERROR(TypeError, "vff-energy: third argument should be a list of nodes.");
+          return NULL;
+        }
+        types::t_real const scale = math::PyQuantity_Get(structure->scale, "angstrom");
+        types::t_real const scale2 = scale * scale;
+        types::t_real energy = 0e0;
+        math::rMatrix3d stress = math::rMatrix3d::Zero(); 
+        npy_intp dimensions[2] = {structure->atoms.size(), 3};
+        PyArrayObject *pyforces = (PyArrayObject*)
+                                     PyArray_ZEROS( 2, dimensions, 
+                                                    math::numpy::type<types::t_real>::value,
+                                                    0 ); 
+        if(not pyforces) return NULL;
+
+        // first loop over each atom in the structure.
+        Py_ssize_t const N = PySequence_Size(tree);
+        for(Py_ssize_t i(0); i < N; ++i)
+        {
+          NodeData *pynode = (NodeData*)PyList_GET_ITEM(tree, i);
+#         ifdef LADA_DEBUG
+            if(not PyNodeData_Check(pynode))
+            {
+              LADA_PYERROR(TypeError, "vff-energy: exepected a list of nodes as input.");
+              Py_DECREF(pyforces);
+              return NULL;
+            }
+#         endif
+
+          // for each atom, loop over each bond.
+          std::vector<EdgeData*> :: const_iterator i_bond = pynode->bonds.begin();
+          std::vector<EdgeData*> :: const_iterator const i_bond_end = pynode->bonds.end();
+          for(; i_bond != i_bond_end; ++i_bond)
+          {
+            EdgeData* const bond0 = *i_bond;
+
+            // bond_direction: avoid double-counting bonds
+            bool const bond_direction = bond0->a == pynode;
+            NodeData* const endpoint0 = bond_direction ? bond0->b: bond0->a;
+            math::rVector3d const vector0 = bond_direction ?
+              math::rVector3d(endpoint0->center->pos - pynode->center->pos + structure->cell * bond0->translation):
+              math::rVector3d(endpoint0->center->pos - pynode->center->pos - structure->cell * bond0->translation);
+          
+            // get bond parameters.
+            PyArrayObject * const bond0_params = get_bond_params( self, 
+                                                                  bond0->a->center->type, 
+                                                                  bond0->b->center->type );
+            if(not bond0_params) {Py_DECREF(pyforces); return NULL;}
+            
+            // compute e0 
+            types::t_real const bondlength0 = LADA_BONDLENGTH(bond0_params);
+            types::t_real const lambda0 = vector0.dot(vector0) * scale2 / bondlength0 - bondlength0;
+            if(bond_direction)
+            {
+              types::t_real const e0grad = 2e0 * scale2 / bondlength0 * lambda0 * ( 
+                           2e0 * LADA_ALPHA2(bond0_params)
+                           + 3e0 *lambda0 * (LADA_ALPHA3(bond0_params) 
+                             + 4e0 *lambda0 * (LADA_ALPHA4(bond0_params) 
+                              + 5e0 * lambda0 * (LADA_ALPHA5(bond0_params) 
+                               + 6e0 *lambda0 * (LADA_ALPHA6(bond0_params) )))));
+              math::rVector3d const hold = vector0 * e0grad;
+              *(types::t_real*) PyArray_GETPTR2(pyforces, pynode->index, 0) -= hold[0];
+              *(types::t_real*) PyArray_GETPTR2(pyforces, pynode->index, 1) -= hold[1];
+              *(types::t_real*) PyArray_GETPTR2(pyforces, pynode->index, 2) -= hold[2];
+
+              *(types::t_real*) PyArray_GETPTR2(pyforces, endpoint0->index, 0) += hold[0];
+              *(types::t_real*) PyArray_GETPTR2(pyforces, endpoint0->index, 1) += hold[1];
+              *(types::t_real*) PyArray_GETPTR2(pyforces, endpoint0->index, 2) += hold[2];
+
+              std::cout << e0grad << std::endl;
+              stress += vector0 * vector0.transpose() * e0grad;
+            }
+
+            std::vector<EdgeData*> :: const_iterator i_angle = i_bond + 1;
+            for(; i_angle != i_bond_end; ++i_angle)
+            {
+              EdgeData* const bond1 = *i_angle;
+              bool const angle_direction = bond1->a == pynode;
+              math::rVector3d const vector1 = angle_direction ?
+                math::rVector3d(bond1->b->center->pos - pynode->center->pos + structure->cell * bond1->translation):
+                math::rVector3d(bond1->a->center->pos - pynode->center->pos - structure->cell * bond1->translation);
+              // get bond and angle parameters.
+              PyArrayObject * const bond1_params = get_bond_params( self, 
+                                                                    bond1->a->center->type, 
+                                                                    bond1->b->center->type );
+              if(not bond0_params) {Py_DECREF(pyforces); return NULL;}
+              PyArrayObject * const angle_params =
+                  get_angle_params( self,
+                                    angle_direction? bond1->b->center->type: bond1->a->center->type,
+                                    pynode->center->type,
+                                    bond_direction? bond0->b->center->type: bond0->a->center->type );
+              if(not angle_params) {Py_DECREF(pyforces); return NULL;}
+              types::t_real const bondlength1 = LADA_BONDLENGTH(bond1_params);
+              types::t_real const lambda1 = vector1.dot(vector1) * scale2 / bondlength1 - bondlength1;
+              types::t_real const mean_length = std::sqrt(bondlength0*bondlength0); 
+              types::t_real const beta = vector0.dot(vector1) * scale2 / mean_length
+                                         - mean_length * LADA_GAMMA(angle_params);
+
+              // add angle energy.
+              energy +=  beta * beta * ( LADA_BETA2(angle_params)
+                            + beta * (LADA_BETA3(angle_params) 
+                             + beta * (LADA_BETA4(angle_params) 
+                              + beta * (LADA_BETA5(angle_params) 
+                               + beta * (LADA_BETA6(angle_params) )))));
+              // add bond-angle energy
+              energy += beta * (lambda0 + lambda1) * fac2 * LADA_SIGMA(angle_params);
+            }
+          } // loop over bonds
+        } // loop over nodes
+        PyObject *pystress = python::wrap_to_numpy(stress);
+        if(not pystress) { Py_DECREF(pyforces); return NULL; }
+        PyObject *result = PyTuple_New(2);
+        if(not result) { Py_DECREF(pyforces); Py_DECREF(pystress); return NULL; }
+        PyTuple_SET_ITEM(result, 0, pystress);
+        PyTuple_SET_ITEM(result, 1, (PyObject*)pyforces);
+        return result;
+      } // energy function
+#     undef LADA_BONDLENGTH
+#     undef LADA_ALPHA2
+#     undef LADA_ALPHA3
+#     undef LADA_ALPHA4
+#     undef LADA_ALPHA5
+#     undef LADA_ALPHA6
+#     undef LADA_GAMMA
+#     undef LADA_SIGMA
+#     undef LADA_BETA2
+#     undef LADA_BETA3
+#     undef LADA_BETA4
+#     undef LADA_BETA5
+#     undef LADA_BETA6
+    }
+  }
+}
+
