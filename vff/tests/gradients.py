@@ -50,7 +50,7 @@ def test_gradients(epsilon = 1e-4):
       xminus = vff(structure).energy
 
       deriv = (xplus - xminus).magnitude / (2e0*structure.scale * epsilon)
-      assert abs(deriv - dot(check.gradient, dir)) < 1e2*epsilon
+      assert abs(deriv.magnitude - dot(check.gradient, dir)) < 1e2*epsilon
 
 def test_stress(epsilon = 1e-4):
   from numpy import abs, dot, array, identity

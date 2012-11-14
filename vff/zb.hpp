@@ -325,7 +325,7 @@ namespace LaDa
               *(types::t_real*) PyArray_GETPTR2(pyforces, pynode->index, 0) -= hold[0];
               *(types::t_real*) PyArray_GETPTR2(pyforces, pynode->index, 1) -= hold[1];
               *(types::t_real*) PyArray_GETPTR2(pyforces, pynode->index, 2) -= hold[2];
-
+ 
               *(types::t_real*) PyArray_GETPTR2(pyforces, endpoint0->index, 0) += hold[0];
               *(types::t_real*) PyArray_GETPTR2(pyforces, endpoint0->index, 1) += hold[1];
               *(types::t_real*) PyArray_GETPTR2(pyforces, endpoint0->index, 2) += hold[2];
@@ -381,11 +381,11 @@ namespace LaDa
               *(types::t_real*) PyArray_GETPTR2(pyforces, pynode->index, 0) -= anglegrad0[0] + anglegrad1[0];
               *(types::t_real*) PyArray_GETPTR2(pyforces, pynode->index, 1) -= anglegrad0[1] + anglegrad1[1];
               *(types::t_real*) PyArray_GETPTR2(pyforces, pynode->index, 2) -= anglegrad0[2] + anglegrad1[2];
-
+ 
               *(types::t_real*) PyArray_GETPTR2(pyforces, endpoint0->index, 0) += anglegrad1[0];
               *(types::t_real*) PyArray_GETPTR2(pyforces, endpoint0->index, 1) += anglegrad1[1];
               *(types::t_real*) PyArray_GETPTR2(pyforces, endpoint0->index, 2) += anglegrad1[2];
-
+ 
               *(types::t_real*) PyArray_GETPTR2(pyforces, endpoint1->index, 0) += anglegrad0[0];
               *(types::t_real*) PyArray_GETPTR2(pyforces, endpoint1->index, 1) += anglegrad0[1];
               *(types::t_real*) PyArray_GETPTR2(pyforces, endpoint1->index, 2) += anglegrad0[2];
@@ -405,21 +405,21 @@ namespace LaDa
 
               // add forces.
               math::rVector3d const bagrad0 
-                  = ( (4e0 * beta / bondlength0) * vector0 
-                      + (2e0 * (lambda0 + lambda1) / mean_length) * vector1 ) 
+                  = ( (2e0 * beta / bondlength0) * vector0 
+                      + ((lambda0 + lambda1) / mean_length) * vector1 ) 
                     * (scale2 * fac2 * LADA_SIGMA(angle_params));
               math::rVector3d const bagrad1 
-                  = ( (4e0 * beta / bondlength1) * vector1 
-                      + (2e0 * (lambda0 + lambda1) / mean_length) * vector0 ) 
+                  = ( (2e0 * beta / bondlength1) * vector1 
+                      + ((lambda0 + lambda1) / mean_length) * vector0 ) 
                     * (scale2 * fac2 * LADA_SIGMA(angle_params));
               *(types::t_real*) PyArray_GETPTR2(pyforces, pynode->index, 0) -= bagrad0[0] + bagrad1[0];
               *(types::t_real*) PyArray_GETPTR2(pyforces, pynode->index, 1) -= bagrad0[1] + bagrad1[1];
               *(types::t_real*) PyArray_GETPTR2(pyforces, pynode->index, 2) -= bagrad0[2] + bagrad1[2];
-
+ 
               *(types::t_real*) PyArray_GETPTR2(pyforces, endpoint0->index, 0) += bagrad0[0];
               *(types::t_real*) PyArray_GETPTR2(pyforces, endpoint0->index, 1) += bagrad0[1];
               *(types::t_real*) PyArray_GETPTR2(pyforces, endpoint0->index, 2) += bagrad0[2];
-
+ 
               *(types::t_real*) PyArray_GETPTR2(pyforces, endpoint1->index, 0) += bagrad1[0];
               *(types::t_real*) PyArray_GETPTR2(pyforces, endpoint1->index, 1) += bagrad1[1];
               *(types::t_real*) PyArray_GETPTR2(pyforces, endpoint1->index, 2) += bagrad1[2];
@@ -432,12 +432,15 @@ namespace LaDa
             }
           } // loop over bonds
         } // loop over nodes
+        PyObject *pyenergy = PyFloat_FromDouble(energy);
+        if(not pyenergy) { Py_DECREF(pyforces); return NULL; }
         PyObject *pystress = python::wrap_to_numpy(stress);
-        if(not pystress) { Py_DECREF(pyforces); return NULL; }
-        PyObject *result = PyTuple_New(2);
-        if(not result) { Py_DECREF(pyforces); Py_DECREF(pystress); return NULL; }
-        PyTuple_SET_ITEM(result, 0, pystress);
-        PyTuple_SET_ITEM(result, 1, (PyObject*)pyforces);
+        if(not pystress) { Py_DECREF(pyenergy); Py_DECREF(pyforces); return NULL; }
+        PyObject *result = PyTuple_New(3);
+        if(not result) { Py_DECREF(pyenergy); Py_DECREF(pyforces); Py_DECREF(pystress); return NULL; }
+        PyTuple_SET_ITEM(result, 0, pyenergy);
+        PyTuple_SET_ITEM(result, 1, pystress);
+        PyTuple_SET_ITEM(result, 2, (PyObject*)pyforces);
         return result;
       } // energy function
 #     undef LADA_BONDLENGTH
