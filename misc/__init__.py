@@ -1,7 +1,7 @@
 """ Miscellaneous ressources. """
-__all__ = ['copyfile', 'Changedir', 'read_input', 'exec_input', 'load',
-	   'RelativePath', 'LockFile', 'open_exclusive', 'translate_to_regex',
-           'mkdtemp']
+__all__ = [ 'copyfile', 'Changedir', 'read_input', 'exec_input', 'load',
+            'RelativePath', 'LockFile', 'open_exclusive', 'translate_to_regex',
+            'mkdtemp', 'Redirect' ]
 
 from types import ModuleType
 
@@ -307,3 +307,51 @@ def mkdtemp(suffix='', prefix='', dir=None):
     else: prefix = '{0}_{1}'.format( str(datetime.today()).replace(' ', '-'),
                                      prefix )
     return pymkdtemp(prefix=prefix, suffix=suffix, dir=rootdir)
+
+class Redirect:
+  """ Redirects python input, output, error. 
+  
+  
+      Usage is as follows:
+
+      :code-block: python
+
+        with Redirect('something.out', ['out', 'err']):
+          print 'something'
+
+      The above will redirect the python output and error to 'something.out'
+      until the close of the ``with`` statement.
+  """
+  def __init__(self, filename, units='out', append=False):
+    """ Creates a redirection context. """
+    from collections import Sequence
+    from ..error import input as InputError
+    units = set(units) if isinstance(units, Sequence) else set([units])
+    if len(units - set(['in', 'out', 'err'])) != 0:
+      raise InputError('Redirect: input should be one of "in", "out", "err".')
+    self.units = units
+    self.filename = filename
+    self.append = append
+
+  def __enter__(self):
+    from os.path import abspath
+    import sys
+    self.old = {}
+    if 'in' in self.units: self.old['in'] = sys.stdin
+    if 'out' in self.units: self.old['out'] = sys.stdout
+    if 'err' in self.units: self.old['err'] = sys.stderr
+    self.file = open( self.filename if len(self.filename) else "/dev/null",
+                      "a" if self.append else "w" )
+    if 'in' in self.units: sys.stdin = self.file
+    if 'out' in self.units: sys.stdout = self.file
+    if 'err' in self.units: sys.stderr = self.file
+    return abspath(self.file.name)
+
+  def __exit__(self, *wargs):
+    import sys 
+    if 'in' in self.units and 'in' in self.old: sys.stdin = self.old.pop('in')
+    if 'err' in self.units and 'err' in self.old: sys.stderr = self.old.pop('err')
+    if 'out' in self.units and 'out' in self.old: sys.stdout = self.old.pop('out')
+    self.file.close()
+    del self.old
+    del self.file

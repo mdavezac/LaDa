@@ -5,7 +5,8 @@ from .extract import Extract as ExtractVFF
 class Functional(Vff): 
   Extract = ExtractVFF
   """ Extraction object for Vff. """
-  def __init__(self, relax=True, method='BFGS', tol=1e-8, maxiter=100, copy=None): 
+  def __init__( self, relax=True, method='BFGS', tol=1e-8, maxiter=100,
+                verbose=True, copy=None, options=None ): 
     super(Functional, self).__init__()
 
     self._parameters = {}
@@ -25,6 +26,10 @@ class Functional(Vff):
     """ Convergence criteria. """
     self.maxiter = maxiter
     """ Maximum number of iterations. """
+    self.verbose = verbose
+    """ Whether minimization should be verbose. """
+    self.options = options
+    """ Additional options for the chosen minimizer. """
 
     if copy is not None: self.__dict__.update(copy.__dict__)
 
@@ -44,6 +49,7 @@ class Functional(Vff):
     from os.path import join
     from scipy.optimize import minimize
     from .extract import Extract as ExtractVFF
+    from ..misc import Redirect
 
     if ExtractVFF(outdir).success and not overwrite: return ExtractVFF(outdir)
 
@@ -65,9 +71,13 @@ class Functional(Vff):
         result = super(Functional, self).__call__(structure)
       else: 
         funcs = self._getfuncs_relaxall(structure)
-        minimization = minimize( funcs.energy, jac=funcs.jacobian, x0=funcs.x0, 
-                                 tol=self.tol, method=self.method,
-                                 options={'maxiter': self.maxiter} )
+        options = {} if self.options is None else self.options.copy()
+        options['disp'] = self.verbose
+        options['maxiter'] = self.maxiter
+        with Redirect(join(outdir, 'vff.out'), ['out', 'err'], True) as f:
+          minimization = minimize( funcs.energy, jac=funcs.jacobian, 
+                                   x0=funcs.x0, tol=self.tol,
+                                   method=self.method, options=options )
         result = funcs.structure(minimization.x)
         # this will reconstruct the tree and might fail. 
         result = super(Functional, self).__call__(result)

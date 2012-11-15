@@ -22,7 +22,7 @@ def test_inas(epsilon = 1e-4):
 
   vff = functional()
 
-  directory = mkdtemp()
+  directory = '/tmp/test' #mkdtemp()
   if directory == '/tmp/test':
     if exists(directory): rmtree(directory)
     with Changedir(directory) as cwd: pass
@@ -143,7 +143,7 @@ def test_ingaas():
   try: 
     structure = crystal()
     vff.method = 'Powell'
-    newout = vff(structure, outdir=directory, tol=1e-10, overwrite=True)
+    newout = vff(structure, outdir=directory, tol=1e-5, maxiter=200, overwrite=True, verbose=True)
     print newout.structure
     print newout.optimize
     print newout.success
@@ -152,5 +152,5 @@ def test_ingaas():
     
       
 if __name__ == '__main__':
-  test_inas(1e-7)
+# test_inas(1e-7)
   test_ingaas()
