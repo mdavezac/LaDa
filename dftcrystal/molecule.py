@@ -11,8 +11,6 @@ class Molecule(ListBlock):
 
     self.symmgroup = symmgroup
     """ Symmetry group. """
-    self.operators = kwargs.pop('operators', [])
-    """ Functional operations on the structure. """
     self.atoms = []
     """ List of atoms. """
     for key, value in kwargs.iteritems(): setattr(self, key, value)
@@ -35,7 +33,7 @@ class Molecule(ListBlock):
     args = [repr(self.symmgroup)]
     indent = ''.join([' ']*length) 
     for key, value in self.__dict__.iteritems():
-      if key in ['operators', 'atoms', 'symmgroup'] : continue
+      if key in ['atoms', 'symmgroup'] : continue
       args.append('\\\n{2}{0}={1!r}'.format(key, value, indent))
     return '{0.__class__.__name__}({1})'.format(self, ', '.join(args))
 
@@ -317,8 +315,24 @@ class Molecule(ListBlock):
 
   def print_input(self, **kwargs):
     """ Returns CRYSTAL input. """
+    from warnings import warn
     from .input import print_input
-    return print_input(self.output_map(**kwargs))
+    # corrects bug in crystal whereby mutliple atomsym commands will do
+    # shit-loads of incorrect stuff, from overallocating array to operations
+    # on unitialized arrays.
+    map = self.output_map(**kwargs)
+    indices = []
+    for i, (key, value) in  enumerate(map[0][1]):
+      if key.upper() == 'ATOMSYMM': indices.append(i)
+    if len(indices) > 1:
+      warn( "ATOMSYMM present more than once in input.\n"                       \
+            "Multiple bugs in CRYSTAL make this unsafe.\n"                      \
+            "All but the last instance of ATOMSYMM will be ignored.",
+            UserWarning, 0 )
+      indices.reverse()
+      for i in indices[1:]: map[0][1].pop(i)
+    # now print map.
+    return print_input(map)
   def output_map(self, **kwargs):
     if 'structure' not in kwargs: kwargs['structure'] = self
     return super(Molecule, self).output_map(**kwargs)

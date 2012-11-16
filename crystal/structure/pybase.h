@@ -35,8 +35,8 @@ namespace LaDa
         PyObject *weakreflist;
         //! Holds python attribute dictionary.
         PyObject *pydict;
-        //! The scale in which cartesian units are given. Units of ansgtroms.
-        types::t_real scale;
+        //! Holds python attribute dictionary.
+        PyObject *scale;
         //! The unit-cell of the structure in cartesian coordinate.
         math::rMatrix3d cell;
         //! Vector of atom wrappers.

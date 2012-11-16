@@ -1,11 +1,12 @@
 set( PYVFF_HEADERS 
      node/pybase.h node/sequence.hpp node/iterator.hpp
-     edge/pybase.h )
+     edge/pybase.h 
+     zb.hpp )
 set( PYVFF_SOURCES 
      module.cc
      node/pybase.cc 
      edge/pybase.cc )
-set( PYVFF_PY __init__.py functional.py vff.py _minimize.py )
+set( PYVFF_PY __init__.py functional.py vff.py extract.py )
 
 install(FILES ${PYVFF_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/vff)
 

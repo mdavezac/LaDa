@@ -5,7 +5,7 @@ __all__ = ['Vasp']
 from ..tools import stateless, assign_attributes
 from ..tools.input import AttrBlock
 from ..misc import add_setter
-from extract import Extract
+from .extract import Extract as ExtractVasp
 
 
 class Vasp(AttrBlock):
@@ -76,7 +76,7 @@ class Vasp(AttrBlock):
       The best way to use this functional is in conjunction with the
       high-throughput interface :py:mod:`lada.jobfolder`.
   """
-  Extract = staticmethod(Extract)
+  Extract = staticmethod(ExtractVasp)
   """ Extraction class.
   
       This extraction class is used to grep output from an OUTCAR file.
@@ -820,8 +820,8 @@ class Vasp(AttrBlock):
       raise RuntimeError("Vasp failed to execute correctly.")
     return program
 
-  @assign_attributes(ignore=['overwrite', 'comm'])
   @stateless
+  @assign_attributes(ignore=['overwrite', 'comm'])
   def iter(self, structure, outdir=None, comm=None, overwrite=False, **kwargs):
     """ Allows asynchronous vasp calculations
      
@@ -895,6 +895,7 @@ class Vasp(AttrBlock):
     """ 
     from .. import vasp_program
     from ..process.program import ProgramProcess
+    from .extract import Extract as ExtractVasp
 
     # check for pre-existing and successful run.
     if not overwrite:
@@ -917,7 +918,7 @@ class Vasp(AttrBlock):
                           onfinish=onfinish, stdout='stdout', stderr='stderr',
                           dompi=comm is not None )
     # yields final extraction object.
-    yield Extract(outdir)
+    yield ExtractVasp(outdir)
 
   def bringup(self, structure, outdir, **kwargs):
     """ Creates all input files necessary to run results.
@@ -960,12 +961,14 @@ class Vasp(AttrBlock):
      # Appends INCAR and CONTCAR to OUTCAR:
      with Changedir(directory) as pwd:
        with open(files.OUTCAR, 'a') as outcar:
-         outcar.write('\n################ CONTCAR ################\n')
-         with open(files.CONTCAR, 'r') as contcar: outcar.write(contcar.read())
-         outcar.write('\n################ END CONTCAR ################\n')
-         outcar.write('\n################ INCAR ################\n')
-         with open(files.INCAR, 'r') as incar: outcar.write(incar.read())
-         outcar.write('\n################ END INCAR ################\n')
+         if exists(files.CONTCAR):
+           outcar.write('\n################ CONTCAR ################\n')
+           with open(files.CONTCAR, 'r') as contcar: outcar.write(contcar.read())
+           outcar.write('\n################ END CONTCAR ################\n')
+         if exists(files.INCAR):
+           outcar.write('\n################ INCAR ################\n')
+           with open(files.INCAR, 'r') as incar: outcar.write(incar.read())
+           outcar.write('\n################ END INCAR ################\n')
          outcar.write('\n################ INITIAL STRUCTURE ################\n')
          outcar.write("""from {0.__class__.__module__} import {0.__class__.__name__}\n"""\
                       """structure = {1}\n"""\
@@ -1058,3 +1061,10 @@ class Vasp(AttrBlock):
     super(Vasp, self).__setstate__(args)
     for key, value in self.__class__().__dict__.iteritems():
        if not hasattr(self, key): setattr(self, key, value)
+
+
+del stateless
+del assign_attributes
+del AttrBlock
+del add_setter
+del ExtractVasp

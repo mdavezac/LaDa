@@ -338,8 +338,8 @@ class Functional(object):
     
     
   
-  @assign_attributes(ignore=['overwrite', 'comm', 'workdir'])
   @stateless
+  @assign_attributes(ignore=['overwrite', 'comm', 'workdir'])
   def iter(self, structure, outdir=None, workdir=None, comm=None,
            overwrite=False, test=False, **kwargs):
     """ Performs a CRYSTAL calculation 

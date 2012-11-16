@@ -2,7 +2,7 @@ def test(path=None, dodate=True):
   from numpy import array, all, abs
   from lada.vasp import Extract
   import lada
-  from quantities import eV
+  from quantities import eV, angstrom
 
   a = Extract(directory=path)
   assert a.success == True
@@ -31,8 +31,8 @@ def test(path=None, dodate=True):
   assert abs(a.extraelectron - 0e0) < 1e-8
   assert abs(a.nbands - 8) < 1e-8
   assert all(abs(1.00778*array([[0, 0.5, 0.5],[0.5, 0, 0.5],[0.5, 0.5, 0]])-a.structure.cell) < 1e-4) 
-  assert all(abs(a.structure.scale-5.43) < 1e-4) 
-  assert all(abs(a.structure.scale*a.structure.cell - a._grep_structure.cell) < 1e-4) 
+  assert all(abs(a.structure.scale-5.43*angstrom) < 1e-4) 
+  assert all(abs(a.structure.scale*a.structure.cell - a._grep_structure.cell*angstrom) < 1e-4) 
   assert all(abs(a.structure[0].pos) < 1e-8)
   assert all(abs(a.structure[1].pos - 0.251945) < 1e-6)
   assert all([b.type == 'Si' for b in a.structure])

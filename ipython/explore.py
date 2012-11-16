@@ -35,7 +35,7 @@ def explore(self, cmdl):
 
   # options supported by all.
   parser = argparse.ArgumentParser(prog='%explore',
-                     description='Opens a job-dictionary from file.')
+                     description='Opens a job-folder from file on disk.')
   group = parser.add_mutually_exclusive_group()
   group.add_argument( '--file', action="store_true", dest="is_file",
         help='JOBFOLDER is a path to a job-dictionary stored on disk.' )

@@ -12,3 +12,7 @@ target_link_libraries(pyewald ${PYTHON_LIBRARY}
                             ${BOOST_C99F_LIBRARY} mathlib)
 install(TARGETS pyewald DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/ewald)
 install(FILES ${PYEWALD_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/ewald)
+
+if(compile_tests OR compile_debug_tests)
+  add_subdirectory(tests)
+endif(compile_tests OR compile_debug_tests)

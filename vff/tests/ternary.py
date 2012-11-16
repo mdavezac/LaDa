@@ -23,8 +23,10 @@ def test_inas():
   structure[1].type = 'As'
   structure.scale = 6.5 #2.62332 * 2 / sqrt(3)  / 0.529177
 
-  out = vff(structure)
+  out = vff._pyeval(structure)
   assert abs(out.energy - 0.34958768908 * eV) < 1e-8
+  assert abs(out.energy - vff.energy(structure)) < 1e-8
+  assert all(abs(out.stress - vff.jacobian(structure)[0]) < 1e-8)
   assert all(abs(out.stress - identity(3) * -0.04096678 * eV/angstrom**3) < 1e-8)
   assert all(abs(out[0].gradient) < 1e-8)
   assert all(abs(out[1].gradient) < 1e-8)
@@ -32,7 +34,7 @@ def test_inas():
   epsilon = array([[1e0, 0.1, 0], [0.1, 1e0, 0], [0, 0, 1e0]])
   structure.cell = dot(epsilon, structure.cell)
   for atom in structure: atom.pos = dot(epsilon, atom.pos)
-  out = vff(structure)
+  out = vff._pyeval(structure)
   assert abs(out.energy - 0.527010806043 * eV) < 1e-8
   assert abs(out.energy - vff.energy(structure)) < 1e-8
   assert all(abs(out.stress - [[ -2.50890474e-02,  -2.95278697e-02,  0],
@@ -41,7 +43,7 @@ def test_inas():
   assert all(abs(out.stress - vff.jacobian(structure)[0]) < 1e-8)
   assert all(abs(out[0].gradient - [0, 0, 1.09205526] * eV / angstrom) < 1e-6)
   assert all(abs(out[1].gradient - [0, 0, -1.09205526] * eV / angstrom) < 1e-6)
-  assert all(abs([u.gradient for u in out] - vff.jacobian(structure)[1]) < 1e-8)
+  assert all(abs([u.gradient for u in out] - vff.jacobian(structure)[1].magnitude) < 1e-8)
 
 def test_ingaas():
   from numpy import abs, all, dot, array
@@ -77,12 +79,14 @@ def test_ingaas():
   epsilon = array([[1e0, 0.1, 0], [0.1, 1e0, 0], [0, 0, 1e0]])
   structure.cell = dot(epsilon, structure.cell)
   for atom in structure: atom.pos = dot(epsilon, atom.pos)
-  out = vff(structure)
+  out = vff._pyeval(structure)
   assert abs(out.energy - 12.7962141476*eV) < 1e-8
+  assert abs(vff.energy(structure) - 12.7962141476*eV) < 1e-8
   stress = array([[ 0.07050804,  0.04862879,  0.00025269],
                   [ 0.04862879,  0.07050804, -0.00025269],
                   [ 0.00025269, -0.00025269,  0.06073765]]) * eV/angstrom**3
   assert all(abs(out.stress - stress) < 1e-6)
+  assert all(abs(vff.jacobian(structure)[0] - stress) < 1e-6)
   gradients = array([u.gradient for u in out])
   check_gradients = array( [[  9.15933995e-16,  -5.96744876e-15,   1.12373933e+00],
                             [  2.22044605e-16,  -9.43689571e-15,  -1.12373933e+00],
@@ -104,8 +108,9 @@ def test_ingaas():
                             [  8.29891711e-15,   0.00000000e+00,  -1.12373933e+00],
                             [  3.33066907e-15,   7.16093851e-15,   1.12373933e+00],
                             [ -4.44089210e-16,   7.85482790e-15,  -1.12373933e+00]])
-  assert all(abs(gradients - check_gradients) < 1e-6)
+  assert all(abs(gradients - check_gradients) < 1e-8)
+  assert all(abs(vff.jacobian(structure)[1].magnitude - check_gradients) < 1e-8)
 
 if __name__ == '__main__': 
   test_inas()
-# test_ingaas()
+  test_ingaas()

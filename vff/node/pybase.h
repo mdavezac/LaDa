@@ -35,7 +35,7 @@ namespace LaDa
         //! Holds reference to other an atom.
         crystal::Atom center;
         //! Index of the atom in the structure.
-        types::t_unsigned index;
+        long index;
       };
       //! Creates a new node.
       NodeData* PyNodeData_New();

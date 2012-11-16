@@ -21,8 +21,7 @@ class ExtractBase(object):
     """ Crystal family """
     result = self._find_first_STDOUT(r"^\s*CRYSTAL FAMILY\s*:\s*(\S+)")
     if result is None:
-      raise GrepError( 'Could not grep crystal family from '                   \
-                       '{0.directory}/{0.STDOUT}.'.format(self) )
+      raise GrepError('Could not grep crystal family.')
     return result.group(1).lower()
   @property 
   @make_cached
@@ -30,8 +29,7 @@ class ExtractBase(object):
     """ Crystal class """
     result = self._find_first_STDOUT(r"^\s*CRYSTAL CLASS\s*(?:.+):\s*(.+)$")
     if result is None: 
-      raise GrepError( 'Could not grep crystal class from'                     \
-                       '{0.directory}/{0.STDOUT}.'.format(self) )
+      raise GrepError('Could not grep crystal class.')
     return result.group(1).lower().rstrip().lstrip()
 
   @property 
@@ -40,8 +38,7 @@ class ExtractBase(object):
     """ Crystal class """
     result = self._find_first_STDOUT(r"^\s*SPACE GROUP\s*\((\S+)\)\s*:")
     if result is None:
-      raise GrepError( 'Could not grep centro-symmetricity from '              \
-                       '{0.directory}/{0.STDOUT}.'.format(self) )
+      raise GrepError('Could not grep centro-symmetricity.')
     return result.group(1).lower().rstrip().lstrip() != 'noncentrosymmetric'
 
   @property 
@@ -50,8 +47,7 @@ class ExtractBase(object):
     """ Crystal class """
     result = self._find_first_STDOUT(r"^\s*SPACE GROUP\s*(?:.+)\s*:\s*(.+)")
     if result is None:
-      raise GrepError( 'Could not grep space-group from '                      \
-                       '{0.directory}/{0.STDOUT}.'.format(self) )
+      raise GrepError('Could not grep space-group.')
     return result.group(1).rstrip().lstrip()
 
   @property
@@ -116,8 +112,7 @@ class ExtractBase(object):
         symops[-1][3] = dot(cell, array(data[-3:], dtype='float64'))
       return array(symops)
     except Exception as e:
-      raise GrepError('Encountered error while grepping for sym ops '          \
-                      'in file {1.directory}/{1.STDOUT}: '                     \
+      raise GrepError('Encountered error while grepping for sym ops: '         \
                       '{0.__class__.__name__} -- {0}'.format(e, self) )
     finally: file.close()
 
@@ -171,8 +166,7 @@ class ExtractBase(object):
     pattern = "E+\s+TERMINATION\s+DATE\s*(\d+)\s+(\d+)\s+(\d+)\s+TIME\s+(\S+)"
     regex = self._find_last_STDOUT(pattern)
     if regex is None: 
-      raise GrepError( 'Could not grep end time from '                         \
-                       '{0.directory}/{0.STDOUT}.'.format(self) )
+      raise GrepError('Could not grep end time.')
 
     day    = int(regex.group(1))
     month  = int(regex.group(2))
@@ -1285,3 +1279,7 @@ class MassExtract(AbstractMassExtract):
     """ Returns __dir__ set special to the extraction itself. """
     return list(set( [ u for u in dir(self.DefaultExtract) if u[0] != '_' ] 
                      + ['details'] ))
+
+del make_cached
+del search_factory
+del AbstractMassExtract

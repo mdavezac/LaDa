@@ -14,6 +14,7 @@ def poscar(path="POSCAR", types=None):
   from os.path import join, exists, isdir
   from copy import deepcopy
   from numpy import array, dot, transpose
+  from quantities import angstrom
   from . import Structure
 
   # if types is not none, converts to a list of strings.
@@ -37,7 +38,7 @@ def poscar(path="POSCAR", types=None):
     if len(result.name) > 0:
       if result.name[0] == "#": result.name = result.name[1:].strip()
     # reads scale
-    result.scale = float(poscar.readline().split()[0])
+    result.scale = float(poscar.readline().split()[0]) * angstrom
     # gets cell vectors.
     cell = []
     for i in range(3):

@@ -21,6 +21,13 @@ namespace LaDa
         PyObject_ClearWeakRefs((PyObject *) _self);
      
       structure_gcclear(_self);
+
+      if(_self->scale)
+      {
+        PyObject *dummy = _self->scale;
+        _self->scale = NULL;
+        Py_DECREF(dummy);
+      }
   
       // calls destructor explicitely.
       PyTypeObject* ob_type = _self->ob_type;
@@ -33,6 +40,15 @@ namespace LaDa
     static int structure_init(StructureData* _self, PyObject* _args, PyObject *_kwargs)
     {
       Py_ssize_t const N = PyTuple_Size(_args);
+      
+      if(_self->scale)
+      {
+        PyObject *dummy = _self->scale;
+        _self->scale = NULL;
+        Py_DECREF(dummy);
+      }
+      _self->scale = math::PyQuantity_FromC(1,  "angstrom");
+
       if(N != 0 and N != 1 and N != 9 and N != 3)
       {
         LADA_PYERROR(TypeError, "Unexpected argument: arguments should represent the cell "

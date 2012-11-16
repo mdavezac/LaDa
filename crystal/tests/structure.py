@@ -4,29 +4,35 @@ def test_init(Class):
   import gc
   from sys import getrefcount
   from numpy import all, abs, array, identity
+  from quantities import angstrom, nanometer
 
   a = Class()
-  assert all(abs(a.cell - identity(3)) < 1e-8) and abs(a.scale - 1e0) < 1e0\
+  assert all(abs(a.cell - identity(3)) < 1e-8) and abs(a.scale - 1e0 * angstrom) < 1e0\
          and len(a.__dict__) == 0
 
   a = Class(identity(3)*2.5, scale=5.45)
-  assert all(abs(a.cell - identity(3)*2.5) < 1e-8) and abs(a.scale - 5.45) < 1e0\
+  assert all(abs(a.cell - identity(3)*2.5) < 1e-8) and abs(a.scale - 5.45 * angstrom) < 1e0\
          and len(a.__dict__) == 0
 
+  a = Class(identity(3)*2.5, scale=0.545*nanometer)
+  assert all(abs(a.cell - identity(3)*2.5) < 1e-8) and abs(a.scale - 5.45 * angstrom) < 1e0\
+         and len(a.__dict__) == 0
+
+
   a = Class(2.5, 0, 0, 0, 2.5, 0, 0, 0, 2.5, scale=5.45)
-  assert all(abs(a.cell - identity(3)*2.5) < 1e-8) and abs(a.scale - 5.45) < 1e0\
+  assert all(abs(a.cell - identity(3)*2.5) < 1e-8) and abs(a.scale - 5.45 * angstrom) < 1e0\
          and len(a.__dict__) == 0
   
   a = Class([2.5, 0, 0], [0, 2.5, 0], [0, 0, 2.5], scale=5.45)
-  assert all(abs(a.cell - identity(3)*2.5) < 1e-8) and abs(a.scale - 5.45) < 1e0\
+  assert all(abs(a.cell - identity(3)*2.5) < 1e-8) and abs(a.scale - 5.45 * angstrom) < 1e0\
          and len(a.__dict__) == 0
 
   a = Class(cell=[[2.5, 0, 0], [0, 2.5, 0], [0, 0, 2.5]], scale=5.45)
-  assert all(abs(a.cell - identity(3)*2.5) < 1e-8) and abs(a.scale - 5.45) < 1e0\
+  assert all(abs(a.cell - identity(3)*2.5) < 1e-8) and abs(a.scale - 5.45 * angstrom) < 1e0\
          and len(a.__dict__) == 0
 
   a = Class(identity(3)*2.5, scale=5.45, m=True)
-  assert all(abs(a.cell - identity(3)*2.5) < 1e-8) and abs(a.scale - 5.45) < 1e0\
+  assert all(abs(a.cell - identity(3)*2.5) < 1e-8) and abs(a.scale - 5.45 * angstrom) < 1e0\
          and len(a.__dict__) == 1 and getattr(a, 'm', False)
   assert all(abs(eval(repr(a), {'Structure': Structure}).cell - a.cell) < 1e-8)
   assert abs(eval(repr(a), {'Structure': Structure}).scale - a.scale) < 1e-8
@@ -57,6 +63,9 @@ def test_init(Class):
   assert all(abs(eval(repr(a), {'Structure': Structure})[1].pos - a[1].pos) < 1e-8)
   assert eval(repr(a), {'Structure': Structure})[1].type == a[1].type
   assert getattr(eval(repr(a), {'Structure': Structure})[1], 'm', 6) == 5
+
+  a.scale = 0.5 * nanometer
+  a.scale += 0.3 * a.scale.units
 
 def test_initerror(Class, AtomClass):
   """ Checks initialization throws appropriately. """

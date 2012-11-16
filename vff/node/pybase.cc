@@ -138,6 +138,8 @@ namespace LaDa
       Py_RETURN_TRUE;
     }
 
+    static PyObject* getindex(NodeData* _self, void *closure)
+      { return PyInt_FromLong(_self->index); }
     static PyObject* getpos(NodeData* _self, void *closure)
       { return crystal::lada_atom_getpos((crystal::PyAtomObject*)_self->center.borrowed(), closure); }
     static int setpos(NodeData* _self, PyObject* _value, void *closure)
@@ -174,24 +176,20 @@ namespace LaDa
 
     static int init(PyObject* _self, PyObject *_args, PyObject *_kwargs)
     {
-      Py_ssize_t const N = PyTuple_Size(_args);
-      if(N != 1)
+      PyObject* pyatom;
+      unsigned long index = 0;
+      static char *kwlist[] = { const_cast<char*>("atom"),
+                                const_cast<char*>("index"), NULL};
+      if(not PyArg_ParseTupleAndKeywords( _args, _kwargs, "O|l:Node", kwlist,
+                                          &pyatom, &index))
+        return -1;
+      if(not PyAtom_Check(pyatom))
       {
-        LADA_PYERROR(TypeError, "Node expects an atom as its only and required argument." );
+        LADA_PYERROR(TypeError, "Node: First argument should be an atom.");
         return -1;
       }
-      if(_kwargs and PyDict_Size(_kwargs) != 0)
-      {
-        LADA_PYERROR(TypeError, "Node does not take keyword arguments.");
-        return -1;
-      }
-      PyObject* node = PyTuple_GET_ITEM(_args, 0);
-      if(not PyAtom_Check(node))
-      {
-        LADA_PYERROR(TypeError, "Node expects an atom as its only and required argument." );
-        return -1;
-      }
-      ((NodeData*)_self)->center = crystal::Atom::acquire(node);
+      ((NodeData*)_self)->center = crystal::Atom::acquire(pyatom);
+      ((NodeData*)_self)->index = index;
       return 0;
     }
 
@@ -235,6 +233,8 @@ namespace LaDa
                                  "Works as a slot."),
           { const_cast<char*>("center"), (getter) getcenter, 
             NULL, const_cast<char*>("Wrapped atom.") },
+          { const_cast<char*>("index"), (getter) getindex, 
+            NULL, const_cast<char*>("Index of the atom in the original structure.") },
           {NULL}  /* Sentinel */
       };
 #     undef LADA_DECLARE

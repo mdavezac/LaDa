@@ -35,7 +35,7 @@ namespace LaDa
       StructureData* result = (StructureData*) structure_type()->tp_alloc(structure_type(), 0);
       if(not result) return NULL;
       result->weakreflist = NULL;
-      result->scale = 1e0;
+      result->scale = NULL;
       new(&result->cell) LaDa::math::rMatrix3d(LaDa::math::rMatrix3d::Identity());
       new(&result->atoms) std::vector<Atom>;
       result->pydict = PyDict_New();
@@ -48,7 +48,7 @@ namespace LaDa
       StructureData* result = (StructureData*)_type->tp_alloc(_type, 0);
       if(not result) return NULL;
       result->weakreflist = NULL;
-      result->scale = 1e0;
+      result->scale = NULL;
       new(&result->cell) LaDa::math::rMatrix3d(LaDa::math::rMatrix3d::Identity());
       new(&result->atoms) std::vector<Atom>;
       result->pydict = PyDict_New();
@@ -74,6 +74,7 @@ namespace LaDa
       new(&result->cell) LaDa::math::rMatrix3d(_self->cell);
       new(&result->atoms) std::vector<Atom>;
       result->pydict = NULL;
+      Py_INCREF(_self->scale);
       result->scale = _self->scale;
       PyObject* copymod = PyImport_ImportModule("copy");
       if(copymod == NULL) return NULL;
@@ -138,8 +139,9 @@ namespace LaDa
           LADA_DECLARE(scale, "Scale factor of this structure.\n"
                               "Should be a number or unit given by "
                               "the python package `quantities "
-                              "<http://packages.python.org/quantities/index.html>`_.\n\n"
-                              ".. note:: The scale is always converted to angstroms. "),
+                              "<http://packages.python.org/quantities/index.html>`_.\n"
+                              "If given as a number, then the current units are kept.\n"
+                              "Otherwise, it changes the units."),
           { const_cast<char*>("volume"), (getter) structure_getvolume, NULL, 
             const_cast<char*>("Volume of the structure.\n\nIncludes scale.") },
           {NULL}  /* Sentinel */

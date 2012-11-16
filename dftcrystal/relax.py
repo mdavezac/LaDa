@@ -38,6 +38,13 @@ class RelaxExtract(Extract):
     if '_details' not in self.__dict__:
       self.__dict__['_details'] = self.IntermediateMassExtract(self.directory)
     return self._details
+
+  @property
+  def last_step(self):
+    """ Extraction object for current step. """
+    if self.success: return self
+    def cmp(a): return int(a[0].split('/')[-1])
+    return max(self.details.items(), key=cmp)[1]
   
   def iterfiles(self, **kwargs):
     """ Iterates over input/output files. """

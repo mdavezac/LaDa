@@ -119,7 +119,9 @@ def equivalence_iterator( structure, operations=None,                          \
           undetermined.  If None, then splitting occurs only according to
           geometry.
       
-      :returns: Yields iterators over atoms linked by space-group operations.
+      :returns: 
+        Yields list of indices in structure of atoms linked by space-group
+        operations.
   """
   from numpy import dot
   from numpy.linalg import inv

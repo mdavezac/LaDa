@@ -3,10 +3,43 @@
  
     Implementation of the valence force field method for zinc-blende.
 """
-__all__ = ['Node', 'Functional']
+__all__ = ['Node', 'Vff', 'read_input', 'exec_input', 'build_tree']
 from .cppwrappers import Node
-# from .functional import Functional
+from .functional import Functional as Vff
 
+def read_input(filepath="input.py", namespace=None):
+  """ Specialized read_input function for vasp. 
+  
+      :Parameters: 
+        filepath : str
+          A path to the input file.
+        namespace : dict
+          Additional names to include in the local namespace when evaluating
+          the input file.
+
+      It add a few names to the input-file's namespace. 
+  """
+  from ..misc import read_input
+  from . import specie
+  from relax import Epitaxial, Relax
+
+  # names we need to create input.
+  input_dict = {}
+  for k in __all__:
+    if k != 'read_input' and k != 'exec_input': global_dict[k] = globals()[k]
+  if namespace is not None: input_dict.update(namespace)
+  return read_input(filepath, input_dict)
+
+def exec_input( script, global_dict=None, local_dict=None,
+                paths=None, name=None ):
+  """ Specialized exec_input function for vasp. """
+  from ..misc import exec_input
+
+  # names we need to create input.
+  if global_dict is None: global_dict = {}
+  for k in __all__:
+    if k != 'read_input' and k != 'exec_input': global_dict[k] = globals()[k]
+  return exec_input(script, global_dict, local_dict, paths, name)
 
 def build_tree(structure, overlap=1.2, **kwargs):
   """ Build first neighbor tree. """
@@ -22,7 +55,7 @@ def build_tree(structure, overlap=1.2, **kwargs):
   # net: map of atom id to the nodes in the the first neighbor net which
   #      wraps them.
   net = {}
-  for atom in structure: net[id(atom)] = Node(atom)
+  for i, atom in enumerate(structure): net[id(atom)] = Node(atom, i)
   
   # invcell: transform from cartesian to fractional coordinates.
   invcell = inv(structure.cell)

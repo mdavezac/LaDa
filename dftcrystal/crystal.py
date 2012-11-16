@@ -155,7 +155,7 @@ class Crystal(Molecule):
     for o in self.params: args.append('{0!r}'.format(o))
     indent = ' '.join('' for i in xrange(length))
     for key, value in self.__dict__.iteritems():
-      if key in ['operators', 'atoms', 'symmgroup', 'params'] : continue
+      if key in ['atoms', 'symmgroup', 'params'] : continue
       if key == '_shift': key = 'shift'
       args.append('\\\n{2}{0}={1!r}'.format(key, value, indent))
     return '{0.__class__.__name__}({1})'.format(self, ', '.join(args))

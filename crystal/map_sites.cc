@@ -29,8 +29,11 @@ namespace LaDa
       bool withocc( PyCallable_Check(_withocc.borrowed()) );
       
       // check that mappee_ is a supercell of mapper_.
-      types::t_real const ratio = _mappee->scale / _mapper->scale;
-      types::t_real tolerance = _tolerance / _mapper->scale;
+      types::t_real const mappee_scale 
+        = math::PyQuantity_GetPy(_mappee->scale, _mapper->scale);
+      types::t_real const mapper_scale = math::PyQuantity_AsReal(_mapper->scale);
+      types::t_real const ratio = mappee_scale / mapper_scale;
+      types::t_real tolerance = _tolerance / mapper_scale;
       math::rMatrix3d const intcell_ = invcell * _mappee.cell() * ratio;
       if(not math::is_integer(intcell_, _tolerance))
       {
