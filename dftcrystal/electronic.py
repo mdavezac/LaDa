@@ -710,7 +710,7 @@ class Electronic(AttrBlock):
     
         Should be None(default), or an integer between 0 and 6 included.
     """
-    self.guessp   = GuessP(value=False)
+    self.guessp   = GuessP(value=True)
     """ Reads density matrix from disk.
     
         - If True *and*
@@ -720,10 +720,8 @@ class Electronic(AttrBlock):
     
         - If True but :py:attr:`~lada.dftcrystal.functional.Functional.restart`
           is None or the file crystal.f9 does not exist, then does nothing.
-          This is not an error, however.
     
-        - If False or None, does nothing. Since GuessP can lead to bizarre
-          problems, it is *False* by default.
+        - If False or None, does nothing.    
     """ 
     self.dft      = Dft()
     """ Holds definition of the DFT functional itself. """

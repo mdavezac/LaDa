@@ -116,6 +116,7 @@ def iter_relax(self, structure=None, outdir=None, maxiter=30, **kwargs):
 
   # perform static calculation
   self.optgeom.enabled = False
+  self.guessp = False
   for extract in self.iter( structure, outdir=outdir, restart=restart, 
                             **kwargs ):
     yield extract

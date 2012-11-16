@@ -226,33 +226,40 @@ class Functional(object):
       # Creates symlink to make sure we keep working directory.
       with Changedir(outdir) as cwd:
         with open('crystal.d12', 'w') as file: file.write(string)
-        with open('crystal.out', 'w') as file: pass
-        with open('crystal.err', 'w') as file: pass
-        with open('ERROR', 'w') as file: pass
+#       with open('crystal.out', 'w') as file: pass
+#       with open('crystal.err', 'w') as file: pass
+#       with open('ERROR', 'w') as file: pass
         # creates symlink files.
         for filename in ['crystal.err', 'crystal.out', 'ERROR']:
           if lexists(join(workdir, filename)):
             try: remove( join(workdir, filename) )
-            except: pass
-          symlink(abspath(filename), abspath(join(workdir, filename)))
+            except OSError: pass
+          try: symlink(abspath(filename), abspath(join(workdir, filename)))
+          except OSError: pass
+        # adds symlink for unformatted wavefunctions.
+        if not lexists(join(workdir, 'fort.9')):
+          try: remove(join(workdir, 'fort.9'))
+          except OSError: pass
+        try: symlink(abspath('crystal.f9'), abspath(join(workdir, 'fort.9')))
+        except OSError: pass
         # for optgeom, make sure we bring SCFOUT.LOG 
         if self.optgeom.enabled:
           if self.optgeom.onelog is None or self.optgeom.onelog == False:
             outname = filenames['SCFOUT.LOG'].format('crystal')
-            with open(outname, 'w') as file: pass
+#           with open(outname, 'w') as file: pass
             if lexists(join(workdir, 'SCFOUT.LOG')):
               try: remove(join(workdir, 'SCFOUT.LOG'))
-              except: pass
+              except OSError: pass
             try: 
               symlink( abspath(outname),
                        abspath(join(workdir, 'SCFOUT.LOG')) )
-            except: pass
+            except OSError: pass
             
         if lexists('workdir'): 
           try: remove('workdir')
-          except: pass
+          except OSError: pass
         try: symlink(workdir, 'workdir')
-        except: pass
+        except OSError: pass
     
     # creates a file in the directory, to say we are going to work here
     with open(join(outdir, '.lada_is_running'), 'w') as file: pass
@@ -278,7 +285,7 @@ class Functional(object):
       # remove 'is running' file marker.
       if exists('.lada_is_running'):
         try: remove('.lada_is_running')
-        except: pass
+        except OSError: pass
 
       for key, value in CRYSTAL_filenames.iteritems():
         copyfile( join(workdir, key), value.format('crystal'),
@@ -322,12 +329,12 @@ class Functional(object):
         with Changedir(workdir) as cwd:
           for filepath in chain(*[iglob(u) for u in CRYSTAL_delpatterns]):
             try: remove(filepath)
-            except: pass
+            except OSError: pass
       elif ExtractBase(outdir).success:
         try: rmtree(workdir)
-        except: pass
+        except OSError: pass
         try: remove(join(outdir, 'workdir'))
-        except: pass
+        except OSError: pass
     
     
   
@@ -476,7 +483,7 @@ class Functional(object):
       with result.__stdout__() as file: return file.read()
     finally:
       try: rmtree(tmpdir)
-      except: pass
+      except OSError: pass
   def test_hamiltonian(self, structure, **kwargs):
     """ Returns output of test basis run. """
     from copy import deepcopy
@@ -491,7 +498,7 @@ class Functional(object):
       with result.__stdout__() as file: return file.read()
     finally:
       try: rmtree(tmpdir)
-      except: pass
+      except OSError: pass
 
 
   def _ibz(self, structure):
