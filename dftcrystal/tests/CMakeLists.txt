@@ -13,6 +13,7 @@ if(NOT compile_debug_tests)
   add_test(dftcrystal_input python ${CMAKE_CURRENT_SOURCE_DIR}/input.py)
   add_test(dftcrystal_input_structure_regression python ${CMAKE_CURRENT_SOURCE_DIR}/input_structure_regression.py)
   add_test(dftcrystal_input_structure_regression python ${CMAKE_CURRENT_SOURCE_DIR}/input_structure_regression1.py)
+  add_test(dftcrystal_crystal_regression python ${CMAKE_CURRENT_SOURCE_DIR}/crystal_regression1.py)
   add_test(dftcrystal_run python ${CMAKE_CURRENT_SOURCE_DIR}/run.py)
   add_test(dftcrystal_runrelax python ${CMAKE_CURRENT_SOURCE_DIR}/runrelax.py)
 
