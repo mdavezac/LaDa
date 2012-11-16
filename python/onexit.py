@@ -6,25 +6,32 @@
 """
 from atexit import register
 
-_list_of_callbacks = {}
+_callback_dict = {}
 """ List of callbacks + arguments. """
 
 
+def _call_callbacks():
+  """ Calls on-exit functions. """
+  try: 
+    _callback_dict.pop('abort', None)
+    _callback_dict.pop('term', None)
+    while len(_callback_dict):
+      name, (callback, args, kwargs) = _callback_dict.popitem()
+      if callback is not None: 
+        try: callback(*args, **kwargs)
+        except: pass
+  except: pass
+
 @register
-def _atexit_onexit():
+def _atexit_onexit(): 
   """ Specific at-exit function for lada. """
-  global _list_of_callbacks
-  _list_of_callbacks.pop('abort', None)
-  _list_of_callbacks.pop('term', None)
-  for callback, args, kwargs in _list_of_callbacks.values():
-    if callback is not None: 
-      try: callback(*args, **kwargs)
-      except: pass
+  _call_callbacks()
+
 
 def _onexit_signal(signum, stackframe):
   from signal import SIGABRT, SIGTERM, signal, SIG_DFL
-  abort = _list_of_callbacks.get('abort', None)
-  term = _list_of_callbacks.get('term', None)
+  _call_callbacks()
+
   if signum == SIGABRT and abort is not None:
     try: signal(SIGABRT, abort)
     except: signal(SIGABRT, SIG_DFL)
@@ -51,18 +58,18 @@ def add_callback(callback, *args, **kwargs):
   """
   from uuid import uuid4
   id = uuid4()
-  _list_of_callbacks[id] = callback, args, kwargs
+  _callback_dict[id] = callback, args, kwargs
   return id
 
 def del_callback(id):
   """ Deletes a callback from the list. """
-  _list_of_callbacks.pop(id, None)
+  _callback_dict.pop(id, None)
 
 # on first opening this module, change sigterm signal.
-if len(_list_of_callbacks) == 0:
+if len(_callback_dict) == 0:
   from signal import SIGABRT, SIGTERM, signal
-  _list_of_callbacks['abort'] = signal(SIGABRT, _onexit_signal)
-  _list_of_callbacks['term'] = signal(SIGTERM, _onexit_signal)
+  _callback_dict['abort'] = signal(SIGABRT, _onexit_signal)
+  _callback_dict['term'] = signal(SIGTERM, _onexit_signal)
   del signal
   del SIGABRT
   del SIGTERM
