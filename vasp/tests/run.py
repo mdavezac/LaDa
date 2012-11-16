@@ -3,6 +3,7 @@ def test(path):
   from tempfile import mkdtemp
   from lada.crystal import Structure
   from lada.vasp import Vasp
+  from lada import default_comm
 
   structure = Structure([[0, 0.5, 0.5],[0.5, 0, 0.5], [0.5, 0.5, 0]], scale=5.43, name='has a name')\
                        .add_atom(0,0,0, "Si")\
@@ -19,7 +20,7 @@ def test(path):
   vasp.add_specie = "Si", "{0}/pseudos/Si".format(path)
   directory = mkdtemp()
   try: 
-    result = vasp(structure, outdir=directory, comm={'n': 2, 'ppn': 1})
+    result = vasp(structure, outdir=directory, comm=default_comm)
     assert result.success
   finally: 
     rmtree(directory)

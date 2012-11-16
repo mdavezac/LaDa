@@ -7,6 +7,7 @@ def test(path):
   from lada.crystal import Structure
   from lada.vasp import Vasp
   from lada.vasp.emass import effective_mass, EMass
+  from lada import default_comm
 
     
     
@@ -30,11 +31,11 @@ def test(path):
   if exists(directory) and directory == '/tmp/test': rmtree(directory)
   if not exists(directory): makedirs(directory)
   try: 
-    result = effective_mass(vasp, structure, outdir=directory, comm={'n': 2, 'ppn': 1},
+    result = effective_mass(vasp, structure, outdir=directory, comm=default_comm,
                             emassparams={'ediff': 1e-8})
     result.emass
     assert result.success
-    result = emass(structure, outdir=directory, comm={'n':2, 'ppn': 1},
+    result = emass(structure, outdir=directory, comm=default_comm,
                    emassparams={'ediff': 1e-8})
     assert result.success
   finally: 

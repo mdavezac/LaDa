@@ -7,6 +7,7 @@ def test(path):
   from lada.crystal import Structure
   from lada.vasp import Vasp
   from lada.vasp.relax import epitaxial
+  from lada import default_comm
 
     
     
@@ -27,7 +28,7 @@ def test(path):
   if exists(directory) and directory == '/tmp/test': rmtree(directory)
   if not exists(directory): makedirs(directory)
   try: 
-    result = epitaxial(vasp, structure, outdir=directory, epiconv=1e-5, comm={'n': 2, 'ppn': 1})
+    result = epitaxial(vasp, structure, outdir=directory, epiconv=1e-5, comm=default_comm)
     assert result.success
     assert abs(result.stress[2,2]) < 1.0
   finally: 

@@ -7,9 +7,8 @@ def test(path):
   from quantities import kbar, eV, angstrom
   from lada.crystal import Structure
   from lada.vasp import Vasp
-  from lada.vasp.relax import relax, Relax
-
-    
+  from lada.vasp.relax import Relax
+  from lada import default_comm
     
   structure = Structure([[0, 0.5, 0.5],[0.5, 0, 0.5], [0.5, 0.5, 0]], scale=5.43, name='has a name')\
                        .add_atom(0,0,0, "Si")\
@@ -29,7 +28,7 @@ def test(path):
     functional = Relax(copy=vasp)
     assert abs(functional.ediff - 1e-5) < 1e-8
     assert functional.prec == 'Accurate'
-    result = functional(structure, outdir=directory, comm={'n': 2, 'ppn': 1},
+    result = functional(structure, outdir=directory, comm=default_comm,
                         relaxation="volume ionic cellshape")
     assert result.success
     def sortme(a): return int(a.split('/')[-1])

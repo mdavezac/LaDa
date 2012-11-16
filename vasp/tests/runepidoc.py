@@ -4,6 +4,7 @@ def test(path):
   from lada.crystal import Structure
   from lada.vasp import Vasp
   from epirelax import epitaxial
+  from lada import default_comm
 
   structure = Structure([[0, 0.5, 0.5],[0.5, 0, 0.5], [0.5, 0.5, 0]], scale=5.55, name='has a name')\
                        .add_atom(0,0,0, "Si")\
@@ -20,7 +21,7 @@ def test(path):
   vasp.add_specie = "Si", "{0}/pseudos/Si".format(path)
   directory = mkdtemp()
   try: 
-    result = epitaxial(vasp, structure, outdir=directory, epiconv=1e-4, comm={'n': 2, 'ppn': 1})
+    result = epitaxial(vasp, structure, outdir=directory, epiconv=1e-4, comm=default_comm)
     assert result.success
   finally: 
     rmtree(directory)
