@@ -961,12 +961,14 @@ class Vasp(AttrBlock):
      # Appends INCAR and CONTCAR to OUTCAR:
      with Changedir(directory) as pwd:
        with open(files.OUTCAR, 'a') as outcar:
-         outcar.write('\n################ CONTCAR ################\n')
-         with open(files.CONTCAR, 'r') as contcar: outcar.write(contcar.read())
-         outcar.write('\n################ END CONTCAR ################\n')
-         outcar.write('\n################ INCAR ################\n')
-         with open(files.INCAR, 'r') as incar: outcar.write(incar.read())
-         outcar.write('\n################ END INCAR ################\n')
+         if exists(files.CONTCAR):
+           outcar.write('\n################ CONTCAR ################\n')
+           with open(files.CONTCAR, 'r') as contcar: outcar.write(contcar.read())
+           outcar.write('\n################ END CONTCAR ################\n')
+         if exists(files.INCAR):
+           outcar.write('\n################ INCAR ################\n')
+           with open(files.INCAR, 'r') as incar: outcar.write(incar.read())
+           outcar.write('\n################ END INCAR ################\n')
          outcar.write('\n################ INITIAL STRUCTURE ################\n')
          outcar.write("""from {0.__class__.__module__} import {0.__class__.__name__}\n"""\
                       """structure = {1}\n"""\
