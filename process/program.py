@@ -221,9 +221,15 @@ class ProgramProcess(Process):
     from . import which
     # Open stdout and stderr if necessary.
     with Changedir(self.outdir) as cwd:
-      file_out = None if self.stdout is None else open(self.stdout, "w") 
-      file_err = None if self.stderr is None else open(self.stderr, "w") 
-      file_in  = None if self.stdin is None else open(self.stdin, "r") 
+      if self.stdout is None: file_out = None
+      elif isinstance(self.stdout, str): file_out = open(self.stdout, 'w')
+      else: file_out = open(*self.stdout)
+      if self.stderr is None: file_err = None
+      elif isinstance(self.stderr, str): file_err = open(self.stderr, 'w')
+      else: file_err = open(*self.stderr)
+      if self.stdin is None: file_in = None
+      elif isinstance(self.stdin, str): file_in = open(self.stdin, 'r')
+      else: file_in = open(*self.stdin)
       self._stdio = file_out, file_err, file_in
 
     # creates commandline

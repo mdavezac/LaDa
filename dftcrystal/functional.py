@@ -198,6 +198,7 @@ class Functional(object):
     from ..misc import copyfile, Changedir
     from ..error import ValueError
     from .. import CRYSTAL_filenames as filenames
+    from .external import External
 
     # sanity check
     if len(self.basis) == 0:
@@ -221,14 +222,25 @@ class Functional(object):
                                  workdir=workdir, test=test, filework=True )
       with open('crystal.d12', 'w') as file: file.write(string)
 
-    with Changedir(outdir) as cwd: pass
+    # write additional input to file.
+    with Changedir(outdir) as cwd: 
+      header = ''.join(['#']*20)
+      with open('crystal.out', 'w') as file:
+        file.write('{0} {1} {0}\n'.format(header, 'INPUT FILE'))
+        file.write(string.rstrip() + '\n')
+        file.write('{0} END {1} {0}\n'.format(header, 'INPUT FILE'))
+        if isinstance(structure, External):
+          file.write('{0} {1} {0}\n'.format(header, 'INITIAL STRUCTURE'))
+          file.write(write.crystal(structure.initial, None))
+          file.write('{0} END {1} {0}\n'.format(header, 'INITIAL STRUCTURE'))
+        file.write('\n{0} {1} {0}\n'.format(header, 'FUNCTIONAL'))
+        file.write(self.__repr__(defaults=False))
+        file.write('\n{0} END {1} {0}\n'.format(header, 'FUNCTIONAL'))
+
     if not samefile(outdir, workdir):
       # Creates symlink to make sure we keep working directory.
       with Changedir(outdir) as cwd:
         with open('crystal.d12', 'w') as file: file.write(string)
-#       with open('crystal.out', 'w') as file: pass
-#       with open('crystal.err', 'w') as file: pass
-#       with open('ERROR', 'w') as file: pass
         # creates symlink files.
         for filename in ['crystal.err', 'crystal.out', 'ERROR']:
           if lexists(join(workdir, filename)):
@@ -246,7 +258,6 @@ class Functional(object):
         if self.optgeom.enabled:
           if self.optgeom.onelog is None or self.optgeom.onelog == False:
             outname = filenames['SCFOUT.LOG'].format('crystal')
-#           with open(outname, 'w') as file: pass
             if lexists(join(workdir, 'SCFOUT.LOG')):
               try: remove(join(workdir, 'SCFOUT.LOG'))
               except OSError: pass
@@ -291,23 +302,7 @@ class Functional(object):
         copyfile( join(workdir, key), value.format('crystal'),
                   nocopyempty=True, symlink=False, nothrow="never" )
 
-      with open('crystal.d12', 'r') as file: input = file.read()
-      with open('crystal.out', 'r') as file: output = file.read()
       header = ''.join(['#']*20)
-      with open('crystal.out', 'w') as file:
-        file.write('{0} {1} {0}\n'.format(header, 'INPUT FILE'))
-        input = input.rstrip()
-        if input[-1] != '\n': input += '\n'
-        file.write(input)
-        file.write('{0} END {1} {0}\n'.format(header, 'INPUT FILE'))
-        if isinstance(structure, External):
-          file.write('{0} {1} {0}\n'.format(header, 'INITIAL STRUCTURE'))
-          file.write(write.crystal(structure.initial, None))
-          file.write('{0} END {1} {0}\n'.format(header, 'INITIAL STRUCTURE'))
-        file.write(output)
-        file.write('\n{0} {1} {0}\n'.format(header, 'FUNCTIONAL'))
-        file.write(self.__repr__(defaults=False))
-        file.write('\n{0} END {1} {0}\n'.format(header, 'FUNCTIONAL'))
       if len([0 for filename in iglob(join(workdir, 'ERROR.*'))]):
         string = ""
         for filename in iglob(join(workdir, 'ERROR.*')):
@@ -413,8 +408,8 @@ class Functional(object):
       onfinish = self.OnFinish(self, structure, workdir, outdir)
       onfail   = self.OnFail(ExtractBase(outdir))
       yield ProgramProcess( program, outdir=workdir, onfinish=onfinish,
-                            stdout=None if dompi else 'crystal.out', 
-                            stderr='crystal.out' if dompi else 'crystal.err',
+                            stdout=None if dompi else ('crystal.out', 'a'), 
+                            stderr=('crystal.out', 'a') if dompi else 'crystal.err',
                             stdin=None if dompi else 'crystal.d12', 
                             dompi=dompi, onfail=onfail )
     # yields final extraction object.
