@@ -446,14 +446,18 @@ class GuessP(BoolKeyword):
   def __init__(self, value=True):
     super(GuessP, self).__init__(value=value)
   def output_map(self, **kwargs):
-    from os.path import exists, join
+    from os.path import exists, join, getsize, realpath
     from ..misc import copyfile
     if self.value is None or self.value == False: return None
     if kwargs['crystal'].restart is None: return None
     path = join(kwargs['crystal'].restart.directory, 'crystal.f9')
     if not exists(path): return None
+    try:
+      if getsize(realpath(path)) == 0: return None
+    except: return None
     if kwargs.get('filework', False) == True:
-      copyfile(path, join(kwargs['workdir'], 'fort.20'), nothrow='same')
+      copyfile( realpath(path), 
+                join(kwargs['workdir'], 'fort.20'), nothrow='same' )
     return super(GuessP, self).output_map(**kwargs)
 
 class Broyden(BaseKeyword):
