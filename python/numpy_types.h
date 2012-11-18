@@ -194,6 +194,7 @@ namespace LaDa
           default: break;
         };
         LADA_PYERROR(ValueError, "Unknown numpy array type.");
+        return T(0);
       }
      
       //! Returns python object from array.

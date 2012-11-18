@@ -13,7 +13,7 @@ namespace LaDa
     template<class T>
       bool one_nonzero(Eigen::MatrixBase<T> const &_in)
       {
-        for(size_t i(0), n(0); i < _in.size(); ++i)
+        for(int i(0), n(0); i < _in.size(); ++i)
           if(_in(i) != 0) 
           {
             if(n == 1) return false;
@@ -24,15 +24,15 @@ namespace LaDa
     template<class T>
       bool check_nonzero(Eigen::MatrixBase<T> const &_in, size_t _index)
       {
-        size_t n(0);
-        for(size_t i(0); i < _in.rows(); ++i)
+        int n(0);
+        for(int i(0); i < _in.rows(); ++i)
           if(_in(i, _index) != 0) 
           {
             if(n == 1) return false;
             n = 1;
           }
-        for(size_t i(0); i < _in.cols(); ++i)
-          if(i != _index and _in(_index, i) != 0) 
+        for(int i(0); i < _in.cols(); ++i)
+          if(i != (int)_index and _in(_index, i) != 0) 
           {
             if(n == 1) return false;
             n = 1;
@@ -44,7 +44,7 @@ namespace LaDa
       void get_min_max(Eigen::MatrixBase<T> const &_in, types::t_int &_max, types::t_int &_min)
       {
         _max = 0;
-        for(size_t k(1); k < _in.size(); ++k)
+        for(int k(1); k < _in.size(); ++k)
           if(std::abs(_in(k)) > std::abs(_in(_max))) _max = k;
         types::t_int k(_in.size()-1);
         for(; k >= 0 and _in(k) == 0; --k);
@@ -59,8 +59,8 @@ namespace LaDa
                                  types::t_int &_max, types::t_int &_min, size_t _index )
       {
         if(std::abs(_in(_min, _index)) != std::abs(_in(_max, _index))) return;
-        size_t n0(0), n1(0);
-        for(size_t i(0); i < _in.rows(); ++i)
+        int n0(0), n1(0);
+        for(int i(0); i < _in.rows(); ++i)
         {
           if(_in(_max, i)) ++n0;
           if(_in(_min, i)) ++n1;
@@ -89,7 +89,7 @@ namespace LaDa
         }
         if(_smith(_index, _index) == 0) 
         {
-          size_t k(0);
+          int k(0);
           for(; k < _smith.rows() and _smith(k, _index) == 0; ++k);
           if(k == _smith.rows()) BOOST_THROW_EXCEPTION(error::internal());
           _smith.row(k).swap(_smith.row(_index));
@@ -123,7 +123,7 @@ namespace LaDa
         }
         if(_smith(_index, _index) == 0) 
         {
-          size_t k(0);
+          int k(0);
           for(; k < _smith.cols() and _smith(_index, k) == 0; ++k);
           if(k == _smith.cols()) BOOST_THROW_EXCEPTION(error::internal());
           _smith.col(k).swap(_smith.col(_index));
@@ -144,20 +144,20 @@ namespace LaDa
                         Eigen::MatrixBase<T2> &_right,
                         Eigen::MatrixBase<T3> &_smith )
       {
-        size_t const nrows = _smith.rows();
-        size_t const ncols = _smith.cols();
+        int const nrows = _smith.rows();
+        int const ncols = _smith.cols();
         Eigen::Matrix<typename Eigen::MatrixBase<T0>::Scalar, Eigen::Dynamic, Eigen::Dynamic> old(nrows, ncols);
-        for(size_t index(0); index < _smith.rows()-1; ++index)
+        for(int index(0); index < _smith.rows()-1; ++index)
           do
           {
             smith_col_impl(_out, _left, _smith, _right, index);
             smith_row_impl(_out, _left, _smith, _right, index);
 
-            size_t maxrow = _smith.rows();
+            int maxrow = _smith.rows();
             types::t_int const diag = _smith(index, index);
             types::t_int maxmod = 0;
-            for(size_t i(index+1); i < _smith.rows(); ++i)
-              for(size_t j(index+1); j < _smith.cols(); ++j)
+            for(int i(index+1); i < _smith.rows(); ++i)
+              for(int j(index+1); j < _smith.cols(); ++j)
               {
                 if(_smith(i, j) % diag == 0) continue;
                 else if(maxmod == 0) { maxrow = i; maxmod = std::abs(_smith(i,j) % diag); }

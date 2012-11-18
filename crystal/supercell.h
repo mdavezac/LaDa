@@ -35,7 +35,7 @@ namespace LaDa
         if(_lattice.hasattr("name") and PyString_Check(_lattice.pyattr("name").borrowed()) )
         {
           char *const attr = PyString_AS_STRING(_lattice.pyattr("name").borrowed());
-          if(attr != "")
+          if(std::string(attr) != "")
           {
             std::string const name = "supercell of " + std::string(attr);
             PyObject* pyname = PyString_FromString(name.c_str());

@@ -2,18 +2,16 @@ namespace LaDa
 {
   namespace crystal
   {
-    extern "C" 
-    { 
-      //! Function to deallocate a string atom.
-      static void lada_atom_dealloc(PyAtomObject *_self);
-      //! Function to initialize a string atom.
-      static int lada_atom_init(PyAtomObject* _self, PyObject* _args, PyObject *_kwargs);
-      //! Traverses to back-reference.
-      static int lada_atom_traverse(PyAtomObject *_self, visitproc visit, void *arg)
-        { Py_VISIT(_self->pydict); Py_VISIT(_self->type); return 0; }
-      //! Clears back reference.
-      static int lada_atom_gcclear(PyAtomObject *self) { Py_CLEAR(self->pydict); Py_CLEAR(self->type); return 0; }
-    }
+    //! Function to deallocate a string atom.
+    static void lada_atom_dealloc(PyAtomObject *_self);
+    //! Function to initialize a string atom.
+    static int lada_atom_init(PyAtomObject* _self, PyObject* _args, PyObject *_kwargs);
+    //! Traverses to back-reference.
+    static int lada_atom_traverse(PyAtomObject *_self, visitproc visit, void *arg)
+      { Py_VISIT(_self->pydict); Py_VISIT(_self->type); return 0; }
+    //! Clears back reference.
+    static int lada_atom_gcclear(PyAtomObject *self) { Py_CLEAR(self->pydict); Py_CLEAR(self->type); return 0; }
+    
  
     // Function to deallocate a string atom.
     static void lada_atom_dealloc(PyAtomObject *_self)
@@ -33,8 +31,6 @@ namespace LaDa
     // Function to initialize a string atom.
     static int lada_atom_init(PyAtomObject* _self, PyObject* _args, PyObject *_kwargs)
     {
-      int found_position = 0;
-      bool found_type = false;
       Py_ssize_t const N = PyTuple_Size(_args);
  
       if(N > 0) 

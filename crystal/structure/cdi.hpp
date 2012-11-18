@@ -5,17 +5,17 @@ namespace LaDa
     extern "C" 
     { 
       //! Function to deallocate a string atom.
-      static void structure_dealloc(StructureData *_self);
+      static void structure_dealloc(PyStructureObject *_self);
       //! Function to initialize a string atom.
-      static int structure_init(StructureData* _self, PyObject* _args, PyObject *_kwargs);
+      static int structure_init(PyStructureObject* _self, PyObject* _args, PyObject *_kwargs);
       //! Traverses to back-reference.
-      static int structure_traverse(StructureData *_self, visitproc _visit, void *_arg);
+      static int structure_traverse(PyStructureObject *_self, visitproc _visit, void *_arg);
       //! Clears back reference.
-      static int structure_gcclear(StructureData *_self);
+      static int structure_gcclear(PyStructureObject *_self);
     }
   
     // Function to deallocate a string atom.
-    static void structure_dealloc(StructureData *_self)
+    static void structure_dealloc(PyStructureObject *_self)
     {
       if(_self->weakreflist != NULL)
         PyObject_ClearWeakRefs((PyObject *) _self);
@@ -31,13 +31,13 @@ namespace LaDa
   
       // calls destructor explicitely.
       PyTypeObject* ob_type = _self->ob_type;
-      _self->~StructureData();
+      _self->~PyStructureObject();
 
       ob_type->tp_free((PyObject*)_self);
     }
   
     // Function to initialize an atom.
-    static int structure_init(StructureData* _self, PyObject* _args, PyObject *_kwargs)
+    static int structure_init(PyStructureObject* _self, PyObject* _args, PyObject *_kwargs)
     {
       Py_ssize_t const N = PyTuple_Size(_args);
       
@@ -77,7 +77,7 @@ namespace LaDa
       return 0;
     }
   
-    static int structure_traverse(StructureData *self, visitproc visit, void *arg)
+    static int structure_traverse(PyStructureObject *self, visitproc visit, void *arg)
     {
       Py_VISIT(self->pydict);
       std::vector<Atom>::const_iterator i_first = self->atoms.begin();
@@ -86,7 +86,7 @@ namespace LaDa
       return 0;
     }
   
-    static int structure_gcclear(StructureData *self)
+    static int structure_gcclear(PyStructureObject *self)
     { 
       Py_CLEAR(self->pydict);
       self->atoms.clear();

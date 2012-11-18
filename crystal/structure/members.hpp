@@ -2,35 +2,29 @@ namespace LaDa
 {
   namespace crystal
   {
-    extern "C" 
-    {
-      //! Returns a representation of the object.
-      static PyObject* structure_repr(StructureData* _self);
-      //! Returns a deepcopy of the atom.
-      static PyObject* structure_copy(StructureData* _self)
-        { return (PyObject*) PyStructure_Copy(_self, NULL); }
-      //! Implements deepcopy.
-      static PyObject* structure_deepcopy(StructureData* _self, PyObject* _memo)
-        { return (PyObject*) PyStructure_Copy(_self, _memo); }
-      //! Implements shallow copy.
-      static PyObject* structure_shallowcopy(StructureData* _self)
-        { Py_INCREF(_self); return (PyObject*)_self; }
-      //! Returns a dictionary with same info as atom.
-      static PyObject* structure_to_dict(StructureData* _self);
-      //! Implements getstate for pickling.
-      static PyObject* structure_getstate(StructureData* _self);
-      //! Implements setstate for pickling.
-      static PyObject* structure_setstate(StructureData* _self, PyObject *_dict);
-      //! Implements reduce for pickling.
-      static PyObject* structure_reduce(StructureData* _self);
-      //! Implements add atom.
-      static PyObject* structure_add_atom(StructureData* _self, PyObject* _args, PyObject* _kwargs);
-      //! Implements structure affine transformation.
-      static PyObject* structure_transform(StructureData* _self, PyObject* _args);
-    }
+    //! Returns a representation of the object.
+    static PyObject* structure_repr(PyStructureObject* _self);
+    //! Returns a deepcopy of the atom.
+    static PyObject* structure_copy(PyStructureObject* _self)
+      { return (PyObject*) copy_structure(_self, NULL); }
+    //! Implements shallow copy.
+    static PyObject* structure_shallowcopy(PyStructureObject* _self)
+      { Py_INCREF(_self); return (PyObject*)_self; }
+    //! Returns a dictionary with same info as atom.
+    static PyObject* structure_to_dict(PyStructureObject* _self);
+    //! Implements getstate for pickling.
+    static PyObject* structure_getstate(PyStructureObject* _self);
+    //! Implements setstate for pickling.
+    static PyObject* structure_setstate(PyStructureObject* _self, PyObject *_dict);
+    //! Implements reduce for pickling.
+    static PyObject* structure_reduce(PyStructureObject* _self);
+    //! Implements add atom.
+    static PyObject* structure_add_atom(PyStructureObject* _self, PyObject* _args, PyObject* _kwargs);
+    //! Implements structure affine transformation.
+    static PyObject* structure_transform(PyStructureObject* _self, PyObject* _args);
 
     //! Returns a representation of the object.
-    PyObject* structure_repr(StructureData* _self)
+    PyObject* structure_repr(PyStructureObject* _self)
     {
       std::string name(_self->ob_type->tp_name);
       name = name.substr(name.rfind('.')+1);
@@ -100,7 +94,7 @@ namespace LaDa
     }
 
     // Creates dictionary from atom with shallow copies.
-    PyObject *structure_to_dict(StructureData* _self)
+    PyObject *structure_to_dict(PyStructureObject* _self)
     {
       python::Object result = PyDict_New();
       if(not result) return NULL;
@@ -133,7 +127,7 @@ namespace LaDa
     }
 
     // Implements __reduce__ for pickling.
-    PyObject* structure_reduce(StructureData* _self)
+    PyObject* structure_reduce(PyStructureObject* _self)
     {
       // Creates return tuple of three elements.
       python::Object type = PyObject_Type((PyObject*)_self);
@@ -152,7 +146,7 @@ namespace LaDa
     }
 
     // Implements getstate for pickling.
-    PyObject* structure_getstate(StructureData* _self)
+    PyObject* structure_getstate(PyStructureObject* _self)
     {
       // get cell attribute.
       python::Object cell = structure_getcell(_self, NULL);
@@ -166,7 +160,7 @@ namespace LaDa
     }
 
     // Implements setstate for pickling.
-    PyObject* structure_setstate(StructureData* _self, PyObject *_tuple)
+    PyObject* structure_setstate(PyStructureObject* _self, PyObject *_tuple)
     {
       if(not PyTuple_Check(_tuple))
       {
@@ -196,13 +190,13 @@ namespace LaDa
     }
 
     // Implements add atom.
-    static PyObject* structure_add_atom(StructureData* _self, PyObject* _args, PyObject* _kwargs)
+    static PyObject* structure_add_atom(PyStructureObject* _self, PyObject* _args, PyObject* _kwargs)
     {
       // Check first that _args is not a tuple containing an atom.
       if(PyTuple_Size(_args) == 1)
       {
         PyAtomObject* wrapper = (PyAtomObject*)PyTuple_GET_ITEM(_args, 0);
-        if(PyAtom_Check(wrapper)) 
+        if(check_atom(wrapper)) 
         {
           if(_kwargs != NULL)
           {
@@ -229,15 +223,20 @@ namespace LaDa
       return (PyObject*)_self;
     }
 
-    static PyObject* structure_transform(StructureData* _self, PyObject* _args)
+    void itransform_structure( PyStructureObject* _self,
+                               Eigen::Matrix<types::t_real, 4, 3> const &_op )
     {
-      Eigen::Matrix<types::t_real, 4, 3> op;
-      if(not python::convert_to_matrix(_args, op)) return NULL;
-      _self->cell = op.block<3,3>(0,0) * _self->cell;
+      _self->cell = _op.block<3,3>(0,0) * _self->cell;
       std::vector<Atom>::iterator i_atom = _self->atoms.begin();
       std::vector<Atom>::iterator i_atom_end = _self->atoms.end();
       for(; i_atom != i_atom_end; ++i_atom)
-        i_atom->pos() = op.block<3,3>(0,0) * i_atom->pos() + ~op.block<1, 3>(3, 0);
+        i_atom->pos() = _op.block<3,3>(0,0) * i_atom->pos() + ~_op.block<1, 3>(3, 0);
+    }
+    static PyObject* structure_transform(PyStructureObject* _self, PyObject* _args)
+    {
+      Eigen::Matrix<types::t_real, 4, 3> op;
+      if(not python::convert_to_matrix(_args, op)) return NULL;
+      itransform_structure(_self, op);
       Py_RETURN_NONE;
     }
   }

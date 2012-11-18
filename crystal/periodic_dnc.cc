@@ -51,9 +51,9 @@ namespace LaDa
       }
       return result;
     }
-    static PyObject* dnc_boxes_impl_( const Structure &_structure, 
-                                      math::iVector3d const &_mesh, 
-                                      types::t_real _overlap)
+    static PyObject* dnc_boxes( const Structure &_structure, 
+                                math::iVector3d const &_mesh, 
+                                types::t_real _overlap)
     {
       namespace bt = boost::tuples;
       typedef math::iVector3d iVector3d;
@@ -238,7 +238,7 @@ namespace LaDa
           return NULL;
         }
         else if(_n == NULL) nperbox = 20;
-        if(not PyStructure_Check(structure)) 
+        if(not check_structure(structure)) 
         {
           LADA_PYERROR(TypeError, "DnCBoxes: First argument should be a structure.");
           return NULL;
@@ -249,7 +249,7 @@ namespace LaDa
   
         try
         { 
-          python::Object result = dnc_boxes_impl_(struc, mesh, overlap);
+          python::Object result = dnc_boxes(struc, mesh, overlap);
           if(not result) return NULL;
           if(not return_mesh) return result.release();
           python::Object pymesh = python::wrap_to_numpy(mesh);

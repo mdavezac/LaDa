@@ -2,13 +2,20 @@
 
 #include<iostream>
 
-#include <opt/debug.h>
 #include <cstdlib>
 #include <time.h>
 
 #include "../smith_normal_form.h"
 #include "../fuzzy.h"
 
+#define LADA_DOASSERT(a,b) \
+        { \
+          if((not (a)))\
+          { \
+            std::cerr << __FILE__ << ", line: " << __LINE__ << "\n" << b; \
+            throw 0;\
+          }\
+        }
 
 using namespace std;
 int main()
@@ -31,11 +38,11 @@ int main()
               rand()%(n<<1)-n, rand()%(n<<1)-n, rand()%(n<<1)-n;
     } while( is_null(cell.determinant()) );
     smith_normal_form(smith, left, cell, right);
-    for(size_t j(0); j < cell.rows(); ++j)
-      for(size_t k(0); k < cell.cols(); ++k)
+    for(int j(0); j < cell.rows(); ++j)
+      for(int k(0); k < cell.cols(); ++k)
         if(k != j) { LADA_DOASSERT(smith(j,k) == 0, "Non-zero off diagonal.\n") }
         else { LADA_DOASSERT(smith(j,k) != 0, "Zero on diagonal.\n") }
-    for(size_t j(0); j < cell.rows() - 1; ++j)
+    for(int j(0); j < cell.rows() - 1; ++j)
       LADA_DOASSERT(smith(j+1,j+1) % smith(j,j) == 0, "Not a factor.\n")
     LADA_DOASSERT( smith == left * cell * right, "Not a transform.\n");
     LADA_DOASSERT( std::abs(left.determinant()) > 1e-12, "Left matrix not invertible.\n")

@@ -173,7 +173,7 @@ namespace LaDa
       if(not PyArg_ParseTupleAndKeywords( _args, _kwargs, "OO:supercell", kwlist,
                                           &lattice, &cellin) )
         return NULL;
-      if(not PyStructure_Check(lattice))
+      if(not check_structure(lattice))
       {
         LADA_PYERROR(TypeError, "Input is not a crystal.Structure object."); 
         return NULL;
@@ -194,7 +194,7 @@ namespace LaDa
         LADA_PYERROR(TypeError, "primitive expects a structure as input, and optionally a tolerance.");
         return NULL;
       }
-      if(not PyStructure_Check(PyTuple_GET_ITEM(_args, 0)))
+      if(not check_structure(PyTuple_GET_ITEM(_args, 0)))
       {
         LADA_PYERROR(TypeError, "First input argument to primitive is not a structure.");
         return NULL;
@@ -221,7 +221,7 @@ namespace LaDa
         LADA_PYERROR(TypeError, "primitive expects a structure as input, and optionally a tolerance.");
         return NULL;
       }
-      if(not PyStructure_Check(PyTuple_GET_ITEM(_args, 0)))
+      if(not check_structure(PyTuple_GET_ITEM(_args, 0)))
       {
         LADA_PYERROR(TypeError, "First input argument to primitive is not a structure.");
         return NULL;
@@ -254,7 +254,7 @@ namespace LaDa
       }
       PyObject * const arg0 = PyTuple_GET_ITEM(_args, 0);
       math::rMatrix3d cell;
-      if(PyStructure_Check(arg0)) cell = ((StructureData*)arg0)->cell;
+      if(check_structure(arg0)) cell = ((PyStructureObject*)arg0)->cell;
       else if(not python::convert_to_matrix(arg0, cell)) return NULL;
       types::t_real tolerance = types::tolerance;
       if(N == 2)
@@ -280,7 +280,7 @@ namespace LaDa
         return NULL;
       }
       PyObject * const arg0 = PyTuple_GET_ITEM(_args, 0);
-      if(not PyStructure_Check(arg0)) 
+      if(not check_structure(arg0)) 
       {
         LADA_PYERROR(TypeError, "space_group expects a Structure as first argument.");
         return NULL;
@@ -316,12 +316,12 @@ namespace LaDa
       if(not PyArg_ParseTupleAndKeywords( _args, _kwargs, "OO|OOd:equivalent", kwlist,
                                           &a, &b, &scale, &cartesian, &tolerance) )
         return NULL;
-      if(not PyStructure_Check(a))
+      if(not check_structure(a))
       {
         LADA_PYERROR(TypeError, "equivalent: First argument should be a structure.");
         return NULL;
       }
-      if(not PyStructure_Check(b))
+      if(not check_structure(b))
       {
         LADA_PYERROR(TypeError, "equivalent: second argument should be a structure.");
         return NULL;
@@ -357,7 +357,7 @@ namespace LaDa
       if(not PyArg_ParseTupleAndKeywords( _args, _kwargs, "OO:transform", kwlist,
                                           &structure_, &transform_) )
         return NULL;
-      if(not PyStructure_Check(structure_))
+      if(not check_structure(structure_))
       {
         LADA_PYERROR(TypeError, "structure: First argument should be a structure.");
         return NULL;
@@ -384,13 +384,13 @@ namespace LaDa
       if(not PyArg_ParseTupleAndKeywords( _args, _kwargs, "OIO|d:neighbors", kwlist,
                                           &structure, &nmax, &_center, &tolerance ) )
         return NULL;
-      if(not PyStructure_Check(structure)) 
+      if(not check_structure(structure)) 
       {
         LADA_PYERROR(TypeError, "neighbors: First argument should be a structure.");
         return NULL;
       }
       math::rVector3d center(0,0,0);
-      if(PyAtom_Check(_center)) center = ((PyAtomObject*)_center)->pos;
+      if(check_atom(_center)) center = ((PyAtomObject*)_center)->pos;
       else if(not python::convert_to_vector(_center, center)) return NULL;
       Structure struc = Structure::acquire(structure);
       try { return neighbors(struc, nmax, center, tolerance); }
@@ -415,13 +415,13 @@ namespace LaDa
       if(not PyArg_ParseTupleAndKeywords( _args, _kwargs, "OIO|dI:coordination_shells", kwlist,
                                           &structure, &nmax, &_center, &tolerance, &natoms ) )
         return NULL;
-      if(not PyStructure_Check(structure)) 
+      if(not check_structure(structure)) 
       {
         LADA_PYERROR(TypeError, "coordination_shells: First argument should be a structure.");
         return NULL;
       }
       math::rVector3d center(0,0,0);
-      if(PyAtom_Check(_center)) center = ((PyAtomObject*)_center)->pos;
+      if(check_atom(_center)) center = ((PyAtomObject*)_center)->pos;
       else if(not python::convert_to_vector(_center, center)) return NULL;
       Structure struc = Structure::acquire(structure);
       try { return coordination_shells(struc, nmax, center, tolerance, natoms); }
@@ -439,11 +439,8 @@ namespace LaDa
       PyObject* _structure = NULL; 
       PyObject* _atom = NULL; 
       PyObject* _configurations = NULL; 
-      int index = 0;
       Py_ssize_t nmax = 0;
-      PyObject* configurations = NULL;
       double tolerance = 1e-8;
-      Py_ssize_t natoms = 0;
       static char *kwlist[] = { const_cast<char*>("structure"),
                                 const_cast<char*>("center"), 
                                 const_cast<char*>("nmax"), 
@@ -452,12 +449,12 @@ namespace LaDa
       if(not PyArg_ParseTupleAndKeywords( _args, _kwargs, "OOI|Od:splitconfigs", kwlist,
                                           &_structure, &_atom, &nmax, &_configurations, &tolerance) )
         return NULL;
-      if(not PyStructure_Check(_structure)) 
+      if(not check_structure(_structure)) 
       {
         LADA_PYERROR(TypeError, "splitconfigs: structure argument should be a structure.");
         return NULL;
       }
-      if(not PyAtom_Check(_atom)) 
+      if(not check_atom(_atom)) 
       {
         LADA_PYERROR(TypeError, "splitconfigs: center argument should be an atom.");
         return NULL;
@@ -498,12 +495,12 @@ namespace LaDa
       if(not PyArg_ParseTupleAndKeywords( _args, _kwargs, "OO|Od:", kwlist,
                                           &_mapper, &_mappee, &_cmp, &tolerance) )
         return NULL;
-      if(not PyStructure_Check(_mapper)) 
+      if(not check_structure(_mapper)) 
       {
         LADA_PYERROR(TypeError, "map_sites: mapper argument should be a structure.");
         return NULL;
       }
-      if(not PyStructure_Check(_mappee)) 
+      if(not check_structure(_mappee)) 
       {
         LADA_PYERROR(TypeError, "map_sites: mappee argument should be a structure.");
         return NULL;

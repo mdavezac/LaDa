@@ -3,35 +3,30 @@ namespace LaDa
 {
   namespace crystal
   {
-    extern "C" 
-    {
-      //! Returns a deepcopy of the atom.
-      static PyObject* hftransform_copy(HFTransformData* _self)
-        { return (PyObject*) PyHFTransform_Copy(_self, NULL); }
-      //! Implements deepcopy.
-      static PyObject* hftransform_deepcopy(HFTransformData* _self, PyObject* _memo)
-        { return (PyObject*) PyHFTransform_Copy(_self, _memo); }
-      //! Implements shallow copy.
-      static PyObject* hftransform_shallowcopy(HFTransformData* _self)
-        { Py_INCREF(_self); return (PyObject*)_self; }
-      //! Implements getstate for pickling.
-      static PyObject* hftransform_getstate(HFTransformData* _self);
-      //! Implements setstate for pickling.
-      static PyObject* hftransform_setstate(HFTransformData* _self, PyObject *_dict);
-      //! Implements reduce for pickling.
-      static PyObject* hftransform_reduce(HFTransformData* _self);
-      //! Computes Z-group indices of position \a _pos.
-      static PyObject* hftransform_indices(HFTransformData* _self, PyObject* _args);
-      // Computes flat hf index from non-flat hf index.
-      static PyObject* hftransform_flatten_indices( HFTransformData* _self,
-                                                       PyObject* _args, PyObject *_kwargs );
-      //! Computes flat index into Z-group from atomic position.
-      static PyObject* hftransform_flat_index( HFTransformData* _self,
-                                                  PyObject* _args, PyObject *_kwargs );
-    }
+    //! Returns a deepcopy of the atom.
+    static PyObject* hftransform_copy(PyHFTObject* _self)
+      { return (PyObject*) copy_hftransform(_self, NULL); }
+    //! Implements shallow copy.
+    static PyObject* hftransform_shallowcopy(PyHFTObject* _self)
+      { Py_INCREF(_self); return (PyObject*)_self; }
+    //! Implements getstate for pickling.
+    static PyObject* hftransform_getstate(PyHFTObject* _self);
+    //! Implements setstate for pickling.
+    static PyObject* hftransform_setstate(PyHFTObject* _self, PyObject *_dict);
+    //! Implements reduce for pickling.
+    static PyObject* hftransform_reduce(PyHFTObject* _self);
+    //! Computes Z-group indices of position \a _pos.
+    static PyObject* hftransform_indices(PyHFTObject* _self, PyObject* _args);
+    // Computes flat hf index from non-flat hf index.
+    static PyObject* hftransform_flatten_indices( PyHFTObject* _self,
+                                                     PyObject* _args, PyObject *_kwargs );
+    //! Computes flat index into Z-group from atomic position.
+    static PyObject* hftransform_flat_index( PyHFTObject* _self,
+                                                PyObject* _args, PyObject *_kwargs );
+    
 
     // Implements __reduce__ for pickling.
-    PyObject* hftransform_reduce(HFTransformData* _self)
+    PyObject* hftransform_reduce(PyHFTObject* _self)
     {
       // Creates return tuple of three elements.
       python::Object type = PyObject_Type((PyObject*)_self);
@@ -48,7 +43,7 @@ namespace LaDa
     }
 
     // Implements getstate for pickling.
-    PyObject* hftransform_getstate(HFTransformData* _self)
+    PyObject* hftransform_getstate(PyHFTObject* _self)
     {
       // get cell attribute.
       python::Object cell = hftransform_gettransform(_self, NULL);
@@ -60,7 +55,7 @@ namespace LaDa
     }
 
     // Implements setstate for pickling.
-    PyObject* hftransform_setstate(HFTransformData* _self, PyObject *_tuple)
+    PyObject* hftransform_setstate(PyHFTObject* _self, PyObject *_tuple)
     {
       if(not PyTuple_Check(_tuple))
       {
@@ -81,7 +76,7 @@ namespace LaDa
     // defines macros also used in hf.
 #   include "macro.hpp"
     // Computes flat hf index from non-flat hf index.
-    static PyObject* hftransform_flatten_indices( HFTransformData* _self,
+    static PyObject* hftransform_flatten_indices( PyHFTObject* _self,
                                                   PyObject* _args, PyObject *_kwargs )
     {
       int site = -1, i = 0, j = 0, k = 0;
@@ -99,7 +94,7 @@ namespace LaDa
               );
     }
     //! Computes flat hf index from non-flat hf index, including sites.
-    static PyObject* hftransform_flat_index( HFTransformData* _self,
+    static PyObject* hftransform_flat_index( PyHFTObject* _self,
                                                 PyObject* _args, PyObject *_kwargs )
     {
       PyObject *posatom = NULL;
@@ -114,7 +109,7 @@ namespace LaDa
       return PyInt_FromLong(flat_result);
     }
     // Computes hf indices of position \a _pos.
-    static PyObject* hftransform_indices(HFTransformData* _self, PyObject* _args)
+    static PyObject* hftransform_indices(PyHFTObject* _self, PyObject* _args)
     {
       math::rVector3d pos;
       if(not python::convert_to_vector(_args, pos)) return NULL;

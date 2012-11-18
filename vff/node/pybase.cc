@@ -183,7 +183,7 @@ namespace LaDa
       if(not PyArg_ParseTupleAndKeywords( _args, _kwargs, "O|l:Node", kwlist,
                                           &pyatom, &index))
         return -1;
-      if(not PyAtom_Check(pyatom))
+      if(not crystal::check_atom(pyatom))
       {
         LADA_PYERROR(TypeError, "Node: First argument should be an atom.");
         return -1;

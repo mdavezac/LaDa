@@ -1,16 +1,11 @@
-#ifndef LADA_CRYSTAL_ATOM_BASE_H
-#define LADA_CRYSTAL_ATOM_BASE_H
+#ifndef LADA_CRYSTAL_ATOMOBJECT_H
+#define LADA_CRYSTAL_ATOMOBJECT_H
 
 #include "LaDaConfig.h"
 
 #include <Python.h>
 
 #include <math/eigen.h>
-
-//! Returns true if an object is an atom or subtype.
-#define PyAtom_Check(object) PyObject_TypeCheck(object, LaDa::crystal::atom_type())
-//! Returns true if an object is an atom.
-#define PyAtom_CheckExact(object) object->ob_type == LaDa::crystal::atom_type()
 
 namespace LaDa
 {
@@ -32,16 +27,54 @@ namespace LaDa
       math::rVector3d pos;
     };
     
-    //! Creates a new atom.
-    PyAtomObject* PyAtom_New();
-    //! Creates a new atom with a given type.
-    PyAtomObject* PyAtom_NewWithArgs(PyTypeObject* _type, PyObject *_args, PyObject *_kwargs);
-    //! Creates a new atom with a given type, also calling initialization.
-    PyAtomObject* PyAtom_NewFromArgs(PyTypeObject* _type, PyObject *_args, PyObject *_kwargs);
-    //! Creates a deepcopy of atom.
-    PyAtomObject *PyAtom_Copy(PyAtomObject* _self, PyObject *_memo = NULL);
-    // Returns pointer to atom type.
-    PyTypeObject* atom_type();
+#   ifdef LADA_CRYSTAL_MODULE
+      //! Creates a new atom.
+      static PyAtomObject* new_atom();
+      //! Creates a deepcopy of atom.
+      static PyAtomObject *copy_atom(PyAtomObject* _self, PyObject *_memo=NULL);
+      //! Creates a new atom with a given type, also calling initialization.
+      static PyAtomObject* new_atom(PyTypeObject* _type, PyObject *_args, PyObject *_kwargs);
+      //! Returns pointer to atom type.
+      static PyTypeObject* atom_type();
+      //! Checks type of an object.
+      static inline bool check_atom(PyObject *_self)
+        { return PyObject_TypeCheck(_self, atom_type()); }
+      //! Checks type of an object.
+      static inline bool checkexact_atom(PyObject *_self)
+        { return _self->ob_type ==  atom_type(); }
+      //! Checks type of an object.
+      static inline bool check_atom(PyAtomObject *_self)
+        { return PyObject_TypeCheck(_self, atom_type()); }
+      //! Checks type of an object.
+      static inline bool checkexact_atom(PyAtomObject *_self)
+        { return _self->ob_type ==  atom_type(); }
+#   else
+      //! Returns pointer to atom type.
+      inline PyTypeObject* atom_type()
+        { return (*(PyTypeObject*(*)())api_capsule[0])(); }
+      //! Creates a new atom.
+      inline PyAtomObject* new_atom()
+        { return (*(PyAtomObject*(*)())api_capsule[1])(); }
+      //! Creates a new atom with a given type, also calling initialization.
+      inline PyAtomObject* new_atom(PyTypeObject* _type, PyObject *_args, PyObject *_kwargs)
+        { return (*(PyAtomObject*(*)(PyTypeObject*, PyObject*, PyObject*))
+                   api_capsule[2])(_type, _args, _kwargs); }
+      //! Creates a deepcopy of atom.
+      inline PyAtomObject *copy_atom(PyAtomObject* _self, PyObject *_memo = NULL)
+        { return (*(PyAtomObject*(*)(PyAtomObject*, PyObject*))api_capsule[3])(_self, _memo); }
+      //! Checks type of an object.
+      inline bool check_atom(PyObject *_self)
+        { return PyObject_TypeCheck(_self, atom_type()); }
+      //! Checks type of an object.
+      inline bool check_atom(PyAtomObject *_self)
+        { return PyObject_TypeCheck(_self, atom_type()); }
+      //! Checks type of an object.
+      inline bool checkexact_atom(PyObject *_self)
+        { return _self->ob_type ==  atom_type(); }
+      //! Checks type of an object.
+      inline bool checkexact_atom(PyAtomObject *_self)
+        { return _self->ob_type ==  atom_type(); }
+#   endif
   }
 }
   

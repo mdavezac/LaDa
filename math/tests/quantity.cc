@@ -81,4 +81,5 @@ static PyMethodDef methods[] = {
 PyMODINIT_FUNC init_quantity(void) 
 {
   PyObject* module = Py_InitModule("_quantity", methods);
+  if(not module) return;
 }

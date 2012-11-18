@@ -2,17 +2,15 @@ namespace LaDa
 {
   namespace crystal
   {
-    extern "C"
-    {
-      //! Returns position as a numpy array. 
-      static PyObject* lada_atom_getpos(PyAtomObject *_self, void *closure);
-      //! Sets position from a sequence of three numbers.
-      static int lada_atom_setpos(PyAtomObject *_self, PyObject *_value, void *_closure);
-      //! Returns type python object.
-      static PyObject* lada_atom_gettype(PyAtomObject *_self, void *closure);
-      //! Sets type python object.
-      static int lada_atom_settype(PyAtomObject *_self, PyObject *_value, void *_closure);
-    }
+    //! Returns position as a numpy array. 
+    static PyObject* lada_atom_getpos(PyAtomObject *_self, void *closure);
+    //! Sets position from a sequence of three numbers.
+    static int lada_atom_setpos(PyAtomObject *_self, PyObject *_value, void *_closure);
+    //! Returns type python object.
+    static PyObject* lada_atom_gettype(PyAtomObject *_self, void *closure);
+    //! Sets type python object.
+    static int lada_atom_settype(PyAtomObject *_self, PyObject *_value, void *_closure);
+    
   
     // Returns position as a numpy array. 
     // Numpy does not implement python's cyclic garbage, hence new wrapper need be

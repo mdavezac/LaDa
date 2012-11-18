@@ -43,7 +43,6 @@ namespace LaDa
             result->flags -= LADA_MACRO;
           else if((not (result->flags & LADA_MACRO)) and _in.IsRowMajor) 
             result->flags |= LADA_MACRO;
-          Eigen::DenseCoeffsBase<T_DERIVED> const coeffs = _in;
           if(_in.cols() == 1)
             result->strides[0] = _in.innerStride() * sizeof(typename t_ScalarType::np_type);
           else if(_in.IsRowMajor) 
@@ -62,8 +61,8 @@ namespace LaDa
         // otherwise, copy data.
         else
         {
-          for(size_t i(0); i < _in.rows(); ++i)
-            for(size_t j(0); j < _in.cols(); ++j)
+          for(int i(0); i < _in.rows(); ++i)
+            for(int j(0); j < _in.cols(); ++j)
               *((typename t_ScalarType::np_type*)
                   (result->data + i*result->strides[0] + j*result->strides[1])) = _in(i, j);
         }
@@ -104,7 +103,6 @@ namespace LaDa
             result->flags -= LADA_MACRO;
           else if((not (result->flags & LADA_MACRO)) and _in.IsRowMajor) 
             result->flags |= LADA_MACRO;
-          Eigen::DenseCoeffsBase<T_DERIVED> const coeffs = _in;
           if(_in.cols() == 1)
             result->strides[0] = _in.innerStride() * sizeof(typename t_ScalarType::np_type);
           else if(_in.IsRowMajor) 
@@ -123,8 +121,8 @@ namespace LaDa
         // otherwise, copy data.
         else
         {
-          for(size_t i(0); i < _in.rows(); ++i)
-            for(size_t j(0); j < _in.cols(); ++j)
+          for(int i(0); i < _in.rows(); ++i)
+            for(int j(0); j < _in.cols(); ++j)
               *((typename t_ScalarType::np_type*)
                   (result->data + i*result->strides[0] + j*result->strides[1])) = _in(i, j);
         }
@@ -135,21 +133,34 @@ namespace LaDa
     template<class T_DERIVED>
       bool convert_to_matrix(PyObject *_in, Eigen::DenseBase<T_DERIVED> &_out)
       {
-        size_t const N0(_out.rows());
-        size_t const N1(_out.cols());
+        Py_ssize_t const N0(_out.rows());
+        Py_ssize_t const N1(_out.cols());
         if(PyArray_Check(_in))
         {
           if(PyArray_NDIM(_in) != 2)
           {
             npy_intp const n(PyArray_NDIM(_in));
-            LADA_PYERROR_FORMAT(TypeError, "Expected a 2d array, got %id", n);
+            LADA_PYERROR_FORMAT(TypeError, "Expected a 2d array, got %id", int(n));
             return false;
           }
           if(PyArray_DIM(_in, 0) != N0 or PyArray_DIM(_in, 1) != N1)
           {
             npy_intp const n0(PyArray_DIM(_in, 0));
             npy_intp const n1(PyArray_DIM(_in, 1));
-            LADA_PYERROR_FORMAT(TypeError,"Expected a %ix%i array, got %ix%i", (N0, N1, n0, n1));
+            {                                                                         
+              PyObject* err_module = PyImport_ImportModule("lada.error");             
+              if(err_module)                                                          
+              {                                                                       
+                PyObject *err_result = PyObject_GetAttrString(err_module, "TypeError");
+                if(not err_result) Py_DECREF(err_module);                             
+                else                                                                  
+                {                                                                     
+                  PyErr_Format(err_result, "Expected a %ix%i array, got %ix%i", int(N0), int(N1), int(n0), int(n1));                           
+                  Py_DECREF(err_module);                                              
+                  Py_DECREF(err_result);                                              
+                }                                                                     
+              }                                                                       
+            }
             return false;
           }
           python::Object iterator = PyArray_IterNew(_in);
@@ -161,7 +172,7 @@ namespace LaDa
 #         define LADA_NPYITER(TYPE, NUM_TYPE)                                             \
             if(type == NUM_TYPE)                                                          \
             {                                                                             \
-              for(size_t i(0); i < N0*N1; ++i)                                            \
+              for(Py_ssize_t i(0); i < N0*N1; ++i)                                        \
               {                                                                           \
                 if(not PyArray_ITER_NOTDONE(iterator.borrowed()))                         \
                 {                                                                         \
@@ -213,7 +224,7 @@ namespace LaDa
           }
           if(not outer.hasattr("__iter__")) // except 9 in a row
           {
-            size_t i(0);
+            Py_ssize_t i(0);
             for( ; outer.is_valid() and i < N0*N1;
                  outer.reset(PyIter_Next(i_outer.borrowed())), ++i ) 
             {
@@ -233,7 +244,7 @@ namespace LaDa
           }    // N0*N1 in a row.
           else // expect N0 by N1
           {
-            size_t i(0);
+            Py_ssize_t i(0);
             for( ; outer.is_valid() and i < N0;
                  outer.reset(PyIter_Next(i_outer.borrowed())), ++i ) 
             {
@@ -241,7 +252,7 @@ namespace LaDa
               if(not i_inner) return false;
               python::Object inner(PyIter_Next(i_inner.borrowed()));
               if(not inner) return false;
-              size_t j(0);
+              Py_ssize_t j(0);
               for( ; inner.is_valid() and j < N1;
                    inner.reset(PyIter_Next(i_inner.borrowed())), ++j ) 
               {

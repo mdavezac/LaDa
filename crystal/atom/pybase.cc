@@ -26,8 +26,10 @@ namespace LaDa
 {
   namespace crystal
   {
+    //! Creates a new atom with a given type.
+    static PyAtomObject* PyAtom_NewWithArgs(PyTypeObject* _type, PyObject *_args, PyObject *_kwargs);
     //! Creates a new atom.
-    PyAtomObject* PyAtom_New()
+    PyAtomObject* new_atom()
     {
       PyAtomObject* result = (PyAtomObject*) atom_type()->tp_alloc(atom_type(), 0);
       if(not result) return NULL;
@@ -53,7 +55,7 @@ namespace LaDa
       return result;
     }
     //! Creates a new atom with a given type, also calling initialization.
-    PyAtomObject* PyAtom_NewFromArgs(PyTypeObject* _type, PyObject *_args, PyObject *_kwargs)
+    PyAtomObject* new_atom(PyTypeObject* _type, PyObject *_args, PyObject *_kwargs)
     {
       PyAtomObject* result = PyAtom_NewWithArgs(_type, _args, _kwargs);
       if(result == NULL) return NULL;
@@ -62,7 +64,7 @@ namespace LaDa
     }
 
     // Creates a deepcopy of atom.
-    PyAtomObject *PyAtom_Copy(PyAtomObject* _self, PyObject *_memo)
+    PyAtomObject *copy_atom(PyAtomObject* _self, PyObject *_memo)
     {
       PyAtomObject* result = (PyAtomObject*)_self->ob_type->tp_alloc(_self->ob_type, 0);
       if(not result) return NULL;
@@ -78,14 +80,14 @@ namespace LaDa
         result->type = PyObject_CallMethodObjArgs(copymod, deepcopystr, _self->type, NULL);
       else 
         result->type = PyObject_CallMethodObjArgs(copymod, deepcopystr, _self->type, _memo, NULL);
-      if(result->type == NULL) { Py_DECREF(result);  result == NULL; }
+      if(result->type == NULL) { Py_DECREF(result); }
       else if(_self->pydict != NULL)
       {
         if(_memo == NULL)
           result->pydict = PyObject_CallMethodObjArgs(copymod, deepcopystr, _self->pydict, NULL);
         else
           result->pydict = PyObject_CallMethodObjArgs(copymod, deepcopystr, _self->pydict, _memo, NULL);
-        if(result->pydict == NULL) { Py_DECREF(result);  result == NULL; }
+        if(result->pydict == NULL) { Py_DECREF(result); }
       }
 
       Py_DECREF(copymod);
@@ -134,7 +136,7 @@ namespace LaDa
           LADA_DECLARE( to_dict, lada_atom_to_dict, NOARGS, 
                         "Returns a dictionary with shallow copies of items." ),
           LADA_DECLARE(__copy__, lada_atom_shallowcopy, NOARGS, "Shallow copy of an atom."),
-          LADA_DECLARE(__deepcopy__, PyAtom_Copy, O, "Deep copy of an atom."),
+          LADA_DECLARE(__deepcopy__, *(PyObject*(*)(PyAtomObject*, PyObject*)) copy_atom, O, "Deep copy of an atom."),
           LADA_DECLARE(__getstate__, lada_atom_getstate, NOARGS, "Implements pickle protocol."),
           LADA_DECLARE(__setstate__, lada_atom_setstate, O, "Implements pickle protocol."),
           LADA_DECLARE(__reduce__,   lada_atom_reduce, NOARGS, "Implements pickle protocol."),

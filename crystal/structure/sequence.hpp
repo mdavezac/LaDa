@@ -2,31 +2,29 @@ namespace LaDa
 {
   namespace crystal
   {
-    extern "C"
-    {
-       //! Adds atom to structure.
-       static PyObject* structure_append(StructureData* _self, PyObject* _atom);
-       //! Extends atoms with other list of atoms.
-       static PyObject* structure_extend(StructureData* _self, PyObject *_b);
-       //! Removes and returns key from set.
-       static PyObject* structure_pop(StructureData *_self, PyObject* _index);
-       //! Insert atom at given position
-       static PyObject* structure_insert(StructureData* _self, PyObject* _tuple);
-       //! Clears occupation set.
-       static PyObject* structure_clear(StructureData *_self) { _self->atoms.clear(); Py_RETURN_NONE;}
-       //! Returns size of set.
-       static Py_ssize_t structure_size(StructureData* _self) { return Py_ssize_t(_self->atoms.size()); }
-       //! Retrieves item. No slice.
-       static PyObject* structure_getitem(StructureData *_self, Py_ssize_t _index);
-       //! Retrieves slice and items.
-       static PyObject* structure_subscript(StructureData *_self, PyObject* _index);
-       //! Sets/deletes item. No slice.
-       static int structure_setitem(StructureData *_self, Py_ssize_t _index, PyObject *_replace);
-       //! Sets slices and items.
-       static int structure_ass_subscript(StructureData *_self, PyObject* _index, PyObject *_value);
-       //! Sets slices and items. Normal(not special) method.
-       static PyObject* structure_setitemnormal(StructureData *_self, PyObject* _tuple);
-    }
+    //! Adds atom to structure.
+    static PyObject* structure_append(PyStructureObject* _self, PyObject* _atom);
+    //! Extends atoms with other list of atoms.
+    static PyObject* structure_extend(PyStructureObject* _self, PyObject *_b);
+    //! Removes and returns key from set.
+    static PyObject* structure_pop(PyStructureObject *_self, PyObject* _index);
+    //! Insert atom at given position
+    static PyObject* structure_insert(PyStructureObject* _self, PyObject* _tuple);
+    //! Clears occupation set.
+    static PyObject* structure_clear(PyStructureObject *_self) { _self->atoms.clear(); Py_RETURN_NONE;}
+    //! Returns size of set.
+    static Py_ssize_t structure_size(PyStructureObject* _self) { return Py_ssize_t(_self->atoms.size()); }
+    //! Retrieves item. No slice.
+    static PyObject* structure_getitem(PyStructureObject *_self, Py_ssize_t _index);
+    //! Retrieves slice and items.
+    static PyObject* structure_subscript(PyStructureObject *_self, PyObject* _index);
+    //! Sets/deletes item. No slice.
+    static int structure_setitem(PyStructureObject *_self, Py_ssize_t _index, PyObject *_replace);
+    //! Sets slices and items.
+    static int structure_ass_subscript(PyStructureObject *_self, PyObject* _index, PyObject *_value);
+    //! Sets slices and items. Normal(not special) method.
+    static PyObject* structure_setitemnormal(PyStructureObject *_self, PyObject* _tuple);
+    
 #   ifdef LADA_STARTTRY
 #     error LADA_STARTTRY already defined.
 #   endif
@@ -41,7 +39,7 @@ namespace LaDa
        return NULL; } 
 
     // Adds atom to structure.
-    PyObject* structure_append(StructureData* _self, PyObject* _atom)
+    PyObject* structure_append(PyStructureObject* _self, PyObject* _atom)
     {
       LADA_STARTTRY
         if(not Atom::check(_atom))
@@ -56,11 +54,11 @@ namespace LaDa
       LADA_ENDTRY(Structure.append)
     }
     //! Extends atoms with other list of atoms.
-    PyObject* structure_extend(StructureData* _self, PyObject* _b)
+    PyObject* structure_extend(PyStructureObject* _self, PyObject* _b)
     {
       LADA_STARTTRY
-        if(PyStructure_Check(_b))
-          std::copy( ((StructureData*)_b)->atoms.begin(), ((StructureData*)_b)->atoms.end(),
+        if(check_structure(_b))
+          std::copy( ((PyStructureObject*)_b)->atoms.begin(), ((PyStructureObject*)_b)->atoms.end(),
                      std::back_inserter(_self->atoms) );
         else if(python::Object iterator = PyObject_GetIter(_b))
           for( python::Object item = PyIter_Next(iterator.borrowed());
@@ -87,13 +85,13 @@ namespace LaDa
       LADA_ENDTRY(Structure.extend)
     }  
     // Removes and returns atom from set.
-    PyObject* structure_pop(StructureData *_self, PyObject* _index)
+    PyObject* structure_pop(PyStructureObject *_self, PyObject* _index)
     {
       LADA_STARTTRY
         long index = PyInt_AsLong(_index);
         if(index == -1 and PyErr_Occurred()) return NULL;
         if(index < 0) index += _self->atoms.size();
-        if(index < 0 or index >= _self->atoms.size()) 
+        if(index < 0 or index >= long(_self->atoms.size()) ) 
         {
           LADA_PYERROR(IndexError, "Index out-of-range in Structure.pop.");
           return NULL;
@@ -104,7 +102,7 @@ namespace LaDa
       LADA_ENDTRY(Structure.pop)
     }
     // Insert atom at given position
-    PyObject* structure_insert(StructureData* _self, PyObject* _tuple)
+    PyObject* structure_insert(PyStructureObject* _self, PyObject* _tuple)
     {
       Py_ssize_t index;
       PyObject *atom;
@@ -118,22 +116,22 @@ namespace LaDa
           return NULL;
         }
         if(index < 0) index += _self->atoms.size();
-        if(index < 0 or index > _self->atoms.size()) 
+        if(index < 0 or index > long(_self->atoms.size()) ) 
         {
           LADA_PYERROR(IndexError, "Index out-of-range in Structure.pop.");
           return NULL;
         }
-        if(index == _self->atoms.size()) _self->atoms.push_back(Atom::acquire_(atom));
+        if(index == long(_self->atoms.size())) _self->atoms.push_back(Atom::acquire_(atom));
         else _self->atoms.insert(_self->atoms.begin()+index, Atom::acquire_(atom));
         Py_RETURN_NONE;
       LADA_ENDTRY(Structure.insert)
     }
     // Retrieves item. No slice.
-    PyObject* structure_getitem(StructureData *_self, Py_ssize_t _index)
+    PyObject* structure_getitem(PyStructureObject *_self, Py_ssize_t _index)
     {
       LADA_STARTTRY
         if(_index < 0) _index += _self->atoms.size();
-        if(_index < 0 or _index >= _self->atoms.size())
+        if(_index < 0 or _index >= long(_self->atoms.size()))
         {
           LADA_PYERROR(IndexError, "Index out of range when getting atom from structure.");
           return NULL;
@@ -142,7 +140,7 @@ namespace LaDa
       LADA_ENDTRY(Structure.__getitem__)
     }
     // Retrieves slice and items.
-    PyObject* structure_subscript(StructureData *_self, PyObject *_index)
+    PyObject* structure_subscript(PyStructureObject *_self, PyObject *_index)
     {
       if(PyIndex_Check(_index))
       {
@@ -182,12 +180,12 @@ namespace LaDa
       LADA_ENDTRY(Structure.__getitem__);
     }
     //! Sets/deletes item. No slice.
-    int structure_setitem(StructureData *_self, Py_ssize_t _index, PyObject *_replace)
+    int structure_setitem(PyStructureObject *_self, Py_ssize_t _index, PyObject *_replace)
     {
       try
       {
         if(_index < 0) _index += _self->atoms.size();
-        if(_index < 0 or _index >= _self->atoms.size())
+        if(_index < 0 or _index >= long(_self->atoms.size()))
         {
           LADA_PYERROR(IndexError, "Index out of range when setting atom in structure.");
           return -1;
@@ -195,7 +193,7 @@ namespace LaDa
         // deleting.
         if(_replace == NULL)
         {
-          if(_index == _self->atoms.size() - 1) _self->atoms.pop_back();
+          if(_index == long(_self->atoms.size() - 1)) _self->atoms.pop_back();
           else _self->atoms.erase(_self->atoms.begin()+_index);
         }
         else if(Atom::check(_replace)) _self->atoms[_index].Object::reset(_replace);
@@ -218,7 +216,7 @@ namespace LaDa
       return 0;
     }
     // Sets slices and items.
-    int structure_ass_subscript(StructureData *_self, PyObject* _index, PyObject *_value)
+    int structure_ass_subscript(PyStructureObject *_self, PyObject* _index, PyObject *_value)
     {
       if(PyIndex_Check(_index))
       {
@@ -248,17 +246,17 @@ namespace LaDa
             for(Py_ssize_t i(0); i < slicelength; ++i, i_first += step) _self->atoms.erase(i_first);
           }
         }
-        else if(_self == (StructureData*)_value and step == -1) // structure[::-1] = structure
+        else if(_self == (PyStructureObject*)_value and step == -1) // structure[::-1] = structure
           std::reverse(_self->atoms.begin()+start + (slicelength-1) * step, _self->atoms.begin()+start+1);
-        else if(PyStructure_Check(_value)) // another structure.
+        else if(check_structure(_value)) // another structure.
         {
-          if(((StructureData*)_value)->atoms.size() != slicelength)
+          if(long(((PyStructureObject*)_value)->atoms.size()) != slicelength)
           {
             LADA_PYERROR(ValueError, "size of right-hand side of assignement is incorrect.");
             return -1;
           }
           std::vector<Atom>::iterator i_first = _self->atoms.begin() + start;
-          std::vector<Atom>::const_iterator i_other = ((StructureData*)_value)->atoms.begin();
+          std::vector<Atom>::const_iterator i_other = ((PyStructureObject*)_value)->atoms.begin();
           for(Py_ssize_t i(start); i < stop; i += step, i_first += step, ++i_other)
             *i_first = *i_other;
         }
@@ -311,7 +309,7 @@ namespace LaDa
       return 0;
     }
     // Sets slices and items. Normal(not special) method.
-    PyObject* structure_setitemnormal(StructureData *_self, PyObject* _tuple)
+    PyObject* structure_setitemnormal(PyStructureObject *_self, PyObject* _tuple)
     {
       PyObject *index, *value;
       if (not PyArg_ParseTuple(_tuple, "OO:__setitem__", &index, &value)) return NULL;

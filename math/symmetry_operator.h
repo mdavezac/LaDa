@@ -3,7 +3,6 @@
 
 #include "LaDaConfig.h"
 
-#include <opt/debug.h>
 #include <misc/types.h>
 
 #include "fuzzy.h"

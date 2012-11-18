@@ -22,14 +22,14 @@ namespace LaDa
     {
       public: 
         //! Constructor
-        Atom() : Object() { object_ = (PyObject*)PyAtom_New(); }
+        Atom() : Object() { object_ = (PyObject*)new_atom(); }
         //! Acquires ownership of an atom.
         Atom(Atom const &_c ) : Object(_c) {}
         //! Shallow copy Constructor
         Atom(PyAtomObject *_data ) : Object((PyObject*)_data) {}
         //! Full Initialization.
         Atom(PyObject *_args, PyObject *_kwargs) : Object()
-          { object_ = (PyObject*)PyAtom_NewFromArgs(atom_type(), _args, _kwargs); }
+          { object_ = (PyObject*)new_atom(atom_type(), _args, _kwargs); }
 
         //! Swaps data of two atoms.
         void swap(Atom &_in) { return std::swap(object_, _in.object_); }
@@ -38,7 +38,7 @@ namespace LaDa
         //!         Atom or subtype.
         void reset(PyObject *_in) 
         {
-          if(_in != NULL and not PyAtom_Check(_in))
+          if(_in != NULL and not check_atom(_in))
           {
             LADA_PYTHROW(TypeError, "Cannot acquire object which is not an Atom or subclass.");
           }
@@ -53,7 +53,7 @@ namespace LaDa
         //! \details Return does not share data with this atom. 
         //!          Use constructor to obtain that behavior.
         //!          The user should check that the atom is valid.
-        Atom copy() const { return Atom(PyAtom_Copy((PyAtomObject*)object_)); } 
+        Atom copy() const { return Atom(copy_atom((PyAtomObject*)object_)); } 
 
         //! Returns borrowed reference to dictionary.
         PyObject* dict() const { return ((PyAtomObject*)object_)->pydict; }
@@ -86,9 +86,9 @@ namespace LaDa
  
 
         //! Check if instance is an atom.
-        static bool check(PyObject *_atom) { return PyAtom_Check(_atom); }
+        static bool check(PyObject *_atom) { return check_atom(_atom); }
         //! Check if instance is an atom.
-        static bool check_exact(PyObject *_atom) { return PyAtom_CheckExact(_atom); }
+        static bool check_exact(PyObject *_atom) { return checkexact_atom(_atom); }
         //! \brief Acquires new reference to an object.
         //! \details incref's reference first, unless null.
         //!          If non-null checks that it is a subtype of Atom.

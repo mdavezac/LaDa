@@ -32,12 +32,12 @@ namespace LaDa
       typedef Eigen::Map<math::rVector3d> t_NpMap;
       typedef python::RAList_iterator pylist_iter;
       typedef python::RATuple_iterator pytuple_iter;
-      math::rVector3d normalized(math::rVector3d const &_in) { return _in / std::sqrt(_in.squaredNorm()); }
+      static math::rVector3d normalized(math::rVector3d const &_in) { return _in / std::sqrt(_in.squaredNorm()); }
       
       //! Look for largest x element.
-      pylist_iter max_xelement( pylist_iter & _first,
-                                pylist_iter const & _last,
-                                math::rVector3d const &_x )
+      static pylist_iter max_xelement( pylist_iter & _first,
+                                       pylist_iter const & _last,
+                                       math::rVector3d const &_x )
       {
         if (_first == _last) return _first;
         do
@@ -65,6 +65,7 @@ namespace LaDa
       }
       
       //! Functor to compare coordinates using once given a basis.
+      namespace {
       struct CmpFromCoord
       {
         math::rVector3d const &x;
@@ -83,13 +84,13 @@ namespace LaDa
           if( math::neq(y1, y2)) return math::gt(y1, y2);
           return math::gt(a.dot(z), b.dot(z) );
         }
-      };
+      }; }
 
       //! Create tuple with atom and coordinates.
-      PyObject *create_tuple( PyObject *_neighbor, 
-                              types::t_real const _x,
-                              types::t_real const _y,
-                              types::t_real const _z )
+      static PyObject *create_tuple( PyObject *_neighbor, 
+                                     types::t_real const _x,
+                                     types::t_real const _y,
+                                     types::t_real const _z )
       {
         python::Object result = PyTuple_New(2);
         if(not result) return NULL;
@@ -104,10 +105,10 @@ namespace LaDa
         return result.release();
       }
       //! Converts bitset to configuration.
-      PyObject *convert_bitset( std::vector<PyObject*> const &_bitset,
-                                math::rVector3d const &_x,
-                                math::rVector3d const &_y,
-                                math::rVector3d const &_z )
+      static PyObject *convert_bitset( std::vector<PyObject*> const &_bitset,
+                                       math::rVector3d const &_x,
+                                       math::rVector3d const &_y,
+                                       math::rVector3d const &_z )
       {
         python::Object result = PyTuple_New(_bitset.size());
         if(not result) return NULL;
@@ -124,16 +125,16 @@ namespace LaDa
       }
 
       //! compare atomic types.
-      bool cmp_atom_types(PyObject *_a, PyObject *_b)
+      static bool cmp_atom_types(PyObject *_a, PyObject *_b)
       {
         return Atom::acquire(PyTuple_GET_ITEM(_a, 0)).type() 
                  == Atom::acquire(PyTuple_GET_ITEM(_b, 0)).type();
       }
 
       // Compare new conf to old
-      bool cmp_to_confs( PyObject *const _config,
-                         PyObject *const _bitset, 
-                         types::t_real _tolerance )
+      static bool cmp_to_confs( PyObject *const _config,
+                                PyObject *const _bitset, 
+                                types::t_real _tolerance )
       {
         // compare configuration sizes.
         PyObject * const bitsetA = PyTuple_GET_ITEM(_config, 0);
@@ -157,7 +158,7 @@ namespace LaDa
                        Atom const &_origin,
                        Py_ssize_t _nmax,
                        python::Object &_configurations,
-                       types::t_real const _tolerance )
+                       types::t_real _tolerance )
     {
       const types::t_real weight( 1e0 / types::t_real(_structure.size()) );
 
@@ -239,7 +240,7 @@ namespace LaDa
         // loop over possible ys.
         //   Determine z from x and y.
         //   Basis is determined. Adds other atoms.
-        for(size_t nn(0); i_ypossible != i_ypossible_end; ++i_ypossible, ++n)
+        for(; i_ypossible != i_ypossible_end; ++i_ypossible, ++n)
         {
           // at this point, we can define the complete coordinate system.
           const math::rVector3d yvec(LADA_GET_TRANS(*i_ypossible) );

@@ -5,7 +5,7 @@
 
 #include <math/eigen.h>
 
-//! \def PyStructure_Check(object)
+//! \def check_structure(object)
 //!      Returns true if an object is an edge or subtype.
 #define PyEdgeData_Check(object) PyObject_TypeCheck(object, LaDa::vff::edge_type())
 //! \def PyNodeData_CheckExact(object)

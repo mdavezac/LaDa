@@ -27,12 +27,10 @@ namespace LaDa
 {
   namespace crystal
   {
-    //! returns 1 angstrom.
-    static PyObject* get_unit_angstrom();
     //! Creates a new structure.
-    StructureData* PyStructure_New()
+    PyStructureObject* new_structure()
     {
-      StructureData* result = (StructureData*) structure_type()->tp_alloc(structure_type(), 0);
+      PyStructureObject* result = (PyStructureObject*) structure_type()->tp_alloc(structure_type(), 0);
       if(not result) return NULL;
       result->weakreflist = NULL;
       result->scale = NULL;
@@ -43,9 +41,9 @@ namespace LaDa
       return result;
     }
     //! Creates a new structure with a given type.
-    StructureData* PyStructure_NewWithArgs(PyTypeObject* _type, PyObject *_args, PyObject *_kwargs)
+    static PyStructureObject* PyStructure_NewWithArgs(PyTypeObject* _type, PyObject *_args, PyObject *_kwargs)
     {
-      StructureData* result = (StructureData*)_type->tp_alloc(_type, 0);
+      PyStructureObject* result = (PyStructureObject*)_type->tp_alloc(_type, 0);
       if(not result) return NULL;
       result->weakreflist = NULL;
       result->scale = NULL;
@@ -57,18 +55,18 @@ namespace LaDa
     }
 
     // Creates a new structure with a given type, also calling initialization.
-    StructureData* PyStructure_NewFromArgs(PyTypeObject* _type, PyObject *_args, PyObject *_kwargs)
+    PyStructureObject* new_structure(PyTypeObject* _type, PyObject *_args, PyObject *_kwargs)
     {
-      StructureData* result = PyStructure_NewWithArgs(_type, _args, _kwargs);
+      PyStructureObject* result = PyStructure_NewWithArgs(_type, _args, _kwargs);
       if(result == NULL) return NULL;
       if(_type->tp_init((PyObject*)result, _args, _kwargs) < 0) {Py_DECREF(result); return NULL; }
       return result;
     }
 
     // Creates a deepcopy of structure.
-    StructureData *PyStructure_Copy(StructureData* _self, PyObject *_memo)
+    PyStructureObject *copy_structure(PyStructureObject* _self, PyObject *_memo)
     {
-      StructureData* result = (StructureData*)_self->ob_type->tp_alloc(_self->ob_type, 0);
+      PyStructureObject* result = (PyStructureObject*)_self->ob_type->tp_alloc(_self->ob_type, 0);
       if(not result) return NULL;
       result->weakreflist = NULL;
       new(&result->cell) LaDa::math::rMatrix3d(_self->cell);
@@ -83,7 +81,7 @@ namespace LaDa
       else if(_self->pydict != NULL)
       {
         result->pydict = PyObject_CallMethodObjArgs(copymod, deepcopystr, _self->pydict, _memo, NULL);
-        if(result->pydict == NULL) { Py_DECREF(result);  result == NULL; }
+        if(result->pydict == NULL) { Py_DECREF(result); }
       }
       std::vector<Atom>::const_iterator i_first = _self->atoms.begin();
       std::vector<Atom>::const_iterator const i_end = _self->atoms.end();
@@ -149,7 +147,7 @@ namespace LaDa
 #     undef LADA_DECLARE
 #     define LADA_DECLARE(name, object, doc) \
         { const_cast<char*>(#name), T_OBJECT_EX, \
-          offsetof(StructureData, object), 0, const_cast<char*>(doc) }
+          offsetof(PyStructureObject, object), 0, const_cast<char*>(doc) }
       static PyMemberDef members[] = {
         LADA_DECLARE(__dict__, pydict, "Python attribute dictionary."),
 #       ifdef LADA_DEBUG
@@ -165,7 +163,7 @@ namespace LaDa
           LADA_DECLARE( to_dict, structure_to_dict, NOARGS, 
                         "Returns a dictionary with shallow copies of items." ),
           LADA_DECLARE(__copy__, structure_shallowcopy, NOARGS, "Shallow copy of an structure."),
-          LADA_DECLARE(__deepcopy__, PyStructure_Copy, O, "Deep copy of an structure."),
+          LADA_DECLARE(__deepcopy__, copy_structure, O, "Deep copy of an structure."),
           LADA_DECLARE(__getstate__, structure_getstate, NOARGS, "Implements pickle protocol."),
           LADA_DECLARE(__setstate__, structure_setstate, O, "Implements pickle protocol."),
           LADA_DECLARE(__reduce__,   structure_reduce, NOARGS, "Implements pickle protocol."),
@@ -228,7 +226,7 @@ namespace LaDa
           PyObject_HEAD_INIT(NULL)
           0,                                 /*ob_size*/
           "lada.crystal.cppwrappers.Structure",   /*tp_name*/
-          sizeof(StructureData),             /*tp_basicsize*/
+          sizeof(PyStructureObject),             /*tp_basicsize*/
           0,                                 /*tp_itemsize*/
           (destructor)structure_dealloc,     /*tp_dealloc*/
           0,                                 /*tp_print*/
@@ -269,7 +267,7 @@ namespace LaDa
           (traverseproc)structure_traverse,  /* tp_traverse */
           (inquiry)structure_gcclear,        /* tp_clear */
           0,		                     /* tp_richcompare */
-          offsetof(StructureData, weakreflist),   /* tp_weaklistoffset */
+          offsetof(PyStructureObject, weakreflist),   /* tp_weaklistoffset */
           (getiterfunc)structureiterator_create,  /* tp_iter */
           0,		                     /* tp_iternext */
           methods,                           /* tp_methods */
@@ -279,7 +277,7 @@ namespace LaDa
           0,                                 /* tp_dict */
           0,                                 /* tp_descr_get */
           0,                                 /* tp_descr_set */
-          offsetof(StructureData, pydict),   /* tp_dictoffset */
+          offsetof(PyStructureObject, pydict),   /* tp_dictoffset */
           (initproc)structure_init,          /* tp_init */
           0,                                 /* tp_alloc */
           (newfunc)PyStructure_NewWithArgs,  /* tp_new */

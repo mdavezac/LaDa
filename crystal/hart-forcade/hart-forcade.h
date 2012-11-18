@@ -7,6 +7,7 @@
 #include <boost/static_assert.hpp>
 
 
+#include <math/misc.h>
 #include <math/smith_normal_form.h>
 #include <python/object.h>
 #include "../structure/structure.h"
@@ -42,16 +43,16 @@ namespace LaDa
 
         //! Returns constant reference to transform object.
         math::rMatrix3d const & transform() const 
-          { return ((HFTransformData* const)object_)->transform; }
+          { return ((PyHFTObject* const)object_)->transform; }
         //! Returns reference to transform object.
         math::rMatrix3d & transform() 
-          { return ((HFTransformData*)object_)->transform; }
+          { return ((PyHFTObject*)object_)->transform; }
         //! Returns constant reference to quotient object.
         math::iVector3d const & quotient() const 
-          { return ((HFTransformData* const)object_)->quotient; }
+          { return ((PyHFTObject* const)object_)->quotient; }
         //! Returns reference to quotient object.
         math::iVector3d & quotient() 
-          { return ((HFTransformData*)object_)->quotient; }
+          { return ((PyHFTObject*)object_)->quotient; }
 
 #       include "macro.hpp"
         //! Computes hf indices of position \a _pos.
@@ -93,7 +94,7 @@ namespace LaDa
         python::Object dummy(object_);
         object_ = hftransform_type()->tp_alloc(hftransform_type(), 0);
         if(not object_) return;
-        if(not hf_transform_init((HFTransformData*)object_, _lattice, _supercell)) release();
+        if(not _init_hft((PyHFTObject*)object_, _lattice, _supercell)) release();
       }
 
   } // namespace Crystal

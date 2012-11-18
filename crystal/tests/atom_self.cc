@@ -1,14 +1,26 @@
 #include "LaDaConfig.h"
 
-#include "../atom/atom.h"
+#include "../crystal.h"
 
 using namespace LaDa::crystal;
-static Atom satom; 
-PyObject* get_static_object() { return satom.new_ref(); }
+static PyAtomObject *pysatom;
+PyObject* get_static_object(PyObject* _module, PyObject*)
+{ 
+  std::cout << "static " << pysatom << std::endl;
+  Py_INCREF(pysatom);
+  return (PyObject*)pysatom;
+}
 PyObject* set_static_object(PyObject* _module, PyObject *_object)
 {
+  std::cout << "AM HERE 0 " << _module << std::endl;
+  pysatom = NULL;
+  std::cout << "AM HERE 1"  << std::endl;
+  Atom satom = (PyAtomObject*)PyObject_GetAttrString(_module, "_atom");
+  std::cout << "AM HERE 2"  << std::endl;
   try { satom.reset(_object); }
-  catch(...) { return NULL; }
+  catch(...) { std::cout << "Caught error" << std::endl; return NULL; }
+  std::cout << "AM HERE 3"  << std::endl;
+  pysatom = (PyAtomObject*)satom.borrowed();
   Py_RETURN_NONE; 
 }
 
@@ -32,4 +44,10 @@ static PyMethodDef methods[] = {
 PyMODINIT_FUNC init_atom_self(void) 
 {
   PyObject* module = Py_InitModule("_atom_self", methods);
+  if(not module) return; 
+  if(not LaDa::crystal::import()) return;
+  Atom satom; 
+  pysatom = (PyAtomObject*)satom.borrowed();
+  std::cout << "Not null " << satom << std::endl;
+  PyModule_AddObject(module, "_atom", (PyObject *)satom.new_ref());
 }

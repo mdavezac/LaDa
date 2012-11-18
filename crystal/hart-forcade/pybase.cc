@@ -27,25 +27,25 @@ namespace LaDa
   namespace crystal
   {
     //! Creates a new hftransform with a given type.
-    HFTransformData* PyHFTransform_NewWithArgs(PyTypeObject* _type, PyObject *_args, PyObject *_kwargs)
+    static PyHFTObject* PyHFTransform_NewWithArgs(PyTypeObject* _type, PyObject *_args, PyObject *_kwargs)
     {
-      HFTransformData* result = (HFTransformData*)_type->tp_alloc(_type, 0);
+      PyHFTObject* result = (PyHFTObject*)_type->tp_alloc(_type, 0);
       return result;
     }
 
     // Creates a new hftransform with a given type, also calling initialization.
-    HFTransformData* PyHFTransform_NewFromArgs(PyTypeObject* _type, PyObject *_args, PyObject *_kwargs)
+    PyHFTObject* new_hftransform(PyTypeObject* _type, PyObject *_args, PyObject *_kwargs)
     {
-      HFTransformData* result = PyHFTransform_NewWithArgs(_type, _args, _kwargs);
+      PyHFTObject* result = PyHFTransform_NewWithArgs(_type, _args, _kwargs);
       if(result == NULL) return NULL;
       if(_type->tp_init((PyObject*)result, _args, _kwargs) < 0) {Py_DECREF(result); return NULL; }
       return result;
     }
 
     // Creates a deepcopy of hftransform.
-    HFTransformData *PyHFTransform_Copy(HFTransformData* _self, PyObject *_memo)
+    PyHFTObject *copy_hftransform(PyHFTObject* _self, PyObject *_memo)
     {
-      HFTransformData* result = (HFTransformData*)_self->ob_type->tp_alloc(_self->ob_type, 0);
+      PyHFTObject* result = (PyHFTObject*)_self->ob_type->tp_alloc(_self->ob_type, 0);
       if(not result) return NULL;
       new(&result->transform) LaDa::math::rMatrix3d(_self->transform);
       new(&result->quotient) LaDa::math::iVector3d(_self->quotient);
@@ -72,7 +72,7 @@ namespace LaDa
       static PyMethodDef methods[] = {
           LADA_DECLARE(copy, hftransform_copy, NOARGS, "Returns a deepcopy of the hftransform."),
           LADA_DECLARE(__copy__, hftransform_shallowcopy, NOARGS, "Shallow copy of an hftransform."),
-          LADA_DECLARE(__deepcopy__, PyHFTransform_Copy, O, "Deep copy of an hftransform."),
+          LADA_DECLARE(__deepcopy__, copy_hftransform, O, "Deep copy of an hftransform."),
           LADA_DECLARE(__getstate__, hftransform_getstate, NOARGS, "Implements pickle protocol."),
           LADA_DECLARE(__setstate__, hftransform_setstate, O, "Implements pickle protocol."),
           LADA_DECLARE(__reduce__,   hftransform_reduce, NOARGS, "Implements pickle protocol."),
@@ -109,7 +109,7 @@ namespace LaDa
           PyObject_HEAD_INIT(NULL)
           0,                                 /*ob_size*/
           "lada.crystal.cppwrappers.HFTransform",   /*tp_name*/
-          sizeof(HFTransformData),             /*tp_basicsize*/
+          sizeof(PyHFTObject),             /*tp_basicsize*/
           0,                                 /*tp_itemsize*/
           0,                                 /*tp_dealloc*/
           0,                                 /*tp_print*/

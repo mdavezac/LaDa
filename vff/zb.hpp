@@ -151,12 +151,12 @@ namespace LaDa
         PyObject *self, *tree, *pystructure;
         if(not PyArg_ParseTuple(_args, "OOO", &self, &pystructure, &tree))
           return NULL;
-        if(not PyStructure_Check(pystructure))
+        if(not check_structure(pystructure))
         {
           LADA_PYERROR(TypeError, "vff-energy: second argument should be a structure.");
           return NULL;
         }
-        crystal::StructureData* const structure = (crystal::StructureData*)pystructure;
+        crystal::PyStructureObject* const structure = (crystal::PyStructureObject*)pystructure;
         if(not PyList_Check(tree)) 
         {
           LADA_PYERROR(TypeError, "vff-energy: third argument should be a list of nodes.");
@@ -254,12 +254,12 @@ namespace LaDa
         PyObject *self, *tree, *pystructure;
         if(not PyArg_ParseTuple(_args, "OOO", &self, &pystructure, &tree))
           return NULL;
-        if(not PyStructure_Check(pystructure))
+        if(not check_structure(pystructure))
         {
           LADA_PYERROR(TypeError, "vff-energy: second argument should be a structure.");
           return NULL;
         }
-        crystal::StructureData* const structure = (crystal::StructureData*)pystructure;
+        crystal::PyStructureObject* const structure = (crystal::PyStructureObject*)pystructure;
         if(not PyList_Check(tree)) 
         {
           LADA_PYERROR(TypeError, "vff-energy: third argument should be a list of nodes.");

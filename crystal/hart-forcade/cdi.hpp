@@ -2,15 +2,13 @@ namespace LaDa
 {
   namespace crystal
   {
-    extern "C" 
-    { 
-      //! Function to initialize a string atom.
-      static int hftransform_init(HFTransformData* _self, PyObject* _args, PyObject *_kwargs);
-    }
+    //! Function to initialize a string atom.
+    static int hftransform_init(PyHFTObject* _self, PyObject* _args, PyObject *_kwargs);
+    
 
     //! \brief Initializes a new hftransform from input lattice unit-cell and supercell.
     //! \details Performs initialization from c++ arguments.
-    bool hf_transform_init( HFTransformData* _self, 
+    bool _init_hft( PyHFTObject* _self, 
                                math::rMatrix3d const &_lattice,
                                math::rMatrix3d const &_supercell )
     {
@@ -61,7 +59,7 @@ namespace LaDa
     }
   
     // Function to initialize an atom.
-    static int hftransform_init(HFTransformData* _self, PyObject* _args, PyObject *_kwargs)
+    static int hftransform_init(PyHFTObject* _self, PyObject* _args, PyObject *_kwargs)
     {
       PyObject *lattice = NULL;
       PyObject *supercell = NULL;
@@ -70,12 +68,12 @@ namespace LaDa
                                           &lattice, &supercell ) )
         return -1;
       math::rMatrix3d cell, bigcell;
-      if(PyStructure_Check(lattice)) cell = ((StructureData*)lattice)->cell;
+      if(check_structure(lattice)) cell = ((PyStructureObject*)lattice)->cell;
       else if(not python::convert_to_matrix(lattice, cell)) { std::cout << "Err 0\n"; return -1; }
-      if(PyStructure_Check(supercell)) bigcell = ((StructureData*)supercell)->cell;
+      if(check_structure(supercell)) bigcell = ((PyStructureObject*)supercell)->cell;
       else if(not python::convert_to_matrix(supercell, bigcell)){ std::cout << "Err 1\n"; return -1; }
       
-      return hf_transform_init(_self, cell, bigcell) ? 0: -1;
+      return _init_hft(_self, cell, bigcell) ? 0: -1;
     }
   }
 }

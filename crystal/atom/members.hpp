@@ -2,37 +2,32 @@ namespace LaDa
 {
   namespace crystal
   {
-    extern "C" 
+    //! Implements atom representation. 
+    static int lada_atom_repr_impl(PyAtomObject const &_atom, std::ostringstream &_sstr);
+    //! Returns a representation of the object.
+    static PyObject* lada_atom_repr(PyAtomObject* _self)
     {
-      //! Implements atom representation. 
-      static int lada_atom_repr_impl(PyAtomObject const &_atom, std::ostringstream &_sstr);
-      //! Returns a representation of the object.
-      static PyObject* lada_atom_repr(PyAtomObject* _self)
-      {
-        std::string name(_self->ob_type->tp_name);
-        std::ostringstream sstr;
-        sstr << name.substr(name.rfind('.')+1);
-        if(lada_atom_repr_impl(*_self, sstr) < 0) return NULL;
-        return PyString_FromString(sstr.str().c_str());
-      }
-      //! Returns a deepcopy of the atom.
-      static PyObject* lada_atom_copy(PyAtomObject* _self)
-        { return (PyObject*) PyAtom_Copy(_self, NULL); }
-      //! Implements deepcopy.
-      static PyObject* lada_atom_deepcopy(PyAtomObject* _self, PyObject* _memo)
-        { return (PyObject*) PyAtom_Copy(_self, _memo); }
-      //! Implements shallow copy.
-      static PyObject* lada_atom_shallowcopy(PyAtomObject* _self)
-        { Py_INCREF(_self); return (PyObject*)_self; }
-      //! Returns a dictionary with same info as atom.
-      static PyObject* lada_atom_to_dict(PyAtomObject* _self);
-      //! Implements getstate for pickling.
-      static PyObject* lada_atom_getstate(PyAtomObject* _self);
-      //! Implements setstate for pickling.
-      static PyObject* lada_atom_setstate(PyAtomObject* _self, PyObject *_dict);
-      //! Implements reduce for pickling.
-      static PyObject* lada_atom_reduce(PyAtomObject* _self);
+      std::string name(_self->ob_type->tp_name);
+      std::ostringstream sstr;
+      sstr << name.substr(name.rfind('.')+1);
+      if(lada_atom_repr_impl(*_self, sstr) < 0) return NULL;
+      return PyString_FromString(sstr.str().c_str());
     }
+    //! Returns a deepcopy of the atom.
+    static PyObject* lada_atom_copy(PyAtomObject* _self)
+      { return (PyObject*) copy_atom(_self, NULL); }
+    //! Implements shallow copy.
+    static PyObject* lada_atom_shallowcopy(PyAtomObject* _self)
+      { Py_INCREF(_self); return (PyObject*)_self; }
+    //! Returns a dictionary with same info as atom.
+    static PyObject* lada_atom_to_dict(PyAtomObject* _self);
+    //! Implements getstate for pickling.
+    static PyObject* lada_atom_getstate(PyAtomObject* _self);
+    //! Implements setstate for pickling.
+    static PyObject* lada_atom_setstate(PyAtomObject* _self, PyObject *_dict);
+    //! Implements reduce for pickling.
+    static PyObject* lada_atom_reduce(PyAtomObject* _self);
+    
  
     // Implements atom representation. 
     static int lada_atom_repr_impl(PyAtomObject const &_atom, std::ostringstream &_sstr)

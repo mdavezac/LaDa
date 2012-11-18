@@ -7,7 +7,7 @@
 
 #include <crystal/atom/atom.h>
 
-//! \def PyStructure_Check(object)
+//! \def check_structure(object)
 //!      Returns true if an object is a node or subtype.
 #define PyNodeData_Check(object) PyObject_TypeCheck(object, LaDa::vff::node_type())
 //! \def PyNodeData_CheckExact(object)

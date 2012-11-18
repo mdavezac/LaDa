@@ -2,7 +2,14 @@
 #include<iostream>
 #include<string>
 
-#include <opt/debug.h>
+#define LADA_DOASSERT(a,b) \
+        { \
+          if((not (a)))\
+          { \
+            std::cerr << __FILE__ << ", line: " << __LINE__ << "\n" << b; \
+            throw 0;\
+          }\
+        }
 #include "../gruber.h"
 #include "../misc.h"
 
