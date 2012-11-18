@@ -14,12 +14,15 @@
       /* This section is used in modules that use lada.crystal's API */
       static void **api_capsule;
       
-      // Return -1 on error, 0 on success.
-      // PyCapsule_Import will set an exception if there's an error.
-      static bool import(void)
+      namespace 
       {
-        api_capsule = (void **)PyCapsule_Import("lada.crystal.cppwrappers._C_API", 0);
-        return api_capsule != NULL;
+        // Return -1 on error, 0 on success.
+        // PyCapsule_Import will set an exception if there's an error.
+        inline bool import(void)
+        {
+          api_capsule = (void **)PyCapsule_Import("lada.crystal.cppwrappers._C_API", 0);
+          return api_capsule != NULL;
+        }
       }
     }
   }

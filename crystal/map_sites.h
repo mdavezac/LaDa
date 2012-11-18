@@ -9,7 +9,8 @@ namespace LaDa
 {
   namespace crystal
   {
-#   ifdef LADA_CRYSTAL_MODULE
+    namespace
+    {
       //! \brief Map atomic sites from mapper onto mappee.
       //! \param[in] _mapper : a lattice against which to map atomic sites.
       //! \param[inout] _mappee : a supercell for which sites will be mapped.
@@ -21,14 +22,14 @@ namespace LaDa
       //!         Since in the case of defects, incomplete mappings may be what is wanted, 
       static bool map_sites( Structure const &_mapper, Structure &_mappee,
                              python::Object _withocc = python::Object(),
-                             types::t_real _tolerance = types::tolerance );
-#   else
-      inline bool map_sites( Structure const &_mapper, Structure &_mappee,
-                             python::Object _withocc = python::Object(),
                              types::t_real _tolerance = types::tolerance )
-        { return (*(bool(*)(Structure const&, Structure &, python::Object, types::t_real))
-                  api_capsule[10])(_mapper, _mappee, _withocc, _tolerance); }
-#   endif
+#     ifdef LADA_CRYSTAL_MODULE
+          ;
+#     else
+          { return (*(bool(*)(Structure const&, Structure &, python::Object, types::t_real))
+                    api_capsule[10])(_mapper, _mappee, _withocc, _tolerance); }
+#     endif
+    }
   } // namespace crystal
 } // namespace LaDa
 

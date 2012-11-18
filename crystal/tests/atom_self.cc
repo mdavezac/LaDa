@@ -3,25 +3,24 @@
 #include "../crystal.h"
 
 using namespace LaDa::crystal;
-static PyAtomObject *pysatom;
 PyObject* get_static_object(PyObject* _module, PyObject*)
 { 
-  std::cout << "static " << pysatom << std::endl;
-  Py_INCREF(pysatom);
-  return (PyObject*)pysatom;
+  LaDa::python::Object module = PyImport_ImportModule("_atom_self");
+  if(not module) return NULL;
+  PyObject *result = PyObject_GetAttrString(module.borrowed(), "_atom");
+  return result;
 }
 PyObject* set_static_object(PyObject* _module, PyObject *_object)
 {
-  std::cout << "AM HERE 0 " << _module << std::endl;
-  pysatom = NULL;
-  std::cout << "AM HERE 1"  << std::endl;
-  Atom satom = (PyAtomObject*)PyObject_GetAttrString(_module, "_atom");
-  std::cout << "AM HERE 2"  << std::endl;
-  try { satom.reset(_object); }
-  catch(...) { std::cout << "Caught error" << std::endl; return NULL; }
-  std::cout << "AM HERE 3"  << std::endl;
-  pysatom = (PyAtomObject*)satom.borrowed();
-  Py_RETURN_NONE; 
+  if(not check_atom(_object))
+  {
+    LADA_PYERROR(TypeError, "Wrong type.");
+    return NULL;
+  }
+  LaDa::python::Object module = PyImport_ImportModule("_atom_self");
+  if(not module) return NULL;
+  if( PyObject_SetAttrString(module.borrowed(), "_atom", _object) < 0) return NULL;
+  Py_RETURN_NONE;
 }
 
 #ifndef PyMODINIT_FUNC	/* declarations for DLL import/export */
@@ -47,7 +46,6 @@ PyMODINIT_FUNC init_atom_self(void)
   if(not module) return; 
   if(not LaDa::crystal::import()) return;
   Atom satom; 
-  pysatom = (PyAtomObject*)satom.borrowed();
-  std::cout << "Not null " << satom << std::endl;
   PyModule_AddObject(module, "_atom", (PyObject *)satom.new_ref());
+  satom.release();
 }

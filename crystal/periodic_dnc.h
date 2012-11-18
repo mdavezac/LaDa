@@ -14,22 +14,21 @@ namespace LaDa
 {
   namespace crystal 
   {
-#   ifdef LADA_CRYSTAL_MODULE
+    namespace
+    {
       //! Creates divide and conquer box with periodic boundary condition.
       static PyObject* dnc_boxes( const Structure &_structure, 
                                   math::iVector3d const &_mesh, 
-                                  types::t_real _overlap);
-#   else
-      //! Creates divide and conquer box with periodic boundary condition.
-      inline PyObject* dnc_boxes( const Structure &_structure, 
-                                  math::iVector3d const &_mesh, 
                                   types::t_real _overlap)
-        { return (*(PyObject*(*)(Structure const&, math::iVector3d const&,
-                                 types::t_real))
-                  api_capsule[19])(_structure, _mesh, _overlap); }
-#   endif
+#     ifdef LADA_CRYSTAL_MODULE
+          ;
+#     else
+          { return (*(PyObject*(*)(Structure const&, math::iVector3d const&,
+                                   types::t_real))
+                    api_capsule[19])(_structure, _mesh, _overlap); }
+#     endif
+    } // anonymous namespace
   } // namespace crystal
-
 } // namespace LaDa
 
 

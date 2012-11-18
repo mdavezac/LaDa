@@ -12,7 +12,8 @@ namespace LaDa
 {
   namespace crystal
   {
-#   ifdef LADA_CRYSTAL_MODULE
+    namespace
+    {
       //! \brief Creates list of coordination shells up to given order.
       //! \returns A list of lists of tuples. The outer list is over coordination shells.
       //!          The inner list references the atoms in a shell.
@@ -27,18 +28,16 @@ namespace LaDa
       static PyObject* coordination_shells( crystal::Structure const &_structure, Py_ssize_t _nshells, 
                                             math::rVector3d const &_center,
                                             types::t_real _tolerance=types::tolerance,
-                                            Py_ssize_t _natoms = 0 );
-#   else
-      inline PyObject* coordination_shells( crystal::Structure const &_structure, Py_ssize_t _nshells, 
-                                            math::rVector3d const &_center,
-                                            types::t_real _tolerance=types::tolerance,
                                             Py_ssize_t _natoms = 0 )
-        { return (*(PyObject*(*)( crystal::Structure const &, Py_ssize_t,
-                                 math::rVector3d const &, types::t_real, 
-                                 Py_ssize_t ))
-                  api_capsule[17])(_structure, _nshells, _center, _tolerance, _natoms); }
-#   endif
-  
+#     ifdef LADA_CRYSTAL_MODULE
+        ;
+#     else
+          { return (*(PyObject*(*)( crystal::Structure const &, Py_ssize_t,
+                                   math::rVector3d const &, types::t_real, 
+                                   Py_ssize_t ))
+                    api_capsule[17])(_structure, _nshells, _center, _tolerance, _natoms); }
+#     endif
+    } 
   } // end of crystal namespace.
 } // namespace LaDa
 

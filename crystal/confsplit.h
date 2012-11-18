@@ -14,7 +14,8 @@ namespace LaDa
 {
   namespace crystal
   {
-#   ifdef LADA_CRYSTAL_MODULE
+    namespace // limits declaration to current translation unit.
+    {
       //! \brief Creates a split-configuration for a given structure and atomic origin.
       //! \details Split-configurations are a symmetry-agnostic atom-centered
       //!          description of chemical environment. For details, see
@@ -38,22 +39,20 @@ namespace LaDa
       //!         to the atom's relevant periodic image, and a distance from the
       //!         center. [[[(atom, vector from center, distance from center),
       //!         ...], weight], ...]
-      static bool splitconfigs( Structure const &_structure,
-                                Atom const &_origin,
-                                Py_ssize_t _nmax,
-                                python::Object &_configurations,
-                                types::t_real _tolerance );
-#   else
-      inline bool splitconfigs( Structure const &_structure,
-                                Atom const &_origin,
-                                Py_ssize_t _nmax,
-                                python::Object &_configurations,
-                                types::t_real _tolerance )
-        { return (*(bool(*)( Structure const&, Atom const&, 
-                             Py_ssize_t, python::Object &,
-                             types::t_real))
-                  api_capsule[18])(_structure, _origin, _nmax, _configurations, _tolerance); }
-#   endif
+      bool splitconfigs( Structure const &_structure,
+                         Atom const &_origin,
+                         Py_ssize_t _nmax,
+                         python::Object &_configurations,
+                         types::t_real _tolerance )
+#     ifdef LADA_CRYSTAL_MODULE
+        ;
+#     else
+          { return (*(bool(*)( Structure const&, Atom const&, 
+                               Py_ssize_t, python::Object &,
+                               types::t_real))
+                    api_capsule[18])(_structure, _origin, _nmax, _configurations, _tolerance); }
+#     endif
+    } // anonymous namespace.
   } // end of Crystal namespace.
 } // namespace LaDa
 
