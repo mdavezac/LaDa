@@ -9,7 +9,8 @@
 
 #include <math/misc.h>
 #include <math/smith_normal_form.h>
-#include <python/object.h>
+
+#include "../python/object.h"
 #include "../structure/structure.h"
 #include "pybase.h"
 

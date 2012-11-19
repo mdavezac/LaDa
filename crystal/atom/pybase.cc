@@ -8,10 +8,10 @@
 #include <numpy/arrayobject.h>
 
 
-#include <python/wrap_numpy.h>
 #include <python/exceptions.h>
-#include <python/numpy_types.h>
-#include <python/object.h>
+#include "../python/wrap_numpy.h"
+#include "../python/numpy_types.h"
+#include "../python/object.h"
 
 #include "pybase.h"
 

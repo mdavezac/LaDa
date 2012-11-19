@@ -3,10 +3,8 @@
 
 #include "LaDaConfig.h"
 
-#include <boost/python/object.hpp>
-
 #include <python/exceptions.h>
-#include <python/object.h>
+#include "../python/object.h"
 
 #include "pybase.h"
 

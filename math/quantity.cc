@@ -1,7 +1,7 @@
 #include "LaDaConfig.h"
 
-#include <python/object.h>
 #include <python/exceptions.h>
+#include <crystal/python/object.h>
 #include "quantity.h"
 
 #include <iostream>

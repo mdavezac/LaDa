@@ -6,8 +6,8 @@
 
 #include <python/exceptions.h>
 #include <math/fuzzy.h>
-#include <python/numpy_types.h>
-#include <python/object.h>
+#include <crystal/python/numpy_types.h>
+#include <crystal/python/object.h>
 #include "ndimiterator.h"
 #include "fciterator.h"
 #include "manipulations.h"

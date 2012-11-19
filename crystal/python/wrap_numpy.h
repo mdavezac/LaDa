@@ -7,8 +7,8 @@
 
 #include <boost/type_traits/is_floating_point.hpp>
 
-#include <python/object.h>
 #include <math/eigen.h>
+#include "object.h"
 #include "numpy_types.h"
 
 namespace LaDa

@@ -6,8 +6,8 @@
 #define NO_IMPORT_ARRAY
 #include <numpy/arrayobject.h>
 
-#include <python/numpy_types.h>
-#include <python/object.h>
+#include <crystal/python/numpy_types.h>
+#include <crystal/python/object.h>
 #include "ewald.h"
 
 extern "C" void FC_GLOBAL( ewaldf, EWALDF )

@@ -2,11 +2,6 @@
 #define LADA_PYTHON_EXCEPTIONS_H
 #include "LaDaConfig.h"
 
-// #include <boost/python/object.hpp>
-// #include <boost/python/import.hpp>
-// #include <boost/python/exception_translator.hpp>
-// #include <boost/exception/diagnostic_information.hpp>
-
 #include <Python.h>
 #include <root_exceptions.h>
 #include <math/exceptions.h>
