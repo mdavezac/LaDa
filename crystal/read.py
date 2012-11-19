@@ -109,6 +109,7 @@ def castep(file):
     current_block = None
     result = {}
     for line in file:
+      if '#' in line: line = line[:line.find('#')]
       if current_block is not None:
         if line.split()[0].lower() == '%endblock': 
           current_block = None
@@ -133,12 +134,39 @@ def castep(file):
         result[name] = ' '.join(data)
     return result
 
+  def parse_units(line):
+    from quantities import a0, meter, centimeter, millimeter, angstrom, emass, \
+                           amu, second, millisecond, microsecond, nanosecond,  \
+                           picosecond, femtosecond, elementary_charge, coulomb,\
+                           hartree, eV, meV, Ry, joule, cal, erg, hertz,       \
+                           megahertz, gigahertz, tera, kelvin, newton, dyne,   \
+                           h_bar, UnitQuantity, pascal, megapascal, gigapascal,\
+                           bar, atm, milli, mol
+
+    auv = UnitQuantity('auv', a0*Ry/h_bar) # velocity
+    units = { 'a0': a0, 'bhor': a0, 'm': meter, 'cm': centimeter,
+              'mm': millimeter, 'ang': angstrom, 'me': emass, 'amu': amu, 
+              's': second, 'ms': millisecond, 'mus': microsecond, 
+              'ns': nanosecond, 'ps': picosecond, 'fs': femtosecond,
+              'e': elementary_charge, 'c': coulomb, 'hartree': hartree,
+              'ha': hartree, 'mha': 1e-3*hartree, 'ev': eV, 'mev': meV,
+              'ry': Ry, 'mry': 1e-3*Ry, 'kj': 1e3*joule, 'mol': mol, 
+              'kcal': 1e3*cal, 'j': joule, 'erg': erg, 'hz': hertz,
+              'mhz': megahertz, 'ghz': gigahertz, 'thz': tera*hertz,
+              'k': kelvin, 'n': newton, 'dyne': dyne, 'auv': auv, 'pa': pascal,
+              'mpa': megapascal, 'gpa': gigapascal, 'atm': atm, 'bar': bar,
+              'atm': atm, 'mbar': milli*bar }
+    line = line.replace('cm-1', '1/cm')
+    return eval(line, units)
+
 
   input = parse_input(file)
   if 'latticecart' in input:
     data = input['latticecart'].splitlines()
     if len(data) == 4:
-      raise NotImplementedError('Units cannot be read from CASTEP file')
+      units = parse_units(data[0])
+      data = data[1:]
+    else: units = 1
     cell = array([l.split() for l in data], dtype='float64')
   elif 'latticeabc' in input:
     raise NotImplementedError('Cannot read lattice in ABC format yet.')
@@ -146,14 +174,20 @@ def castep(file):
     raise InputError('Could not find lattice block in input.')
                       
   # create structure
-  result = Structure(cell)
+  result = Structure(cell, scale=units)
 
   # now look for position block.
-  if 'positionsfrac' in input: posdata, isfrac = input['positionsfrac'], True
-  elif 'positionsabs' in input: posdata, isfrac = input['positionsabs'], False
+  units = None
+  if 'positionsfrac' in input:
+    posdata, isfrac = input['positionsfrac'].splitlines, True
+  elif 'positionsabs' in input:
+    posdata, isfrac = input['positionsabs'].splitlines(), False
+    try: units = parse_units(posdata[0])
+    except: units = None
+    else: posdata = posdata[1:]
   else: raise InputError('Could not find position block in input.')
   # and parse it
-  for line in posdata.splitlines():
+  for line in posdata:
     line = line.split()
     if len(line) < 2: 
       raise IOError( 'Wrong file format: line with less '                      \
