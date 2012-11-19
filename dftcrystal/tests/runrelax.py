@@ -28,6 +28,7 @@ def test():
   functional.shrink = 8, 16
   functional.levshift = 5, True
   functional.maxcycle = 600
+  functional.guessp = True
 
   crystal = Crystal(227, 5.43).add_atom(0.125, 0.125, 0.125, 'Si')
   directory = mkdtemp()

@@ -456,8 +456,8 @@ class GuessP(BoolKeyword):
       if getsize(realpath(path)) == 0: return None
     except: return None
     if kwargs.get('filework', False) == True:
-      copyfile( realpath(path), 
-                join(kwargs['workdir'], 'fort.20'), nothrow='same' )
+      copyfile( realpath(path), join(kwargs['workdir'], 'fort.20'),
+                symlink=True, nothrow='same' )
     return super(GuessP, self).output_map(**kwargs)
 
 class Broyden(BaseKeyword):

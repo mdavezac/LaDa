@@ -9,6 +9,32 @@ from changedir import Changedir
 from relativepath import RelativePath
 from lockfile import LockFile, open_exclusive
 
+def _copyfile_impl(src, dest):
+  """ Copies files by hand. 
+      
+      Makes sure that files are actually copied to disk, as opposed to
+      buffered. Does not check for existence or anything.
+  """
+  from os import stat, fsync
+
+  stepsize = 2**20
+  size = stat(src).st_size
+  if size == 0: 
+    with open(dest, 'wb') as outfile: pass
+    return
+
+  with open(dest, 'wb') as outfile:
+    with open(src, 'rb') as infile:
+      steps = [stepsize] * (size // stepsize)
+      if size % stepsize != 0: steps += [size % stepsize]
+      for step in steps:
+        buffer = infile.read(step)
+        if buffer is None: break
+        outfile.write(buffer)
+    # makes sure stuff is written to disk prior to returning.
+    outfile.flush()
+    fsync(outfile.fileno())
+
 def copyfile(src, dest=None, nothrow=None, symlink=False, aslink=False, nocopyempty=False):
   """ Copy ``src`` file onto ``dest`` directory or file.
 
@@ -43,7 +69,6 @@ def copyfile(src, dest=None, nothrow=None, symlink=False, aslink=False, nocopyem
     from os import getcwd, symlink as ln, remove
     from os.path import isdir, isfile, samefile, exists, basename, dirname,\
                         join, islink, realpath, relpath, getsize
-    from shutil import copyfile as cpf
     # sets up nothrow options.
     if nothrow is None: nothrow = []
     if isinstance(nothrow, str): nothrow = nothrow.split()
@@ -82,7 +107,7 @@ def copyfile(src, dest=None, nothrow=None, symlink=False, aslink=False, nocopyem
       else:
         with Changedir(dirname(dest)) as cwd:
            ln(relpath(src, dirname(dest)), basename(dest))
-    else: cpf(src, dest)
+    else: _copyfile_impl(src, dest)
   except:
     if 'never' in nothrow: return False
     raise

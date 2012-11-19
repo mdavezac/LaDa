@@ -1,7 +1,6 @@
 """ Subpackage grouping single-electron properties. """
 __docformat__ = "restructuredtext en"
 __all__ = ['Properties']
-from ...tools import stateless, assign_attributes
 from ..input import AttrBlock
 from .extract import Extract
 
@@ -155,12 +154,9 @@ class Properties(AttrBlock):
 
   def guess_workdir(self, outdir):
     """ Tries and guess working directory. """
-    from os import environ
-    from tempfile import mkdtemp
-    from datetime import datetime
-    rootdir = environ.get('PBS_TMPDIR', outdir)
-    return mkdtemp( prefix='dftcrystal_prop_{0!s}'.format(datetime.today()), 
-                    dir=rootdir )
+    from ...misc import mkdtemp
+    from ... import crystal_inplace
+    return outdir if crystal_inplace else mkdtemp(prefix='crystalprop') 
 
   def iter( self, input=None, outdir=None, workdir=None, overwrite=False,
             **kwargs ):
@@ -261,7 +257,7 @@ class Properties(AttrBlock):
         **and** run was successfull.
     """
     from os import remove
-    from os.path import join, exists
+    from os.path import join, exists, samefile
     from shutil import rmtree
     from ...misc import copyfile, Changedir
     from ... import CRYSTAL_propnames as propnames
@@ -291,8 +287,9 @@ class Properties(AttrBlock):
         except: pass
     
     if Extract(outdir).success:
-      try: rmtree(workdir)
-      except: pass
+      if exists(workdir) and not samefile(workdir, outdir):
+        try: rmtree(workdir)
+        except: pass
       try: remove(join(outdir, 'workdir'))
       except: pass
 
