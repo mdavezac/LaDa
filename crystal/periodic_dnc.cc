@@ -7,7 +7,6 @@
 #include <crystal/python/wrap_numpy.h>
 #include <math/gruber.h>
 #include <math/misc.h>
-#include "periodic_dnc.h"
 
 namespace LaDa 
 {

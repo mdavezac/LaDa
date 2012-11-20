@@ -11,7 +11,6 @@
 #include <crystal/python/wrap_numpy.h>
 #include <math/quantity.h>
 
-#include "pybase.h"
 // structure getters/settters.
 #include "getset.hpp"
 // iterator functions and type.

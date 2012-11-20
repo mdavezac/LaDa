@@ -7,9 +7,6 @@
 #include <math/fuzzy.h>
 #include <math/gruber.h>
 
-#include "utilities.h"
-#include "primitive.h"
-
 namespace LaDa
 {
   namespace crystal

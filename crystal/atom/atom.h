@@ -1,12 +1,8 @@
-#ifndef LADA_CRYSTAL_ATOM_H
-#define LADA_CRYSTAL_ATOM_H
-
+#if LADA_CRYSTAL_MODULE != 1
 #include "LaDaConfig.h"
 
 #include <python/exceptions.h>
 #include "../python/object.h"
-
-#include "pybase.h"
 
 namespace LaDa
 {
@@ -116,5 +112,4 @@ namespace LaDa
     }
   } // namespace Crystal
 } // namespace LaDa
-  
 #endif

@@ -4,7 +4,6 @@
 #include <limits>
 
 #include <math/fuzzy.h>
-#include "utilities.h"
 
 
 namespace LaDa

@@ -2,8 +2,6 @@
 
 #include <math/misc.h>
 #include <math/gruber.h>
-#include "utilities.h"
-#include "map_sites.h"
 
 namespace LaDa 
 {

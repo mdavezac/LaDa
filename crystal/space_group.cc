@@ -15,11 +15,6 @@
 
 #include <python/exceptions.h>
 
-#include "primitive.h"
-#include "utilities.h"
-#include "space_group.h"
-
-
 namespace LaDa
 {
   namespace crystal 

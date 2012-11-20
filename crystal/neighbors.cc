@@ -12,10 +12,6 @@
 #include <math/gruber.h>
 #include <crystal/python/wrap_numpy.h>
 
-#include "utilities.h"
-
-#include "neighbors.h"
-
 namespace LaDa
 {
   namespace crystal 

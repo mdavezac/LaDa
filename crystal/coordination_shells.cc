@@ -9,9 +9,6 @@
 #include <math/gruber.h>
 #include <math/misc.h>
 
-#include "utilities.h"
-#include "coordination_shells.h"
-
 namespace LaDa 
 {
   namespace crystal 

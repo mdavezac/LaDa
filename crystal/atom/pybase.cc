@@ -13,8 +13,6 @@
 #include "../python/numpy_types.h"
 #include "../python/object.h"
 
-#include "pybase.h"
-
 // atom getters/settters.
 #include "getset.hpp"
 // atom member functions.

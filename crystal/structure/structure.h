@@ -1,11 +1,7 @@
-#ifndef LADA_CRYSTAL_STRUCTURE_H
-#define LADA_CRYSTAL_STRUCTURE_H
-
+#if LADA_CRYSTAL_MODULE != 1
 #include "LaDaConfig.h"
 
 #include <math/quantity.h>
-#include "pybase.h"
-
 
 namespace LaDa 
 {
@@ -202,5 +198,4 @@ namespace LaDa
     } // anonymous namespace.
   } // namespace crystal
 } // namespace LaDa
-
 #endif

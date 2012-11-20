@@ -12,9 +12,6 @@
 #include <math/fuzzy.h>
 #include <math/smith_normal_form.h>
 
-#include "../structure/pybase.h"
-
-#include "pybase.h"
 // hftransform getters/settters.
 #include "get.hpp"
 // hftransform member functions.

@@ -1,5 +1,5 @@
-#ifndef LADA_CRYSTAL_SUPERCELL_H
-#define LADA_CRYSTAL_SUPERCELL_H
+#if LADA_CRYSTAL_MODULE != 1
+
 #include "LaDaConfig.h"
 
 #include <cmath>
@@ -8,11 +8,6 @@
 
 #include <math/misc.h>
 #include <math/fuzzy.h>
-
-#include "hart-forcade/hart-forcade.h"
-#include "structure/structure.h"
-#include "utilities.h"
-
 
 namespace LaDa
 {

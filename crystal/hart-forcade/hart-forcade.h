@@ -1,18 +1,10 @@
-#ifndef LADA_CRYSTAL_HF_H
-#define LADA_CRYSTAL_HF_H
-
-#include "LaDaConfig.h"
-
+#if LADA_CRYSTAL_MODULE != 1
 #include <boost/type_traits/is_same.hpp>
 #include <boost/static_assert.hpp>
 
 
 #include <math/misc.h>
 #include <math/smith_normal_form.h>
-
-#include "../python/object.h"
-#include "../structure/structure.h"
-#include "pybase.h"
 
 namespace LaDa 
 {
@@ -104,5 +96,4 @@ namespace LaDa
   } // namespace Crystal
 
 } // namespace LaDa
-
-#endif
+#endif 

@@ -4,9 +4,18 @@
 # error LaDa requires a cpp compiler
 #endif
 
-#include <Python.h>
 
 #ifndef LADA_CRYSTAL_MODULE
+#  define LADA_CRYSTAL_MODULE 100
+#endif 
+
+#if LADA_CRYSTAL_MODULE != 1
+# include <boost/preprocessor/arithmetic/inc.hpp>
+# include <boost/preprocessor/slot/slot.hpp>
+# define BOOST_PP_VALUE 0
+# include BOOST_PP_ASSIGN_SLOT(1)
+
+# include <Python.h>
   namespace LaDa
   {
     namespace crystal
@@ -26,23 +35,25 @@
       }
     }
   }
-
+#endif
+#if LADA_CRYSTAL_MODULE == 0
 # include <boost/preprocessor/arithmetic/inc.hpp>
 # include <boost/preprocessor/slot/slot.hpp>
 # define BOOST_PP_VALUE 0
 # include BOOST_PP_ASSIGN_SLOT(1)
-#else
-# include <boost/preprocessor/list/append.hpp>
-# ifdef LADA_PYLIST
-#   error LADA_PYLIST already defined
-# endif
-# ifdef LADA_PYLISTSAVE
-#   error LADA_PYLISTSAVE already defined
-# endif
-# ifdef LADA_VALUE
-#   error LADA_VALUE already defined
-# endif
-# define LADA_PYLIST (BOOST_PP_NIL)
+#elif LADA_CRYSTAL_MODULE == 1
+# define BOOST_PP_VALUE 0
+# include BOOST_PP_ASSIGN_SLOT(1)
+#endif
+
+#if LADA_CRYSTAL_MODULE != 1
+#  ifdef LADA_END
+#    error LADA_END already defined
+#  elif LADA_CRYSTAL_MODULE == 0
+#    define LADA_END(X) ;
+#  elif LADA_CRYSTAL_MODULE == 100
+#    define LADA_END(X) X
+#  endif
 #endif
 
 #include "atom/pybase.h"
@@ -62,5 +73,23 @@
 #include "coordination_shells.h"
 #include "confsplit.h"
 #include "periodic_dnc.h"
+
+// get ready for second inclusion
+#ifdef LADA_CRYSTAL_MODULE 
+# if LADA_CRYSTAL_MODULE == 0
+#   undef LADA_CRYSTAL_MODULE 
+#   define LADA_CRYSTAL_MODULE 1
+# elif LADA_CRYSTAL_MODULE == 1
+#   undef LADA_CRYSTAL_MODULE 
+#   define LADA_CRYSTAL_MODULE 0
+# endif
+#endif 
+#ifdef LADA_END
+# undef LADA_END
+#endif
+
+#if LADA_CRYSTAL_MODULE == 100
+# undef LADA_CRYSTAL_MODULE
+#endif
 
 #endif 

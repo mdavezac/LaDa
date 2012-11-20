@@ -15,9 +15,6 @@
 #include <crystal/python/random_access_tuple_iterator.h>
 #include <crystal/python/wrap_numpy.h>
 
-#include "coordination_shells.h"
-#include "confsplit.h"
-
 namespace LaDa
 {
   namespace crystal

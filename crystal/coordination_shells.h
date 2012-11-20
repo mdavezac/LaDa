@@ -1,44 +1,40 @@
-#ifndef LADA_CRYSTAL_COORDINATION_SHELLS_H
-#define LADA_CRYSTAL_COORDINATION_SHELLS_H
-
-#include "LaDaConfig.h"
-
-#include <boost/lambda/lambda.hpp>
-
-#include <misc/types.h>
-#include "structure/structure.h"
-
+#if LADA_CRYSTAL_MODULE != 1
 namespace LaDa
 {
   namespace crystal
   {
     namespace
     {
-      //! \brief Creates list of coordination shells up to given order.
-      //! \returns A list of lists of tuples. The outer list is over coordination shells.
-      //!          The inner list references the atoms in a shell.
-      //!          Each innermost tuple contains a reference to the atom in question,
-      //!          a translation vector to its periodic image inside the relevant shell, 
-      //!          and the distance from the center to the relevant periodic image.
-      //! \param[in] _structure : Structure for which to determine coordination shells.
-      //! \param[in] _nshells : Number of shells to compute.
-      //! \param[in] _center : Center of the coordination shells.
-      //! \param[in] _tolerance : criteria to judge when a shell ends.
-      //! \param[in] _natoms : Total number of neighbors to consider. Defaults to fcc + some security.
-      static PyObject* coordination_shells( crystal::Structure const &_structure, Py_ssize_t _nshells, 
-                                            math::rVector3d const &_center,
-                                            types::t_real _tolerance=types::tolerance,
-                                            Py_ssize_t _natoms = 0 )
-#     ifdef LADA_CRYSTAL_MODULE
-        ;
-#     else
-          { return (*(PyObject*(*)( crystal::Structure const &, Py_ssize_t,
-                                   math::rVector3d const &, types::t_real, 
-                                   Py_ssize_t ))
-                    api_capsule[17])(_structure, _nshells, _center, _tolerance, _natoms); }
-#     endif
-    } 
-  } // end of crystal namespace.
-} // namespace LaDa
+#endif
 
+#if LADA_CRYSTAL_MODULE != 1
+  //! \brief Creates list of coordination shells up to given order.
+  //! \returns A list of lists of tuples. The outer list is over coordination shells.
+  //!          The inner list references the atoms in a shell.
+  //!          Each innermost tuple contains a reference to the atom in question,
+  //!          a translation vector to its periodic image inside the relevant shell, 
+  //!          and the distance from the center to the relevant periodic image.
+  //! \param[in] _structure : Structure for which to determine coordination shells.
+  //! \param[in] _nshells : Number of shells to compute.
+  //! \param[in] _center : Center of the coordination shells.
+  //! \param[in] _tolerance : criteria to judge when a shell ends.
+  //! \param[in] _natoms : Total number of neighbors to consider. Defaults to fcc + some security.
+  PyObject* coordination_shells( crystal::Structure const &_structure, Py_ssize_t _nshells, 
+                                 math::rVector3d const &_center,
+                                 types::t_real _tolerance=types::tolerance,
+                                 Py_ssize_t _natoms = 0 )
+    LADA_END({ return (*(PyObject*(*)( crystal::Structure const &, Py_ssize_t,
+                                       math::rVector3d const &, types::t_real, 
+                                       Py_ssize_t ))
+                api_capsule[BOOST_PP_SLOT(1)])(_structure, _nshells, _center, _tolerance, _natoms); })
+#else
+  api_capsule[BOOST_PP_SLOT(1)] = (void *)coordination_shells;
+#endif
+#define BOOST_PP_VALUE BOOST_PP_INC(BOOST_PP_SLOT(1))
+#include BOOST_PP_ASSIGN_SLOT(1)
+
+#if LADA_CRYSTAL_MODULE != 1
+    }
+  } // namespace crystal
+} // namespace LaDa
 #endif

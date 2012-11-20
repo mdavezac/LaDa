@@ -12,11 +12,6 @@
 #include <math/misc.h>
 #include <math/gruber.h>
 
-#include "space_group.h"
-#include "utilities.h"
-#include "equivalent_structures.h"
-
-
 namespace LaDa
 {
 
