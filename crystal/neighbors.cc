@@ -10,7 +10,7 @@
 
 #include <math/fuzzy.h>
 #include <math/gruber.h>
-#include <python/wrap_numpy.h>
+#include <crystal/python/wrap_numpy.h>
 
 #include "utilities.h"
 

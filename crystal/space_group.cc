@@ -11,7 +11,7 @@
 #include <math/fuzzy.h>
 #include <math/misc.h>
 #include <math/gruber.h>
-#include <python/numpy_types.h>
+#include <crystal/python/numpy_types.h>
 
 #include <python/exceptions.h>
 

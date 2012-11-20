@@ -4,7 +4,7 @@
 #define PY_ARRAY_UNIQUE_SYMBOL lada_math_ARRAY_API
 #include <numpy/arrayobject.h>
 
-#include <python/wrap_numpy.h>
+#include <crystal/python/wrap_numpy.h>
 #include <math/gruber.h>
 #include <math/misc.h>
 #include "periodic_dnc.h"

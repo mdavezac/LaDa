@@ -6,8 +6,8 @@
 
 #include <iterator> 
 
-#include <python/numpy_types.h>
-#include <python/wrap_numpy.h>
+#include <crystal/python/numpy_types.h>
+#include <crystal/python/wrap_numpy.h>
 
 #ifndef PyMODINIT_FUNC	/* declarations for DLL import/export */
 # define PyMODINIT_FUNC void
@@ -42,6 +42,7 @@ PyMODINIT_FUNC initcppwrappers(void)
 
   import_array(); // needed for NumPy 
 
+  std::cout << BOOST_PP_SLOT(1) << std::endl;
   /* Initialize the C API pointer array */
   api_capsule[0] = (void *)atom_type();
   api_capsule[1] = (void *)((PyAtomObject*(*)())new_atom);

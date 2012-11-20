@@ -10,9 +10,9 @@
 #include <algorithm>
 
 
-#include <python/numpy_types.h>
+#include <crystal/python/numpy_types.h>
 #include <python/exceptions.h>
-#include <python/wrap_numpy.h>
+#include <crystal/python/wrap_numpy.h>
 
 #include "fciterator.h"
 

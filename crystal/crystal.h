@@ -26,6 +26,23 @@
       }
     }
   }
+
+# include <boost/preprocessor/arithmetic/inc.hpp>
+# include <boost/preprocessor/slot/slot.hpp>
+# define BOOST_PP_VALUE 0
+# include BOOST_PP_ASSIGN_SLOT(1)
+#else
+# include <boost/preprocessor/list/append.hpp>
+# ifdef LADA_PYLIST
+#   error LADA_PYLIST already defined
+# endif
+# ifdef LADA_PYLISTSAVE
+#   error LADA_PYLISTSAVE already defined
+# endif
+# ifdef LADA_VALUE
+#   error LADA_VALUE already defined
+# endif
+# define LADA_PYLIST (BOOST_PP_NIL)
 #endif
 
 #include "atom/pybase.h"

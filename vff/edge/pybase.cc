@@ -8,7 +8,7 @@
 
 
 #include <python/exceptions.h>
-#include <python/wrap_numpy.h>
+#include <crystal/python/wrap_numpy.h>
 #include <math/quantity.h>
 
 #include "../node/pybase.h"

@@ -3,7 +3,7 @@
 
 #include <LaDaConfig.h>
 #include <Python.h>
-#include "exceptions.h"
+#include <python/exceptions.h>
 
 namespace LaDa 
 {
@@ -25,7 +25,7 @@ namespace LaDa
       //!          decrefed (eg, borrowed). 
       class Object 
       {
-        friend object_reset(Object& _self, PyObject *_in = NULL);
+        friend void object_reset(Object& _self, PyObject *_in);
         public:
           //! Steals a python reference.
           Object(PyObject* _in = NULL) : object_(_in) {}

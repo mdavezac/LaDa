@@ -6,7 +6,7 @@
 #include <boost/mpl/int.hpp>
 
 #include <root_exceptions.h>
-#include "exceptions.h"
+#include <python/exceptions.h>
 
 
 namespace LaDa

@@ -11,9 +11,9 @@
 #include <boost/ref.hpp>
 
 #include <math/fuzzy.h>
-#include <python/random_access_list_iterator.h>
-#include <python/random_access_tuple_iterator.h>
-#include <python/wrap_numpy.h>
+#include <crystal/python/random_access_list_iterator.h>
+#include <crystal/python/random_access_tuple_iterator.h>
+#include <crystal/python/wrap_numpy.h>
 
 #include "coordination_shells.h"
 #include "confsplit.h"

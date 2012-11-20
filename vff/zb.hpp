@@ -1,7 +1,7 @@
 // Special methods for zinc-blende VFF.
 #include <crystal/structure/pybase.h>
 #include <math/quantity.h>
-#include <python/wrap_numpy.h>
+#include <crystal/python/wrap_numpy.h>
 namespace LaDa
 {
   namespace vff

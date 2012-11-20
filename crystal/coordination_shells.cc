@@ -5,7 +5,7 @@
 #define NO_IMPORT_ARRAY
 #include <numpy/arrayobject.h>
 
-#include <python/wrap_numpy.h>
+#include <crystal/python/wrap_numpy.h>
 #include <math/gruber.h>
 #include <math/misc.h>
 
