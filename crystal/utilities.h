@@ -1,15 +1,3 @@
-#if LADA_CRYSTAL_MODULE != 1
-#include <misc/types.h>
-#include <math/misc.h>
-
-namespace LaDa
-{
-  namespace crystal 
-  {
-    namespace
-    {
-#endif
-
 #ifdef LADA_TYPEDEF
 # error LADA_TYPEDEF already defined
 #endif
@@ -20,9 +8,9 @@ namespace LaDa
 
 #if LADA_CRYSTAL_MODULE != 1
   //! Refolds a periodic vector into the unit cell.
-  math::rVector3d into_cell( math::rVector3d const &_vec, 
-                             math::rMatrix3d const &_cell, 
-                             math::rMatrix3d const &_inv)
+  LADA_INLINE math::rVector3d into_cell( math::rVector3d const &_vec, 
+                                         math::rMatrix3d const &_cell, 
+                                         math::rMatrix3d const &_inv)
     LADA_END( { return (*LADA_TYPEDEF
                          api_capsule[BOOST_PP_SLOT(1)])(_vec, _cell, _inv); } ) 
 #else
@@ -33,9 +21,9 @@ namespace LaDa
   
 #if LADA_CRYSTAL_MODULE != 1
   //! Refolds a periodic vector into the voronoi cell (eg first BZ or WignerSeitz).
-  math::rVector3d into_voronoi( math::rVector3d const &_vec, 
-                                math::rMatrix3d const &_cell, 
-                                math::rMatrix3d const &_inv)
+  LADA_INLINE math::rVector3d into_voronoi( math::rVector3d const &_vec, 
+                                            math::rMatrix3d const &_cell, 
+                                            math::rMatrix3d const &_inv)
     LADA_END({ return (*LADA_TYPEDEF
                         api_capsule[BOOST_PP_SLOT(1)])(_vec, _cell, _inv); }) 
 #else
@@ -50,9 +38,9 @@ namespace LaDa
   //! \details Since the vector is refolded in fractional coordinates, it may
   //!          or may not be the vector with smallest norm. Use math::rVector3d
   //!          into_voronoi() to get the equivalent vector with smallest norm.
-  math::rVector3d zero_centered( math::rVector3d const &_vec, 
-                                 math::rMatrix3d const &_cell, 
-                                 math::rMatrix3d const &_inv)
+  LADA_INLINE math::rVector3d zero_centered( math::rVector3d const &_vec, 
+                                             math::rMatrix3d const &_cell, 
+                                             math::rMatrix3d const &_inv)
     LADA_END({ return (*LADA_TYPEDEF
                         api_capsule[BOOST_PP_SLOT(1)])(_vec, _cell, _inv); })
 #else
@@ -64,26 +52,23 @@ namespace LaDa
 #undef LADA_TYPEDEF
 
 #if LADA_CRYSTAL_MODULE != 1
-      //! Refolds a periodic vector into the unit cell.           
-      inline math::rVector3d into_cell( math::rVector3d const &_vec, 
-                                        math::rMatrix3d const &_cell )
-        { return into_cell(_vec, _cell, _cell.inverse()); }
-      //! \brief Refolds a periodic vector into the voronoi cell (eg first BZ or WignerSeitz).
-      //! \details May fail if the matrix is a weird parameterization of the
-      //!          lattice. It is best to use a grubber(...) cell . 
-      inline math::rVector3d into_voronoi( math::rVector3d const &_vec, 
-                                           math::rMatrix3d const &_cell )
-        { return into_voronoi(_vec, _cell, _cell.inverse()); }
+  //! Refolds a periodic vector into the unit cell.           
+  inline math::rVector3d into_cell( math::rVector3d const &_vec, 
+                                    math::rMatrix3d const &_cell )
+    { return into_cell(_vec, _cell, _cell.inverse()); }
+  //! \brief Refolds a periodic vector into the voronoi cell (eg first BZ or WignerSeitz).
+  //! \details May fail if the matrix is a weird parameterization of the
+  //!          lattice. It is best to use a grubber(...) cell . 
+  inline math::rVector3d into_voronoi( math::rVector3d const &_vec, 
+                                       math::rMatrix3d const &_cell )
+    { return into_voronoi(_vec, _cell, _cell.inverse()); }
 
-      //! \brief Refolds a periodic vector into a cell centered around zero (in
-      //!        fractional coordinates).
-      //! \details Since the vector is refolded in fractional coordinates, it may
-      //!          or may not be the vector with smallest norm. Use math::rVector3d
-      //!          into_voronoi() to get the equivalent vector with smallest norm.
-      inline math::rVector3d zero_centered( math::rVector3d const &_vec, 
-                                            math::rMatrix3d const &_cell )
-        { return zero_centered(_vec, _cell, _cell.inverse()); }
-    } // anonymous namespace
-  } // namespace Crystal
-} // namespace LaDa
+  //! \brief Refolds a periodic vector into a cell centered around zero (in
+  //!        fractional coordinates).
+  //! \details Since the vector is refolded in fractional coordinates, it may
+  //!          or may not be the vector with smallest norm. Use math::rVector3d
+  //!          into_voronoi() to get the equivalent vector with smallest norm.
+  inline math::rVector3d zero_centered( math::rVector3d const &_vec, 
+                                        math::rMatrix3d const &_cell )
+    { return zero_centered(_vec, _cell, _cell.inverse()); }
 #endif

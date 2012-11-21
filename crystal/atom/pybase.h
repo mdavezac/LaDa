@@ -1,11 +1,4 @@
 #if LADA_CRYSTAL_MODULE == 100 || LADA_CRYSTAL_MODULE == 0
-# include "LaDaConfig.h"
-
-# include <Python.h>
-
-# include <math/eigen.h>
-
-
   namespace LaDa
   {
     namespace crystal
