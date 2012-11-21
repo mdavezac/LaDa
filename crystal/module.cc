@@ -23,7 +23,7 @@
 #include <math/quantity.h>
 #include <math/gruber.h>
 
-#include <python/exceptions.h>
+#include <errors/exceptions.h>
 #include "python/numpy_types.h"
 #include "python/wrap_numpy.h"
 #include "python/object.h"

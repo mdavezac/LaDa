@@ -6,7 +6,7 @@
 
 #include <algorithm>
 
-#include <python/exceptions.h>
+#include <errors/exceptions.h>
 #include <python/numpy_types.h>
 #ifndef PyMODINIT_FUNC	/* declarations for DLL import/export */
 # define PyMODINIT_FUNC void

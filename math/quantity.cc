@@ -1,6 +1,6 @@
 #include "LaDaConfig.h"
 
-#include <python/exceptions.h>
+#include <errors/exceptions.h>
 #include "quantity.h"
 
 #include <iostream>

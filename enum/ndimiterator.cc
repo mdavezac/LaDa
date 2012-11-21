@@ -11,7 +11,7 @@
 
 
 #include <crystal/python/numpy_types.h>
-#include <python/exceptions.h>
+#include <errors/exceptions.h>
 #include <crystal/python/wrap_numpy.h>
 
 #include "ndimiterator.h"

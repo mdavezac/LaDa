@@ -1,0 +1,2 @@
+set(PYERROR_PY error.py)
+install(FILES ${PYLADA_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada)

@@ -33,7 +33,7 @@
 # include <math/quantity.h>
 # include <math/smith_normal_form.h>
 
-# include <python/exceptions.h>
+# include <errors/exceptions.h>
 
 # if LADA_CRYSTAL_MODULE == 100
     namespace LaDa

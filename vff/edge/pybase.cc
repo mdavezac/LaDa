@@ -7,7 +7,7 @@
 #include <numpy/arrayobject.h>
 
 
-#include <python/exceptions.h>
+#include <errors/exceptions.h>
 #include <crystal/python/wrap_numpy.h>
 #include <math/quantity.h>
 
