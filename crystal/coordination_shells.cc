@@ -1,160 +1,140 @@
-#include "LaDaConfig.h"
-
-#include <Python.h>
-#define PY_ARRAY_UNIQUE_SYMBOL lada_math_ARRAY_API
-#define NO_IMPORT_ARRAY
-#include <numpy/arrayobject.h>
-
-#include <crystal/python/wrap_numpy.h>
-#include <math/gruber.h>
-#include <math/misc.h>
-
-namespace LaDa 
+struct DataPoint
 {
-  namespace crystal 
+  PyObject* atom;
+  math::rVector3d trans;
+  types::t_real distance;
+};
+
+struct CmpDataPoints
+{
+  types::t_real tolerance;
+  CmpDataPoints(types::t_real const &_tol) : tolerance(_tol) {}
+  CmpDataPoints(CmpDataPoints const &_c) : tolerance(_c.tolerance) {}
+  bool operator()(DataPoint const &_a, DataPoint const &_b) const
+    { return math::lt(_a.distance, _b.distance, tolerance); }
+};
+
+PyObject* coordination_shells( crystal::Structure const &_structure, Py_ssize_t _nshells, 
+                               math::rVector3d const &_center,
+                               types::t_real _tolerance, Py_ssize_t _natoms )
+{
+  // first, computes and sorts nth neighbors.
+  const types::t_int N( _structure.size() );
+  math::rMatrix3d const cell = math::gruber(_structure.cell(), 3e0*_tolerance);
+  math::rMatrix3d const inv_cell( !cell );
+  types::t_real const volume(_structure.volume());
+
+  // Tries to figure out how far to look in number of atoms.
+  if(_natoms == 0)
   {
-    namespace // limits declarations to current scope.
-    {
-      struct DataPoint
-      {
-        PyObject* atom;
-        math::rVector3d trans;
-        types::t_real distance;
-      };
-
-      struct CmpDataPoints
-      {
-        types::t_real tolerance;
-        CmpDataPoints(types::t_real const &_tol) : tolerance(_tol) {}
-        CmpDataPoints(CmpDataPoints const &_c) : tolerance(_c.tolerance) {}
-        bool operator()(DataPoint const &_a, DataPoint const &_b) const
-          { return math::lt(_a.distance, _b.distance, tolerance); }
-      };
-
-      PyObject* coordination_shells( crystal::Structure const &_structure, Py_ssize_t _nshells, 
-                                     math::rVector3d const &_center,
-                                     types::t_real _tolerance, Py_ssize_t _natoms )
-      {
-        // first, computes and sorts nth neighbors.
-        const types::t_int N( _structure.size() );
-        math::rMatrix3d const cell = math::gruber(_structure.cell(), 3e0*_tolerance);
-        math::rMatrix3d const inv_cell( !cell );
-        types::t_real const volume(_structure.volume());
-      
-        // Tries to figure out how far to look in number of atoms.
-        if(_natoms == 0)
-        {
-          // adds number of atoms for fcc.
-          _natoms = 12;
-          if(_nshells > 1) _natoms += 6;
-          if(_nshells > 2) _natoms += 24;
-          if(_nshells > 3) _natoms += 12;
-          if(_nshells > 4) _natoms += 24;
-          if(_nshells > 5) _natoms += 8;
-          if(_nshells > 6) _natoms += 48;
-          if(_nshells > 7) _natoms += 6;
-          if(_nshells > 8) _natoms += 32;
-          if(_nshells > 9) _natoms += 24*(_nshells-9);
-          // security buffer.
-          if(_natoms < 12) _natoms += 6;
-          else _natoms += _natoms >> 4;
-        }
-        // Finds out how far to look.
-        math::rVector3d const a0(cell.col(0));
-        math::rVector3d const a1(cell.col(1));
-        math::rVector3d const a2(cell.col(2));
-        types::t_real const max_norm
-          = std::max( a0.norm(), std::max(a1.norm(), a2.norm()) );
-        types::t_real const r
-        ( 
-          std::pow
-          (
-            std::max(1e0, types::t_real(_natoms) / types::t_real(N)),
-            0.3333333333333
-          )
-        );
-        types::t_int n0( std::max(1.0, std::ceil(r*max_norm*a1.cross(a2).norm()/volume)) );
-        types::t_int n1( std::max(1.0, std::ceil(r*max_norm*a2.cross(a0).norm()/volume)) );
-        types::t_int n2( std::max(1.0, std::ceil(r*max_norm*a0.cross(a1).norm()/volume)) );
-        while( n0 * n1 * n2 * 8 * N < _natoms ) { ++n0; ++n1; ++n2; }
-      
-        typedef std::vector< DataPoint > t_DataPoints;
-        t_DataPoints datapoints;
-        datapoints.reserve(n0*n1*n2*8*N);
-        types::t_real max_distance( 1.2 * std::pow(volume/types::t_real(_natoms), 2e0/3e0)
-                                        * types::t_real(_natoms * _natoms) );
-        Structure::const_iterator i_atom = _structure.begin();
-        Structure::const_iterator i_atom_end = _structure.end();
-        for(; i_atom != i_atom_end; ++i_atom) 
-        {
-          math::rVector3d const start = into_voronoi(i_atom->pos()-_center, cell, inv_cell);
-          if(start.squaredNorm() > max_distance) continue;
-          for( types::t_int x(-n0); x <= n0; ++x )
-            for( types::t_int y(-n1); y <= n1; ++y )
-              for( types::t_int z(-n2); z <= n2; ++z )
-              {
-                math::rVector3d const pos = start + cell * math::rVector3d(x,y,z);
-                types::t_real const distance = pos.norm();
-                DataPoint const point = {i_atom->borrowed(), pos, distance};
-                datapoints.push_back(point);
-              }
-        }
-        std::partial_sort
-        ( 
-          datapoints.begin(), datapoints.begin() + _natoms, datapoints.end(),
-          CmpDataPoints(_tolerance) 
-        );
-      
-      
-        //! creates list of results.
-        python::Object result = PyList_New(0);
-        if(not result) return NULL;
-        t_DataPoints::const_iterator i_point = datapoints.begin();
-        t_DataPoints::const_iterator i_point_end = datapoints.end();
-        types::t_real current_norm = i_point->distance;
-        while(math::is_null(current_norm, _tolerance)) 
-        {
-          ++i_point;
-          if(i_point == i_point_end)
-          {
-            LADA_PYERROR(InternalError, "Could not find any point at non-zero distance from origin.");
-            return NULL;
-          }
-          current_norm = i_point->distance;
-        }
-        
-        for(Py_ssize_t nshells(0); nshells < _nshells; ++nshells)
-        {
-          python::Object current_list = PyList_New(0);
-          if(not current_list) return NULL;
-          if(PyList_Append(result.borrowed(), current_list.borrowed()) != 0) return NULL; 
-          for(; i_point != i_point_end; ++i_point)
-          {
-            // loop until norm changes.
-            if( math::lt(current_norm, i_point->distance, _tolerance) )
-              { current_norm = i_point->distance; break; }
-            // adds point to result.
-            PyObject* pydist = PyFloat_FromDouble(i_point->distance);
-            if(not pydist) return NULL;
-            PyObject* pypos = python::wrap_to_numpy(i_point->trans);
-            if(not pypos) { Py_DECREF(pydist); return NULL; }
-            PyObject *tuple = PyTuple_Pack(3, i_point->atom, pypos, pydist);
-            Py_DECREF(pypos); Py_DECREF(pydist);
-            if(not tuple) return NULL;
-            bool is_appended = PyList_Append(current_list.borrowed(), tuple) == 0;
-            Py_DECREF(tuple);
-            if(not is_appended) return NULL;
-          }
-          if(i_point == i_point_end) // premature death. Retry with more atoms.
-          {
-            result.release(); // cleanup
-            datapoints.clear(); // cleanup
-            _natoms += _natoms >> 1; // increase number of atoms.
-            return coordination_shells(_structure, _nshells, _center, _tolerance, _natoms);
-          }
-        }
-        return result.release();
-      }
-    } // anonymoy namespace
+    // adds number of atoms for fcc.
+    _natoms = 12;
+    if(_nshells > 1) _natoms += 6;
+    if(_nshells > 2) _natoms += 24;
+    if(_nshells > 3) _natoms += 12;
+    if(_nshells > 4) _natoms += 24;
+    if(_nshells > 5) _natoms += 8;
+    if(_nshells > 6) _natoms += 48;
+    if(_nshells > 7) _natoms += 6;
+    if(_nshells > 8) _natoms += 32;
+    if(_nshells > 9) _natoms += 24*(_nshells-9);
+    // security buffer.
+    if(_natoms < 12) _natoms += 6;
+    else _natoms += _natoms >> 4;
   }
+  // Finds out how far to look.
+  math::rVector3d const a0(cell.col(0));
+  math::rVector3d const a1(cell.col(1));
+  math::rVector3d const a2(cell.col(2));
+  types::t_real const max_norm
+    = std::max( a0.norm(), std::max(a1.norm(), a2.norm()) );
+  types::t_real const r
+  ( 
+    std::pow
+    (
+      std::max(1e0, types::t_real(_natoms) / types::t_real(N)),
+      0.3333333333333
+    )
+  );
+  types::t_int n0( std::max(1.0, std::ceil(r*max_norm*a1.cross(a2).norm()/volume)) );
+  types::t_int n1( std::max(1.0, std::ceil(r*max_norm*a2.cross(a0).norm()/volume)) );
+  types::t_int n2( std::max(1.0, std::ceil(r*max_norm*a0.cross(a1).norm()/volume)) );
+  while( n0 * n1 * n2 * 8 * N < _natoms ) { ++n0; ++n1; ++n2; }
+
+  typedef std::vector< DataPoint > t_DataPoints;
+  t_DataPoints datapoints;
+  datapoints.reserve(n0*n1*n2*8*N);
+  types::t_real max_distance( 1.2 * std::pow(volume/types::t_real(_natoms), 2e0/3e0)
+                                  * types::t_real(_natoms * _natoms) );
+  Structure::const_iterator i_atom = _structure.begin();
+  Structure::const_iterator i_atom_end = _structure.end();
+  for(; i_atom != i_atom_end; ++i_atom) 
+  {
+    math::rVector3d const start = into_voronoi(i_atom->pos()-_center, cell, inv_cell);
+    if(start.squaredNorm() > max_distance) continue;
+    for( types::t_int x(-n0); x <= n0; ++x )
+      for( types::t_int y(-n1); y <= n1; ++y )
+        for( types::t_int z(-n2); z <= n2; ++z )
+        {
+          math::rVector3d const pos = start + cell * math::rVector3d(x,y,z);
+          types::t_real const distance = pos.norm();
+          DataPoint const point = {i_atom->borrowed(), pos, distance};
+          datapoints.push_back(point);
+        }
+  }
+  std::partial_sort
+  ( 
+    datapoints.begin(), datapoints.begin() + _natoms, datapoints.end(),
+    CmpDataPoints(_tolerance) 
+  );
+
+
+  //! creates list of results.
+  python::Object result = PyList_New(0);
+  if(not result) return NULL;
+  t_DataPoints::const_iterator i_point = datapoints.begin();
+  t_DataPoints::const_iterator i_point_end = datapoints.end();
+  types::t_real current_norm = i_point->distance;
+  while(math::is_null(current_norm, _tolerance)) 
+  {
+    ++i_point;
+    if(i_point == i_point_end)
+    {
+      LADA_PYERROR(InternalError, "Could not find any point at non-zero distance from origin.");
+      return NULL;
+    }
+    current_norm = i_point->distance;
+  }
+  
+  for(Py_ssize_t nshells(0); nshells < _nshells; ++nshells)
+  {
+    python::Object current_list = PyList_New(0);
+    if(not current_list) return NULL;
+    if(PyList_Append(result.borrowed(), current_list.borrowed()) != 0) return NULL; 
+    for(; i_point != i_point_end; ++i_point)
+    {
+      // loop until norm changes.
+      if( math::lt(current_norm, i_point->distance, _tolerance) )
+        { current_norm = i_point->distance; break; }
+      // adds point to result.
+      PyObject* pydist = PyFloat_FromDouble(i_point->distance);
+      if(not pydist) return NULL;
+      PyObject* pypos = python::wrap_to_numpy(i_point->trans);
+      if(not pypos) { Py_DECREF(pydist); return NULL; }
+      PyObject *tuple = PyTuple_Pack(3, i_point->atom, pypos, pydist);
+      Py_DECREF(pypos); Py_DECREF(pydist);
+      if(not tuple) return NULL;
+      bool is_appended = PyList_Append(current_list.borrowed(), tuple) == 0;
+      Py_DECREF(tuple);
+      if(not is_appended) return NULL;
+    }
+    if(i_point == i_point_end) // premature death. Retry with more atoms.
+    {
+      result.release(); // cleanup
+      datapoints.clear(); // cleanup
+      _natoms += _natoms >> 1; // increase number of atoms.
+      return coordination_shells(_structure, _nshells, _center, _tolerance, _natoms);
+    }
+  }
+  return result.release();
 }
