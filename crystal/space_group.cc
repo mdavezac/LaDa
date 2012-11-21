@@ -1,7 +1,7 @@
 template<size_t N0, size_t N1>  PyObject* new_matrix()
 {
   npy_intp dims[2] = {N0, N1};
-  int const type = math::numpy::type<types::t_real>::value;
+  int const type = python::numpy::type<types::t_real>::value;
   PyArrayObject *result = (PyArrayObject*)PyArray_ZEROS(2, dims, type, 1);
   return (PyObject*)result;
 }

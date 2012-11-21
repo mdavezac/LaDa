@@ -14,7 +14,7 @@ int lada_atom_settype(PyAtomObject *_self, PyObject *_value, void *_closure);
 PyObject* lada_atom_getpos(PyAtomObject *_self, void *closure)
 {
   npy_intp dims[1] = {3};
-  int const value = math::numpy::type<math::rVector3d::Scalar>::value;
+  int const value = python::numpy::type<math::rVector3d::Scalar>::value;
   PyArrayObject* result = (PyArrayObject*) PyArray_SimpleNewFromData(1, dims, value, _self->pos.data());
   if(result == NULL) return NULL;
   result->base = (PyObject*)_self;

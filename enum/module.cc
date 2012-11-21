@@ -45,9 +45,9 @@ namespace LaDa
             PyArray_ITER_NEXT(i_iterator);                                     \
           }                                                                    \
         }
-      LADA_IFTYPE(NPY_FLOAT, math::numpy::type<npy_float>::np_type)
-      else LADA_IFTYPE(NPY_DOUBLE, math::numpy::type<npy_double>::np_type)
-      else LADA_IFTYPE(NPY_LONGDOUBLE, math::numpy::type<npy_longdouble>::np_type)
+      LADA_IFTYPE(NPY_FLOAT, python::numpy::type<npy_float>::np_type)
+      else LADA_IFTYPE(NPY_DOUBLE, python::numpy::type<npy_double>::np_type)
+      else LADA_IFTYPE(NPY_LONGDOUBLE, python::numpy::type<npy_longdouble>::np_type)
 #     undef LADA_WITH_DATA_TYPE
       Py_RETURN_TRUE;
     }
@@ -88,8 +88,8 @@ namespace LaDa
         LADA_PYERROR(TypeError, "_lexcompare arguments should have the same size.");
         return NULL;
       }
-      if( first->descr->type_num != math::numpy::type<t_ndim>::value
-          or second->descr->type_num != math::numpy::type<t_ndim>::value )
+      if( first->descr->type_num != python::numpy::type<t_ndim>::value
+          or second->descr->type_num != python::numpy::type<t_ndim>::value )
       {
         LADA_PYERROR(TypeError, "Wrong kind for _lexcompare arguments.");
         return NULL;

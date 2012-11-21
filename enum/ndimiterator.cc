@@ -115,7 +115,7 @@ namespace LaDa
         _self->yielded = NULL;
         Py_DECREF(dummy);
       }
-      typedef math::numpy::type<t_ndim> t_type;
+      typedef python::numpy::type<t_ndim> t_type;
       npy_intp d[1] = {(npy_intp)N};
       _self->yielded = (PyArrayObject*)
           PyArray_SimpleNewFromData(1, d, t_type::value, &_self->counter[0]);

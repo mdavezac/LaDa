@@ -87,7 +87,7 @@ namespace LaDa
       else
       {
         typedef math::rVector3d::Scalar t_type;
-        int const nptype = math::numpy::type<t_type>::value;
+        int const nptype = python::numpy::type<t_type>::value;
         npy_intp dims[1] = {3};
         translation = PyArray_SimpleNew(1, dims, nptype);
         if(not translation) return NULL;

@@ -4,8 +4,9 @@
 #define PY_ARRAY_UNIQUE_SYMBOL lada_ARRAY_API
 #include <numpy/arrayobject.h>
 
-#include <crystal/python/numpy_types.h>
-#include <crystal/python/wrap_numpy.h>
+#include <python/exceptions.h>
+// #include <crystal/python/numpy_types.h>
+// #include <crystal/python/wrap_numpy.h>
 
 #define LADA_MATH_MODULE
 

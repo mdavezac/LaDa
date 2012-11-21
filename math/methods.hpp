@@ -1,5 +1,12 @@
 namespace LaDa
 {
+  namespace python
+  {
+#   define LADA_CRYSTAL_MODULE 0
+#   include "../crystal/python/numpy_types.h"
+#   include "../crystal/python/wrap_numpy.h"
+#   undef LADA_CRYSTAL_MODULE 
+  }
   namespace math
   {
     static PyObject* pyis_integer(PyObject *_module, PyObject* _in)
@@ -17,14 +24,16 @@ namespace LaDa
 #     define LADA_NPYITER(TYPE, NUM_TYPE)                                     \
         if(type == NUM_TYPE)                                                  \
         {                                                                     \
-          python::Object iterator = PyArray_IterNew(_in);                     \
-          while(PyArray_ITER_NOTDONE(iterator.borrowed()))                    \
+          PyObject* iterator = PyArray_IterNew(_in);                          \
+          if(not iterator) return NULL;                                       \
+          while(PyArray_ITER_NOTDONE(iterator))                               \
           {                                                                   \
-            TYPE const x = *((TYPE*)PyArray_ITER_DATA(iterator.borrowed()));  \
+            TYPE const x = *((TYPE*)PyArray_ITER_DATA(iterator));             \
             if(not LaDa::math::eq(x, TYPE(std::floor(x+0.1))) )               \
-              { Py_RETURN_FALSE; }                                            \
-            PyArray_ITER_NEXT(iterator.borrowed());                           \
+              { Py_DECREF(iterator); Py_RETURN_FALSE; }                       \
+            PyArray_ITER_NEXT(iterator);                                      \
           }                                                                   \
+          Py_DECREF(iterator);                                                \
           Py_RETURN_TRUE;                                                     \
         }
       LADA_NPYITER( npy_float,      NPY_FLOAT)      
@@ -54,50 +63,56 @@ namespace LaDa
         LADA_PYERROR(TypeError, "Argument should be a numpy array.");
         return NULL;
       }
-      python::Object result = PyArray_SimpleNew( PyArray_NDIM(_in),
-                                                 PyArray_DIMS(_in), 
-                                                 NPY_LONG );
-      if(not result) return NULL;
-      python::Object iter_in = PyArray_IterNew(_in);
-      if(not iter_in) return NULL;
-      python::Object iter_out = PyArray_IterNew(result.borrowed());
-      if(not iter_out) return NULL;
-      PyObject* py_iterin = iter_in.borrowed();
-      PyObject* py_iterout = iter_out.borrowed();
-
       int const type = PyArray_TYPE(_in);
+      if(    type == NPY_INT
+          or type == NPY_UINT        
+          or type == NPY_LONG        
+          or type == NPY_LONGLONG    
+          or type == NPY_ULONGLONG   
+          or type == NPY_BYTE        
+          or type == NPY_SHORT       
+          or type == NPY_USHORT     )
+      {
+        LADA_PYERROR(TypeError, "Numpy array is already an interger type.");
+        Py_RETURN_TRUE; 
+      }
+
+      PyObject* result = PyArray_SimpleNew( PyArray_NDIM(_in),
+                                            PyArray_DIMS(_in), 
+                                            NPY_LONG );
+      if(not result) return NULL;
+      PyObject* iter_in = PyArray_IterNew(_in);
+      if(not iter_in) {Py_DECREF(result); return NULL;}
+      PyObject* iter_out = PyArray_IterNew(result);
+      if(not iter_out) {Py_DECREF(iter_in); Py_DECREF(result); return NULL;}
+
 #     ifdef  LADA_NPYITER
 #       error LADA_NPYITER already defined
 #     endif
 #     define LADA_NPYITER(TYPE, NUM_TYPE)                                       \
         if(type == NUM_TYPE)                                                    \
         {                                                                       \
-          while(PyArray_ITER_NOTDONE(py_iterin))                                \
+          while(PyArray_ITER_NOTDONE(iter_in))                                  \
           {                                                                     \
-            *((npy_long*)PyArray_ITER_DATA(py_iterout))                         \
-                = math::floor_int<TYPE>(*(TYPE*) PyArray_ITER_DATA(py_iterin)); \
-            PyArray_ITER_NEXT(py_iterin);                                       \
-            PyArray_ITER_NEXT(py_iterout);                                      \
+            *((npy_long*)PyArray_ITER_DATA(iter_out))                           \
+                = math::floor_int<TYPE>(*(TYPE*) PyArray_ITER_DATA(iter_in));   \
+            PyArray_ITER_NEXT(iter_in);                                         \
+            PyArray_ITER_NEXT(iter_out);                                        \
           }                                                                     \
+          Py_DECREF(iter_in);                                                   \
+          Py_DECREF(iter_out);                                                  \
         }
       LADA_NPYITER( npy_float,      NPY_FLOAT)      
       else LADA_NPYITER( npy_double,     NPY_DOUBLE     )
       else LADA_NPYITER( npy_longdouble, NPY_LONGDOUBLE )
-      else if(    type == NPY_INT
-               or type == NPY_UINT        
-               or type == NPY_LONG        
-               or type == NPY_LONGLONG    
-               or type == NPY_ULONGLONG   
-               or type == NPY_BYTE        
-               or type == NPY_SHORT       
-               or type == NPY_USHORT     ) Py_RETURN_TRUE;
       else
       {
+        Py_DECREF(result);
         LADA_PYERROR(TypeError, "Unknown numpy array type.");
         return NULL;
       }
 #     undef LADA_NPYITER
-      return result.release();
+      return result;
     }
 
     static PyObject* Rotation1( PyObject *_module, 
@@ -124,7 +139,7 @@ namespace LaDa
       // \typedef type of the angle axis object to initialize roations.
       typedef Eigen::AngleAxis<types::t_real> AngleAxis;
       npy_intp dims[2] = {4, 3};
-      int const type = numpy::type<types::t_real>::value;
+      int const type = python::numpy::type<types::t_real>::value;
       PyArrayObject *result = (PyArrayObject*)PyArray_ZEROS(2, dims, type, 1);
       if(not result) return NULL;
       
@@ -148,7 +163,7 @@ namespace LaDa
 #     endif
       // \typedef type of the angle axis object to initialize roations.
       npy_intp dims[2] = {4, 3};
-      int const type = numpy::type<types::t_real>::value;
+      int const type = python::numpy::type<types::t_real>::value;
       PyArrayObject *result = (PyArrayObject*)PyArray_ZEROS(2, dims, type, 1);
       if(not result) return NULL;
       

@@ -25,7 +25,7 @@ namespace LaDa
             LADA_PYERROR(TypeError, "Unexpected bond-parameters in vff.");
             return NULL;
           }
-          if(result->descr->type_num != math::numpy::type<types::t_real>::value)
+          if(result->descr->type_num != python::numpy::type<types::t_real>::value)
           {
             Py_DECREF(result); 
             LADA_PYERROR(TypeError, "Unexpected array kind for bond-parameters.");
@@ -63,7 +63,7 @@ namespace LaDa
             LADA_PYERROR(TypeError, "Unexpected bond-parameters in vff.");
             return NULL;
           }
-          if(result->descr->type_num != math::numpy::type<types::t_real>::value)
+          if(result->descr->type_num != python::numpy::type<types::t_real>::value)
           {
             Py_DECREF(result); 
             LADA_PYERROR(TypeError, "Unexpected array kind for bond-parameters.");
@@ -272,7 +272,7 @@ namespace LaDa
         npy_intp dimensions[2] = {structure->atoms.size(), 3};
         PyArrayObject *pyforces = (PyArrayObject*)
                                      PyArray_ZEROS( 2, dimensions, 
-                                                    math::numpy::type<types::t_real>::value,
+                                                    python::numpy::type<types::t_real>::value,
                                                     0 ); 
         if(not pyforces) return NULL;
 

@@ -26,7 +26,7 @@
        math::rVector3d vector = NAME(a, cell, invcell);                              \
        npy_intp dim[1] = {3};                                                        \
        PyObject* result = PyArray_SimpleNew(1, dim,                                  \
-           math::numpy::type<math::rVector3d::Scalar>::value );                      \
+           python::numpy::type<math::rVector3d::Scalar>::value );                    \
        if(result == NULL) return NULL;                                               \
        char * const elem = (char*const) PyArray_DATA(result);                        \
        npy_intp const stride = PyArray_STRIDE(result, 0);                            \
@@ -65,7 +65,7 @@
        return NULL;                                                                  \
      }                                                                               \
      python::Object result(PyArray_SimpleNew(ndim, shape,                            \
-         math::numpy::type<math::rVector3d::Scalar>::value ));                       \
+         python::numpy::type<math::rVector3d::Scalar>::value ));                     \
      if(not result) return NULL;                                                     \
      python::Object iter_pos( (PyObject*) PyArray_IterNew(positions) );              \
      python::Object iter_res( (PyObject*) PyArray_IterNew(result.borrowed()) );      \
@@ -77,7 +77,7 @@
        for(size_t i(0); i < 3; ++i)                                                  \
        {                                                                             \
          void const * const data = PyArray_ITER_DATA(iter_pos.borrowed());           \
-         a(i) = math::numpy::cast_data<types::t_real>(data, type);                   \
+         a(i) = python::numpy::cast_data<types::t_real>(data, type);                 \
          PyArray_ITER_NEXT(iter_pos.borrowed());                                     \
        }                                                                             \
                                                                                      \
@@ -87,9 +87,9 @@
        /* copies result */                                                           \
        for(size_t i(0); i < 3; ++i)                                                  \
        {                                                                             \
-         *( (math::numpy::type<math::rVector3d::Scalar>::np_type*)                   \
+         *( (python::numpy::type<math::rVector3d::Scalar>::np_type*)                 \
              PyArray_ITER_DATA(iter_res.borrowed()) )                                \
-           = (math::numpy::type<math::rVector3d::Scalar>::np_type) vector(i);        \
+           = (python::numpy::type<math::rVector3d::Scalar>::np_type) vector(i);      \
          PyArray_ITER_NEXT(iter_res.borrowed());                                     \
        }                                                                             \
      }                                                                               \
