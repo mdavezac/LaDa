@@ -64,7 +64,7 @@ namespace LaDa
     {
       python::Object result = PyTuple_New(3);
       if(not result) return NULL;
-      PyObject* translation = python::wrap_to_numpy(_data->translation, (PyObject*)_data);
+      PyObject* translation = python::numpy::wrap_to_numpy(_data->translation, (PyObject*)_data);
       if(not translation) return NULL;
       Py_INCREF(_data->a);
       Py_INCREF(_data->b);
@@ -82,7 +82,7 @@ namespace LaDa
       if(isself)
       {
         math::rVector3d const &trans = _data->translation;
-        translation = python::wrap_to_numpy(trans, (PyObject*) _data);
+        translation = python::numpy::wrap_to_numpy(trans, (PyObject*) _data);
       }
       else
       {

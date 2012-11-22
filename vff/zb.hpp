@@ -434,7 +434,7 @@ namespace LaDa
         } // loop over nodes
         PyObject *pyenergy = PyFloat_FromDouble(energy);
         if(not pyenergy) { Py_DECREF(pyforces); return NULL; }
-        PyObject *pystress = python::wrap_to_numpy(stress);
+        PyObject *pystress = python::numpy::wrap_to_numpy(stress);
         if(not pystress) { Py_DECREF(pyenergy); Py_DECREF(pyforces); return NULL; }
         PyObject *result = PyTuple_New(3);
         if(not result) { Py_DECREF(pyenergy); Py_DECREF(pyforces); Py_DECREF(pystress); return NULL; }

@@ -63,8 +63,8 @@ PyObject* hftransform_setstate(PyHFTObject* _self, PyObject *_tuple)
     return NULL;
   }
   // first cell and scale.
-  if(not python::convert_to_matrix(PyTuple_GET_ITEM(_tuple, 0), _self->transform)) return NULL;
-  if(not python::convert_to_vector(PyTuple_GET_ITEM(_tuple, 1), _self->quotient)) return NULL;
+  if(not python::numpy::convert_to_matrix(PyTuple_GET_ITEM(_tuple, 0), _self->transform)) return NULL;
+  if(not python::numpy::convert_to_vector(PyTuple_GET_ITEM(_tuple, 1), _self->quotient)) return NULL;
   Py_RETURN_NONE;
 }
 
@@ -98,7 +98,7 @@ PyObject* hftransform_flat_index( PyHFTObject* _self,
   if(not PyArg_ParseTupleAndKeywords(_args, _kwargs, "O|i:flat_index", kwlist, &posatom, &site) )
     return NULL;
   math::rVector3d pos;
-  if(not python::convert_to_vector(posatom, pos)) return NULL;
+  if(not python::numpy::convert_to_vector(posatom, pos)) return NULL;
   LADA_HFTRANSFORM_SHARED1(_self->quotient, _self->transform, pos, LADA_PYERROR, return NULL);
   LADA_HFTRANSFORM_SHARED0(_self->quotient, vector_result, site);
   return PyInt_FromLong(flat_result);
@@ -107,9 +107,9 @@ PyObject* hftransform_flat_index( PyHFTObject* _self,
 PyObject* hftransform_indices(PyHFTObject* _self, PyObject* _args)
 {
   math::rVector3d pos;
-  if(not python::convert_to_vector(_args, pos)) return NULL;
+  if(not python::numpy::convert_to_vector(_args, pos)) return NULL;
   LADA_HFTRANSFORM_SHARED1(_self->quotient, _self->transform, pos, LADA_PYERROR, return NULL);
-  return python::wrap_to_numpy(vector_result);
+  return python::numpy::wrap_to_numpy(vector_result);
 }
 // undefs macros also used in hf.
 #include "macro.hpp"

@@ -24,11 +24,7 @@
 #include <math/gruber.h>
 
 #include <errors/exceptions.h>
-#include "python/numpy_types.h"
-#include "python/wrap_numpy.h"
-#include "python/object.h"
-#include "python/random_access_list_iterator.h"
-#include "python/random_access_tuple_iterator.h"
+#include <python/python.h>
 
 #ifndef PyMODINIT_FUNC	/* declarations for DLL import/export */
 # define PyMODINIT_FUNC void
@@ -71,8 +67,7 @@ PyMODINIT_FUNC initcppwrappers(void)
   char const doc[] =  "Wrapper around C++ atom/structure class and affiliates.";
   PyObject* module = Py_InitModule3("cppwrappers", methods_table, doc);
   if(not module) return;
-
-  import_array(); // needed for NumPy 
+  if(not LaDa::python::import()) return;
 
   /* Initialize the C API pointer array */
 # undef PYLADA_CRYSTALMODULE_H

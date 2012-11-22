@@ -50,7 +50,7 @@ namespace LaDa
         size_t const n = _self->bonds.size();
         math::rVector3d pos(0,0,0);
         if(_pos) 
-          { if(not python::convert_to_vector(_pos, pos)) return NULL; }
+          { if(not python::numpy::convert_to_vector(_pos, pos)) return NULL; }
         if(not PyNode_AddEdge(_self, (NodeData*)nodeB, pos)) return NULL;
         if(n != _self->bonds.size()) Py_RETURN_TRUE;
         Py_RETURN_FALSE;

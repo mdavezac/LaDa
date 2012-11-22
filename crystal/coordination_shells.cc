@@ -119,7 +119,7 @@ PyObject* coordination_shells( crystal::Structure const &_structure, Py_ssize_t 
       // adds point to result.
       PyObject* pydist = PyFloat_FromDouble(i_point->distance);
       if(not pydist) return NULL;
-      PyObject* pypos = python::wrap_to_numpy(i_point->trans);
+      PyObject* pypos = python::numpy::wrap_to_numpy(i_point->trans);
       if(not pypos) { Py_DECREF(pydist); return NULL; }
       PyObject *tuple = PyTuple_Pack(3, i_point->atom, pypos, pydist);
       Py_DECREF(pypos); Py_DECREF(pydist);

@@ -69,7 +69,7 @@ PyObject *create_tuple( PyObject *_neighbor,
   if(not result) return NULL;
   // create numpy array.
   math::rVector3d const vec(_x, _y, _z);
-  PyObject *array = python::wrap_to_numpy(vec);
+  PyObject *array = python::numpy::wrap_to_numpy(vec);
   if(not array) return NULL;
   PyTuple_SET_ITEM(result.borrowed(), 1, (PyObject*)array);
   PyObject* const atom = PyTuple_GetItem(_neighbor, 0);
@@ -154,7 +154,7 @@ bool splitconfigs( Structure const &_structure,
     if(not pydist) return false;
     PyTuple_SET_ITEM(firstitem.borrowed(), 2, pydist);
     math::rVector3d const zero = math::rVector3d::Zero();
-    PyObject* pytrans = python::wrap_to_numpy(zero);
+    PyObject* pytrans = python::numpy::wrap_to_numpy(zero);
     if(not pytrans) return false;
     PyTuple_SET_ITEM(firstitem.borrowed(), 1, pytrans);
   }

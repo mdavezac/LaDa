@@ -132,7 +132,7 @@ namespace LaDa
         return NULL;
       }
       math::rVector3d translation(0,0,0);
-      if(_trans and not python::convert_to_vector(_trans, translation)) return NULL;
+      if(_trans and not python::numpy::convert_to_vector(_trans, translation)) return NULL;
       
       if(not PyNode_AddEdge(_self, (NodeData*)endpoint, translation)) Py_RETURN_FALSE;
       Py_RETURN_TRUE;

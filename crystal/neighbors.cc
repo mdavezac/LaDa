@@ -7,7 +7,7 @@ bool insert_neighbor_impl_( python::Object const &_list,
 {
   PyObject *pydist = PyFloat_FromDouble(_distance);
   if(not pydist) return false;
-  PyObject* pypos = python::wrap_to_numpy(_pos);
+  PyObject* pypos = python::numpy::wrap_to_numpy(_pos);
   if(not pypos) {Py_DECREF(pydist); return false; }
   PyObject *tuple = PyTuple_Pack(3, _ref.borrowed(), pypos, pydist);
   Py_DECREF(pypos); Py_DECREF(pydist);
@@ -24,7 +24,7 @@ bool append_neighbor_impl_( python::Object const &_list,
 {
   PyObject *pydist = PyFloat_FromDouble(_distance);
   if(not pydist) return false;
-  PyObject* pypos = python::wrap_to_numpy(_pos);
+  PyObject* pypos = python::numpy::wrap_to_numpy(_pos);
   if(not pypos) {Py_DECREF(pydist); return false; }
   PyObject *tuple = PyTuple_Pack(3, _ref.borrowed(), pypos, pydist);
   Py_DECREF(pypos); Py_DECREF(pydist);

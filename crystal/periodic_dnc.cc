@@ -109,7 +109,7 @@ PyObject* dnc_boxes( const Structure &_structure,
     
     // creates apropriate point in small-box and adds it to list.
     math::rVector3d const orig_translation = cell * (ifrac - _ifrac).cast<math::rMatrix3d::Scalar>();
-    { python::Object trans = python::wrap_to_numpy(orig_translation);
+    { python::Object trans = python::numpy::wrap_to_numpy(orig_translation);
       if(not trans) return NULL;
       python::Object tuple = PyTuple_Pack(3, i_atom->borrowed(), trans.borrowed(), Py_True);
       if(not tuple) return NULL;
@@ -186,7 +186,7 @@ PyObject* dnc_boxes( const Structure &_structure,
           }
           if(not found)
           { // constructs overlap object and adds it to container.
-            python::Object trans = python::wrap_to_numpy(overlap_translation);
+            python::Object trans = python::numpy::wrap_to_numpy(overlap_translation);
             if(not trans) return NULL;
             python::Object overlap =PyTuple_Pack(3, i_atom->borrowed(), trans.borrowed(), Py_False); 
             if(not overlap) continue;
@@ -227,7 +227,7 @@ PyObject* pyperiodic_dnc(PyObject* _module, PyObject* _args, PyObject *_kwargs)
     return NULL;
   }
   Structure struc = Structure::acquire(structure);
-  if(_n != NULL and not python::convert_to_vector(_n, mesh)) return NULL;
+  if(_n != NULL and not python::numpy::convert_to_vector(_n, mesh)) return NULL;
   else if(_n == NULL) mesh = guess_mesh_(struc, nperbox);
 
   try
@@ -235,7 +235,7 @@ PyObject* pyperiodic_dnc(PyObject* _module, PyObject* _args, PyObject *_kwargs)
     python::Object result = dnc_boxes(struc, mesh, overlap);
     if(not result) return NULL;
     if(not return_mesh) return result.release();
-    python::Object pymesh = python::wrap_to_numpy(mesh);
+    python::Object pymesh = python::numpy::wrap_to_numpy(mesh);
     if(not pymesh) return NULL;
     return PyTuple_Pack(2, pymesh.borrowed(), result.borrowed());
   }

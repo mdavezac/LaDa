@@ -65,9 +65,9 @@ int hftransform_init(PyHFTObject* _self, PyObject* _args, PyObject *_kwargs)
     return -1;
   math::rMatrix3d cell, bigcell;
   if(check_structure(lattice)) cell = ((PyStructureObject*)lattice)->cell;
-  else if(not python::convert_to_matrix(lattice, cell)) { std::cout << "Err 0\n"; return -1; }
+  else if(not python::numpy::convert_to_matrix(lattice, cell)) { std::cout << "Err 0\n"; return -1; }
   if(check_structure(supercell)) bigcell = ((PyStructureObject*)supercell)->cell;
-  else if(not python::convert_to_matrix(supercell, bigcell)){ std::cout << "Err 1\n"; return -1; }
+  else if(not python::numpy::convert_to_matrix(supercell, bigcell)){ std::cout << "Err 1\n"; return -1; }
   
   return _init_hft(_self, cell, bigcell) ? 0: -1;
 }

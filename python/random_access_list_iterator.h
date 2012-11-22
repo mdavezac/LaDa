@@ -1,4 +1,4 @@
-#if LADA_CRYSTAL_MODULE != 1
+#if LADA_PYTHON_MODULE != 1
   //! \brief Thin wrapper around a python list implementing random access stl iterators.
   //! \details No reference count management. The point is that the list
   //!          should be owned and stable throughout the life of the iterator. 

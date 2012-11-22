@@ -1,12 +1,5 @@
 namespace LaDa
 {
-  namespace python
-  {
-#   define LADA_CRYSTAL_MODULE 0
-#   include "../crystal/python/numpy_types.h"
-#   include "../crystal/python/wrap_numpy.h"
-#   undef LADA_CRYSTAL_MODULE 
-  }
   namespace math
   {
     static PyObject* pyis_integer(PyObject *_module, PyObject* _in)
@@ -127,7 +120,7 @@ namespace LaDa
                                           kwlist, &angle, &_vector ) )
           return NULL;
       rVector3d vector;
-      if(not python::convert_to_vector(_vector, vector)) return NULL;
+      if(not python::numpy::convert_to_vector(_vector, vector)) return NULL;
       
 #     ifndef LADA_WITH_EIGEN3 
         // \typedef type of the affine transformations.
@@ -168,7 +161,7 @@ namespace LaDa
       if(not result) return NULL;
       
       rVector3d trans;
-      if(not python::convert_to_vector(_args, trans)) return NULL;
+      if(not python::numpy::convert_to_vector(_args, trans)) return NULL;
       for(size_t i(0); i < 3; ++i)
         for(size_t j(0); j < 3; ++j)
           *((types::t_real*)(result->data + i*result->strides[0] + j*result->strides[1])) = i == j? 1: 0;
@@ -189,12 +182,12 @@ namespace LaDa
                                           kwlist, &_cell, &itermax, &tolerance ) )
           return NULL;
       rMatrix3d cell;
-      if(not python::convert_to_matrix(_cell, cell)) return NULL;
+      if(not python::numpy::convert_to_matrix(_cell, cell)) return NULL;
 
       try
       {
         rMatrix3d result = gruber(cell, itermax, tolerance);
-        return python::wrap_to_numpy(result);
+        return python::numpy::wrap_to_numpy(result);
       }
       catch(error::singular_matrix& _e)
       {
@@ -216,7 +209,7 @@ namespace LaDa
     static PyObject* pysmith(PyObject* _module, PyObject* _matrix)
     {
       iMatrix3d matrix;
-      if(not python::convert_to_matrix(_matrix, matrix)) return NULL;
+      if(not python::numpy::convert_to_matrix(_matrix, matrix)) return NULL;
 
       iMatrix3d S, L, R;
       try { smith_normal_form(S, L, matrix, R); }
@@ -232,11 +225,11 @@ namespace LaDa
       }
       PyObject *result = PyTuple_New(3);
       if(not result) return NULL;
-      PyObject *pyS = python::wrap_to_numpy(S);
+      PyObject *pyS = python::numpy::wrap_to_numpy(S);
       if(not pyS) { Py_DECREF(result); return NULL; }
-      PyObject *pyL = python::wrap_to_numpy(L);
+      PyObject *pyL = python::numpy::wrap_to_numpy(L);
       if(not pyL) { Py_DECREF(result); Py_DECREF(pyS); return NULL; }
-      PyObject *pyR = python::wrap_to_numpy(R);
+      PyObject *pyR = python::numpy::wrap_to_numpy(R);
       if(not pyR) { Py_DECREF(result); Py_DECREF(pyS); Py_DECREF(pyL); return NULL; }
       PyTuple_SET_ITEM(result, 0, pyS);
       PyTuple_SET_ITEM(result, 1, pyL);

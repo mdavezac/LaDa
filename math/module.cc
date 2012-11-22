@@ -5,10 +5,10 @@
 #include <numpy/arrayobject.h>
 
 #include <errors/exceptions.h>
-// #include <crystal/python/numpy_types.h>
-// #include <crystal/python/wrap_numpy.h>
+#include <python/python.h>
 
 #define LADA_MATH_MODULE
+
 
 #include "fuzzy.h"
 #include "gruber.h"
@@ -23,5 +23,6 @@ PyMODINIT_FUNC initmath(void)
   char const doc[] =  "A ratatouille of useful mathematics.";
   PyObject* module = Py_InitModule3("math", LaDa::math::methods_table, doc);
   if(not module) return;
-  import_array(); // needed for NumPy 
+  if(not LaDa::python::import()) return;
+  // import_array(); // imported by python
 }

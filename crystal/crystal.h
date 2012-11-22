@@ -16,8 +16,6 @@
 # include <vector>
 # include <cmath>
 
-# include <boost/mpl/int.hpp>
-# include <boost/type_traits/is_floating_point.hpp>
 # include <boost/type_traits/is_same.hpp>
 # include <boost/static_assert.hpp>
 # include <boost/preprocessor/arithmetic/inc.hpp>
@@ -32,6 +30,7 @@
 # include <math/fuzzy.h>
 # include <math/quantity.h>
 # include <math/smith_normal_form.h>
+# include <python/python.h>
 
 # include <errors/exceptions.h>
 
@@ -39,10 +38,6 @@
     namespace LaDa
     {
 
-      namespace python
-      {
-#       include "python/python.h"
-      }
       namespace crystal
       {
         /* This section is used in modules that use lada.crystal's API */

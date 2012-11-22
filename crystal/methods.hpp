@@ -12,15 +12,15 @@
      return NULL;                                                                    \
    }                                                                                 \
    math::rMatrix3d cell, invcell;                                                    \
-   if(not python::convert_to_matrix(PyTuple_GET_ITEM(_args, 1), cell)) return NULL;  \
-   if(N == 3 and not python::convert_to_matrix(PyTuple_GET_ITEM(_args, 2), invcell)) \
+   if(not python::numpy::convert_to_matrix(PyTuple_GET_ITEM(_args, 1), cell)) return NULL;  \
+   if(N == 3 and not python::numpy::convert_to_matrix(PyTuple_GET_ITEM(_args, 2), invcell)) \
      return NULL;                                                                    \
    if(N == 2) invcell = cell.inverse();                                              \
    PyObject *positions = PyTuple_GET_ITEM(_args, 0);                                 \
    if(not PyArray_Check(positions))                                                  \
    {                                                                                 \
      math::rVector3d a;                                                              \
-     if(not python::convert_to_vector(positions, a)) return NULL;                    \
+     if(not python::numpy::convert_to_vector(positions, a)) return NULL;                    \
      try                                                                             \
      {                                                                               \
        math::rVector3d vector = NAME(a, cell, invcell);                              \
@@ -134,9 +134,9 @@ PyObject* are_periodic_images_wrapper(PyObject *_module, PyObject *_args)
   }
   math::rMatrix3d invcell;
   math::rVector3d a, b;
-  if(not python::convert_to_vector(PyTuple_GET_ITEM(_args, 0), a)) return NULL;
-  if(not python::convert_to_vector(PyTuple_GET_ITEM(_args, 1), b)) return NULL;
-  if(not python::convert_to_matrix(PyTuple_GET_ITEM(_args, 2), invcell)) return NULL;
+  if(not python::numpy::convert_to_vector(PyTuple_GET_ITEM(_args, 0), a)) return NULL;
+  if(not python::numpy::convert_to_vector(PyTuple_GET_ITEM(_args, 1), b)) return NULL;
+  if(not python::numpy::convert_to_matrix(PyTuple_GET_ITEM(_args, 2), invcell)) return NULL;
   try
   { 
     if(N == 3 and math::are_periodic_images(a, b, invcell) ) Py_RETURN_TRUE;
@@ -175,7 +175,7 @@ PyObject* supercell_wrapper(PyObject *_module, PyObject *_args, PyObject *_kwarg
     return NULL;
   }
   math::rMatrix3d cell;
-  if(not python::convert_to_matrix(cellin, cell)) return NULL;
+  if(not python::numpy::convert_to_matrix(cellin, cell)) return NULL;
   // create supercell.
   try { return supercell(Structure::acquire(lattice), cell).release(); } 
   LADA_CATCH;
@@ -251,7 +251,7 @@ PyObject* cell_invariants_wrapper(PyObject *_module, PyObject *_args)
   PyObject * const arg0 = PyTuple_GET_ITEM(_args, 0);
   math::rMatrix3d cell;
   if(check_structure(arg0)) cell = ((PyStructureObject*)arg0)->cell;
-  else if(not python::convert_to_matrix(arg0, cell)) return NULL;
+  else if(not python::numpy::convert_to_matrix(arg0, cell)) return NULL;
   types::t_real tolerance = types::tolerance;
   if(N == 2)
   {
@@ -359,7 +359,7 @@ PyObject* transform_wrapper(PyObject *_module, PyObject *_args, PyObject *_kwarg
     return NULL;
   }
   Eigen::Matrix<types::t_real, 4, 3> transform;
-  if(not python::convert_to_matrix(transform_, transform)) return NULL;
+  if(not python::numpy::convert_to_matrix(transform_, transform)) return NULL;
   Structure structure = Structure::acquire(structure_).copy();
   structure.transform(transform);
   return structure.release();
@@ -387,7 +387,7 @@ PyObject* pyneighbors(PyObject* _module, PyObject* _args, PyObject *_kwargs)
   }
   math::rVector3d center(0,0,0);
   if(check_atom(_center)) center = ((PyAtomObject*)_center)->pos;
-  else if(not python::convert_to_vector(_center, center)) return NULL;
+  else if(not python::numpy::convert_to_vector(_center, center)) return NULL;
   Structure struc = Structure::acquire(structure);
   try { return neighbors(struc, nmax, center, tolerance); }
   catch(...) {}
@@ -418,7 +418,7 @@ PyObject* pycoordination_shells(PyObject* _module, PyObject* _args, PyObject *_k
   }
   math::rVector3d center(0,0,0);
   if(check_atom(_center)) center = ((PyAtomObject*)_center)->pos;
-  else if(not python::convert_to_vector(_center, center)) return NULL;
+  else if(not python::numpy::convert_to_vector(_center, center)) return NULL;
   Structure struc = Structure::acquire(structure);
   try { return coordination_shells(struc, nmax, center, tolerance, natoms); }
   catch(...)

@@ -1,10 +1,10 @@
-#if LADA_CRYSTAL_MODULE != 1
+#if LADA_PYTHON_MODULE != 1
   //! Convert/wrap a matrix to numpy.
   template<class T_DERIVED>
     PyObject* wrap_to_numpy(Eigen::DenseBase<T_DERIVED> const &_in, PyObject *_parent = NULL)
     {
       npy_intp dims[2] = { _in.rows(), _in.cols() };
-      typedef python::numpy::type<typename Eigen::DenseBase<T_DERIVED>::Scalar> t_ScalarType;
+      typedef numpy::type<typename Eigen::DenseBase<T_DERIVED>::Scalar> t_ScalarType;
       PyArrayObject *result = _parent == NULL ?
         (PyArrayObject*) PyArray_ZEROS(_in.cols() > 1? 2: 1, dims, t_ScalarType::value, _in.IsRowMajor?0:1):
         (PyArrayObject*) PyArray_SimpleNewFromData(_in.cols() > 1? 2: 1, dims, t_ScalarType::value,
@@ -65,7 +65,7 @@
     PyObject* wrap_to_numpy(Eigen::DenseBase<T_DERIVED> &_in, PyObject *_parent = NULL)
     {
       npy_intp dims[2] = { _in.rows(), _in.cols() };
-      typedef python::numpy::type<typename Eigen::DenseBase<T_DERIVED>::Scalar> t_ScalarType;
+      typedef numpy::type<typename Eigen::DenseBase<T_DERIVED>::Scalar> t_ScalarType;
       PyArrayObject *result = _parent == NULL ?
         (PyArrayObject*) PyArray_ZEROS(_in.cols() > 1? 2: 1, dims, t_ScalarType::value, _in.IsRowMajor?0:1):
         (PyArrayObject*) PyArray_SimpleNewFromData(_in.cols() > 1? 2: 1, dims, t_ScalarType::value, &_in(0,0));

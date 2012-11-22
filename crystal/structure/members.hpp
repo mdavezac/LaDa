@@ -231,7 +231,7 @@ void itransform_structure( PyStructureObject* _self,
 PyObject* structure_transform(PyStructureObject* _self, PyObject* _args)
 {
   Eigen::Matrix<types::t_real, 4, 3> op;
-  if(not python::convert_to_matrix(_args, op)) return NULL;
+  if(not python::numpy::convert_to_matrix(_args, op)) return NULL;
   itransform_structure(_self, op);
   Py_RETURN_NONE;
 }

@@ -1,6 +1,6 @@
 //! Returns cell as a numpy array. 
 PyObject* structure_getcell(PyStructureObject *_self, void *closure)
-   { return python::wrap_to_numpy(_self->cell, (PyObject*)_self); }
+   { return python::numpy::wrap_to_numpy(_self->cell, (PyObject*)_self); }
 //! Sets cell from a sequence of 3x3 numbers.
 int structure_setcell(PyStructureObject *_self, PyObject *_value, void *_closure);
 // Returns the scale.
@@ -24,7 +24,7 @@ int structure_setcell(PyStructureObject *_self, PyObject *_value, void *_closure
     LADA_PYERROR(TypeError, "Cannot delete cell attribute.");
     return -1;
   }
-  return python::convert_to_matrix(_value, _self->cell) ? 0: -1;
+  return python::numpy::convert_to_matrix(_value, _self->cell) ? 0: -1;
 }
 
 // Returns the scale of the structure.
