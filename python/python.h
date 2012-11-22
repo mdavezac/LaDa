@@ -48,9 +48,7 @@
             PyObject *module = PyImport_ImportModule("lada.cppwrappers");
             if(not module) return false;
             Py_DECREF(module);
-            std::cout << "IMPORTING CAPSULES" << std::endl;
             api_capsule = (void **)PyCapsule_Import("lada.cppwrappers._C_API", 0);
-            std::cout << "IMPORTED CAPSULES " << api_capsule << std::endl;
             return api_capsule != NULL;
           }
         }

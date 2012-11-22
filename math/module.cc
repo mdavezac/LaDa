@@ -24,5 +24,5 @@ PyMODINIT_FUNC initmath(void)
   PyObject* module = Py_InitModule3("math", LaDa::math::methods_table, doc);
   if(not module) return;
   if(not LaDa::python::import()) return;
-  // import_array(); // imported by python
+  import_array(); // imported by python
 }

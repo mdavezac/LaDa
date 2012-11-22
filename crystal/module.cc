@@ -68,6 +68,7 @@ PyMODINIT_FUNC initcppwrappers(void)
   PyObject* module = Py_InitModule3("cppwrappers", methods_table, doc);
   if(not module) return;
   if(not LaDa::python::import()) return;
+  import_array();
 
   /* Initialize the C API pointer array */
 # undef PYLADA_CRYSTALMODULE_H
