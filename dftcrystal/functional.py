@@ -762,7 +762,6 @@ class Functional(object):
     def __init__(self, extract):
       self.extract = extract
     def __call__(self, process, error):
-      from os.path import exists
       from ..process import Fail
       self.extract.uncache()
       try: success = self.extract.success

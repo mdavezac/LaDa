@@ -179,7 +179,7 @@ def castep(file):
   # now look for position block.
   units = None
   if 'positionsfrac' in input:
-    posdata, isfrac = input['positionsfrac'].splitlines, True
+    posdata, isfrac = input['positionsfrac'].splitlines(), True
   elif 'positionsabs' in input:
     posdata, isfrac = input['positionsabs'].splitlines(), False
     try: units = parse_units(posdata[0])
