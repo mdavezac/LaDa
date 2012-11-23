@@ -15,13 +15,13 @@ namespace LaDa
   LADA_END( { return (*(PyObject*(*)( Structure const&,
                                       math::iVector3d const&,
                                       types::t_real ))
-                      api_capsule[BOOST_PP_SLOT(1)])
+                      api_capsule[LADA_SLOT(crystal)])
                      (_structure, _mesh, _overlap); } )
 #else
-  api_capsule[BOOST_PP_SLOT(1)] = (void *)dnc_boxes;
+  api_capsule[LADA_SLOT(crystal)] = (void *)dnc_boxes;
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(BOOST_PP_SLOT(1))
-#include BOOST_PP_ASSIGN_SLOT(1)
+#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(crystal))
+#include LADA_ASSIGN_SLOT(crystal)
 
 #if LADA_CRYSTAL_MODULE != 1
     }

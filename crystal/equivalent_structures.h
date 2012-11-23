@@ -31,12 +31,12 @@ namespace LaDa
                    bool with_scale=true, bool with_cartesian=true,
                    types::t_real _tol = types::tolerance )
     LADA_END({ return (*(bool(*)(Structure const&, Structure const &, bool, bool, types::t_real))
-                       api_capsule[BOOST_PP_SLOT(1)])(_a, _b, with_scale, with_cartesian, _tol); })
+                       api_capsule[LADA_SLOT(crystal)])(_a, _b, with_scale, with_cartesian, _tol); })
 #else
-  api_capsule[BOOST_PP_SLOT(1)] = (void *)equivalent;
+  api_capsule[LADA_SLOT(crystal)] = (void *)equivalent;
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(BOOST_PP_SLOT(1))
-#include BOOST_PP_ASSIGN_SLOT(1)
+#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(crystal))
+#include LADA_ASSIGN_SLOT(crystal)
 
 #if LADA_CRYSTAL_MODULE != 1
     } 

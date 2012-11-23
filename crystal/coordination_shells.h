@@ -26,12 +26,12 @@ namespace LaDa
     LADA_END({ return (*(PyObject*(*)( crystal::Structure const &, Py_ssize_t,
                                        math::rVector3d const &, types::t_real, 
                                        Py_ssize_t ))
-                api_capsule[BOOST_PP_SLOT(1)])(_structure, _nshells, _center, _tolerance, _natoms); })
+                api_capsule[LADA_SLOT(crystal)])(_structure, _nshells, _center, _tolerance, _natoms); })
 #else
-  api_capsule[BOOST_PP_SLOT(1)] = (void *)coordination_shells;
+  api_capsule[LADA_SLOT(crystal)] = (void *)coordination_shells;
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(BOOST_PP_SLOT(1))
-#include BOOST_PP_ASSIGN_SLOT(1)
+#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(crystal))
+#include LADA_ASSIGN_SLOT(crystal)
 
 #if LADA_CRYSTAL_MODULE != 1
     }

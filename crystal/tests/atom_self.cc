@@ -44,6 +44,7 @@ PyMODINIT_FUNC init_atom_self(void)
 {
   PyObject* module = Py_InitModule("_atom_self", methods);
   if(not module) return; 
+  if(not LaDa::python::import()) return;
   if(not LaDa::crystal::import()) return;
   Atom satom; 
   PyModule_AddObject(module, "_atom", (PyObject *)satom.new_ref());

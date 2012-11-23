@@ -61,7 +61,7 @@ namespace LaDa
 PyMODINIT_FUNC initcppwrappers(void) 
 {
   using namespace LaDa::crystal;
-  static void *api_capsule[BOOST_PP_SLOT(1)];
+  static void *api_capsule[LADA_SLOT(crystal)];
   PyObject *c_api_object;
 
   char const doc[] =  "Wrapper around C++ atom/structure class and affiliates.";
@@ -75,8 +75,8 @@ PyMODINIT_FUNC initcppwrappers(void)
 # include "crystal.h"
 
   /* Create a Capsule containing the API pointer array's address */
-  c_api_object = PyCapsule_New((void *)api_capsule, "lada.crystal.cppwrappers._C_API", NULL);
-
+  static const char name[] = "lada.crystal.cppwrappers._C_API";
+  c_api_object = PyCapsule_New((void *)api_capsule, name, NULL);
   if (c_api_object != NULL) PyModule_AddObject(module, "_C_API", c_api_object);
 
   if (PyType_Ready(atom_type()) < 0) return;

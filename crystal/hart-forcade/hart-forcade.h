@@ -18,12 +18,12 @@
 #if LADA_CRYSTAL_MODULE != 1
   // Returns pointer to hftransform type.
   LADA_INLINE PyTypeObject* hftransform_type()
-    LADA_END({ return (PyTypeObject*)api_capsule[BOOST_PP_SLOT(1)]; })
+    LADA_END({ return (PyTypeObject*)api_capsule[LADA_SLOT(crystal)]; })
 #else
-  api_capsule[BOOST_PP_SLOT(1)] = (void *)hftransform_type();
+  api_capsule[LADA_SLOT(crystal)] = (void *)hftransform_type();
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(BOOST_PP_SLOT(1))
-#include BOOST_PP_ASSIGN_SLOT(1)
+#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(crystal))
+#include LADA_ASSIGN_SLOT(crystal)
 
 #if LADA_CRYSTAL_MODULE != 1
   //! Creates a new hftransform with a given type, also calling initialization.
@@ -33,24 +33,24 @@
     LADA_END( { return (*(PyHFTObject*(*)( PyTypeObject*, 
                                            PyObject*, 
                                            PyObject* ))
-                        api_capsule[BOOST_PP_SLOT(1)])
+                        api_capsule[LADA_SLOT(crystal)])
                        (_type, _args, _kwargs); } )
 #else
-  api_capsule[BOOST_PP_SLOT(1)] = (void *)new_hftransform;
+  api_capsule[LADA_SLOT(crystal)] = (void *)new_hftransform;
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(BOOST_PP_SLOT(1))
-#include BOOST_PP_ASSIGN_SLOT(1)
+#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(crystal))
+#include LADA_ASSIGN_SLOT(crystal)
 
 #if LADA_CRYSTAL_MODULE != 1
   //! Creates a deepcopy of hftransform.
   LADA_INLINE PyHFTObject *copy_hftransform(PyHFTObject* _self, PyObject *_memo = NULL)
     LADA_END( { return (*(PyHFTObject*(*)(PyHFTObject*, PyObject*))
-                        api_capsule[BOOST_PP_SLOT(1)])(_self, _memo); } )
+                        api_capsule[LADA_SLOT(crystal)])(_self, _memo); } )
 #else
-  api_capsule[BOOST_PP_SLOT(1)] = (void *)copy_hftransform;
+  api_capsule[LADA_SLOT(crystal)] = (void *)copy_hftransform;
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(BOOST_PP_SLOT(1))
-#include BOOST_PP_ASSIGN_SLOT(1)
+#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(crystal))
+#include LADA_ASSIGN_SLOT(crystal)
 
 #if LADA_CRYSTAL_MODULE != 1
   //! \brief Initializes a new hftransform from input lattice unit-cell and supercell.
@@ -60,12 +60,12 @@
                               math::rMatrix3d const &_supercell )
     LADA_END( { return (*(bool(*)( PyHFTObject*, math::rMatrix3d const&, 
                                    math::rMatrix3d const &))
-                        api_capsule[BOOST_PP_SLOT(1)])(_self, _lattice, _supercell); } )
+                        api_capsule[LADA_SLOT(crystal)])(_self, _lattice, _supercell); } )
 #else
-  api_capsule[BOOST_PP_SLOT(1)] = (void *)_init_hft;
+  api_capsule[LADA_SLOT(crystal)] = (void *)_init_hft;
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(BOOST_PP_SLOT(1))
-#include BOOST_PP_ASSIGN_SLOT(1)
+#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(crystal))
+#include LADA_ASSIGN_SLOT(crystal)
 
 #if LADA_CRYSTAL_MODULE != 1
   //! Convenience wrapper around the smuth transform.

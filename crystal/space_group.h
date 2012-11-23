@@ -22,12 +22,12 @@ namespace LaDa
   //! \see Taken from Enum code, PRB 77, 224115 (2008).
   PyObject* cell_invariants(math::rMatrix3d const &_cell, types::t_real _tolerance = -1e0)
     LADA_END({ return (*(PyObject*(*)(math::rMatrix3d const &, types::t_real))
-                       api_capsule[BOOST_PP_SLOT(1)])(_cell, _tolerance); })
+                       api_capsule[LADA_SLOT(crystal)])(_cell, _tolerance); })
 #else
-  api_capsule[BOOST_PP_SLOT(1)] = (void *)cell_invariants;
+  api_capsule[LADA_SLOT(crystal)] = (void *)cell_invariants;
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(BOOST_PP_SLOT(1))
-#include BOOST_PP_ASSIGN_SLOT(1)
+#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(crystal))
+#include LADA_ASSIGN_SLOT(crystal)
 
 #if LADA_CRYSTAL_MODULE != 1
   //! \brief Finds and stores space group operations.
@@ -42,12 +42,12 @@ namespace LaDa
   //! \see Taken from Enum code, PRB 77, 224115 (2008).
   PyObject* space_group(Structure const &_lattice, types::t_real _tolerance = -1e0)
     LADA_END({ return (*(PyObject*(*)(Structure const &, types::t_real))
-                       api_capsule[BOOST_PP_SLOT(1)])(_lattice, _tolerance); })
+                       api_capsule[LADA_SLOT(crystal)])(_lattice, _tolerance); })
 #else
-  api_capsule[BOOST_PP_SLOT(1)] = (void *)space_group;
+  api_capsule[LADA_SLOT(crystal)] = (void *)space_group;
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(BOOST_PP_SLOT(1))
-#include BOOST_PP_ASSIGN_SLOT(1)
+#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(crystal))
+#include LADA_ASSIGN_SLOT(crystal)
 
 #if LADA_CRYSTAL_MODULE != 1
     } // anonymous namespace

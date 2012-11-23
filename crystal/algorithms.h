@@ -16,13 +16,13 @@
                                    Structure &, 
                                    python::Object, 
                                    types::t_real ))
-                        api_capsule[BOOST_PP_SLOT(1)])
+                        api_capsule[LADA_SLOT(crystal)])
                        (_mapper, _mappee, _withocc, _tolerance); } )
 #else
-  api_capsule[BOOST_PP_SLOT(1)] = (void *)map_sites;
+  api_capsule[LADA_SLOT(crystal)] = (void *)map_sites;
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(BOOST_PP_SLOT(1))
-#include BOOST_PP_ASSIGN_SLOT(1)
+#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(crystal))
+#include LADA_ASSIGN_SLOT(crystal)
 
 #if LADA_CRYSTAL_MODULE != 1
   //! \brief Returns true if two structures are equivalent. 
@@ -53,13 +53,13 @@
                                   bool, 
                                   bool, 
                                   types::t_real ))
-                       api_capsule[BOOST_PP_SLOT(1)])
+                       api_capsule[LADA_SLOT(crystal)])
                       (_a, _b, with_scale, with_cartesian, _tol); })
 #else
-  api_capsule[BOOST_PP_SLOT(1)] = (void *)equivalent;
+  api_capsule[LADA_SLOT(crystal)] = (void *)equivalent;
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(BOOST_PP_SLOT(1))
-#include BOOST_PP_ASSIGN_SLOT(1)
+#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(crystal))
+#include LADA_ASSIGN_SLOT(crystal)
 
 #if LADA_CRYSTAL_MODULE != 1
   //! Returns the primitive unit structure. 
@@ -67,25 +67,25 @@
                                    types::t_real _tolerance = -1e0 )
       LADA_END({ return (*(Structure(*)( Structure const&, 
                                          types::t_real ))
-                         api_capsule[BOOST_PP_SLOT(1)])
+                         api_capsule[LADA_SLOT(crystal)])
                         (_structure, _tolerance); })
 #else
-  api_capsule[BOOST_PP_SLOT(1)] = (void *)primitive;
+  api_capsule[LADA_SLOT(crystal)] = (void *) primitive;
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(BOOST_PP_SLOT(1))
-#include BOOST_PP_ASSIGN_SLOT(1)
+#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(crystal))
+#include LADA_ASSIGN_SLOT(crystal)
 
 #if LADA_CRYSTAL_MODULE != 1
   //! Returns True if the input is primitive.
   LADA_INLINE bool is_primitive( Structure const &_structure, 
                                  types::t_real _tolerance = -1e0 )
     LADA_END( { return (*(bool(*)(Structure const&, types::t_real))
-                        api_capsule[BOOST_PP_SLOT(1)])(_structure, _tolerance); } )
+                        api_capsule[LADA_SLOT(crystal)])(_structure, _tolerance); } )
 #else
-  api_capsule[BOOST_PP_SLOT(1)] = (void *)is_primitive;
+  api_capsule[LADA_SLOT(crystal)] = (void *)is_primitive;
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(BOOST_PP_SLOT(1))
-#include BOOST_PP_ASSIGN_SLOT(1)
+#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(crystal))
+#include LADA_ASSIGN_SLOT(crystal)
 
 
 #if LADA_CRYSTAL_MODULE != 1
@@ -104,12 +104,12 @@
   LADA_INLINE PyObject* cell_invariants( math::rMatrix3d const &_cell, 
                                          types::t_real _tolerance = -1e0 )
     LADA_END({ return (*(PyObject*(*)(math::rMatrix3d const &, types::t_real))
-                       api_capsule[BOOST_PP_SLOT(1)])(_cell, _tolerance); })
+                       api_capsule[LADA_SLOT(crystal)])(_cell, _tolerance); })
 #else
-  api_capsule[BOOST_PP_SLOT(1)] = (void *)cell_invariants;
+  api_capsule[LADA_SLOT(crystal)] = (void *)cell_invariants;
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(BOOST_PP_SLOT(1))
-#include BOOST_PP_ASSIGN_SLOT(1)
+#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(crystal))
+#include LADA_ASSIGN_SLOT(crystal)
 
 #if LADA_CRYSTAL_MODULE != 1
   //! \brief Finds and stores space group operations.
@@ -125,12 +125,12 @@
   LADA_INLINE PyObject* space_group( Structure const &_lattice, 
                                      types::t_real _tolerance = -1e0 )
     LADA_END({ return (*(PyObject*(*)(Structure const &, types::t_real))
-                       api_capsule[BOOST_PP_SLOT(1)])(_lattice, _tolerance); })
+                       api_capsule[LADA_SLOT(crystal)])(_lattice, _tolerance); })
 #else
-  api_capsule[BOOST_PP_SLOT(1)] = (void *)space_group;
+  api_capsule[LADA_SLOT(crystal)] = (void *)space_group;
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(BOOST_PP_SLOT(1))
-#include BOOST_PP_ASSIGN_SLOT(1)
+#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(crystal))
+#include LADA_ASSIGN_SLOT(crystal)
 
 
 #if LADA_CRYSTAL_MODULE != 1
@@ -149,13 +149,13 @@
                                         Py_ssize_t, 
                                         math::rVector3d const&, 
                                         types::t_real ))
-                        api_capsule[BOOST_PP_SLOT(1)])
+                        api_capsule[LADA_SLOT(crystal)])
                        (_structure, _nmax, _center, _tolerance); } )
 #else
-  api_capsule[BOOST_PP_SLOT(1)] = (void *)neighbors;
+  api_capsule[LADA_SLOT(crystal)] = (void *)neighbors;
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(BOOST_PP_SLOT(1))
-#include BOOST_PP_ASSIGN_SLOT(1)
+#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(crystal))
+#include LADA_ASSIGN_SLOT(crystal)
 
 #if LADA_CRYSTAL_MODULE != 1
   //! \brief Creates list of coordination shells up to given order.
@@ -179,13 +179,13 @@
                                        math::rVector3d const &, 
                                        types::t_real, 
                                        Py_ssize_t ))
-                       api_capsule[BOOST_PP_SLOT(1)])
+                       api_capsule[LADA_SLOT(crystal)])
                       (_structure, _nshells, _center, _tolerance, _natoms); })
 #else
-  api_capsule[BOOST_PP_SLOT(1)] = (void *)coordination_shells;
+  api_capsule[LADA_SLOT(crystal)] = (void *)coordination_shells;
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(BOOST_PP_SLOT(1))
-#include BOOST_PP_ASSIGN_SLOT(1)
+#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(crystal))
+#include LADA_ASSIGN_SLOT(crystal)
 
 
 #if LADA_CRYSTAL_MODULE != 1
@@ -220,13 +220,13 @@
    LADA_END( { return (*(bool(*)( Structure const&, Atom const&, 
                                   Py_ssize_t, python::Object &,
                                   types::t_real))
-                       api_capsule[BOOST_PP_SLOT(1)])
+                       api_capsule[LADA_SLOT(crystal)])
                       (_structure, _origin, _nmax, _configurations, _tolerance); } )
 #else
-  api_capsule[BOOST_PP_SLOT(1)] = (void *)splitconfigs;
+  api_capsule[LADA_SLOT(crystal)] = (void *)splitconfigs;
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(BOOST_PP_SLOT(1))
-#include BOOST_PP_ASSIGN_SLOT(1)
+#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(crystal))
+#include LADA_ASSIGN_SLOT(crystal)
 
 #if LADA_CRYSTAL_MODULE != 1
   //! Creates divide and conquer box with periodic boundary condition.
@@ -236,10 +236,10 @@
   LADA_END( { return (*(PyObject*(*)( Structure const&,
                                       math::iVector3d const&,
                                       types::t_real ))
-                      api_capsule[BOOST_PP_SLOT(1)])
+                      api_capsule[LADA_SLOT(crystal)])
                      (_structure, _mesh, _overlap); } )
 #else
-  api_capsule[BOOST_PP_SLOT(1)] = (void *)dnc_boxes;
+  api_capsule[LADA_SLOT(crystal)] = (void *)dnc_boxes;
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(BOOST_PP_SLOT(1))
-#include BOOST_PP_ASSIGN_SLOT(1)
+#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(crystal))
+#include LADA_ASSIGN_SLOT(crystal)

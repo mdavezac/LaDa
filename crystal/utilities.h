@@ -12,12 +12,12 @@
                                          math::rMatrix3d const &_cell, 
                                          math::rMatrix3d const &_inv)
     LADA_END( { return (*LADA_TYPEDEF
-                         api_capsule[BOOST_PP_SLOT(1)])(_vec, _cell, _inv); } ) 
+                         api_capsule[LADA_SLOT(crystal)])(_vec, _cell, _inv); } ) 
 #else
-  api_capsule[BOOST_PP_SLOT(1)] = (void *)(LADA_TYPEDEF into_cell);
+  api_capsule[LADA_SLOT(crystal)] = (void *)(LADA_TYPEDEF into_cell);
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(BOOST_PP_SLOT(1))
-#include BOOST_PP_ASSIGN_SLOT(1)
+#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(crystal))
+#include LADA_ASSIGN_SLOT(crystal)
   
 #if LADA_CRYSTAL_MODULE != 1
   //! Refolds a periodic vector into the voronoi cell (eg first BZ or WignerSeitz).
@@ -25,12 +25,12 @@
                                             math::rMatrix3d const &_cell, 
                                             math::rMatrix3d const &_inv)
     LADA_END({ return (*LADA_TYPEDEF
-                        api_capsule[BOOST_PP_SLOT(1)])(_vec, _cell, _inv); }) 
+                        api_capsule[LADA_SLOT(crystal)])(_vec, _cell, _inv); }) 
 #else
-  api_capsule[BOOST_PP_SLOT(1)] = (void *)(LADA_TYPEDEF into_voronoi);
+  api_capsule[LADA_SLOT(crystal)] = (void *)(LADA_TYPEDEF into_voronoi);
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(BOOST_PP_SLOT(1))
-#include BOOST_PP_ASSIGN_SLOT(1)
+#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(crystal))
+#include LADA_ASSIGN_SLOT(crystal)
 
 #if LADA_CRYSTAL_MODULE != 1
   //! \brief Refolds a periodic vector into a cell centered around zero (in
@@ -42,12 +42,12 @@
                                              math::rMatrix3d const &_cell, 
                                              math::rMatrix3d const &_inv)
     LADA_END({ return (*LADA_TYPEDEF
-                        api_capsule[BOOST_PP_SLOT(1)])(_vec, _cell, _inv); })
+                        api_capsule[LADA_SLOT(crystal)])(_vec, _cell, _inv); })
 #else
-  api_capsule[BOOST_PP_SLOT(1)] = (void *)(LADA_TYPEDEF zero_centered);
+  api_capsule[LADA_SLOT(crystal)] = (void *)(LADA_TYPEDEF zero_centered);
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(BOOST_PP_SLOT(1))
-#include BOOST_PP_ASSIGN_SLOT(1)
+#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(crystal))
+#include LADA_ASSIGN_SLOT(crystal)
 
 #undef LADA_TYPEDEF
 

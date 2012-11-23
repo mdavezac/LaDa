@@ -7,22 +7,22 @@
   //! Declared as friend to object so that it can be linked at runtime.
   LADA_INLINE void object_reset(PyObject*& _object, PyObject *_in = NULL)
     LADA_END( { return ( *(void(*)(PyObject*&, PyObject*))
-                         api_capsule[BOOST_PP_SLOT(1)])(_object, _in); } ) 
+                         api_capsule[LADA_SLOT(python)])(_object, _in); } ) 
 #else
-  api_capsule[BOOST_PP_SLOT(1)] = (void *)object_reset;
+  api_capsule[LADA_SLOT(python)] = (void *)object_reset;
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(BOOST_PP_SLOT(1))
-#include BOOST_PP_ASSIGN_SLOT(1)
+#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(python))
+#include LADA_ASSIGN_SLOT(python)
   
 #if LADA_CRYSTAL_MODULE != 1
   LADA_INLINE bool object_equality_op(Object const& _self, Object const &_b)
     LADA_END( { return ( *(bool(*)(Object const&, Object const&))
-                         api_capsule[BOOST_PP_SLOT(1)])(_self, _b); } )
+                         api_capsule[LADA_SLOT(python)])(_self, _b); } )
 #else
-  api_capsule[BOOST_PP_SLOT(1)] = (void *)object_equality_op;
+  api_capsule[LADA_SLOT(python)] = (void *)object_equality_op;
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(BOOST_PP_SLOT(1))
-#include BOOST_PP_ASSIGN_SLOT(1)
+#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(python))
+#include LADA_ASSIGN_SLOT(python)
 
 #if LADA_CRYSTAL_MODULE != 1
   //! \brief Dumps representation of an object.
@@ -30,14 +30,14 @@
   //!          python exceptions.
   LADA_INLINE  std::ostream& operator<< (std::ostream &stream, Object const &_ob)
     LADA_END( { return ( *(std::ostream&(*)(std::ostream&, Object const&))
-                         api_capsule[BOOST_PP_SLOT(1)])(_stream, _ob); } )
+                         api_capsule[LADA_SLOT(python)])(_stream, _ob); } )
 #else
-  api_capsule[BOOST_PP_SLOT(1)]
+  api_capsule[LADA_SLOT(python)]
       = (void *) ( ( (std::ostream&(*)(std::ostream&, Object const&))
                      object_equality_op ) );
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(BOOST_PP_SLOT(1))
-#include BOOST_PP_ASSIGN_SLOT(1)
+#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(python))
+#include LADA_ASSIGN_SLOT(python)
 
 #if LADA_CRYSTAL_MODULE != 1
   //! \brief Thin wrapper around a python refence.

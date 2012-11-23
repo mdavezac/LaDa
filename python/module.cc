@@ -33,7 +33,7 @@ namespace LaDa
 PyMODINIT_FUNC initcppwrappers(void) 
 {
   using namespace LaDa::python;
-  static void *api_capsule[BOOST_PP_SLOT(1)];
+  static void *api_capsule[LADA_SLOT(python)];
   static PyMethodDef methods_table[] = { {NULL, NULL, 0, NULL} };
   PyObject *c_api_object;
 
@@ -49,6 +49,7 @@ PyMODINIT_FUNC initcppwrappers(void)
 # include "python.h"
 
   /* Create a Capsule containing the API pointer array's address */
-  c_api_object = PyCapsule_New((void *)api_capsule, "lada.cppwrappers._C_API", NULL);
+  static const char name[] = "lada.cppwrappers._C_API";
+  c_api_object = PyCapsule_New((void *)api_capsule, name, NULL);
   if (c_api_object != NULL) PyModule_AddObject(module, "_C_API", c_api_object);
 }

@@ -24,12 +24,12 @@ namespace LaDa
                   python::Object _withocc = python::Object(),
                   types::t_real _tolerance = types::tolerance )
     LADA_END( { return (*(bool(*)(Structure const&, Structure &, python::Object, types::t_real))
-                        api_capsule[BOOST_PP_SLOT(1)])(_mapper, _mappee, _withocc, _tolerance); } )
+                        api_capsule[LADA_SLOT(crystal)])(_mapper, _mappee, _withocc, _tolerance); } )
 #else
-  api_capsule[BOOST_PP_SLOT(1)] = (void *)map_sites;
+  api_capsule[LADA_SLOT(crystal)] = (void *)map_sites;
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(BOOST_PP_SLOT(1))
-#include BOOST_PP_ASSIGN_SLOT(1)
+#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(crystal))
+#include LADA_ASSIGN_SLOT(crystal)
 
 #if LADA_CRYSTAL_MODULE != 1
     }

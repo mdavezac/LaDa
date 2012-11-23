@@ -23,9 +23,9 @@
 # include <boost/mpl/int.hpp>
 # include <boost/type_traits/is_floating_point.hpp>
 # include <boost/preprocessor/arithmetic/inc.hpp>
-# include <boost/preprocessor/slot/slot.hpp>
+# include <python/ppslot.hpp>
 # define BOOST_PP_VALUE 0
-# include BOOST_PP_ASSIGN_SLOT(1)
+# include LADA_ASSIGN_SLOT(python)
 
 # include <math/eigen.h>
 # include <errors/exceptions.h>
@@ -36,7 +36,7 @@
     {
 
 #     if LADA_PYTHON_MODULE == 100
-        /* This section is used in modules that use lada.crystal's API */
+        /* This section is used in modules that use lada.python's API */
         static void **api_capsule;
         
         namespace 
@@ -55,7 +55,7 @@
 #     endif
 #else
 # define BOOST_PP_VALUE 0
-# include BOOST_PP_ASSIGN_SLOT(1)
+# include LADA_ASSIGN_SLOT(python)
 #endif
 
 #if LADA_PYTHON_MODULE != 1
@@ -86,22 +86,22 @@
   //! Declared as friend to object so that it can be linked at runtime.
   LADA_INLINE void object_reset(PyObject*& _object, PyObject *_in)
     LADA_END( { return ( *(void(*)(PyObject*&, PyObject*))
-                         api_capsule[BOOST_PP_SLOT(1)])(_object, _in); } ) 
+                         api_capsule[LADA_SLOT(python)])(_object, _in); } ) 
 #else
-  api_capsule[BOOST_PP_SLOT(1)] = (void *)((void(*)(PyObject*&, PyObject*)) object_reset);
+  api_capsule[LADA_SLOT(python)] = (void *)((void(*)(PyObject*&, PyObject*)) object_reset);
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(BOOST_PP_SLOT(1))
-#include BOOST_PP_ASSIGN_SLOT(1)
+#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(python))
+#include LADA_ASSIGN_SLOT(python)
   
 #if LADA_PYTHON_MODULE != 1
   LADA_INLINE bool object_equality_op(Object const& _self, Object const &_b)
     LADA_END( { return ( *(bool(*)(Object const&, Object const&))
-                         api_capsule[BOOST_PP_SLOT(1)])(_self, _b); } )
+                         api_capsule[LADA_SLOT(python)])(_self, _b); } )
 #else
-  api_capsule[BOOST_PP_SLOT(1)] = (void *)object_equality_op;
+  api_capsule[LADA_SLOT(python)] = (void *)object_equality_op;
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(BOOST_PP_SLOT(1))
-#include BOOST_PP_ASSIGN_SLOT(1)
+#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(python))
+#include LADA_ASSIGN_SLOT(python)
 
 #if LADA_PYTHON_MODULE != 1
   //! \brief Dumps representation of an object.
@@ -109,14 +109,14 @@
   //!          python exceptions.
   LADA_INLINE  std::ostream& operator<< (std::ostream &stream, Object const &_ob)
     LADA_END( { return ( *(std::ostream&(*)(std::ostream&, Object const&))
-                         api_capsule[BOOST_PP_SLOT(1)])(stream, _ob); } )
+                         api_capsule[LADA_SLOT(python)])(stream, _ob); } )
 #else
-  api_capsule[BOOST_PP_SLOT(1)]
+  api_capsule[LADA_SLOT(python)]
       = (void *) ( ( (std::ostream&(*)(std::ostream&, Object const&))
                      object_equality_op ) );
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(BOOST_PP_SLOT(1))
-#include BOOST_PP_ASSIGN_SLOT(1)
+#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(python))
+#include LADA_ASSIGN_SLOT(python)
 
 #if LADA_PYTHON_MODULE != 1
   //! \brief Thin wrapper around a python refence.

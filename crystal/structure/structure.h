@@ -24,32 +24,32 @@
 #if LADA_CRYSTAL_MODULE != 1
   // Returns pointer to structure type.
   LADA_INLINE PyTypeObject* structure_type()
-    LADA_END( { return (PyTypeObject*)api_capsule[BOOST_PP_SLOT(1)]; } )
+    LADA_END( { return (PyTypeObject*)api_capsule[LADA_SLOT(crystal)]; } )
 #else
-  api_capsule[BOOST_PP_SLOT(1)] = (void *)structure_type();
+  api_capsule[LADA_SLOT(crystal)] = (void *)structure_type();
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(BOOST_PP_SLOT(1))
-#include BOOST_PP_ASSIGN_SLOT(1)
+#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(crystal))
+#include LADA_ASSIGN_SLOT(crystal)
 
 #if LADA_CRYSTAL_MODULE != 1
   //! Returns address of structure iterator type object.
   LADA_INLINE PyTypeObject* structureiterator_type()
-   LADA_END({ return (PyTypeObject*)api_capsule[BOOST_PP_SLOT(1)]; })
+   LADA_END({ return (PyTypeObject*)api_capsule[LADA_SLOT(crystal)]; })
 #else
-  api_capsule[BOOST_PP_SLOT(1)] = (void *)structureiterator_type();
+  api_capsule[LADA_SLOT(crystal)] = (void *)structureiterator_type();
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(BOOST_PP_SLOT(1))
-#include BOOST_PP_ASSIGN_SLOT(1)
+#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(crystal))
+#include LADA_ASSIGN_SLOT(crystal)
 
 #if LADA_CRYSTAL_MODULE != 1
   //! Creates a new structure.
   LADA_INLINE PyStructureObject* new_structure()
-    LADA_END({ return (PyStructureObject*)api_capsule[BOOST_PP_SLOT(1)]; })
+    LADA_END({ return (PyStructureObject*)api_capsule[LADA_SLOT(crystal)]; })
 #else
-  api_capsule[BOOST_PP_SLOT(1)] = (void *)((PyStructureObject*(*)())new_structure);
+  api_capsule[LADA_SLOT(crystal)] = (void *)((PyStructureObject*(*)())new_structure);
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(BOOST_PP_SLOT(1))
-#include BOOST_PP_ASSIGN_SLOT(1)
+#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(crystal))
+#include LADA_ASSIGN_SLOT(crystal)
 
 #if LADA_CRYSTAL_MODULE != 1
   //! Creates a new structure with a given type, also calling initialization.
@@ -59,25 +59,25 @@
     LADA_END( { return (*(PyStructureObject*(*)( PyTypeObject*, 
                                                  PyObject*, 
                                                  PyObject* ))
-                        api_capsule[BOOST_PP_SLOT(1)])
+                        api_capsule[LADA_SLOT(crystal)])
                        (_type, _args, _kwargs); } )
 #else
-  api_capsule[BOOST_PP_SLOT(1)] = (void *)((PyStructureObject*(*)(PyTypeObject*, PyObject*, PyObject*))new_structure);
+  api_capsule[LADA_SLOT(crystal)] = (void *)((PyStructureObject*(*)(PyTypeObject*, PyObject*, PyObject*))new_structure);
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(BOOST_PP_SLOT(1))
-#include BOOST_PP_ASSIGN_SLOT(1)
+#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(crystal))
+#include LADA_ASSIGN_SLOT(crystal)
 
 #if LADA_CRYSTAL_MODULE != 1
   //! Creates a deepcopy of structure.
   LADA_INLINE PyStructureObject *copy_structure( PyStructureObject* _self,
                                                  PyObject *_memo=NULL)
     LADA_END( { return (*(PyStructureObject*(*)(PyStructureObject*, PyObject*))
-                       api_capsule[BOOST_PP_SLOT(1)])(_self, _memo); } )
+                       api_capsule[LADA_SLOT(crystal)])(_self, _memo); } )
 #else
-  api_capsule[BOOST_PP_SLOT(1)] = (void *)copy_structure;
+  api_capsule[LADA_SLOT(crystal)] = (void *)copy_structure;
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(BOOST_PP_SLOT(1))
-#include BOOST_PP_ASSIGN_SLOT(1)
+#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(crystal))
+#include LADA_ASSIGN_SLOT(crystal)
 
 #if LADA_CRYSTAL_MODULE != 1
   //! Transforms a structure in-place, according to symop.
@@ -85,12 +85,12 @@
                                          Eigen::Matrix<types::t_real, 4, 3> const &_op )
     LADA_END( { return (*(void(*)( PyStructureObject*, 
                                    Eigen::Matrix<types::t_real, 4, 3> const & ))
-                        api_capsule[BOOST_PP_SLOT(1)])(_self, _op); } )
+                        api_capsule[LADA_SLOT(crystal)])(_self, _op); } )
 #else
-  api_capsule[BOOST_PP_SLOT(1)] = (void *)itransform_structure;
+  api_capsule[LADA_SLOT(crystal)] = (void *)itransform_structure;
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(BOOST_PP_SLOT(1))
-#include BOOST_PP_ASSIGN_SLOT(1)
+#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(crystal))
+#include LADA_ASSIGN_SLOT(crystal)
 
 #if LADA_CRYSTAL_MODULE != 1
   //! Checks type of an object.

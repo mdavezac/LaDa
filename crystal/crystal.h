@@ -19,9 +19,9 @@
 # include <boost/type_traits/is_same.hpp>
 # include <boost/static_assert.hpp>
 # include <boost/preprocessor/arithmetic/inc.hpp>
-# include <boost/preprocessor/slot/slot.hpp>
+# include <python/ppslot.hpp>
 # define BOOST_PP_VALUE 0
-# include BOOST_PP_ASSIGN_SLOT(1)
+# include LADA_ASSIGN_SLOT(crystal)
 
 # include <Eigen/LU> 
 
@@ -41,7 +41,7 @@
       namespace crystal
       {
         /* This section is used in modules that use lada.crystal's API */
-        static void **api_capsule;
+        static void **api_capsule = NULL; 
         
         namespace 
         {
@@ -49,6 +49,9 @@
           // PyCapsule_Import will set an exception if there's an error.
           inline bool import(void)
           {
+//           PyObject* module = PyImport_ImportModule("lada.crystal.cppwrappers");
+//           if(not module) return false;
+//           Py_DECREF(module);
             api_capsule = (void **)PyCapsule_Import("lada.crystal.cppwrappers._C_API", 0);
             return api_capsule != NULL;
           }
@@ -58,7 +61,7 @@
 # endif
 #else
 # define BOOST_PP_VALUE 0
-# include BOOST_PP_ASSIGN_SLOT(1)
+# include LADA_ASSIGN_SLOT(crystal)
 #endif
 
 #if LADA_CRYSTAL_MODULE != 1
