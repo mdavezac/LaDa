@@ -68,7 +68,7 @@ def copyfile(src, dest=None, nothrow=None, symlink=False, aslink=False, nocopyem
   try:
     from os import getcwd, symlink as ln, remove
     from os.path import isdir, isfile, samefile, exists, basename, dirname,\
-                        join, islink, realpath, relpath, getsize
+                        join, islink, realpath, relpath, getsize, abspath
     # sets up nothrow options.
     if nothrow is None: nothrow = []
     if isinstance(nothrow, str): nothrow = nothrow.split()
@@ -88,6 +88,7 @@ def copyfile(src, dest=None, nothrow=None, symlink=False, aslink=False, nocopyem
     if not exists(src): 
       if 'exists' in nothrow: return False
       raise IOError("{0} does not exist.".format(src))
+    src = abspath(realpath(src))
     if not isfile(src):
       if 'isfile' in nothrow: return False
       raise IOError("{0} is not a file.".format(src))
@@ -102,6 +103,8 @@ def copyfile(src, dest=None, nothrow=None, symlink=False, aslink=False, nocopyem
     if aslink and islink(src): symlink, src = True, realpath(src)
     if symlink:
       if exists(dest): remove(dest)
+      src = realpath(abspath(src))
+      dest = realpath(abspath(dest))
       if relpath(src, dirname(dest)).count("../") == relpath(src, '/').count("../"):
         ln(src, realpath(dest))
       else:

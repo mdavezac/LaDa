@@ -1,7 +1,7 @@
 """ Python wrapper for the CRYSTAL dft code. """
 __docformat__ = "restructuredtext en"
 __all__ = [ 'Extract', 'AffineTransform', 'DisplaceAtoms', 'InsertAtoms',
-            'Marker', 'ModifySymmetry', 'RemoveAtoms', 'Slabcut', 'read',
+            'ModifySymmetry', 'RemoveAtoms', 'Slabcut', 'read',
             'Slabinfo','Crystal', 'Molecule', 'Slab', 'Functional', 'Shell',
             'read_gaussian_basisset', 'MassExtract', 'read_input', 'exec_input',
             'Elastic', 'External', 'Supercell', 'Supercon' ]

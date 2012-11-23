@@ -120,12 +120,38 @@ class ExtractBase(object):
   @make_cached
   def functional(self):
     """ Reads functional from output file. """
+    from re import compile
+    from . import exec_input
     from .functional import Functional
     from .parse import parse
+    # first tries to read from functional print-out.
+    script = self._extract_script('FUNCTIONAL')
+    if script is not None:
+      try: return exec_input(script).functional
+      except: pass
+       
+    # otherwise tries to read from input part.
     with self.__stdout__() as file: b = parse(file)
     result = Functional()
     result.read_input(b)
     return result
+
+  def _extract_script(self, pattern):
+    """ Returns string between two '#+' patterns. """
+    from re import compile
+    with self.__stdout__() as file:
+      regex = compile('^#+ {0} #+$'.format(pattern))
+      found = False
+      for line in file:
+        if regex.search(line) != None: found = True; break
+      if not found: return None
+      result = ""
+      regex = compile('^#+ END {0} #+$'.format(pattern))
+      found = False
+      for line in file:
+        if regex.search(line) != None: found = True; break
+        result += line
+      return result if found else None
 
   @property
   @make_cached

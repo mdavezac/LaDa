@@ -52,8 +52,9 @@ class Functional(object):
   """ Extraction class. """
   __ui_name__ = 'functional'
   """ Name used in user-friendly representation """
-  def __init__(self, copy=None, program=None, **kwargs):
+  def __init__(self, program=None, copy=None, **kwargs):
     """ Creates the crystal wrapper. """
+    from copy import deepcopy
     from .basis import BasisSet
     from .optgeom import OptGeom
     from .electronic import Electronic
@@ -79,6 +80,9 @@ class Functional(object):
     """ 
     self.restart = None
     """ Place holder. """
+    if copy is not None:
+      for key, value in copy.__dict__.iteritems():
+        setattr(self, key, deepcopy(value))
 
   def __getattr__(self, name):
     """ Pushes scf stuff into instance namespace. """
@@ -380,7 +384,7 @@ class Functional(object):
 
     # check for pre-existing and successfull run.
     if not overwrite:
-      extract = self.Extract(outdir)
+      extract = ExtractBase(outdir)
       if extract.success:
         yield extract # in which case, returns extraction object.
         return
@@ -394,7 +398,7 @@ class Functional(object):
 
       # writes/copies files before launching.
       self.bringup(structure, outdir, workdir, restart=self.restart, test=test)
-      dompi = comm is not None
+      dompi = comm is not None and comm['n'] > 1
       if dompi:
         from ..misc import copyfile
         copyfile('crystal.d12', 'INPUT')
