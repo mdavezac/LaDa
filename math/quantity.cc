@@ -1,6 +1,7 @@
 #include "LaDaConfig.h"
 
 #include <errors/exceptions.h>
+#include <python/python.h>
 #include "quantity.h"
 
 #include <iostream>
@@ -12,19 +13,15 @@ namespace LaDa
   {
     static PyObject* UnitQuantityClass()
     {
-      PyObject* quant( PyImport_ImportModule("quantities") );
+      python::Object quant( PyImport_ImportModule("quantities") );
       if(not quant) return NULL;
-      PyObject* result = PyObject_GetAttrString(quant, "UnitQuantity");
-      Py_DECREF(quant);
-      return result;
+      return PyObject_GetAttrString(quant.borrowed(), "UnitQuantity");
     }
     static PyObject* QuantityClass()
     {
-      PyObject* quant( PyImport_ImportModule("quantities") );
+      python::Object quant( PyImport_ImportModule("quantities") );
       if(not quant) return NULL;
-      PyObject* result = PyObject_GetAttrString(quant, "Quantity");
-      Py_DECREF(quant);
-      return result;
+      return PyObject_GetAttrString(quant.borrowed(), "Quantity");
     }
     bool PyQuantity_Check(PyObject *_in)
     {
@@ -52,48 +49,43 @@ namespace LaDa
     PyObject *PyQuantity_FromC(types::t_real const &_double, std::string const &_units)
     {
       // creates global/local dictionary in order to run code.
-      PyObject* globals = PyImport_ImportModule("quantities");
+      python::Object const globals = PyImport_ImportModule("quantities");
       if(not globals) return NULL;
-      PyObject* locals = PyDict_New();
-      if(not locals) {Py_DECREF(globals); return NULL; }
-      PyObject* number = PyFloat_FromDouble(_double);
-      if(not number) {Py_DECREF(globals); Py_DECREF(number); return NULL;}
-      PyObject* units = PyString_FromString(_units.c_str());
+      python::Object locals = PyDict_New();
+      if(not locals) return NULL;
+      python::Object number = PyFloat_FromDouble(_double);
+      if(not number) return NULL;
+      python::Object units = PyString_FromString(_units.c_str());
       if(not units) return NULL;
-      if(PyDict_SetItemString(locals, "number", number) < 0)
-        {Py_DECREF(globals); Py_DECREF(locals); Py_DECREF(number); Py_DECREF(units); return NULL;}
-      Py_DECREF(number);
-      if(PyDict_SetItemString(locals, "units", units) < 0)
-        {Py_DECREF(globals); Py_DECREF(locals); Py_DECREF(units); return NULL;}
-      Py_DECREF(units);
-      PyObject* result(PyRun_String( "quantity.Quantity(number, units)", Py_eval_input,
-                                     PyModule_GetDict(globals), 
-                                     locals ));
-      Py_DECREF(locals);
-      Py_DECREF(globals);
-      return result;
+      if(PyDict_SetItemString(locals.borrowed(), "number", number.borrowed()) < 0)
+        return NULL;
+      if(PyDict_SetItemString(locals.borrowed(), "units", units.borrowed()) < 0)
+        return NULL;
+      python::Object result(PyRun_String( "quantity.Quantity(number, units)", Py_eval_input,
+                                  PyModule_GetDict(globals.borrowed()), 
+                                  locals.borrowed() ));
+      if(not result) return NULL;
+      return result.release();
     }
 
     PyObject *PyQuantity_FromCWithTemplate(types::t_real const &_double, PyObject *_unittemplate)
     {
       // creates global/local dictionary in order to run code.
-      PyObject* globals = PyImport_ImportModule("quantities");
+      python::Object const globals = PyImport_ImportModule("quantities");
       if(not globals) return NULL;
-      PyObject* locals = PyDict_New();
-      if(not locals) {Py_DECREF(globals); return NULL; }
-      PyObject* number = PyFloat_FromDouble(_double);
-      if(not number) {Py_DECREF(globals); Py_DECREF(number); return NULL;}
-      if(PyDict_SetItemString(locals, "number", number) < 0)
-        {Py_DECREF(globals); Py_DECREF(locals); Py_DECREF(number); return NULL;}
-      Py_DECREF(number);
-      if(PyDict_SetItemString(locals, "units", _unittemplate) < 0)
-        {Py_DECREF(globals); Py_DECREF(locals); return NULL;}
-      PyObject* result(PyRun_String( "quantity.Quantity(number, units.units)", Py_eval_input,
-                                     PyModule_GetDict(globals), 
-                                     locals ));
-      Py_DECREF(locals);
-      Py_DECREF(globals);
-      return result;
+      python::Object locals = PyDict_New();
+      if(not locals) return NULL;
+      python::Object number = PyFloat_FromDouble(_double);
+      if(not number) return NULL;
+      if(PyDict_SetItemString(locals.borrowed(), "number", number.borrowed()) < 0)
+        return NULL;
+      if(PyDict_SetItemString(locals.borrowed(), "units", _unittemplate) < 0)
+        return NULL;
+      python::Object result(PyRun_String( "quantity.Quantity(number, units.units)", Py_eval_input,
+                                  PyModule_GetDict(globals.borrowed()), 
+                                  locals.borrowed() ));
+      if(not result) return NULL;
+      return result.release();
     }
 
     static bool PyQuantity_Convertible(PyObject *_a, PyObject *_b)
@@ -102,10 +94,9 @@ namespace LaDa
       if(not PyQuantity_Check(_b)) return false;
       char rescale_str[] = "rescale";
       char s_str[] = "O";
-      PyObject* units = PyObject_GetAttrString(_b, "units");
+      python::Object units = PyObject_GetAttrString(_b, "units");
       if(not units) return false;
-      PyObject *result = PyObject_CallMethod(_a, rescale_str, s_str, units);
-      Py_DECREF(units);
+      PyObject *result = PyObject_CallMethod(_a, rescale_str, s_str, units.borrowed());
       if(PyErr_Occurred())
       {
         PyErr_Clear();
@@ -134,21 +125,20 @@ namespace LaDa
       }
       
       // creates global/local dictionary in order to run code.
-      PyObject* locals = PyDict_New();
+      python::Object const globals = PyImport_ImportModule("quantities");
+      if(not globals) return NULL;
+      python::Object locals = PyDict_New();
       if(not locals) return NULL;
-      if(PyDict_SetItemString(locals, "number", _number) < 0)
-        { Py_DECREF(locals); return NULL; }
-      if(PyDict_SetItemString(locals, "unitdims", _units) < 0)
-        { Py_DECREF(locals); return NULL; }
-      PyObject* globals = PyImport_ImportModule("quantities");
-      if(not globals) {Py_DECREF(locals); return NULL;}
-      PyObject* result = PyRun_String( "Quantity(number, unitdims.units)",
-                                       Py_eval_input,
-                                       PyModule_GetDict(globals), 
-                                       locals );
-      Py_DECREF(locals);
-      Py_DECREF(globals);
-      return result;
+      if(PyDict_SetItemString(locals.borrowed(), "number", _number) < 0)
+        return NULL;
+      if(PyDict_SetItemString(locals.borrowed(), "unitdims", _units) < 0)
+        return NULL;
+      python::Object result(PyRun_String( "Quantity(number, unitdims.units)",
+                                  Py_eval_input,
+                                  PyModule_GetDict(globals.borrowed()), 
+                                  locals.borrowed() ));
+      if(not result) return NULL;
+      return result.release();
     }
 
 
@@ -162,25 +152,21 @@ namespace LaDa
         return types::t_real(0);
       }
       // creates global/local dictionary in order to run code.
-      PyObject* globals = PyImport_ImportModule("quantities");
+      python::Object const globals = PyImport_ImportModule("quantities");
       if(not globals) return types::t_real(0);
-      PyObject* locals = PyDict_New();
-      if(not locals) {Py_DECREF(globals); return types::t_real(0);}
-      PyObject* units = PyString_FromString(_units.c_str());
-      if(not units) {Py_DECREF(locals); Py_DECREF(globals); return types::t_real(0); }
-      if(PyDict_SetItemString(locals, "units", units) < 0)
-        {Py_DECREF(locals); Py_DECREF(globals); Py_DECREF(units); return types::t_real(0); }
-      Py_DECREF(units);
-      if(PyDict_SetItemString(locals, "number", _in) < 0)
-        {Py_DECREF(locals); Py_DECREF(globals); return types::t_real(0); }
-      PyObject* result = PyRun_String( "float(number.rescale(units))", Py_eval_input,
-                                       PyModule_GetDict(globals), 
-                                       locals );
-      Py_DECREF(globals);
-      Py_DECREF(locals);
+      python::Object locals = PyDict_New();
+      if(not locals) return types::t_real(0);
+      python::Object units = PyString_FromString(_units.c_str());
+      if(not units) return types::t_real(0);
+      if(PyDict_SetItemString(locals.borrowed(), "number", _in) < 0)
+        return types::t_real(0);
+      if(PyDict_SetItemString(locals.borrowed(), "units", units.borrowed()) < 0)
+        return types::t_real(0);
+      python::Object const result(PyRun_String( "float(number.rescale(units))", Py_eval_input,
+                                        PyModule_GetDict(globals.borrowed()), 
+                                        locals.borrowed() ));
       if(not result) return types::t_real(0);
-      types::t_real const realresult = PyFloat_AsDouble(result);
-      Py_DECREF(result);
+      types::t_real const realresult = PyFloat_AsDouble(result.borrowed());
       if(PyErr_Occurred()) return types::t_real(0);
       return realresult;
     }
@@ -197,42 +183,37 @@ namespace LaDa
         return types::t_real(0);
       }
       // creates global/local dictionary in order to run code.
-      PyObject* locals = PyDict_New();
+      python::Object const globals = PyImport_ImportModule("quantities");
+      if(not globals) return types::t_real(0);
+      python::Object locals = PyDict_New();
       if(not locals) return types::t_real(0);
-      if(PyDict_SetItemString(locals, "number", _number) < 0)
-        {Py_DECREF(locals); return types::t_real(0);}
-      if(PyDict_SetItemString(locals, "units", _units) < 0)
-        {Py_DECREF(locals); return types::t_real(0);}
-      PyObject* globals = PyImport_ImportModule("quantities");
-      if(not globals) {Py_DECREF(locals); return types::t_real(0);}
-      PyObject* result = PyRun_String( "float(number.rescale(units.units))",
-                                       Py_eval_input,
-                                       PyModule_GetDict(globals), 
-                                       locals );
-      Py_DECREF(globals);
-      Py_DECREF(locals);
+      if(PyDict_SetItemString(locals.borrowed(), "number", _number) < 0)
+        return types::t_real(0);
+      if(PyDict_SetItemString(locals.borrowed(), "units", _units) < 0)
+        return types::t_real(0);
+      python::Object const result(PyRun_String( "float(number.rescale(units.units))",
+                                        Py_eval_input,
+                                        PyModule_GetDict(globals.borrowed()), 
+                                        locals.borrowed() ));
       if(not result) return types::t_real(0);
-      types::t_real const realresult = PyFloat_AsDouble(result);
-      Py_DECREF(result);
+      types::t_real const realresult = PyFloat_AsDouble(result.borrowed());
       if(PyErr_Occurred()) return types::t_real(0);
       return realresult;
     }
 
     types::t_real PyQuantity_AsReal(PyObject *_in)
     {
-      PyObject* locals = PyDict_New();
-      if(not locals) return types::t_real(0);
-      if(PyDict_SetItemString(locals, "number", _in) < 0)
-        { Py_DECREF(locals); return types::t_real(0);}
       PyObject *globals = PyEval_GetBuiltins();
-      if(not globals) {Py_DECREF(locals); return types::t_real(0);}
-      PyObject* result = PyRun_String( "float(number)", Py_eval_input,
-                                       globals, locals );
-      Py_DECREF(locals);
-      Py_DECREF(globals);
+      if(not globals) return types::t_real(0);
+      python::Object locals = PyDict_New();
+      if(not locals) return types::t_real(0);
+      if(PyDict_SetItemString(locals.borrowed(), "number", _in) < 0)
+        return types::t_real(0);
+      python::Object const result(PyRun_String( "float(number)", Py_eval_input,
+                                        globals, 
+                                        locals.borrowed() ));
       if(not result) return types::t_real(0);
-      types::t_real const realresult = PyFloat_AsDouble(result);
-      Py_DECREF(result);
+      types::t_real const realresult = PyFloat_AsDouble(result.borrowed());
       if(PyErr_Occurred()) return types::t_real(0);
       return realresult;
     }
