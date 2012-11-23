@@ -171,15 +171,29 @@ class AtomSpin(BaseKeyword):
   down = property( _get_list('down'), _set_list('down'),
                    doc=""" Labels of atoms with spin down. """ )
   other = property( _get_list('other'), _set_list('other'),
-                    doc = """ Labels of atoms with irrelevant atoms. 
+            doc = """ Labels of atoms with irrelevant atoms. 
                   
-                        'Irrelevant' is the word used by the CRYSTAL_ userguide. It is likely not
-                        necessary once one migrates away from bash-scripts.
-                    """ )
+		      'Irrelevant' is the word used by the CRYSTAL_ userguide.
+		      This feature is likely only relevant to bash-scripts. 
+                  """ )
                     
   def output_map(self, **kwargs):
-    if self.up is None and self.down is None and self.other is None: return None
+    """ Creates standard output map for AtomSpin. """
+    # If disabled returns None
+    if self.up is None and self.down is None and self.other is None: 
+      return None
+    # if not a spin polarized calculation, then disabled.
     if kwargs['crystal'].dft.spin is False: return None
+    # If GuessP then disabled. 
+    if 'crystal' in kwargs:
+      print 'guessp', kwargs['crystal'].scf._input['guessp']
+      kwargs_copy = kwargs.copy()
+      kwargs_copy['filework'] = False
+      map = kwargs['crystal'].scf._input['guessp'].output_map(**kwargs_copy)
+      print 'map', map, map.get('guessp', False) == 'True'
+      if map is not None and map.get('guessp', False) == 'True': return None
+    raise Exception()
+    # Ok, now add ATOMSPIN stuff.
     result = ''
     if self.up is not None and len(self.up) > 0:
       result += ' 1  '.join(str(u) for u in self.up) + ' 1\n'
@@ -446,18 +460,25 @@ class GuessP(BoolKeyword):
   def __init__(self, value=True):
     super(GuessP, self).__init__(value=value)
   def output_map(self, **kwargs):
+    from os import stat
     from os.path import exists, join, getsize, realpath
     from ..misc import copyfile
     if self.value is None or self.value == False: return None
     if kwargs['crystal'].restart is None: return None
+    print 'crystal has restart'
     path = join(kwargs['crystal'].restart.directory, 'crystal.f9')
+    print 'path exists', exists(path), path
     if not exists(path): return None
     try:
       if getsize(realpath(path)) == 0: return None
     except: return None
     if kwargs.get('filework', False) == True:
       copyfile( realpath(path), join(kwargs['workdir'], 'fort.20'),
-                symlink=True, nothrow='same' )
+                symlink=False, nothrow='same' )
+      if not exists(join(kwargs['workdir'], 'fort.20')):
+        raise IOError('Could not create link to wavefunctions.')
+      if not exists(realpath(join(kwargs['workdir'], 'fort.20'))):
+        raise IOError('Could not create link to wavefunctions.')
     return super(GuessP, self).output_map(**kwargs)
 
 class Broyden(BaseKeyword):
@@ -833,9 +854,12 @@ class Electronic(AttrBlock):
 
 
         .. note::
-        
-          py:attr:`~lada.dftcrystal.functional.dft.spin` should be set to True
-          for this parameter to take effect.
+
+          A number of settings will disable this keyword:
+
+            - py:attr:`~lada.dftcrystal.functional.dft.spin` is False
+	    - py:attr:`~lada.dftcrystal.functional.dft.spin` is None or True,
+	      and the appropriate wavefunction exists.
     """
     self.betalock = BetaLock()
     """ Locks in the number of beta electrons. 

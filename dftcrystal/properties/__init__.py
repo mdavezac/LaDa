@@ -78,6 +78,8 @@ class Properties(AttrBlock):
 
         >>> properties.band = [startA, endA], [startB, endB], ...
     """
+    self.fmwf = BoolKeyword()
+    """ Whether to output formatted wavefunctions. """
     self.program = program
     """ CRYSTAL_'s properties program. 
 
@@ -168,7 +170,7 @@ class Properties(AttrBlock):
     from ...misc import Changedir
     from ... import properties_program
     from ..functional import Functional
-    from ...error import AttributeError
+    from ...error import AttributeError, input as InputError
 
     # Performs deepcopy of self.
     this = deepcopy(self)
@@ -187,6 +189,13 @@ class Properties(AttrBlock):
         return
     
     if outdir == None: outdir = getcwd()
+    # Makes sure that we have actual work to do.
+    # we check prior to checking the workdir since that might create it.
+    map = self.print_input(workdir=outdir, outdir=outdir, filework=False)
+    if len(map) == 0:
+      raise InputError( 'Nothing to do. Properties not requested '           \
+                        'to compute anything.' )
+    # now make sure guessdir is well defined.
     if workdir == None: workdir = this.guess_workdir(outdir)
 
     outdir = abspath(outdir)
@@ -202,7 +211,7 @@ class Properties(AttrBlock):
       # now creates the process, with a callback when finished.
       onfinish = Functional.OnFinish(this, workdir, outdir)
       yield ProgramProcess( program, outdir=workdir, onfinish=onfinish,
-                            stdout='prop.out', stderr='prop.out', 
+                            stdout=('prop.out', 'a'), stderr='prop.out', 
                             stdin='prop.d12', dompi=False )
     # yields final extraction object.
     yield Extract(outdir)
@@ -225,7 +234,16 @@ class Properties(AttrBlock):
 
       # then creates input file.
       string = self.print_input(workdir=workdir, outdir=outdir, filework=True)
+      string = string.rstrip() + '\n'
       with open('prop.d12', 'w') as file: file.write(string)
+      header = ''.join(['#']*20)
+      with open('prop.out', 'w') as file:
+        file.write('{0} {1} {0}\n'.format(header, 'INPUT FILE'))
+        file.write(string)
+        file.write('{0} END {1} {0}\n'.format(header, 'INPUT FILE'))
+        file.write('\n{0} {1} {0}\n'.format(header, 'FUNCTIONAL'))
+        file.write(self.__repr__(defaults=False))
+        file.write('\n{0} END {1} {0}\n'.format(header, 'FUNCTIONAL'))
 
     with Changedir(outdir) as cwd: pass
     if not samefile(outdir, workdir):
@@ -246,7 +264,7 @@ class Properties(AttrBlock):
           except: pass
         try: symlink(workdir, 'workdir')
         except: pass
-    
+
     # creates a file in the directory, to say we are going to work here
     with open(join(outdir, '.lada_is_running'), 'w') as file: pass
 
@@ -260,26 +278,17 @@ class Properties(AttrBlock):
     from os.path import join, exists, samefile
     from shutil import rmtree
     from ...misc import copyfile, Changedir
-    from ... import CRYSTAL_propnames as propnames
+    from ... import CRYSTAL_propnames as propnames,                            \
+                    CRYSTAL_filenames as crysnames
 
     with Changedir(outdir) as cwd:
       for key, value in propnames.iteritems():
         copyfile( join(workdir, key), value.format('prop'),
                   nocopyempty=True, symlink=False, nothrow="never" )
-
-      with open('prop.d12', 'r') as file: input = file.read()
-      with open('prop.out', 'r') as file: output = file.read()
-      header = ''.join(['#']*20)
-      with open('prop.out', 'w') as file:
-        file.write('{0} {1} {0}\n'.format(header, 'INPUT FILE'))
-        input = input.rstrip()
-        if input[-1] != '\n': input += '\n'
-        file.write(input)
-        file.write('{0} END {1} {0}\n'.format(header, 'INPUT FILE'))
-        file.write(output)
-        file.write('\n{0} {1} {0}\n'.format(header, 'FUNCTIONAL'))
-        file.write(self.__repr__(defaults=False))
-        file.write('\n{0} END {1} {0}\n'.format(header, 'FUNCTIONAL'))
+      if self.fmwf is True:
+        copyfile( join(workdir, 'fort.98'),
+                  crysnames['fort.98'].format('crystal'),
+                  nocopyempty=True, symlink=False, nothrow="never" )
 
       # remove 'is running' file marker.
       if exists('.lada_is_running'):

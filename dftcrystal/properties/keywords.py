@@ -216,7 +216,6 @@ class NewK(Shrink):
     add_to_imports(self, imports)
     return {result.keys()[0]: repr(self)}
 
-
 class Rdfmwf(BoolKeyword):
   """ Whether to read formated wavefunctions. """
   keyword = 'rdfmwf'
@@ -245,6 +244,6 @@ class Rdfmwf(BoolKeyword):
       if kwargs.get('filework', False):
         path = join(kwargs['workdir'], 'fort.98' if value else  'fort.9')
         copyfile(which, path, nothrow='same')
-    elif kwargs.get('filework', False): 
+    elif kwargs.get('filework', False) and value: 
       raise IOError('Could not find input density.')
     return None if value is False or value is None else {self.keyword: True}
