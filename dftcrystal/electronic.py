@@ -459,7 +459,7 @@ class GuessP(BoolKeyword):
     super(GuessP, self).__init__(value=value)
   def output_map(self, **kwargs):
     from os.path import join
-    from ..misc import latest_file
+    from ..misc import latest_file, copyfile
     from .. import CRYSTAL_filenames as filenames
     from .properties import Properties
     
@@ -480,6 +480,7 @@ class GuessP(BoolKeyword):
         props = Properties('.')
       props.rdfmwf = True
       props(overwrite=True, outdir='.')
+      copyfile(filenames['fort.9'].format('crystal'), 'fort.20')
     return super(GuessP, self).output_map(**kwargs)
 
 class Broyden(BaseKeyword):
@@ -743,12 +744,23 @@ class Electronic(AttrBlock):
         - If True *and*
           :py:attr:`~lada.dftcrystal.functional.Functional.restart` is not
           None, then copies crystal.f9 to fort.20 in the working directory and
-          adds GUESSP keyword to the input.
+          adds GUESSP keyword to the input. Alternatively, if a later
+          crystal.f98 file is found, then it is transformed to an unformatted
+          file and copied to fort.20.
     
         - If True but :py:attr:`~lada.dftcrystal.functional.Functional.restart`
           is None or the file crystal.f9 does not exist, then does nothing.
     
         - If False or None, does nothing.    
+
+        .. note::
+           
+          There seems to be a strange bug, at least on crays, where the
+          crystal.f9 file is likely to be corrupt as far as the main CRYSTAL_
+          program can tell. However, it can still be read by PROPERTIES_ and
+          transformed to a valid f98 file. That file can then be transformed
+          back to a valid f9 file. To ensure correctness, this procedure is
+          followed each time an f9 file is found.
     """ 
     self.dft      = Dft()
     """ Holds definition of the DFT functional itself. """

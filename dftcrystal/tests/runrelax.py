@@ -2,6 +2,8 @@ def test():
   from tempfile import mkdtemp
   from numpy import array, all, abs
   from shutil import rmtree
+  from os.path import exists
+  from os import mkdir
   from lada.dftcrystal import Crystal, relax, Shell
   from lada import default_comm
 
@@ -32,6 +34,9 @@ def test():
 
   crystal = Crystal(227, 5.43).add_atom(0.125, 0.125, 0.125, 'Si')
   directory = mkdtemp()
+  if directory == '/tmp/test/' and exists(directory):
+    rmtree(directory)
+    mkdir(directory)
   try: 
      results = functional(crystal, outdir=directory, comm=default_comm)
      assert results.success

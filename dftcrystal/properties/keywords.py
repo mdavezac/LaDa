@@ -129,7 +129,8 @@ class Band(BaseKeyword):
       if len(args) != 4: args.append("maxband={0.maxband!r}".format(self))
       else: args.append("{0.maxband!r}".format(self))
     if self._lines is not None and len(self._lines): 
-      if len(args) != 5: args.append("lines={0!r}".format(self._lines.tolist()))
+      if len(args) != 5:
+        args.append("lines={0!r}".format(self._lines.tolist()))
       else: args.append("{0!r}".format(self._lines.tolist()))
     return "{0.__class__.__name__}({1})".format(self, ", ".join(args)) 
 
@@ -156,7 +157,8 @@ class NewK(Shrink):
   """ Recomputes on new k-point grid. """
   keyword = 'newk'
   """ CRYSTAL keyword. """
-  def __init__(self, mp=None, gallat=None, recompute_fermi=False, printing=None):
+  def __init__( self, mp=None, gallat=None, recompute_fermi=False,
+                printing=None ):
     from ..input import SetPrint
     super(NewK, self).__init__(mp=mp, gallat=gallat)
     self.recompute_fermi = recompute_fermi
@@ -210,8 +212,10 @@ class NewK(Shrink):
     """ Creaters user-friendly representation. """
     from ...tools.uirepr import add_to_imports
     if name is None: name = 'newk'
-    result = super(NewK, self).__ui_repr__( imports, name=name, 
-                                            defaults=defaults, exclude=exclude )
+    result = super(NewK, self).__ui_repr__( imports,
+                                            name=name, 
+                                            defaults=defaults,
+                                            exclude=exclude )
     if len(self.printing) == 0 and not self.recompute_fermi: return result
     add_to_imports(self, imports)
     return {result.keys()[0]: repr(self)}
