@@ -225,7 +225,7 @@ PyObject* pysmith(PyObject* _module, PyObject* _matrix)
   return result;
 }
    
-//! Methods table for crystal module.
+//! Methods table for math module.
 static PyMethodDef methods_table[] = {
     {"is_integer",  pyis_integer, METH_O,
      "True if the input vector or matrix is integer.\n\n"

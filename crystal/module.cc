@@ -2,7 +2,9 @@
 
 #include <Python.h>
 #include <structmember.h>
-#define PY_ARRAY_UNIQUE_SYMBOL lada_math_ARRAY_API
+#ifndef PY_ARRAY_UNIQUE_SYMBOL
+#  define PY_ARRAY_UNIQUE_SYMBOL lada_math_ARRAY_API
+#endif
 #include <numpy/arrayobject.h>
 
 #include <cmath>
@@ -16,15 +18,7 @@
 
 #include <Eigen/LU> 
 
-#include <math/misc.h>
-#include <math/fuzzy.h>
-#include <math/eigen.h>
-#include <math/smith_normal_form.h>
-#include <math/gruber.h>
-
 #include <errors/exceptions.h>
-#include <python/python.h>
-
 #ifndef PyMODINIT_FUNC	/* declarations for DLL import/export */
 # define PyMODINIT_FUNC void
 #endif
@@ -67,6 +61,7 @@ PyMODINIT_FUNC initcppwrappers(void)
   PyObject* module = Py_InitModule3("cppwrappers", methods_table, doc);
   if(not module) return;
   if(not LaDa::python::import()) return;
+  if(not LaDa::math::import()) return;
   import_array();
 
   /* Initialize the C API pointer array */

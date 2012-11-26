@@ -41,15 +41,15 @@ bool _init_hft( PyHFTObject* _self,
   }
   catch(error::internal &_e)
   {
-    LADA_PYERROR(InternalError, "HFTransform: Could not create smith normal form.");
+    LADA_PYERROR(internal, "HFTransform: Could not create smith normal form.");
   }
   catch(std::exception &_e)
   {
-    LADA_PYERROR_FORMAT(InternalError, "HFTransform: Caught c++ exception %s.", _e.what());
+    LADA_PYERROR_FORMAT(internal, "HFTransform: Caught c++ exception %s.", _e.what());
   }
   catch(...)
   {
-    LADA_PYERROR(InternalError, "HFTransform: Caught unknown c++ exception.");
+    LADA_PYERROR(internal, "HFTransform: Caught unknown c++ exception.");
   }
   return false;
 }

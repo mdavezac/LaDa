@@ -37,13 +37,13 @@
 #if LADA_MATH_MODULE != 1
   //! Computes smith normal form of a matrix \a  _S = \a _L \a _M \a _R.
   LADA_INLINE void smith_normal_form( iMatrix3d& _S, 
-                                      iMatrix3d & _L, 
+                                      iMatrix3d& _L, 
                                       const iMatrix3d& _M, 
-                                      iMatrix3d &_R )
-    LADA_END( ( (rMatrix3d(*)( iMatrix3d&, 
-                                      iMatrix3d&, 
-                                      const iMatrix3d&, 
-                                 iMatrix3d& ))
+                                      iMatrix3d& _R )
+    LADA_END( ( (void(*)( iMatrix3d&, 
+                          iMatrix3d&, 
+                          const iMatrix3d&, 
+                          iMatrix3d& ))
                   api_capsule[LADA_SLOT(math)] ) 
                 (_S, _L, _M, _R); )
 #else
