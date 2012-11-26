@@ -39,9 +39,4 @@ if(NOT compile_debug_tests)
   target_link_libraries(smith_form mathlib)
   ADD_TEST( math_smith_form ${CMAKE_CURRENT_BINARY_DIR}/smith_form)
 
-  add_library (quantity SHARED "quantity.cc")
-  target_link_libraries(quantity mathlib)
-  set_target_properties(quantity PROPERTIES PREFIX "_")
-  add_test(math_quantity python ${CMAKE_CURRENT_SOURCE_DIR}/quantity.py ${CMAKE_CURRENT_BINARY_DIR})
-
 endif(NOT compile_debug_tests)

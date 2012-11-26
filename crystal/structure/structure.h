@@ -159,10 +159,10 @@
         { return ((PyStructureObject*)object_)->cell(i, j); }
       //! Returns scale as real number in current units.
       types::t_real scale() const
-        { return math::PyQuantity_AsReal(((PyStructureObject*)object_)->scale); }
+        { return python::get_quantity(((PyStructureObject*)object_)->scale); }
       //! Returns scale as real number in given units.
       types::t_real scale(std::string const &_units) const
-        { return math::PyQuantity_Get(((PyStructureObject*)object_)->scale, _units); }
+        { return python::get_quantity(((PyStructureObject*)object_)->scale, _units); }
   
       //! Deep copy of a structure.
       Structure copy() const { return Structure(copy_structure((PyStructureObject*)object_)); }
@@ -255,7 +255,7 @@
       //! Returns structure volume in current units.
       types::t_real volume() const
         { return std::abs(((PyStructureObject*)object_)->cell.determinant()) 
-                 * std::pow(math::PyQuantity_AsReal(((PyStructureObject*)object_)->scale), 3); }
+                 * std::pow(python::get_quantity(((PyStructureObject*)object_)->scale), 3); }
   
       //! Transforms a structure according to an affine transformation.
       void transform(Eigen::Matrix<types::t_real, 4, 3> const &_affine)

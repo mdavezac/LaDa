@@ -24,6 +24,7 @@ namespace LaDa
     namespace 
     {
 #     include "object.cc"
+#     include "quantity.cc"
     }
   }
 }
@@ -33,6 +34,7 @@ namespace LaDa
 PyMODINIT_FUNC initcppwrappers(void) 
 {
   using namespace LaDa::python;
+  using namespace LaDa;
   static void *api_capsule[LADA_SLOT(python)];
   static PyMethodDef methods_table[] = { {NULL, NULL, 0, NULL} };
   PyObject *c_api_object;

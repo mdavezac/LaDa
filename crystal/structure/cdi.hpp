@@ -40,7 +40,7 @@ int structure_init(PyStructureObject* _self, PyObject* _args, PyObject *_kwargs)
     _self->scale = NULL;
     Py_DECREF(dummy);
   }
-  _self->scale = math::PyQuantity_FromC(1,  "angstrom");
+  _self->scale = python::fromC_quantity(1,  "angstrom");
 
   if(N != 0 and N != 1 and N != 9 and N != 3)
   {

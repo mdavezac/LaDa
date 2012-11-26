@@ -18,8 +18,8 @@ bool map_sites( Structure const &_mapper, Structure &_mappee,
   
   // check that mappee_ is a supercell of mapper_.
   types::t_real const mappee_scale 
-    = math::PyQuantity_GetPy(_mappee->scale, _mapper->scale);
-  types::t_real const mapper_scale = math::PyQuantity_AsReal(_mapper->scale);
+    = python::get_quantity(_mappee->scale, _mapper->scale);
+  types::t_real const mapper_scale = python::get_quantity(_mapper->scale);
   types::t_real const ratio = mappee_scale / mapper_scale;
   types::t_real tolerance = _tolerance / mapper_scale;
   math::rMatrix3d const intcell_ = invcell * _mappee.cell() * ratio;

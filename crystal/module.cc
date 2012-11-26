@@ -20,7 +20,6 @@
 #include <math/fuzzy.h>
 #include <math/eigen.h>
 #include <math/smith_normal_form.h>
-#include <math/quantity.h>
 #include <math/gruber.h>
 
 #include <errors/exceptions.h>

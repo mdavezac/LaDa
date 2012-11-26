@@ -1,6 +1,6 @@
 #include "LaDaConfig.h"
 
-#include <misc/types.h>
+#include <python/types.h>
 #include "smith_normal_form.h"
 #include "fuzzy.h"
 #include "exceptions.h"

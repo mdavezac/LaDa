@@ -1,7 +1,6 @@
 // Special methods for zinc-blende VFF.
-#include <crystal/structure/pybase.h>
-#include <math/quantity.h>
-#include <crystal/python/wrap_numpy.h>
+#include <crystal/crystal.h>
+#include <python/python.h>
 namespace LaDa
 {
   namespace vff
@@ -162,7 +161,7 @@ namespace LaDa
           LADA_PYERROR(TypeError, "vff-energy: third argument should be a list of nodes.");
           return NULL;
         }
-        types::t_real const scale = math::PyQuantity_Get(structure->scale, "angstrom");
+        types::t_real const scale = python::get_quantity(structure->scale, "angstrom");
         types::t_real const scale2 = scale * scale;
         types::t_real energy = 0e0;
 
@@ -265,7 +264,7 @@ namespace LaDa
           LADA_PYERROR(TypeError, "vff-energy: third argument should be a list of nodes.");
           return NULL;
         }
-        types::t_real const scale = math::PyQuantity_Get(structure->scale, "angstrom");
+        types::t_real const scale = python::get_quantity(structure->scale, "angstrom");
         types::t_real const scale2 = scale * scale;
         types::t_real energy = 0e0;
         math::rMatrix3d stress = math::rMatrix3d::Zero(); 

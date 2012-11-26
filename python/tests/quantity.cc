@@ -1,12 +1,12 @@
 #include "LaDaConfig.h"
 
-#include "../quantity.h"
+#include "../python.h"
 
 
-using namespace LaDa::math;
-PyObject* is_quantity(PyObject *_module, PyObject *_in)
+using namespace LaDa::python;
+PyObject* is_quantity(PyObject *_module, PyObject *_in, PyObject*)
 { 
-  if(not PyQuantity_Check(_in)) Py_RETURN_FALSE;
+  if(not check_quantity(_in)) Py_RETURN_FALSE;
   Py_RETURN_TRUE;
 }
 PyObject* fromC(PyObject *_module, PyObject *_args)
@@ -14,18 +14,18 @@ PyObject* fromC(PyObject *_module, PyObject *_args)
   double pynumber;
   char *pyunits;
   if(not PyArg_ParseTuple(_args, "ds", &pynumber, &pyunits)) return NULL;
-  return PyQuantity_FromC(pynumber, std::string(pyunits));
+  return fromC_quantity(pynumber, std::string(pyunits));
 }
 PyObject* fromPy(PyObject *_module, PyObject *_args)
 {
   PyObject *number;
   PyObject *units;
   if(not PyArg_ParseTuple(_args, "OO", &number, &units)) return NULL;
-  return PyQuantity_FromPy(number, units);
+  return fromPy_quantity(number, units);
 }
 PyObject* get_angstrom(PyObject *_module, PyObject *_in)
 {
-  LaDa::types::t_real result(PyQuantity_Get(_in, "angstrom"));
+  LaDa::types::t_real result(get_quantity(_in, "angstrom"));
   if(std::abs(result) < 1e-8 and PyErr_Occurred())
   {
     PyErr_Clear();
@@ -36,7 +36,7 @@ PyObject* get_angstrom(PyObject *_module, PyObject *_in)
 
 PyObject* as_real(PyObject *_module, PyObject *_in)
 {
-  LaDa::types::t_real result(PyQuantity_AsReal(_in));
+  LaDa::types::t_real result(get_quantity(_in));
   if(std::abs(result) < 1e-8 and PyErr_Occurred())
   {
     PyErr_Clear();
@@ -49,7 +49,7 @@ PyObject* get_as(PyObject *_module, PyObject *_args)
   PyObject *number;
   PyObject *units;
   if(not PyArg_ParseTuple(_args, "OO", &number, &units)) return NULL;
-  LaDa::types::t_real result(PyQuantity_GetPy(number, units));
+  LaDa::types::t_real result(get_quantity(number, units));
   if(std::abs(result) < 1e-8 and PyErr_Occurred())
   {
     PyErr_Clear();
@@ -82,4 +82,6 @@ PyMODINIT_FUNC init_quantity(void)
 {
   PyObject* module = Py_InitModule("_quantity", methods);
   if(not module) return;
+  import_array();
+  if(not LaDa::python::import()) return;
 }

@@ -39,7 +39,7 @@ PyObject* structure_repr(PyStructureObject* _self)
          << ", " << _self->cell(2, 1) 
          << ", " << _self->cell(2, 2)
          << ",\n" << std::string(name.size()+2, ' ')
-         << "scale=" << math::PyQuantity_Get(_self->scale, "angstrom");
+         << "scale=" << python::get_quantity(_self->scale, "angstrom");
       
   // Including python dynamic attributes.
   if(_self->pydict != NULL)

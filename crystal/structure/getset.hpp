@@ -10,9 +10,9 @@ int structure_setscale(PyStructureObject *_self, PyObject *_value, void *_closur
 //! Gets the volume of the structure
 PyObject* structure_getvolume(PyStructureObject *_self, void *_closure)
 {
-  types::t_real const scale = math::PyQuantity_AsReal(_self->scale);
+  types::t_real const scale = python::get_quantity(_self->scale);
   types::t_real const result = std::abs(_self->cell.determinant() * std::pow(scale, 3));
-  return math::PyQuantity_FromCWithTemplate(result, _self->scale);
+  return python::fromC_quantity(result, _self->scale);
 }
 
 
@@ -41,7 +41,7 @@ int structure_setscale(PyStructureObject *_self, PyObject *_value, void *_closur
     LADA_PYERROR(TypeError, "Cannot delete scale attribute.");
     return -1;
   }
-  PyObject *result = math::PyQuantity_FromPy(_value, _self->scale);
+  PyObject *result = python::fromPy_quantity(_value, _self->scale);
   if(not result) return -1;
   PyObject *dummy = _self->scale;
   _self->scale = result;

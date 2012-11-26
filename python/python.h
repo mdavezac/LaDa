@@ -19,6 +19,7 @@
 # include <numpy/arrayobject.h>
 
 # include <vector>
+# include <string>
 
 # include <boost/mpl/int.hpp>
 # include <boost/type_traits/is_floating_point.hpp>
@@ -29,6 +30,7 @@
 
 # include <math/eigen.h>
 # include <errors/exceptions.h>
+# include "types.h"
 
   namespace LaDa
   {
@@ -113,7 +115,7 @@
 #else
   api_capsule[LADA_SLOT(python)]
       = (void *) ( ( (std::ostream&(*)(std::ostream&, Object const&))
-                     object_equality_op ) );
+                     operator<< ) );
 #endif
 #define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(python))
 #include LADA_ASSIGN_SLOT(python)
@@ -247,6 +249,7 @@
 
 #include "random_access_list_iterator.h"
 #include "random_access_tuple_iterator.h"
+#include "quantity.h"
 
 #if LADA_PYTHON_MODULE != 1
       }

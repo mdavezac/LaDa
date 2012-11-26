@@ -33,3 +33,7 @@ set_target_properties(pypython PROPERTIES OUTPUT_NAME cppwrappers)
 set_target_properties(pypython PROPERTIES PREFIX "")
 install(TARGETS pypython DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada)
 install(FILES ${LIBCRYSTAL_PYSOURCES} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada)
+
+if(compile_tests OR compile_debug_tests)
+  add_subdirectory(tests)
+endif(compile_tests OR compile_debug_tests)

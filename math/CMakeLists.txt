@@ -1,6 +1,6 @@
 set(LIBMATH_HEADERS fuzzy.h gruber.h eigen.h smith_normal_form.h exceptions.h
-                    misc.h quantity.h)
-set(LIBMATH_SOURCES gruber.cc noopt.cc smith_normal_form.cc quantity.cc)
+                    misc.h )
+set(LIBMATH_SOURCES gruber.cc noopt.cc smith_normal_form.cc )
 set(PYMATH_SOURCES methods.hpp module.cc gruber.cc noopt.cc smith_normal_form.cc)
 
 add_library (mathlib SHARED ${LIBMATH_HEADERS} ${LIBMATH_SOURCES})

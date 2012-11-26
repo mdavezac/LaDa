@@ -9,7 +9,7 @@
 #include <boost/type_traits/is_floating_point.hpp>
 #include <boost/numeric/conversion/converter.hpp>
 
-#include <misc/types.h>
+#include <python/types.h>
 #include "eigen.h"
 
 namespace LaDa

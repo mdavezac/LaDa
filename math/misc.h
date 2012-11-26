@@ -5,7 +5,7 @@
 
 #include <limits>
 
-#include <misc/types.h>
+#include <python/types.h>
 #include "eigen.h"
 #include "fuzzy.h"
 #include "exceptions.h"

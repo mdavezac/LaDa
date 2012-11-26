@@ -3,7 +3,7 @@
 
 #include "LaDaConfig.h"
 
-#include <misc/types.h>
+#include <python/types.h>
 
 #include "fuzzy.h"
 #include "misc.h"
