@@ -33,13 +33,14 @@ def test():
   functional.dft.spin = True
 
   crystal = Crystal(227, 5.43).add_atom(0.125, 0.125, 0.125, 'Si')
-  directory = mkdtemp() 
+  directory =  mkdtemp() 
   firstdir, seconddir = join(directory, '0'), join(directory, '1')
   try: 
      si = functional(crystal, outdir=firstdir, comm=default_comm)
      properties = Properties(si)
      properties.band = [0, 0, 0], [1, 0, 0], [1, 0, 0], [0, 1, 0]
      result0 = properties(outdir=firstdir)
+     assert result0.success 
      assert all(abs(result0.bandstructure.eigenvalues[0] - result0.bandstructure.eigenvalues[1]) < 1e-6)
      test = [ [-64.55637917, -64.55637522,  -3.64877203,  -3.64854929,
                 -1.98183315,  -1.98183315,  -1.98183315,  -1.98097196,
@@ -100,6 +101,7 @@ def test():
      properties = Properties(si)
      properties.band = [0, 0, 0], [1, 0, 0], [1, 0, 0], [0, 1, 0]
      result1 = properties(outdir=seconddir)
+     assert result1.success 
      assert all(abs(result1.bandstructure.eigenvalues - result0.bandstructure.eigenvalues[0]) < 1e-6)
      assert all(abs(result1.bandstructure.kpoints - result0.bandstructure.kpoints) < 1e-6)
   finally: 

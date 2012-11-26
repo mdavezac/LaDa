@@ -1,6 +1,6 @@
 """ Subpackage grouping single-electron properties. """
 __docformat__ = "restructuredtext en"
-__all__ = ['Band', 'NewK', 'Rdfmwf']
+__all__ = ['Band', 'NewK', 'Rdfmwf', 'Fmwf']
 from ..input import BaseKeyword, BoolKeyword
 from ..electronic import Shrink
 
@@ -222,12 +222,23 @@ class Rdfmwf(BoolKeyword):
   """ CRYSTAL keyword. """
   def __init__(self, value=None):
     super(BoolKeyword, self).__init__(value=value)
+
+  def __set__(self, owner, value):
+    """ Makes this keyword incompatible with Fmwf. """
+    self.value = value
+    if self.value is True:
+      if owner.fmwf is not None: owner.fmwf = False
+
   def output_map(self, **kwargs):
     from os.path import join
     from ...misc import copyfile, latest_file
     from ...error import IOError
 
+    # do nothing if fmwf is True
+    if getattr(kwargs.get('properties', None), 'fmwf', False): return None
+
     value = self.value
+    # check for crystal.f9, crystal.98
     if value is None: 
       which = latest_file( join(kwargs['input'].directory, 'crystal.f9'), 
                            join(kwargs['input'].directory, 'crystal.f98'), 
@@ -239,11 +250,58 @@ class Rdfmwf(BoolKeyword):
     else:
       which = latest_file( join(kwargs['input'].directory, 'crystal.f9'), 
                            join(kwargs['outdir'], 'crystal.f9') )
+    # check for fort.9, fort.98, as per original CRYSTAL.
+    if which is None: 
+      if value is None: 
+        which = latest_file( join(kwargs['input'].directory, 'fort.9'), 
+                             join(kwargs['input'].directory, 'fort.98'), 
+                             join(kwargs['outdir'], 'fort.9'), 
+                             join(kwargs['outdir'], 'fort.98') )
+      elif value:
+        which = latest_file( join(kwargs['input'].directory, 'fort.98'), 
+                             join(kwargs['outdir'], 'fort.98') )
+      else:
+        which = latest_file( join(kwargs['input'].directory, 'fort.9'), 
+                             join(kwargs['outdir'], 'fort.9') )
+
     if which is not None:
       value = which[which.rfind('.'):] == '.f98'
       if kwargs.get('filework', False):
         path = join(kwargs['workdir'], 'fort.98' if value else  'fort.9')
         copyfile(which, path, nothrow='same')
-    elif kwargs.get('filework', False) and value: 
+    elif kwargs.get('filework', False):
       raise IOError('Could not find input density.')
     return None if value is False or value is None else {self.keyword: True}
+
+
+class Fmwf(BoolKeyword):
+  """ Whether to read formated wavefunctions. """
+  keyword = 'fmwf'
+  """ CRYSTAL keyword. """
+  def __init__(self, value=None):
+    super(BoolKeyword, self).__init__(value=value)
+  def __set__(self, owner, value):
+    """ Makes this keyword incompatible with Fmwf. """
+    self.value = value
+    if self.value is True: owner.rdfmwf = False
+    elif self.value is False:
+      if owner.rdfmwf is not None: owner.rdfmwf = True
+    elif owner.rdfmwf is False: owner.rdfmwf = None
+
+    if self.value is True: owner.rdfmwf = False
+  def output_map(self, **kwargs):
+    from os.path import join
+    from ...misc import copyfile, latest_file
+    from ...error import IOError
+    if self.value is None or self.value is False: return None
+
+    which = latest_file( join(kwargs['input'].directory, 'crystal.f9'), 
+                         join(kwargs['outdir'], 'crystal.f9') )
+    if which is None:
+      which = latest_file( join(kwargs['input'].directory, 'fort.9'), 
+                           join(kwargs['outdir'], 'fort.9') )
+    if which is None:
+      raise IOError('Could not find valid unformatted wavefunction file.')
+    if kwargs.get('filework', False):
+      copyfile(which, join(kwargs['workdir'], 'fort.9'), nothrow='same')
+    return {self.keyword: True}

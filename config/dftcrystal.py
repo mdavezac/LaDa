@@ -75,7 +75,7 @@ def crystal_program(self=None, structure=None, comm=None):
   ser = 'crystal'
   mpi = 'Pcrystal'
   mpp = 'MPPcrystal'
-  if self is None or comm is None: return ser
+  if self is None or comm is None or comm['n'] == 1: return ser
   if self.mpp is True: return mpp
   return mpi
 

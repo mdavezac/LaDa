@@ -11,7 +11,7 @@ class Properties(AttrBlock):
   __ui_name__ = 'properties'
   """ Name used in user-friendly representation """
   def __init__(self, input=None, program=None):
-    from .keywords import NewK, Band, Rdfmwf
+    from .keywords import NewK, Band, Rdfmwf, Fmwf
     from ..input import BoolKeyword
     super(Properties, self).__init__()
     self.rdfmwf = Rdfmwf()
@@ -29,6 +29,11 @@ class Properties(AttrBlock):
 
         If no error occurs, the relevant files are copied to the working
         directory.
+
+        .. note:: 
+
+           Only one of :py:attr:`rdfmwf` and :py:attr:`fmwf` can be True at any
+           one time.
     """
     self.newk = NewK()
     """ Performs diagonalization on new k-point mesh. 
@@ -78,8 +83,14 @@ class Properties(AttrBlock):
 
         >>> properties.band = [startA, endA], [startB, endB], ...
     """
-    self.fmwf = BoolKeyword()
-    """ Whether to output formatted wavefunctions. """
+    self.fmwf = Fmwf()
+    """ Whether to output formatted wavefunctions. 
+
+        .. note:: 
+
+           Only one of :py:attr:`rdfmwf` and :py:attr:`fmwf` can be True at any
+           one time.
+    """
     self.program = program
     """ CRYSTAL_'s properties program. 
 
@@ -196,7 +207,7 @@ class Properties(AttrBlock):
       raise InputError( 'Nothing to do. Properties not requested '           \
                         'to compute anything.' )
     # now make sure guessdir is well defined.
-    if workdir == None: workdir = this.guess_workdir(outdir)
+    if workdir is None: workdir = this.guess_workdir(outdir)
 
     outdir = abspath(outdir)
     workdir = abspath(workdir)
@@ -289,6 +300,10 @@ class Properties(AttrBlock):
         copyfile( join(workdir, 'fort.98'),
                   crysnames['fort.98'].format('crystal'),
                   nocopyempty=True, symlink=False, nothrow="never" )
+      if self.rdfmwf is True:
+        copyfile( join(workdir, 'fort.9'),
+                  crysnames['fort.9'].format('crystal'),
+                  nocopyempty=True, symlink=False, nothrow="never" )
 
       # remove 'is running' file marker.
       if exists('.lada_is_running'):
@@ -319,10 +334,8 @@ class Properties(AttrBlock):
     return program
   __call__.__doc__ = iter.__doc__
 
-  def __ui_repr__(self, imports, name=None, defaults=None, exclude=None):
-    from ...tools.uirepr import template_ui_repr
-
-    results = template_ui_repr(self, imports, name, defaults, ['scf'])
-    if name is None:
-      name = getattr(self, '__ui_name__', self.__class__.__name__.lower())
-    return results
+  def __repr__(self, defaults=True, name=None): 
+    """ Returns representation of this instance """
+    from ...tools.uirepr import uirepr
+    defaults = self.__class__() if defaults else None
+    return uirepr(self, name=name, defaults=defaults)

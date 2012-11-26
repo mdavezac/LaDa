@@ -186,11 +186,9 @@ class AtomSpin(BaseKeyword):
     if kwargs['crystal'].dft.spin is False: return None
     # If GuessP then disabled. 
     if 'crystal' in kwargs:
-      print 'guessp', kwargs['crystal'].scf._input['guessp']
       kwargs_copy = kwargs.copy()
       kwargs_copy['filework'] = False
       map = kwargs['crystal'].scf._input['guessp'].output_map(**kwargs_copy)
-      print 'map', map, map.get('guessp', False) == 'True'
       if map is not None and map.get('guessp', False) == 'True': return None
     raise Exception()
     # Ok, now add ATOMSPIN stuff.
@@ -460,25 +458,28 @@ class GuessP(BoolKeyword):
   def __init__(self, value=True):
     super(GuessP, self).__init__(value=value)
   def output_map(self, **kwargs):
-    from os import stat
-    from os.path import exists, join, getsize, realpath
-    from ..misc import copyfile
+    from os.path import join
+    from ..misc import latest_file
+    from .. import CRYSTAL_filenames as filenames
+    from .properties import Properties
+    
     if self.value is None or self.value == False: return None
     if kwargs['crystal'].restart is None: return None
-    print 'crystal has restart'
-    path = join(kwargs['crystal'].restart.directory, 'crystal.f9')
-    print 'path exists', exists(path), path
-    if not exists(path): return None
-    try:
-      if getsize(realpath(path)) == 0: return None
-    except: return None
+
+    directory = kwargs['crystal'].restart.directory
+    paths = join(directory, filenames['fort.9'].format('crystal')),            \
+            join(directory, filenames['fort.98'].format('crystal'))
+    filename = latest_file(*paths)
+    if filename is None: return
+
     if kwargs.get('filework', False) == True:
-      copyfile( realpath(path), join(kwargs['workdir'], 'fort.20'),
-                symlink=False, nothrow='same' )
-      if not exists(join(kwargs['workdir'], 'fort.20')):
-        raise IOError('Could not create link to wavefunctions.')
-      if not exists(realpath(join(kwargs['workdir'], 'fort.20'))):
-        raise IOError('Could not create link to wavefunctions.')
+      props = Properties(kwargs['crystal'].restart)
+      if filename[-3:] == 'f9':
+        props.fmwf = True
+        props(outdir='.')
+        props = Properties('.')
+      props.rdfmwf = True
+      props(overwrite=True, outdir='.')
     return super(GuessP, self).output_map(**kwargs)
 
 class Broyden(BaseKeyword):
