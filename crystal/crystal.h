@@ -26,10 +26,8 @@
 # include <Eigen/LU> 
 
 # include <root_exceptions.h>
-# include <math/misc.h>
-# include <math/fuzzy.h>
-# include <math/smith_normal_form.h>
 # include <python/python.h>
+# include <math/math.h>
 
 # include <errors/exceptions.h>
 

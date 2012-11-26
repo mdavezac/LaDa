@@ -46,7 +46,8 @@
 # define LADA_ASSIGN_SLOT(i) BOOST_PP_CAT(LADA_ASSIGN_SLOT_, i)
 #
 # define LADA_ASSIGN_SLOT_crystal <python/ppslot_crystal.hpp>
-# define LADA_ASSIGN_SLOT_python <python/ppslot_python.hpp>
+# define LADA_ASSIGN_SLOT_python  <python/ppslot_python.hpp>
+# define LADA_ASSIGN_SLOT_math    <python/ppslot_math.hpp>
 #
 # /* BOOST_PP_SLOT */
 #

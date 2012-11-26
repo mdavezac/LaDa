@@ -11,8 +11,7 @@
           }\
         }
 
-#include "../misc.h"
-#include "../symmetry_operator.h"
+#include "../math.h"
 
 using namespace std;
 int main()

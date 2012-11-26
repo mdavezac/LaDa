@@ -4,7 +4,6 @@
 
 #include <Python.h>
 #include <root_exceptions.h>
-#include <math/exceptions.h>
 
 namespace LaDa
 {

@@ -28,7 +28,8 @@
 # define BOOST_PP_VALUE 0
 # include LADA_ASSIGN_SLOT(python)
 
-# include <math/eigen.h>
+# include <Eigen/Core>
+
 # include <errors/exceptions.h>
 # include "types.h"
 
@@ -74,7 +75,7 @@
 #  elif LADA_PYTHON_MODULE == 0
 #    define LADA_END(X) ;
 #  elif LADA_PYTHON_MODULE == 100
-#    define LADA_END(X) X
+#    define LADA_END(X) { X }
 #  endif
 #endif
 
@@ -87,8 +88,8 @@
   //! Object reset function.
   //! Declared as friend to object so that it can be linked at runtime.
   LADA_INLINE void object_reset(PyObject*& _object, PyObject *_in)
-    LADA_END( { return ( *(void(*)(PyObject*&, PyObject*))
-                         api_capsule[LADA_SLOT(python)])(_object, _in); } ) 
+    LADA_END( return ( *(void(*)(PyObject*&, PyObject*))
+                       api_capsule[LADA_SLOT(python)])(_object, _in); ) 
 #else
   api_capsule[LADA_SLOT(python)] = (void *)((void(*)(PyObject*&, PyObject*)) object_reset);
 #endif
@@ -97,8 +98,8 @@
   
 #if LADA_PYTHON_MODULE != 1
   LADA_INLINE bool object_equality_op(Object const& _self, Object const &_b)
-    LADA_END( { return ( *(bool(*)(Object const&, Object const&))
-                         api_capsule[LADA_SLOT(python)])(_self, _b); } )
+    LADA_END( return ( *(bool(*)(Object const&, Object const&))
+                       api_capsule[LADA_SLOT(python)])(_self, _b); )
 #else
   api_capsule[LADA_SLOT(python)] = (void *)object_equality_op;
 #endif
@@ -110,8 +111,8 @@
   //! \details Will throw c++ exceptions if python calls fail. Does not clear
   //!          python exceptions.
   LADA_INLINE  std::ostream& operator<< (std::ostream &stream, Object const &_ob)
-    LADA_END( { return ( *(std::ostream&(*)(std::ostream&, Object const&))
-                         api_capsule[LADA_SLOT(python)])(stream, _ob); } )
+    LADA_END( return ( *(std::ostream&(*)(std::ostream&, Object const&))
+                       api_capsule[LADA_SLOT(python)])(stream, _ob); )
 #else
   api_capsule[LADA_SLOT(python)]
       = (void *) ( ( (std::ostream&(*)(std::ostream&, Object const&))

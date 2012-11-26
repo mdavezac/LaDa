@@ -26,5 +26,12 @@ def test_gruber():
   except internal: pass
   else: raise Exception()
 
+def test_capi():
+  from _gruber import testme
+  assert testme()
+
 if __name__ == '__main__':
+  from sys import argv, path 
+  if len(argv) > 0: path.extend(argv[1:])
+  test_capi()
   test_gruber()

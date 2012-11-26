@@ -11,7 +11,7 @@
           }\
         }
 
-#include "../fuzzy.h"
+#include "../math.h"
 
 #if LADA_TEST_INCTYPE == 0
 #  define LADA_FIRST 5

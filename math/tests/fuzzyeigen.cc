@@ -11,7 +11,7 @@
           }\
         }
 
-#include "../misc.h"
+#include "../math.h"
 
 #if LADA_TEST_INCTYPE == 0
 #  define LADA_UNITY math::iVector3d(1,1,1)

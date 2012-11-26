@@ -5,21 +5,20 @@
 #include <cstdlib>
 #include <time.h>
 
-#include "../smith_normal_form.h"
-#include "../fuzzy.h"
+#include "../math.h"
 
-#define LADA_DOASSERT(a,b) \
-        { \
-          if((not (a)))\
-          { \
-            std::cerr << __FILE__ << ", line: " << __LINE__ << "\n" << b; \
-            throw 0;\
-          }\
+#define LADA_DOASSERT(a,b)                \
+        {                                 \
+          if((not (a)))                   \
+          {                               \
+            LADA_PYERROR(internal, b);    \
+            return NULL;                  \
+          }                               \
         }
 
-using namespace std;
-int main()
+PyObject* testme(PyObject* _module, PyObject *)
 {
+  using namespace std;
   using namespace LaDa;
   using namespace LaDa::math;
 
@@ -48,5 +47,28 @@ int main()
     LADA_DOASSERT( std::abs(left.determinant()) > 1e-12, "Left matrix not invertible.\n")
     LADA_DOASSERT( std::abs(right.determinant()) > 1e-12, "Right matrix not invertible.\n")
   }
-  return 0;
+  Py_RETURN_TRUE;
+}
+
+#ifndef PyMODINIT_FUNC	/* declarations for DLL import/export */
+# define PyMODINIT_FUNC void
+#endif
+
+#ifdef LADA_DECLARE
+#  error LADA_DECLARE already defined.
+#endif
+#define LADA_DECLARE(name, args) {#name, (PyCFunction)name, METH_ ## args, ""} 
+
+static PyMethodDef methods[] = { 
+  LADA_DECLARE(testme, NOARGS),
+  {NULL},
+};
+
+#undef LADA_DECLARE
+
+PyMODINIT_FUNC init_smith(void) 
+{
+  PyObject* module = Py_InitModule("_smith", methods);
+  if(not module) return;
+  if(not LaDa::math::import()) return;
 }

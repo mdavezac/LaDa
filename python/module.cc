@@ -5,11 +5,8 @@
 #define PY_ARRAY_UNIQUE_SYMBOL lada_math_ARRAY_API
 #include <numpy/arrayobject.h>
 
-#include <math/misc.h>
-#include <math/fuzzy.h>
-#include <math/eigen.h>
-
 #include <errors/exceptions.h>
+#include <math/math.h>
 
 #ifndef PyMODINIT_FUNC	/* declarations for DLL import/export */
 # define PyMODINIT_FUNC void
