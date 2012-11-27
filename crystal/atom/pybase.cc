@@ -1,9 +1,9 @@
 // atom getters/settters.
-#include "getset.hpp"
+#include "getset.cc"
 // atom member functions.
-#include "members.hpp"
+#include "members.cc"
 // creation, deallocation, initialization.
-#include "cdi.hpp"
+#include "cdi.cc"
 
 //! Creates a new atom with a given type.
 PyAtomObject* PyAtom_NewWithArgs(PyTypeObject* _type, PyObject *_args, PyObject *_kwargs);

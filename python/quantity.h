@@ -1,7 +1,7 @@
 #if LADA_PYTHON_MODULE != 1
   //! Checks whether this a quantity object.
   LADA_INLINE bool check_quantity(PyObject *_in)
-    LADA_END( return ((bool(*)())api_capsule[LADA_SLOT(python)])(); )
+    LADA_END( return ((bool(*)(PyObject*))api_capsule[LADA_SLOT(python)])(_in); )
 #else
   api_capsule[LADA_SLOT(python)] = (void *)check_quantity;
 #endif

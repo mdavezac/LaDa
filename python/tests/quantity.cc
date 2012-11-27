@@ -1,10 +1,15 @@
 #include "LaDaConfig.h"
 
+#include <Python.h>
+#include <numpy/arrayobject.h>
+
+#include <iostream>
+
 #include "../python.h"
 
 
 using namespace LaDa::python;
-PyObject* is_quantity(PyObject *_module, PyObject *_in, PyObject*)
+PyObject* is_quantity(PyObject *_module, PyObject *_in)
 { 
   if(not check_quantity(_in)) Py_RETURN_FALSE;
   Py_RETURN_TRUE;

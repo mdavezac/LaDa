@@ -1,5 +1,7 @@
 #include "LaDaConfig.h"
 
+#include <Python.h>
+#include <numpy/arrayobject.h>
 #include "../crystal.h"
 
 using namespace LaDa::crystal;

@@ -18,7 +18,7 @@
 #if LADA_CRYSTAL_MODULE != 1
   // Returns pointer to hftransform type.
   LADA_INLINE PyTypeObject* hftransform_type()
-    LADA_END({ return (PyTypeObject*)api_capsule[LADA_SLOT(crystal)]; })
+    LADA_END(return (PyTypeObject*)api_capsule[LADA_SLOT(crystal)];)
 #else
   api_capsule[LADA_SLOT(crystal)] = (void *)hftransform_type();
 #endif
@@ -30,11 +30,11 @@
   LADA_INLINE PyHFTObject* new_hftransform( PyTypeObject* _type, 
                                             PyObject *_args, 
                                             PyObject *_kwargs )
-    LADA_END( { return (*(PyHFTObject*(*)( PyTypeObject*, 
-                                           PyObject*, 
-                                           PyObject* ))
-                        api_capsule[LADA_SLOT(crystal)])
-                       (_type, _args, _kwargs); } )
+    LADA_END(return (*(PyHFTObject*(*)( PyTypeObject*, 
+                                        PyObject*, 
+                                        PyObject* ))
+                     api_capsule[LADA_SLOT(crystal)])
+                    (_type, _args, _kwargs);)
 #else
   api_capsule[LADA_SLOT(crystal)] = (void *)new_hftransform;
 #endif
@@ -44,8 +44,8 @@
 #if LADA_CRYSTAL_MODULE != 1
   //! Creates a deepcopy of hftransform.
   LADA_INLINE PyHFTObject *copy_hftransform(PyHFTObject* _self, PyObject *_memo = NULL)
-    LADA_END( { return (*(PyHFTObject*(*)(PyHFTObject*, PyObject*))
-                        api_capsule[LADA_SLOT(crystal)])(_self, _memo); } )
+    LADA_END(return (*(PyHFTObject*(*)(PyHFTObject*, PyObject*))
+                     api_capsule[LADA_SLOT(crystal)])(_self, _memo);)
 #else
   api_capsule[LADA_SLOT(crystal)] = (void *)copy_hftransform;
 #endif
@@ -58,9 +58,9 @@
   LADA_INLINE bool _init_hft( PyHFTObject* _self, 
                               math::rMatrix3d const &_lattice,
                               math::rMatrix3d const &_supercell )
-    LADA_END( { return (*(bool(*)( PyHFTObject*, math::rMatrix3d const&, 
-                                   math::rMatrix3d const &))
-                        api_capsule[LADA_SLOT(crystal)])(_self, _lattice, _supercell); } )
+    LADA_END(return (*(bool(*)( PyHFTObject*, math::rMatrix3d const&, 
+                                math::rMatrix3d const &))
+                     api_capsule[LADA_SLOT(crystal)])(_self, _lattice, _supercell);)
 #else
   api_capsule[LADA_SLOT(crystal)] = (void *)_init_hft;
 #endif

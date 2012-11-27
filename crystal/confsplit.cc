@@ -119,7 +119,7 @@ bool cmp_to_confs( PyObject *const _config,
     if(not cmp_atom_types(*i_a, *i_b)) return false; 
     t_NpMap const vecA(LADA_GET_TRANS(*i_a));
     t_NpMap const vecB(LADA_GET_TRANS(*i_b));
-    if(math::neq(vecA(0), vecB(0), _tolerance)) { std::cout << ~vecA << " " << ~vecB << "\n"; return false; }
+    if(math::neq(vecA(0), vecB(0), _tolerance)) return false;
     if(math::neq(vecA(1), vecB(1), _tolerance)) return false;
     if(math::neq(vecA(2), vecB(2), _tolerance)) return false;
   }

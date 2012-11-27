@@ -1,5 +1,8 @@
 #include "LaDaConfig.h"
 
+#include <Python.h>
+#include <numpy/arrayobject.h>
+
 #include "../python.h"
 
 

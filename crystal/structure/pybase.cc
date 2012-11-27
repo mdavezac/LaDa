@@ -1,13 +1,13 @@
 // structure getters/settters.
-#include "getset.hpp"
+#include "getset.cc"
 // iterator functions and type.
-#include "iterator.hpp"
+#include "iterator.cc"
 // structure member functions.
-#include "members.hpp"
+#include "members.cc"
 // creation, deallocation, initialization.
-#include "cdi.hpp"
+#include "cdi.cc"
 // sequence functions.
-#include "sequence.hpp"
+#include "sequence.cc"
 
 //! Creates a new structure.
 PyStructureObject* new_structure()

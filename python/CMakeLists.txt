@@ -34,6 +34,19 @@ set_target_properties(pypython PROPERTIES PREFIX "")
 install(TARGETS pypython DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada)
 install(FILES ${LIBCRYSTAL_PYSOURCES} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada)
 
+
+set(PYHELPER_HEADERS python.h types.h wrap_numpy.h numpy_types.h
+                     random_access_list_iterator.h
+                     random_access_tuple_iterator.h
+                     quantity.h
+                     ppslot.hpp ppslot_crystal.hpp ppslot_math.hpp
+                     ppslot_python.hpp )
+set(PYHELPER_SOURCES object.cc quantity.cc)
+
+if(NOT noinstall_headers)
+  install(FILES ${PYHELPER_HEADERS} DESTINATION include/LaDa/python)
+endif(NOT noinstall_headers)
+
 if(compile_tests OR compile_debug_tests)
   add_subdirectory(tests)
 endif(compile_tests OR compile_debug_tests)

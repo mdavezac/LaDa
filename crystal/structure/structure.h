@@ -24,7 +24,7 @@
 #if LADA_CRYSTAL_MODULE != 1
   // Returns pointer to structure type.
   LADA_INLINE PyTypeObject* structure_type()
-    LADA_END( { return (PyTypeObject*)api_capsule[LADA_SLOT(crystal)]; } )
+    LADA_END(return (PyTypeObject*)api_capsule[LADA_SLOT(crystal)];)
 #else
   api_capsule[LADA_SLOT(crystal)] = (void *)structure_type();
 #endif
@@ -34,7 +34,7 @@
 #if LADA_CRYSTAL_MODULE != 1
   //! Returns address of structure iterator type object.
   LADA_INLINE PyTypeObject* structureiterator_type()
-   LADA_END({ return (PyTypeObject*)api_capsule[LADA_SLOT(crystal)]; })
+   LADA_END(return (PyTypeObject*)api_capsule[LADA_SLOT(crystal)];)
 #else
   api_capsule[LADA_SLOT(crystal)] = (void *)structureiterator_type();
 #endif
@@ -44,7 +44,7 @@
 #if LADA_CRYSTAL_MODULE != 1
   //! Creates a new structure.
   LADA_INLINE PyStructureObject* new_structure()
-    LADA_END({ return (PyStructureObject*)api_capsule[LADA_SLOT(crystal)]; })
+    LADA_END(return (PyStructureObject*)api_capsule[LADA_SLOT(crystal)];)
 #else
   api_capsule[LADA_SLOT(crystal)] = (void *)((PyStructureObject*(*)())new_structure);
 #endif
@@ -56,11 +56,11 @@
   LADA_INLINE PyStructureObject* new_structure( PyTypeObject* _type, 
                                                 PyObject *_args, 
                                                 PyObject *_kwargs )
-    LADA_END( { return (*(PyStructureObject*(*)( PyTypeObject*, 
-                                                 PyObject*, 
-                                                 PyObject* ))
-                        api_capsule[LADA_SLOT(crystal)])
-                       (_type, _args, _kwargs); } )
+    LADA_END(return (*(PyStructureObject*(*)( PyTypeObject*, 
+                                              PyObject*, 
+                                              PyObject* ))
+                     api_capsule[LADA_SLOT(crystal)])
+                    (_type, _args, _kwargs);)
 #else
   api_capsule[LADA_SLOT(crystal)] = (void *)((PyStructureObject*(*)(PyTypeObject*, PyObject*, PyObject*))new_structure);
 #endif
@@ -71,8 +71,8 @@
   //! Creates a deepcopy of structure.
   LADA_INLINE PyStructureObject *copy_structure( PyStructureObject* _self,
                                                  PyObject *_memo=NULL)
-    LADA_END( { return (*(PyStructureObject*(*)(PyStructureObject*, PyObject*))
-                       api_capsule[LADA_SLOT(crystal)])(_self, _memo); } )
+    LADA_END(return (*(PyStructureObject*(*)(PyStructureObject*, PyObject*))
+                    api_capsule[LADA_SLOT(crystal)])(_self, _memo);)
 #else
   api_capsule[LADA_SLOT(crystal)] = (void *)copy_structure;
 #endif
@@ -83,9 +83,9 @@
   //! Transforms a structure in-place, according to symop.
   LADA_INLINE void itransform_structure( PyStructureObject* _self,
                                          Eigen::Matrix<types::t_real, 4, 3> const &_op )
-    LADA_END( { return (*(void(*)( PyStructureObject*, 
-                                   Eigen::Matrix<types::t_real, 4, 3> const & ))
-                        api_capsule[LADA_SLOT(crystal)])(_self, _op); } )
+    LADA_END(return (*(void(*)( PyStructureObject*, 
+                                Eigen::Matrix<types::t_real, 4, 3> const & ))
+                     api_capsule[LADA_SLOT(crystal)])(_self, _op);)
 #else
   api_capsule[LADA_SLOT(crystal)] = (void *)itransform_structure;
 #endif

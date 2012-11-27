@@ -1,9 +1,9 @@
 // hftransform getters/settters.
-#include "get.hpp"
+#include "get.cc"
 // hftransform member functions.
-#include "members.hpp"
+#include "members.cc"
 // creation, deallocation, initialization.
-#include "cdi.hpp"
+#include "cdi.cc"
 
 //! Creates a new hftransform with a given type.
 PyHFTObject* PyHFTransform_NewWithArgs(PyTypeObject* _type, PyObject *_args, PyObject *_kwargs)

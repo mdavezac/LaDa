@@ -2,9 +2,6 @@
 
 #include <Python.h>
 #include <structmember.h>
-#ifndef PY_ARRAY_UNIQUE_SYMBOL
-#  define PY_ARRAY_UNIQUE_SYMBOL lada_math_ARRAY_API
-#endif
 #include <numpy/arrayobject.h>
 
 #include <errors/exceptions.h>

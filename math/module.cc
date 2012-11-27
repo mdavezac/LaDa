@@ -1,8 +1,6 @@
 #include "LaDaConfig.h"
 
 #include <Python.h>
-#include <structmember.h>
-#define PY_ARRAY_UNIQUE_SYMBOL lada_math_ARRAY_API
 #include <numpy/arrayobject.h>
 
 #include <python/python.h>
@@ -28,7 +26,7 @@ namespace LaDa
     {
 #     include "gruber.cc"
 #     include "smith_normal_form.cc"
-#     include "methods.hpp"
+#     include "methods.cc"
     }
   }
 }

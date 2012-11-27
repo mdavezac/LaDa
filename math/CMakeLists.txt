@@ -5,6 +5,14 @@ set_target_properties(pymath PROPERTIES OUTPUT_NAME math)
 set_target_properties(pymath PROPERTIES PREFIX "")
 install(TARGETS pymath DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada)
 
+set(PYMATH_HEADERS math.h eigen.h exceptions.h fuzzy.h misc.h
+                   symmetry_operator.h algorithms.h )
+set(PYMATH_SOURCES gruber.cc smith_normal_form.cc methods.cc)
+
+if(NOT noinstall_headers)
+  install(FILES ${PYMATH_HEADERS} DESTINATION include/LaDa/math)
+endif(NOT noinstall_headers)
+
 if(compile_tests OR compile_debug_tests)
   add_subdirectory(tests)
 endif(compile_tests OR compile_debug_tests)

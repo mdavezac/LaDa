@@ -8,6 +8,27 @@ set_target_properties(pycrystal PROPERTIES PREFIX "")
 install(TARGETS pycrystal DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/crystal)
 install(FILES ${LIBCRYSTAL_PYSOURCES} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/crystal)
 
+set(PYCRYSTAL_SOURCES atom/pybase.cc atom/cdi.cc atom/members.cc atom/getset.cc
+                      structure/pybase.cc structure/cdi.cc structure/members.cc
+                      structure/getset.cc structure/sequence.cc
+                      structure/iterator.cc 
+                      hart-forcade/pybase.cc hart-forcade/cdi.cc
+                      hart-forcade/get.cc hart-forcade/members.cc
+                      utilities.cc map_sites.cc equivalent_structures.cc
+                      primitive.cc space_group.cc neighbors.cc
+                      coordination_shells.cc confsplit.cc periodic_dnc.cc
+                      methods.cc )
+
+
+set(PYCRYSTAL_HEADERS atom/atom.h
+                      structure/structure.h
+                      hart-forcade/hart-forcade.h hart-forcade/macro.hpp
+                      utilities.h supercell.h algorithms.h )
+
+if(NOT noinstall_headers)
+  install(FILES ${PYCRYSTAL_HEADERS} DESTINATION include/LaDa/crystal)
+endif(NOT noinstall_headers)
+
 if(compile_tests OR compile_debug_tests)
   add_subdirectory(tests)
 endif(compile_tests OR compile_debug_tests)

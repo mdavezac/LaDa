@@ -12,12 +12,12 @@
                               Structure &_mappee,
                               python::Object _withocc = python::Object(),
                               types::t_real _tolerance = types::tolerance )
-    LADA_END( { return (*(bool(*)( Structure const&,
-                                   Structure &, 
-                                   python::Object, 
-                                   types::t_real ))
-                        api_capsule[LADA_SLOT(crystal)])
-                       (_mapper, _mappee, _withocc, _tolerance); } )
+    LADA_END(return (*(bool(*)( Structure const&,
+                                Structure &, 
+                                python::Object, 
+                                types::t_real ))
+                     api_capsule[LADA_SLOT(crystal)])
+                    (_mapper, _mappee, _withocc, _tolerance);)
 #else
   api_capsule[LADA_SLOT(crystal)] = (void *)map_sites;
 #endif
@@ -48,13 +48,13 @@
                                bool with_scale=true, 
                                bool with_cartesian=true,
                                types::t_real _tol = types::tolerance )
-    LADA_END({ return (*(bool(*)( Structure const&, 
-                                  Structure const &, 
-                                  bool, 
-                                  bool, 
-                                  types::t_real ))
-                       api_capsule[LADA_SLOT(crystal)])
-                      (_a, _b, with_scale, with_cartesian, _tol); })
+    LADA_END(return (*(bool(*)( Structure const&, 
+                                Structure const &, 
+                                bool, 
+                                bool, 
+                                types::t_real ))
+                     api_capsule[LADA_SLOT(crystal)])
+                    (_a, _b, with_scale, with_cartesian, _tol);)
 #else
   api_capsule[LADA_SLOT(crystal)] = (void *)equivalent;
 #endif
@@ -65,10 +65,10 @@
   //! Returns the primitive unit structure. 
   LADA_INLINE Structure primitive( Structure const &_structure, 
                                    types::t_real _tolerance = -1e0 )
-      LADA_END({ return (*(Structure(*)( Structure const&, 
-                                         types::t_real ))
-                         api_capsule[LADA_SLOT(crystal)])
-                        (_structure, _tolerance); })
+      LADA_END(return (*(Structure(*)( Structure const&, 
+                                       types::t_real ))
+                       api_capsule[LADA_SLOT(crystal)])
+                      (_structure, _tolerance);)
 #else
   api_capsule[LADA_SLOT(crystal)] = (void *) primitive;
 #endif
@@ -79,8 +79,8 @@
   //! Returns True if the input is primitive.
   LADA_INLINE bool is_primitive( Structure const &_structure, 
                                  types::t_real _tolerance = -1e0 )
-    LADA_END( { return (*(bool(*)(Structure const&, types::t_real))
-                        api_capsule[LADA_SLOT(crystal)])(_structure, _tolerance); } )
+    LADA_END(return (*(bool(*)(Structure const&, types::t_real))
+                     api_capsule[LADA_SLOT(crystal)])(_structure, _tolerance);)
 #else
   api_capsule[LADA_SLOT(crystal)] = (void *)is_primitive;
 #endif
@@ -103,8 +103,8 @@
   //! \see Taken from Enum code, PRB 77, 224115 (2008).
   LADA_INLINE PyObject* cell_invariants( math::rMatrix3d const &_cell, 
                                          types::t_real _tolerance = -1e0 )
-    LADA_END({ return (*(PyObject*(*)(math::rMatrix3d const &, types::t_real))
-                       api_capsule[LADA_SLOT(crystal)])(_cell, _tolerance); })
+    LADA_END(return (*(PyObject*(*)(math::rMatrix3d const &, types::t_real))
+                     api_capsule[LADA_SLOT(crystal)])(_cell, _tolerance);)
 #else
   api_capsule[LADA_SLOT(crystal)] = (void *)cell_invariants;
 #endif
@@ -124,8 +124,8 @@
   //! \see Taken from Enum code, PRB 77, 224115 (2008).
   LADA_INLINE PyObject* space_group( Structure const &_lattice, 
                                      types::t_real _tolerance = -1e0 )
-    LADA_END({ return (*(PyObject*(*)(Structure const &, types::t_real))
-                       api_capsule[LADA_SLOT(crystal)])(_lattice, _tolerance); })
+    LADA_END(return (*(PyObject*(*)(Structure const &, types::t_real))
+                     api_capsule[LADA_SLOT(crystal)])(_lattice, _tolerance);)
 #else
   api_capsule[LADA_SLOT(crystal)] = (void *)space_group;
 #endif
@@ -145,12 +145,12 @@
                                    Py_ssize_t _nmax, 
                                    math::rVector3d const &_center,
                                    types::t_real _tolerance=types::tolerance )
-    LADA_END( { return (*(PyObject*(*)( Structure const&, 
-                                        Py_ssize_t, 
-                                        math::rVector3d const&, 
-                                        types::t_real ))
-                        api_capsule[LADA_SLOT(crystal)])
-                       (_structure, _nmax, _center, _tolerance); } )
+    LADA_END(return (*(PyObject*(*)( Structure const&, 
+                                     Py_ssize_t, 
+                                     math::rVector3d const&, 
+                                     types::t_real ))
+                     api_capsule[LADA_SLOT(crystal)])
+                    (_structure, _nmax, _center, _tolerance);)
 #else
   api_capsule[LADA_SLOT(crystal)] = (void *)neighbors;
 #endif
@@ -174,13 +174,13 @@
                                              math::rVector3d const &_center,
                                              types::t_real _tolerance=types::tolerance,
                                              Py_ssize_t _natoms = 0 )
-    LADA_END({ return (*(PyObject*(*)( crystal::Structure const &,
-                                       Py_ssize_t,
-                                       math::rVector3d const &, 
-                                       types::t_real, 
-                                       Py_ssize_t ))
-                       api_capsule[LADA_SLOT(crystal)])
-                      (_structure, _nshells, _center, _tolerance, _natoms); })
+    LADA_END(return (*(PyObject*(*)( crystal::Structure const &,
+                                     Py_ssize_t,
+                                     math::rVector3d const &, 
+                                     types::t_real, 
+                                     Py_ssize_t ))
+                     api_capsule[LADA_SLOT(crystal)])
+                    (_structure, _nshells, _center, _tolerance, _natoms);)
 #else
   api_capsule[LADA_SLOT(crystal)] = (void *)coordination_shells;
 #endif
@@ -217,11 +217,11 @@
                                  Py_ssize_t _nmax,
                                  python::Object &_configurations,
                                  types::t_real _tolerance )
-   LADA_END( { return (*(bool(*)( Structure const&, Atom const&, 
-                                  Py_ssize_t, python::Object &,
-                                  types::t_real))
-                       api_capsule[LADA_SLOT(crystal)])
-                      (_structure, _origin, _nmax, _configurations, _tolerance); } )
+   LADA_END(return (*(bool(*)( Structure const&, Atom const&, 
+                               Py_ssize_t, python::Object &,
+                               types::t_real))
+                    api_capsule[LADA_SLOT(crystal)])
+                   (_structure, _origin, _nmax, _configurations, _tolerance);)
 #else
   api_capsule[LADA_SLOT(crystal)] = (void *)splitconfigs;
 #endif
@@ -233,11 +233,11 @@
   LADA_INLINE PyObject* dnc_boxes( const Structure &_structure, 
                                    math::iVector3d const &_mesh, 
                                    types::t_real _overlap )
-  LADA_END( { return (*(PyObject*(*)( Structure const&,
-                                      math::iVector3d const&,
-                                      types::t_real ))
-                      api_capsule[LADA_SLOT(crystal)])
-                     (_structure, _mesh, _overlap); } )
+  LADA_END(return (*(PyObject*(*)( Structure const&,
+                                   math::iVector3d const&,
+                                   types::t_real ))
+                   api_capsule[LADA_SLOT(crystal)])
+                  (_structure, _mesh, _overlap);)
 #else
   api_capsule[LADA_SLOT(crystal)] = (void *)dnc_boxes;
 #endif

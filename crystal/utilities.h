@@ -11,8 +11,8 @@
   LADA_INLINE math::rVector3d into_cell( math::rVector3d const &_vec, 
                                          math::rMatrix3d const &_cell, 
                                          math::rMatrix3d const &_inv)
-    LADA_END( { return (*LADA_TYPEDEF
-                         api_capsule[LADA_SLOT(crystal)])(_vec, _cell, _inv); } ) 
+    LADA_END(return (*LADA_TYPEDEF
+                      api_capsule[LADA_SLOT(crystal)])(_vec, _cell, _inv);) 
 #else
   api_capsule[LADA_SLOT(crystal)] = (void *)(LADA_TYPEDEF into_cell);
 #endif
@@ -24,8 +24,8 @@
   LADA_INLINE math::rVector3d into_voronoi( math::rVector3d const &_vec, 
                                             math::rMatrix3d const &_cell, 
                                             math::rMatrix3d const &_inv)
-    LADA_END({ return (*LADA_TYPEDEF
-                        api_capsule[LADA_SLOT(crystal)])(_vec, _cell, _inv); }) 
+    LADA_END(return (*LADA_TYPEDEF
+                      api_capsule[LADA_SLOT(crystal)])(_vec, _cell, _inv);) 
 #else
   api_capsule[LADA_SLOT(crystal)] = (void *)(LADA_TYPEDEF into_voronoi);
 #endif
@@ -41,8 +41,8 @@
   LADA_INLINE math::rVector3d zero_centered( math::rVector3d const &_vec, 
                                              math::rMatrix3d const &_cell, 
                                              math::rMatrix3d const &_inv)
-    LADA_END({ return (*LADA_TYPEDEF
-                        api_capsule[LADA_SLOT(crystal)])(_vec, _cell, _inv); })
+    LADA_END(return (*LADA_TYPEDEF
+                      api_capsule[LADA_SLOT(crystal)])(_vec, _cell, _inv);)
 #else
   api_capsule[LADA_SLOT(crystal)] = (void *)(LADA_TYPEDEF zero_centered);
 #endif
