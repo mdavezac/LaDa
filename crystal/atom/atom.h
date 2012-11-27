@@ -13,6 +13,9 @@
     //! The atomic position in cartesian coordinate.
     math::rVector3d pos;
   };
+
+  namespace 
+  {
 #endif 
 
       
@@ -72,6 +75,8 @@
   //! Checks type of an object.
   inline bool checkexact_atom(PyAtomObject *_self)
     { return _self->ob_type ==  atom_type(); }
+
+  } // anonymous namespace
 
   //! \brief Holds a reference to the underlying python atom
   //! \details This wrapper makes it easy to interact with the python object.

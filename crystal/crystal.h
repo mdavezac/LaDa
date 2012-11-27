@@ -84,19 +84,23 @@
   {
     namespace crystal 
     {
-      namespace 
-      {
 #endif
 
-#       include "atom/atom.h"
-#       include "structure/structure.h"
-#       include "hart-forcade/hart-forcade.h"
-#       include "utilities.h"
-#       include "supercell.h"
-#       include "algorithms.h"
+#     include "atom/atom.h"
+#     include "structure/structure.h"
+#     include "hart-forcade/hart-forcade.h"
+#if   LADA_CRYSTAL_MODULE != 1
+        namespace 
+        {
+#endif
+#         include "utilities.h"
+#         include "supercell.h"
+#         include "algorithms.h"
+#if   LADA_CRYSTAL_MODULE != 1
+        }
+#endif
         
 #if LADA_CRYSTAL_MODULE != 1
-      }
     }
   }
 #endif

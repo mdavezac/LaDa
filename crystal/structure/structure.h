@@ -19,6 +19,9 @@
     //! Vector of atom wrappers.
     std::vector<Atom> atoms;
   };
+
+  namespace
+  {
 #endif 
 
 #if LADA_CRYSTAL_MODULE != 1
@@ -105,6 +108,8 @@
   //! Checks type of an object.
   inline bool checkexact_structure(PyStructureObject *_self)
     { return _self->ob_type ==  structure_type(); }
+
+  } // anonymous namespace
   
   //! Wraps a python structure. 
   class Structure : public python::Object

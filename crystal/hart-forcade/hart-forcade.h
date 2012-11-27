@@ -13,6 +13,9 @@
     //! Vector of atom wrappers.
     math::iVector3d quotient;
   };
+
+  namespace 
+  {
 #endif
 
 #if LADA_CRYSTAL_MODULE != 1
@@ -68,6 +71,9 @@
 #include LADA_ASSIGN_SLOT(crystal)
 
 #if LADA_CRYSTAL_MODULE != 1
+
+  } // anonymous namespace
+
   //! Convenience wrapper around the smuth transform.
   class HFTransform : public python::Object
   {
