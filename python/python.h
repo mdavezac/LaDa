@@ -37,7 +37,10 @@
 
 #     if LADA_PYTHON_MODULE == 100
         /* This section is used in modules that use lada.python's API */
-        static void **api_capsule;
+#       ifdef LADA_NO_IMPORT
+          extern
+#       endif 
+        void **api_capsule;
         
         namespace 
         {

@@ -39,7 +39,10 @@
       namespace math
       {
         /* This section is used in modules that use lada.math's API */
-        static void **api_capsule = NULL; 
+#       ifdef LADA_NO_IMPORT
+          extern
+#       endif 
+        void **api_capsule; 
         
         namespace 
         {

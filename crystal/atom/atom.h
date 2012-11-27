@@ -32,7 +32,7 @@
 #if LADA_CRYSTAL_MODULE != 1
   //! Creates a new atom.
   LADA_INLINE PyAtomObject* new_atom()
-    LADA_END(return (*(PyAtomObject*(*)()) api_capsule[LADA_SLOT(crystal)])();)
+    LADA_END( return ((PyAtomObject*(*)()) api_capsule[LADA_SLOT(crystal)])();)
 #else
   api_capsule[LADA_SLOT(crystal)] = (void *)((PyAtomObject*(*)())new_atom);
 #endif

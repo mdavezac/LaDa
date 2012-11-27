@@ -7,6 +7,7 @@
 #include <numpy/arrayobject.h>
 
 
+#define LADA_NO_IMPORT
 #include <errors/exceptions.h>
 #include <crystal/crystal.h>
 
