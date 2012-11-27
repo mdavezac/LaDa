@@ -46,6 +46,9 @@
           // PyCapsule_Import will set an exception if there's an error.
           inline bool import(void)
           {
+            PyObject *module = PyImport_ImportModule("lada.crystal.cppwrappers");
+            if(not module) return false;
+            Py_DECREF(module);
             api_capsule = (void **)PyCapsule_Import("lada.crystal.cppwrappers._C_API", 0);
             return api_capsule != NULL;
           }

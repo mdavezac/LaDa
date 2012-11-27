@@ -2,12 +2,11 @@
 #include "FCMangle.h"
 
 #include <Python.h>
-#define PY_ARRAY_UNIQUE_SYMBOL lada_math_ARRAY_API
+#define PY_ARRAY_UNIQUE_SYMBOL lada_ewald_ARRAY_API
 #define NO_IMPORT_ARRAY
 #include <numpy/arrayobject.h>
 
-#include <crystal/python/numpy_types.h>
-#include <crystal/python/object.h>
+#include <python/python.h>
 #include "ewald.h"
 
 extern "C" void FC_GLOBAL( ewaldf, EWALDF )

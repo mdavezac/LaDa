@@ -49,6 +49,7 @@
           {
             PyObject *module = PyImport_ImportModule("lada.math");
             if(not module) return false;
+            Py_DECREF(module);
             api_capsule = (void **)PyCapsule_Import("lada.math._C_API", 0);
             return api_capsule != NULL;
           }

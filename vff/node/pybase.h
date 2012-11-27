@@ -5,8 +5,6 @@
 
 #include <vector>
 
-#include <crystal/atom/atom.h>
-
 //! \def check_structure(object)
 //!      Returns true if an object is a node or subtype.
 #define PyNodeData_Check(object) PyObject_TypeCheck(object, LaDa::vff::node_type())

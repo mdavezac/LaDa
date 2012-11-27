@@ -2,14 +2,14 @@
 
 #include <Python.h>
 #include <structmember.h>
-#define PY_ARRAY_UNIQUE_SYMBOL lada_math_ARRAY_API
+#define PY_ARRAY_UNIQUE_SYMBOL lada_vff_ARRAY_API
 #define NO_IMPORT_ARRAY
 #include <numpy/arrayobject.h>
 
 
 #include <errors/exceptions.h>
-#include <crystal/python/wrap_numpy.h>
-#include <math/misc.h>
+
+#include <crystal/crystal.h>
 
 #include "pybase.h"
 #include "../edge/pybase.h"
@@ -17,11 +17,16 @@
 
 #include "sequence.hpp"
 
-// include private stuff from crystal so we can access pos and type faster.
-#include "../../crystal/atom/getset.hpp"
-
 namespace LaDa
 {
+  namespace crystal
+  {
+    namespace 
+    {
+      // include private stuff from crystal so we can access pos and type faster.
+#     include "../../crystal/atom/getset.cc"
+    }
+  }
   namespace vff
   {
     // Creates a new node.
