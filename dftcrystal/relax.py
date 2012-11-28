@@ -8,18 +8,33 @@ class RelaxExtract(Extract):
   """ Extractor class for vasp relaxations. """
   class IntermediateMassExtract(MassExtract):
     """ Focuses on intermediate steps. """
+    def __init__(self, *args, **kwargs):
+      """ Makes sure we are using ordered dict. """
+      from ..jobfolder.ordered_dict import OrderedDict
+      super(RelaxExtract.IntermediateMassExtract, self).__init__(*args, **kwargs)
+      self.dicttype = OrderedDict
+      """ Type of dictionary to use. 
+      
+          Always ordered dictionary for intermediate mass extraction.
+          Makes it easier to explore ongoing calculations.
+      """
+
     def __iter_alljobs__(self):
       """ Goes through all directories with an OUTVAR. """
       from re import match
       from glob import iglob
       from os.path import relpath, join, exists
 
+      results = []
       for dir in iglob(join(join(self.rootpath, 'relax'), '*/')):
         if not match('\d+', dir.split('/')[-2]): continue 
         if not exists(join(self.rootpath, join(dir, 'crystal.out'))): continue
         try: result = Extract(dir[:-1])
         except: continue
-        yield join('/', relpath(dir[:-1], self.rootpath)), result
+        results.append((join('/', relpath(dir[:-1], self.rootpath)), result))
+      results = sorted(results, key=lambda x: int(x[0].split('/')[-1]))
+      return results
+
     def _complete_output(self, structure):
       """ Completes output after stopped jobs. """
       result = False
