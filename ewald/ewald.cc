@@ -6,7 +6,9 @@
 #define NO_IMPORT_ARRAY
 #include <numpy/arrayobject.h>
 
+#define LADA_NO_IMPORT
 #include <python/python.h>
+
 #include "ewald.h"
 
 extern "C" void FC_GLOBAL( ewaldf, EWALDF )

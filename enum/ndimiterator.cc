@@ -2,7 +2,7 @@
 
 #include <Python.h>
 #include <structmember.h>
-#define PY_ARRAY_UNIQUE_SYMBOL enumeration_ARRAY_API
+#define PY_ARRAY_UNIQUE_SYMBOL lada_enum_ARRAY_API
 #define NO_IMPORT_ARRAY
 #include <numpy/arrayobject.h>
 
@@ -10,9 +10,9 @@
 #include <algorithm>
 
 
-#include <crystal/python/numpy_types.h>
+#define LADA_NO_IMPORT
+#include <python/python.h>
 #include <errors/exceptions.h>
-#include <crystal/python/wrap_numpy.h>
 
 #include "ndimiterator.h"
 

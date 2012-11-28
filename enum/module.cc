@@ -1,13 +1,12 @@
 #include "LaDaConfig.h"
 
 #include <Python.h>
-#define PY_ARRAY_UNIQUE_SYMBOL enumeration_ARRAY_API
+#define PY_ARRAY_UNIQUE_SYMBOL lada_enum_ARRAY_API
 #include <numpy/arrayobject.h>
 
 #include <errors/exceptions.h>
-#include <math/fuzzy.h>
-#include <crystal/python/numpy_types.h>
-#include <crystal/python/object.h>
+#include <math/math.h>
+#include <python/python.h>
 #include "ndimiterator.h"
 #include "fciterator.h"
 #include "manipulations.h"
@@ -130,7 +129,12 @@ namespace LaDa
 
 PyMODINIT_FUNC initcppwrappers(void) 
 {
+  char const doc[] =  "Wrapper around C++ enumeration methods.";
+  PyObject* module = Py_InitModule3("cppwrappers", LaDa::enumeration::methods_table, doc);
+  if(not module) return;
   import_array(); // needed for NumPy 
+  if(not LaDa::python::import()) return;
+  if(not LaDa::math::import()) return;
 
   if (PyType_Ready(LaDa::enumeration::ndimiterator_type()) < 0) return;
   Py_INCREF(LaDa::enumeration::ndimiterator_type());
@@ -139,8 +143,6 @@ PyMODINIT_FUNC initcppwrappers(void)
   if (PyType_Ready(LaDa::enumeration::fciterator_type()) < 0) return;
   Py_INCREF(LaDa::enumeration::fciterator_type());
 
-  char const doc[] =  "Wrapper around C++ enumeration methods.";
-  PyObject* module = Py_InitModule3("cppwrappers", LaDa::enumeration::methods_table, doc);
   PyModule_AddObject(module, "NDimIterator", (PyObject *)LaDa::enumeration::ndimiterator_type());
   PyModule_AddObject(module, "Manipulations", (PyObject *)LaDa::enumeration::manipulations_type());
   PyModule_AddObject(module, "FCIterator", (PyObject *)LaDa::enumeration::fciterator_type());
