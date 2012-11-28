@@ -120,7 +120,6 @@ class ExtractBase(object):
   @make_cached
   def functional(self):
     """ Reads functional from output file. """
-    from re import compile
     from . import exec_input
     from .functional import Functional
     from .parse import parse
@@ -323,18 +322,21 @@ class ExtractBase(object):
   def _parsed_tree(self, doadd_input=False):
     """ Returns parsed input tree.
  
-	Checks first whether an input file exists in the output file, as per
-	Giuseppe Malia's standard script. If it does, parse it and returns it.
+        Checks first whether an input file exists in the output file, as per
+        Giuseppe Malia's standard script. If it does, parse it and returns it.
 
-	If it doesn't check for a file with the same name and path as the
-	input, but with a d12 extension. If it exists and is parsable, returns
+        If it doesn't check for a file with the same name and path as the
+        input, but with a d12 extension. If it exists and is parsable, returns
         that.
         
         :param bool doadd_input:
-	  If True and the output file does not have an input file, but a
-          parsable d12 file exist, then prefix the output file with the d12 file.
+          If True and the output file does not have an input file, but a
+          parsable d12 file exist, then prefix the output file with the d12
+          file.
 
-          .. warning:: Yes, this does change the output file.
+          .. warning::
+          
+             Yes, this does change the output file if doadd_input is True.
     """
     from os.path import splitext, exists, join
     from .parse import parse
@@ -1063,6 +1065,29 @@ class ExtractBase(object):
     """ Number of electrons per formula unit. """
     return self.functional.valence(self.structure)
 
+  @property
+  @make_cached
+  def params(self):
+    """ Computational parameters. 
+
+        Recreates the functional used in the calculation by reading the
+        CRYSTAL_ input file. This means no extra LaDa behavior, e.g. atomspin
+        when atomspin is actually disabled in the calculation because guessp is
+        True. 
+    """
+    from .functional import Functional
+    from .parse import parse
+    try: 
+      with self.__stdout__() as file: tree = parse(file)
+    except: raise GrepError("Could not find CRYSTAL input.")
+    result = Functional()
+    result.read_input(tree)
+    return result
+
+  @property
+  def date(self):
+    """ Start date in human readable format. """ 
+    return str(self.start_date)
   @property
   @make_cached
   def mpp(self):

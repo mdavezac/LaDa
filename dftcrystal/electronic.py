@@ -936,6 +936,8 @@ class Electronic(AttrBlock):
     """
     self.cmplxfac = TypedKeyword(type=float)
     """ Computaional weight of complex vs real k-points. """
+    self.postscf = BoolKeyword()
+    """ Whether to continue despite lack of electronic convergence. """
 
   def output_map(self, **kwargs):
     """ Makes sure DFT subblock is first. """
