@@ -8,18 +8,50 @@ class RelaxExtract(Extract):
   """ Extractor class for vasp relaxations. """
   class IntermediateMassExtract(MassExtract):
     """ Focuses on intermediate steps. """
+    def __init__(self, *args, **kwargs):
+      """ Makes sure we are using ordered dict. """
+      from ..jobfolder.ordered_dict import OrderedDict
+      super(RelaxExtract.IntermediateMassExtract, self).__init__(*args, **kwargs)
+      self.dicttype = OrderedDict
+      """ Type of dictionary to use. 
+      
+          Always ordered dictionary for intermediate mass extraction.
+          Makes it easier to explore ongoing calculations.
+      """
+
+    def __getitem__(self, value):
+      """ Gets intermediate step. 
+
+          Adds ability to get runs as numbers: ``self.details[0]`` 
+          is equivalent to ``self.details['relax/0']``
+      """
+      from ..error import IndexError
+      if isinstance(value, int): 
+        N = len(self)
+        if value < 0: value += N
+        if value < 0 or value >= N:
+          raise IndexError( 'details: Index out of range -- no run {0}.'       \
+                            .format(value) )
+        value = '/relax/{0}'.format(value)
+      return super(RelaxExtract.IntermediateMassExtract, self)                 \
+                .__getitem__(value)
+
     def __iter_alljobs__(self):
       """ Goes through all directories with an OUTVAR. """
       from re import match
       from glob import iglob
       from os.path import relpath, join, exists
 
+      results = []
       for dir in iglob(join(join(self.rootpath, 'relax'), '*/')):
         if not match('\d+', dir.split('/')[-2]): continue 
         if not exists(join(self.rootpath, join(dir, 'crystal.out'))): continue
         try: result = Extract(dir[:-1])
         except: continue
-        yield join('/', relpath(dir[:-1], self.rootpath)), result
+        results.append((join('/', relpath(dir[:-1], self.rootpath)), result))
+      results = sorted(results, key=lambda x: int(x[0].split('/')[-1]))
+      return results
+
     def _complete_output(self, structure):
       """ Completes output after stopped jobs. """
       result = False
@@ -85,11 +117,9 @@ def iter_relax(self, structure=None, outdir=None, maxiter=30, **kwargs):
   """
   from os.path import join
   from os import getcwd
-  from ..error import ValueError, ExternalRunFailed
+  from ..error import ExternalRunFailed
 
   self = self.copy()
-  if maxiter <= 0:
-    raise ValueError('Maximum number of iteration cannot be less than 0.')
   if outdir is None: outdir = getcwd()
   self.optgeom.enabled = True
   if self.optgeom.maxcycle is None: 
@@ -100,7 +130,7 @@ def iter_relax(self, structure=None, outdir=None, maxiter=30, **kwargs):
   
   iteration, restart = 0, kwargs.pop('restart', None)
 
-  while iteration < maxiter:
+  while maxiter > 0 and iteration < maxiter:
     # performs calculation
     outpath = join(join(outdir, 'relax'), str(iteration))
     for extract in self.iter( structure, outdir=outpath, restart=restart,
@@ -118,15 +148,21 @@ def iter_relax(self, structure=None, outdir=None, maxiter=30, **kwargs):
     iteration += 1
 
     # check for convergence
+    # last condition makes it easier to increase tolerance after first few run
+    # at lower toldee.
     if extract.optgeom_convergence is True                                     \
-        and extract.optgeom_iterations < self.optgeom.maxcycle: break
+       and extract.optgeom_iterations < self.optgeom.maxcycle                  \
+       and extract.params.toldee >= self.toldee: break
 
-  # perform static calculation
-  self.optgeom.enabled = False
-  self.guessp = False
-  for extract in self.iter( structure, outdir=outdir, restart=restart, 
-                            **kwargs ):
-    yield extract
+  if extract.optgeom_convergence is True                                       \
+     and extract.optgeom_iterations < self.optgeom.maxcycle                    \
+     and extract.params.toldee >= self.toldee:
+    # perform static calculation
+    self.optgeom.enabled = False
+    self.guessp = False
+    for extract in self.iter( structure, outdir=outdir, restart=restart, 
+                              **kwargs ):
+      yield extract
 
   yield iter_relax.Extract(outdir)     
 
@@ -135,6 +171,6 @@ iter_relax.Extract = RelaxExtract
 
 Relax = makeclass( 'Relax', Functional, iter_relax, None,
                    module='lada.dftcrystal.relax',
-		   doc='Functional form of the '                               \
+	            	   doc='Functional form of the '                               \
                        ':py:class:`lada.dftcrystal.relax.iter_relax` method.' )
 relax = makefunc('relax', iter_relax, module='lada.dftcrystal.relax')
