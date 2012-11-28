@@ -1,8 +1,6 @@
 #include "LaDaConfig.h"
 
 #include <Python.h>
-#include <structmember.h>
-#include <iostream>
 #include <errors/exceptions.h>
 
 #include "productilj.h"
