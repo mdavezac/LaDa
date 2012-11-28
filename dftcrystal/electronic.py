@@ -190,7 +190,6 @@ class AtomSpin(BaseKeyword):
       kwargs_copy['filework'] = False
       map = kwargs['crystal'].scf._input['guessp'].output_map(**kwargs_copy)
       if map is not None and map.get('guessp', False) == 'True': return None
-    raise Exception()
     # Ok, now add ATOMSPIN stuff.
     result = ''
     if self.up is not None and len(self.up) > 0:
@@ -474,7 +473,7 @@ class GuessP(BoolKeyword):
 
     if kwargs.get('filework', False) == True:
       props = Properties(kwargs['crystal'].restart)
-      if filename[-3:] == 'f9':
+      if filename[-3:] == '.f9':
         props.fmwf = True
         props(outdir='.')
         props = Properties('.')
