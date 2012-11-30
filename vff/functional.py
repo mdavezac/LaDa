@@ -6,7 +6,7 @@ class Functional(Vff):
   Extract = ExtractVFF
   """ Extraction object for Vff. """
   def __init__( self, relax=True, method='BFGS', tol=1e-8, maxiter=100,
-                verbose=True, copy=None, options=None ): 
+                verbose=True, copy=None, cartesian=True, options=None ): 
     super(Functional, self).__init__()
 
     self._parameters = {}
@@ -30,6 +30,8 @@ class Functional(Vff):
     """ Whether minimization should be verbose. """
     self.options = options
     """ Additional options for the chosen minimizer. """
+    self.cartesian = cartesian
+    """ Whether to relax as cartesian or fractional. """
 
     if copy is not None: self.__dict__.update(copy.__dict__)
 
@@ -119,8 +121,9 @@ class Functional(Vff):
     def update_structure(x0, strain):
       structure.cell = dot(strain, cell0)
       structure[0].pos = dot(strain, pos0)
-      for i, atom in enumerate(structure[1:]):
-        atom.pos = dot(structure.cell, x0[i*3:3+i*3])
+      positions = dot( strain if self.cartesian else structure.cell, 
+                       x0.reshape(-1, 3).T ).T
+      for atom, pos in zip(structure[1:], positions): atom.pos = pos
 
     def make_structure(x0):
       strain = xtostrain(x0)
@@ -147,12 +150,14 @@ class Functional(Vff):
       result[3] = stress[1,1]
       result[4] = 2e0*stress[1,2]
       result[5] = stress[2, 2]
-      result[6:] = dot(structure.cell.T*scale, forces[1:].T).T.flatten()
+      result[6:] = dot( (strain if self.cartesian else structure.cell.T)*scale,
+                        forces[1:].T ).T.flatten()
       return result
 
     x = zeros(3+len(structure)*3, dtype='float64')
-    frac = inv(structure.cell)
-    for i, atom in enumerate(structure[1:]): x[6+3*i:9+3*i] = dot(frac, atom.pos)
+    for i, atom in enumerate(structure[1:]): x[6+3*i:9+3*i] = atom.pos
+    if not self.cartesian:
+      x[6:] = dot(inv(structure.cell), x[6:].reshape(-1, 3).T).T.flatten()
 
     Functions = namedtuple('Functions', ['x0', 'jacobian', 'energy', 'structure'])
     return Functions(x, jacobian, energy, make_structure)
