@@ -317,15 +317,6 @@ class OptGeom(ExclAttrBlock):
   @keepsymm.setter
   def keepsymm(self, value): self.breaksym = value != True
 
-  @property
-  def keepsym(self):
-    """ Raise error to avoid errors. """
-    raise AttributeError('OptGeom: did you mean keepsymm (with two m)?')
-  @keepsym.setter
-  def keepsym(self, value):
-    """ Raise error to avoid errors. """
-    raise AttributeError('OptGeom: did you mean keepsymm (with two m)?')
-
   def __ui_repr__(self, imports, name=None, defaults=None, exclude=None):
     """ User-friendly output. """
     exclude = ['keepsym', 'keepsymm']
