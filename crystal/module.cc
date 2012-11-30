@@ -65,8 +65,12 @@ PyMODINIT_FUNC initcppwrappers(void)
 # include "crystal.h"
 
   /* Create a Capsule containing the API pointer array's address */
-  static const char name[] = "lada.crystal.cppwrappers._C_API";
-  c_api_object = PyCapsule_New((void *)api_capsule, name, NULL);
+# ifdef LADA_PYTHONTWOSIX
+    c_api_object = PyCObject_FromVoidPtr((void *)api_capsule, NULL);
+# else
+    static const char name[] = "lada.crystal.cppwrappers._C_API";
+    c_api_object = PyCapsule_New((void *)api_capsule, name, NULL);
+# endif
   if (c_api_object != NULL) PyModule_AddObject(module, "_C_API", c_api_object);
 
   if (PyType_Ready(atom_type()) < 0) return;

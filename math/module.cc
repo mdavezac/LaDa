@@ -52,7 +52,11 @@ PyMODINIT_FUNC initmath(void)
 # include "math.h"
 
   /* Create a Capsule containing the API pointer array's address */
-  static const char name[] = "lada.math._C_API";
-  c_api_object = PyCapsule_New((void *)api_capsule, name, NULL);
+# ifdef LADA_PYTHONTWOSIX
+    c_api_object = PyCObject_FromVoidPtr((void *)api_capsule, NULL);
+# else
+    static const char name[] = "lada.math._C_API";
+    c_api_object = PyCapsule_New((void *)api_capsule, name, NULL);
+# endif
   if (c_api_object != NULL) PyModule_AddObject(module, "_C_API", c_api_object);
 }

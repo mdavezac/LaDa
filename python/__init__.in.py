@@ -51,7 +51,7 @@ def _config_files(dointeractive=False):
   if "LADA_CONFIG_DIR" in environ: 
     for directory in environ["LADA_CONFIG_DIR"].split(':'):
       for filename in iglob(join(directory, pattern)):
-        if dointeractive == Fales and filename[:4] == 'ipy_': continue
+        if dointeractive == False and filename[:4] == 'ipy_': continue
         execfile(filename, global_dict, local_dict)
 
   # then user configuration file.
