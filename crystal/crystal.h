@@ -12,6 +12,11 @@
 #if LADA_CRYSTAL_MODULE != 1
 # include "LaDaConfig.h"
 # include <Python.h>
+# ifndef LADA_PYTHONTWOSIX
+#   if PY_MAJOR_VERSION == 2 && PY_MINOR_VERSION < 7
+#     define LADA_PYTHONTWOSIX
+#   endif
+# endif
 
 # include <vector>
 # include <cmath>
@@ -51,8 +56,16 @@
           {
             PyObject *module = PyImport_ImportModule("lada.crystal.cppwrappers");
             if(not module) return false;
+#           ifdef LADA_PYTHONTWOSIX
+              PyObject* c_api_object = PyObject_GetAttrString(module, "_C_API");
+	      if (c_api_object == NULL) { Py_DECREF(module); return false; }
+              if (PyCObject_Check(c_api_object))
+                api_capsule = (void **)PyCObject_AsVoidPtr(c_api_object);
+              Py_DECREF(c_api_object);
+#           else
+              api_capsule = (void **)PyCapsule_Import("lada.crystal.cppwrappers._C_API", 0);
+#           endif
             Py_DECREF(module);
-            api_capsule = (void **)PyCapsule_Import("lada.crystal.cppwrappers._C_API", 0);
             return api_capsule != NULL;
           }
         }
