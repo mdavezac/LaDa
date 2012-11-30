@@ -108,6 +108,7 @@ class Molecule(ListBlock):
     from . import registered
     self[:] = []
     self.raw = tree.prefix
+    kwargs['owner'] = self
     for key, value in tree:
       # parses sub-block.
       if isinstance(value, Tree): continue
@@ -116,8 +117,11 @@ class Molecule(ListBlock):
         newobject = registered[key.lower()]()
       else: newobject = BaseKeyword(keyword=key)
       if len(value) > 0: 
-        try: newobject.raw = getattr(value, 'raw', value)
-        except: pass
+        if hasattr(newobject, 'read_input'): 
+          newobject.read_input(value, **kwargs)
+        else:
+          try: newobject.raw = getattr(value, 'raw', value)
+          except: pass
       self.append(newobject)
 
   def append(self, keyword, raw=None):

@@ -15,7 +15,7 @@ def test_crystal():
   assert structure.print_input().split()[-1] == 'CRYSTAL'
 
 def test_supercell():
-  from numpy import array
+  from numpy import array, all, abs
   from lada.dftcrystal import Supercell, Crystal
   from lada.error import ValueError
   structure = Crystal(136, 4.63909875, 2.97938395, \
@@ -27,6 +27,12 @@ def test_supercell():
   assert len(structure.eval()) == 2 * 6
   structure[-1].matrix[2,2] = 2
   assert len(structure.eval()) == 2 * 2 * 6
+  map = structure[-1].output_map()
+  assert 'supercel' in map
+  a = Supercell()
+  a.read_input(map['supercel'])
+  assert all(abs(a.matrix - structure[-1].matrix) < 1e-8)
+  assert all(abs(eval(repr(a), {'Supercell': Supercell}).matrix - a.matrix) < 1e-8)
 
   # test errors
   try: structure[-1].matrix = array( [[0]*3]*3 )
@@ -37,9 +43,17 @@ def test_supercell():
   except ValueError: pass
   else: raise Exception()
 
+  map = structure[-1].output_map()
+  assert 'supercel' in map
+  a = Supercell()
+  a.read_input(map['supercel'])
+  assert all(abs(a.matrix - structure[-1].matrix) < 1e-8)
+  assert all(abs(eval(repr(a), {'Supercell': Supercell}).matrix - a.matrix) < 1e-8)
+
 
 def test_elastic():
   """ Test elastic keyword. """
+  from pickle import loads, dumps
   from numpy import array, all, abs, identity, dot
   from lada.dftcrystal import Crystal, Elastic
 
@@ -57,6 +71,10 @@ def test_elastic():
   a.raw = crystal[-1].raw
   assert a.is_epsilon == crystal[-1].is_epsilon
   assert all(abs(a.matrix - crystal[-1].matrix) < 1e-8)
+  assert all(abs(eval(repr(a), {'Elastic': Elastic}).matrix - a.matrix) < 1e-8)
+  assert eval(repr(a), {'Elastic': Elastic}).is_epsilon == a.is_epsilon
+  assert loads(dumps(a)).is_epsilon == a.is_epsilon
+  assert all(abs(loads(dumps(a)).matrix - a.matrix) < 1e-8)
 
   z = dot(epsilon, structure.cell)
   crystal[-1].matrix = z
@@ -68,6 +86,10 @@ def test_elastic():
   a.raw = crystal[-1].raw
   assert a.is_epsilon == crystal[-1].is_epsilon
   assert all(abs(a.matrix - crystal[-1].matrix) < 1e-8)
+  assert all(abs(eval(repr(a), {'Elastic': Elastic}).matrix - a.matrix) < 1e-8)
+  assert eval(repr(a), {'Elastic': Elastic}).is_epsilon == a.is_epsilon
+  assert loads(dumps(a)).is_epsilon == a.is_epsilon
+  assert all(abs(loads(dumps(a)).matrix - a.matrix) < 1e-8)
 
   epsilon = array([[0, 0, 0], [0, 0, 0], [0, 0.1, 0]])
   crystal[-1].matrix = epsilon
@@ -79,6 +101,10 @@ def test_elastic():
   a.raw = crystal[-1].raw
   assert a.is_epsilon == crystal[-1].is_epsilon
   assert all(abs(a.matrix - crystal[-1].matrix) < 1e-8)
+  assert all(abs(eval(repr(a), {'Elastic': Elastic}).matrix - a.matrix) < 1e-8)
+  assert eval(repr(a), {'Elastic': Elastic}).is_epsilon == a.is_epsilon
+  assert loads(dumps(a)).is_epsilon == a.is_epsilon
+  assert all(abs(loads(dumps(a)).matrix - a.matrix) < 1e-8)
 
   z = dot(epsilon, structure.cell)
   crystal[-1].matrix = z
@@ -90,6 +116,10 @@ def test_elastic():
   a.raw = crystal[-1].raw
   assert a.is_epsilon == crystal[-1].is_epsilon
   assert all(abs(a.matrix - crystal[-1].matrix) < 1e-8)
+  assert all(abs(eval(repr(a), {'Elastic': Elastic}).matrix - a.matrix) < 1e-8)
+  assert eval(repr(a), {'Elastic': Elastic}).is_epsilon == a.is_epsilon
+  assert loads(dumps(a)).is_epsilon == a.is_epsilon
+  assert all(abs(loads(dumps(a)).matrix - a.matrix) < 1e-8)
 
 
 

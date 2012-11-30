@@ -665,9 +665,9 @@ class Supercell(BaseKeyword):
     string = '\n'.join(' '.join(str(i) for i in j) for j in self.matrix)
     return {self.keyword: string}
              
-  def read_input(self, tree, owner=None):
+  def read_input(self, tree, owner=None, **kwargs):
     from numpy import array
-    self.matrix = array(tree.split(), dtype='float64')                      \
+    self.matrix = array(tree.split(), dtype='float64')                         \
                        .round().astype('int64')
 
 class Supercon(Supercell):

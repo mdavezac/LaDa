@@ -446,7 +446,7 @@ class Chemod(BaseKeyword, MutableMapping):
     result = {}
     if defaults is None:
       result['{0}.breaksym'.format(name)] = repr(self.breaksym)
-    elif self.breaksym == True: 
+    elif self.breaksym == False: 
       result['{0}.breaksym'.format(name)] = repr(True)
     for key, value in self.modifications.iteritems():
       result['{0}[{1}]'.format(name,key)] = repr(value) 
