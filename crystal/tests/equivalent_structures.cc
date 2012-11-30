@@ -8,8 +8,15 @@
 #include <time.h>
 
 #include <math/smith_normal_form.h>
-#include <opt/debug.h>
 
+#define LADA_DOASSERT(a,b) \
+        { \
+          if((not (a)))\
+          { \
+            std::cerr << __FILE__ << ", line: " << __LINE__ << "\n" << b; \
+            throw 0;\
+          }\
+        }
 #include "../supercell.h"
 #include "../space_group.h"
 #include "../equivalent_structures.h"

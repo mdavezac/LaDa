@@ -2,7 +2,7 @@
 
 #include <Python.h>
 #include <structmember.h>
-#define PY_ARRAY_UNIQUE_SYMBOL enumeration_ARRAY_API
+#define PY_ARRAY_UNIQUE_SYMBOL lada_enum_ARRAY_API
 #define NO_IMPORT_ARRAY
 #include <numpy/arrayobject.h>
 
@@ -10,9 +10,9 @@
 #include <algorithm>
 
 
-#include <python/numpy_types.h>
-#include <python/exceptions.h>
-#include <python/wrap_numpy.h>
+#define LADA_NO_IMPORT
+#include <python/python.h>
+#include <errors/exceptions.h>
 
 #include "ndimiterator.h"
 
@@ -115,7 +115,7 @@ namespace LaDa
         _self->yielded = NULL;
         Py_DECREF(dummy);
       }
-      typedef math::numpy::type<t_ndim> t_type;
+      typedef python::numpy::type<t_ndim> t_type;
       npy_intp d[1] = {(npy_intp)N};
       _self->yielded = (PyArrayObject*)
           PyArray_SimpleNewFromData(1, d, t_type::value, &_self->counter[0]);

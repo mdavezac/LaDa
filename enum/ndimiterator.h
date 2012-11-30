@@ -3,8 +3,7 @@
 #include "LaDaConfig.h"
 
 #include <Python.h>
-#include <structmember.h>
-#define PY_ARRAY_UNIQUE_SYMBOL enumeration_ARRAY_API
+#define PY_ARRAY_UNIQUE_SYMBOL lada_enum_ARRAY_API
 #define NO_IMPORT_ARRAY
 #include <numpy/arrayobject.h>
 

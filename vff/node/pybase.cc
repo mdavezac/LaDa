@@ -2,14 +2,14 @@
 
 #include <Python.h>
 #include <structmember.h>
-#define PY_ARRAY_UNIQUE_SYMBOL lada_math_ARRAY_API
+#define PY_ARRAY_UNIQUE_SYMBOL lada_vff_ARRAY_API
 #define NO_IMPORT_ARRAY
 #include <numpy/arrayobject.h>
 
 
-#include <python/exceptions.h>
-#include <python/wrap_numpy.h>
-#include <math/misc.h>
+#define LADA_NO_IMPORT
+#include <errors/exceptions.h>
+#include <crystal/crystal.h>
 
 #include "pybase.h"
 #include "../edge/pybase.h"
@@ -17,11 +17,16 @@
 
 #include "sequence.hpp"
 
-// include private stuff from crystal so we can access pos and type faster.
-#include "../../crystal/atom/getset.hpp"
-
 namespace LaDa
 {
+  namespace crystal
+  {
+    namespace 
+    {
+      // include private stuff from crystal so we can access pos and type faster.
+#     include "../../crystal/atom/getset.cc"
+    }
+  }
   namespace vff
   {
     // Creates a new node.
@@ -132,7 +137,7 @@ namespace LaDa
         return NULL;
       }
       math::rVector3d translation(0,0,0);
-      if(_trans and not python::convert_to_vector(_trans, translation)) return NULL;
+      if(_trans and not python::numpy::convert_to_vector(_trans, translation)) return NULL;
       
       if(not PyNode_AddEdge(_self, (NodeData*)endpoint, translation)) Py_RETURN_FALSE;
       Py_RETURN_TRUE;
@@ -183,7 +188,7 @@ namespace LaDa
       if(not PyArg_ParseTupleAndKeywords( _args, _kwargs, "O|l:Node", kwlist,
                                           &pyatom, &index))
         return -1;
-      if(not PyAtom_Check(pyatom))
+      if(not crystal::check_atom(pyatom))
       {
         LADA_PYERROR(TypeError, "Node: First argument should be an atom.");
         return -1;

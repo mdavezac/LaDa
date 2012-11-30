@@ -1,14 +1,10 @@
 #include "LaDaConfig.h"
-#include<iostream>
-#include<string>
 
-#include <opt/debug.h>
-#include "../gruber.h"
-#include "../misc.h"
+#include "../math.h"
 
-using namespace std;
-int main()
+PyObject* testme(PyObject *_module, PyObject *)
 {
+  using namespace std;
   using namespace LaDa;
   using namespace LaDa::math;
 
@@ -18,8 +14,16 @@ int main()
   Eigen::Matrix<types::t_real, 6, 1> params;
   params << 0.5, 0.5, 0.5, 0.5, 0.5, 0.5;
 
-  LADA_DOASSERT(eq(cell, gruber(cell)), "Did not leave cell as is.\n");
-  LADA_DOASSERT(eq(gruber_parameters(cell), params), "Did not leave cell as is.\n");
+  if(not eq(cell, gruber(cell)))
+  {
+    LADA_PYERROR(internal, "Did not leave cell as is.\n");
+    return NULL;
+  }
+  if(not eq(gruber_parameters(cell), params) )
+  {
+    LADA_PYERROR(internal, "Did not leave cell as is.\n");
+    return NULL;
+  }
 
   bool cont = true;
   for(types::t_int a00(-lim); a00 <= lim and cont; ++a00)
@@ -35,10 +39,45 @@ int main()
     mult << a00, a01, a02, a10, a11, a12, a20, a21, a22;
     if( neq(mult.determinant(), 1e0) ) continue;
     rMatrix3d const gruberred = gruber(cell*mult);
-    LADA_DOASSERT(is_integer(gruberred * cell.inverse()), "not a sublattice.\n")
-    LADA_DOASSERT(is_integer(cell * gruberred.inverse()), "not a sublattice.\n")
-    LADA_DOASSERT(eq(gruber_parameters(cell), params), "not a sublattice.\n")
+    if(not is_integer(gruberred * cell.inverse()))
+    {
+      LADA_PYERROR(internal, "not a sublattice.\n");
+      return NULL;
+    }
+    if(not is_integer(cell * gruberred.inverse()))
+    {
+      LADA_PYERROR(internal, "not a sublattice.\n");
+      return NULL;
+    }
+    if(not eq(gruber_parameters(cell), params))
+    {
+      LADA_PYERROR(internal, "not a sublattice.\n");
+      return NULL;
+    }
   }
   
-  return 0;
+  Py_RETURN_TRUE;
+}
+
+#ifndef PyMODINIT_FUNC	/* declarations for DLL import/export */
+# define PyMODINIT_FUNC void
+#endif
+
+#ifdef LADA_DECLARE
+#  error LADA_DECLARE already defined.
+#endif
+#define LADA_DECLARE(name, args) {#name, (PyCFunction)name, METH_ ## args, ""} 
+
+static PyMethodDef methods[] = { 
+  LADA_DECLARE(testme, NOARGS),
+  {NULL},
+};
+
+#undef LADA_DECLARE
+
+PyMODINIT_FUNC init_gruber(void) 
+{
+  PyObject* module = Py_InitModule("_gruber", methods);
+  if(not module) return;
+  if(not LaDa::math::import()) return;
 }

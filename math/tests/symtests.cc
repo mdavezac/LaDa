@@ -2,8 +2,16 @@
 
 #include<iostream>
 
-#include "../misc.h"
-#include "../symmetry_operator.h"
+#define LADA_DOASSERT(a,b) \
+        { \
+          if((not (a)))\
+          { \
+            std::cerr << __FILE__ << ", line: " << __LINE__ << "\n" << b; \
+            throw 0;\
+          }\
+        }
+
+#include "../math.h"
 
 using namespace std;
 int main()

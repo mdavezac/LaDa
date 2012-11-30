@@ -2,14 +2,14 @@
 
 #include <Python.h>
 #include <structmember.h>
-#define PY_ARRAY_UNIQUE_SYMBOL lada_math_ARRAY_API
+#define PY_ARRAY_UNIQUE_SYMBOL lada_vff_ARRAY_API
 #define NO_IMPORT_ARRAY
 #include <numpy/arrayobject.h>
 
 
-#include <python/exceptions.h>
-#include <python/wrap_numpy.h>
-#include <math/quantity.h>
+#define LADA_NO_IMPORT
+#include <errors/exceptions.h>
+#include <crystal/crystal.h>
 
 #include "../node/pybase.h"
 #include "pybase.h"
@@ -64,7 +64,7 @@ namespace LaDa
     {
       python::Object result = PyTuple_New(3);
       if(not result) return NULL;
-      PyObject* translation = python::wrap_to_numpy(_data->translation, (PyObject*)_data);
+      PyObject* translation = python::numpy::wrap_to_numpy(_data->translation, (PyObject*)_data);
       if(not translation) return NULL;
       Py_INCREF(_data->a);
       Py_INCREF(_data->b);
@@ -82,12 +82,12 @@ namespace LaDa
       if(isself)
       {
         math::rVector3d const &trans = _data->translation;
-        translation = python::wrap_to_numpy(trans, (PyObject*) _data);
+        translation = python::numpy::wrap_to_numpy(trans, (PyObject*) _data);
       }
       else
       {
         typedef math::rVector3d::Scalar t_type;
-        int const nptype = math::numpy::type<t_type>::value;
+        int const nptype = python::numpy::type<t_type>::value;
         npy_intp dims[1] = {3};
         translation = PyArray_SimpleNew(1, dims, nptype);
         if(not translation) return NULL;

@@ -4,10 +4,17 @@
 #include <vector>
 #include <set>
 
-#include <opt/debug.h>
 #include <math/misc.h>
 #include "../structure.h"
 
+#define LADA_DOASSERT(a,b) \
+        { \
+          if((not (a)))\
+          { \
+            std::cerr << __FILE__ << ", line: " << __LINE__ << "\n" << b; \
+            throw 0;\
+          }\
+        }
 #if LADA_INCREMENT == 0
 #  define LADA_INIT 
 #  define LADA_DOASSERT_TYPE0 LADA_DOASSERT(c[0]->type == "Si", "Wrong first type.\n"); 

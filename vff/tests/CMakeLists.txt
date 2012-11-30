@@ -5,7 +5,7 @@ if(NOT compile_debug_tests)
   add_test(vff_iterator python ${CMAKE_CURRENT_SOURCE_DIR}/iterator.py)
   add_test(vff_represent python ${CMAKE_CURRENT_SOURCE_DIR}/represent.py)
   add_test(vff_gradients python ${CMAKE_CURRENT_SOURCE_DIR}/gradients.py)
-  add_test(vff_gradientfuncs python ${CMAKE_CURRENT_SOURCE_DIR}/gradientfuncs.py)
+  add_test(vff_gradientfunc python ${CMAKE_CURRENT_SOURCE_DIR}/gradientfunc.py)
   add_test(vff_ternary python ${CMAKE_CURRENT_SOURCE_DIR}/ternary.py)
 
 endif(NOT compile_debug_tests)
