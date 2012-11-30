@@ -40,7 +40,7 @@ def lattice():
 # trans = array([3.0/8.0, 3.0/8.0, 3.0/8.0], dtype="float64")
 # for site in lattice.sites: site.pos -= trans
 
-  lattice.scale = 7.5 # in bhor?
+  lattice.scale = 7.5 # in bohr?
   lattice.find_space_group()
 
   return lattice

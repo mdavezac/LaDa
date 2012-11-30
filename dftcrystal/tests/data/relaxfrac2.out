@@ -1,0 +1,920 @@
+#################### INPUT FILE ####################
+
+CRYSTAL
+0 0 0
+227
+5.43 
+1
+14 0.125 0.125 0.125
+FRACTION
+KEEPSYMM
+ATOMDISP
+1
+1 0.01 0.0 0.0
+ANGSTROM
+ELASTIC
+-2
+-0.0390939984073 1.98267830235E-05 -7.78346375363E-06
+1.98267830235E-05 -0.0390939984073 -7.78346375363E-06
+-5.89387641641E-06 -5.89387641641E-06 -0.0391199558658
+ATOMDISP
+1
+1 -0.0130940689448 -0.0130940689448 -0.0259843667735
+OPTGEOM
+FULLOPTG
+MAXCYCLE
+10
+END OPTGEOM
+END CRYSTAL
+14 5
+0 0 6 2.0 1
+16120.000000000000            0.001959000000
+2426.000000000000             0.014930000000
+553.900000000000              0.072850000000
+156.300000000000              0.246100000000
+50.070000000000               0.485900000000
+17.020000000000               0.325000000000
+0 1 5 8.0 1
+292.700000000000             -0.002781000000        0.004438000000
+69.870000000000              -0.035710000000        0.032670000000
+22.340000000000              -0.115000000000        0.134700000000
+8.150000000000                0.093560000000        0.328700000000
+3.135000000000                0.603000000000        0.449600000000
+0 1 1 4.0 1
+1.220000000000                1.000000000000        1.000000000000
+0 1 1 0.0 1
+0.550000000000                1.000000000000        1.000000000000
+0 1 1 0.0 1
+0.270000000000                1.000000000000        1.000000000000
+99 0
+END BASISSET
+DFT
+PBE0
+END DFT
+FMIXING
+30
+SHRINK
+8 16
+GUESSP
+MAXCYCLE
+600
+LEVSHIFT
+5 1
+END
+#################### END INPUT FILE ####################
+
+#################### FUNCTIONAL ####################
+from lada.dftcrystal.basis import Ghosts, Shell, Chemod
+from lada.dftcrystal.electronic import BetaLock, AtomSpin, Broyden, SpinLock, Shrink, LevShift
+from lada.dftcrystal.hamiltonian import Dft, Angular, Radial
+from lada.dftcrystal.input import SetPrint
+from lada.dftcrystal.relax import Relax
+
+functional = Relax()
+functional.anderson              = None
+functional.atomspin              = AtomSpin()
+functional.basis.atomsymm        = None
+functional.basis.charged         = None
+functional.basis.chemod          = Chemod()
+functional.basis.chemod.breaksym = True
+functional.basis.ghosts          = Ghosts()
+functional.basis.noprint         = None
+functional.basis.paramprt        = None
+functional.basis.symmops         = None
+functional.basis['Si']           = [Shell('s', a0=[16120.0, 0.001959], a1=[2426.0, 0.01493], a2=[553.9, 0.07285], a3=[156.3, 0.2461], a4=[50.07, 0.4859], a5=[17.02, 0.325]),
+                                     Shell('sp', a0=[292.7, -0.002781, 0.004438], a1=[69.87, -0.03571, 0.03267], a2=[22.34, -0.115, 0.1347], a3=[8.15, 0.09356, 0.3287], a4=[3.135, 0.603, 0.4496]),
+                                     Shell('sp', 4.0, a0=[1.22, 1.0, 1.0]),
+                                     Shell('sp', 0.0, a0=[0.55, 1.0, 1.0]),
+                                     Shell('sp', 0.0, a0=[0.27, 1.0, 1.0])]
+functional.betalock              = BetaLock()
+functional.biposize              = None
+functional.broyden               = Broyden()
+functional.cmplxfac              = None
+functional.dft                   = Dft()
+functional.dft.angular           = Angular()
+functional.dft.pbe0              = True
+functional.dft.radial            = Radial()
+functional.dft.spin              = None
+functional.dft.tolldens          = None
+functional.dft.tollgrid          = None
+functional.exchsize              = None
+functional.fmixing               = 30
+functional.guessp                = True
+functional.levshift              = LevShift(5.0, True)
+functional.maxcycle              = 600
+functional.maxiter               = 30
+functional.mpp                   = False
+functional.nobipcou              = None
+functional.nobipexc              = None
+functional.nobipola              = None
+functional.nofmwf                = None
+functional.nomondir              = None
+functional.nosymada              = None
+functional.optgeom.breaksym      = False
+functional.optgeom.cellonly      = False
+functional.optgeom.cvolopt       = None
+functional.optgeom.enabled       = True
+functional.optgeom.extpress      = None
+functional.optgeom.extstress     = None
+functional.optgeom.fixcell       = None
+functional.optgeom.fulloptg      = True
+functional.optgeom.intredun      = False
+functional.optgeom.itatocell     = False
+functional.optgeom.maxcycle      = 10
+functional.optgeom.nosymmops     = None
+functional.optgeom.noxyz         = None
+functional.optgeom.onelog        = None
+functional.optgeom.printforces   = None
+functional.optgeom.printhess     = None
+functional.optgeom.printopt      = None
+functional.optgeom.toldee        = None
+functional.optgeom.toldeg        = None
+functional.optgeom.toldex        = None
+functional.optgeom.verbose       = None
+functional.poleordr              = None
+functional.postscf               = None
+functional.ppan                  = None
+functional.program               = None
+functional.restart               = Extract("/tmp/test/relax/0")
+functional.savewf                = None
+functional.scfdir                = None
+functional.setprint              = SetPrint()
+functional.shrink                = Shrink(8, 16)
+functional.smear                 = None
+functional.spinlock              = SpinLock()
+functional.symadapt              = None
+functional.test                  = None
+functional.testpdim              = None
+functional.title                 = None
+functional.toldee                = None
+functional.toldep                = None
+functional.tolinteg              = None
+functional.tolpseud              = None
+#################### END FUNCTIONAL ####################
+
+         
+ *******************************************************************************
+ *                                                                             *
+ *                                CRYSTAL09                                    *
+ *                              public : 2.0                                   *
+ *                      March 5th, 2010 - sequential executable                *
+ *                                                                             *
+ *                                                                             *
+ *                                                                             *
+ *                              MAIN AUTHORS                                   *
+ *                                                                             *
+ *    R. DOVESI(1,10), V.R. SAUNDERS(2), C. ROETTI(1,10), R. ORLANDO (1,3),    *
+ *  C.M. ZICOVICH-WILSON(1,4), F. PASCALE(5), B. CIVALLERI(1,10), K. DOLL(6),  *
+ *       N.M. HARRISON(2,7), I. J. BUSH(2), Ph. D'ARCO(8), M. LLUNELL(9)       *
+ *                                                                             *
+ * (1) THEORETICAL CHEMISTRY GROUP - UNIVERSITA' DI TORINO - TORINO (ITALY)    *
+ *      http://www.crystal.unito.it                                            *
+ * (2) COMPUTATIONAL SCIENCE & ENGINEERING DEPARTMENT - STFC DARESBURY LABORATO*Y (UK)
+ *     http://www.cse.stfc.ac.uk/cmg/CRYSTAL/                                  *
+ * (3) UNIVERSITA' DEL PIEMONTE ORIENTALE - ALESSANDRIA (ITALY)                *
+ * (4) UNIVERSIDAD AUTONOMA DEL ESTADO DE MORELOS - CUERNAVACA (MEXICO)        *
+ * (5) UNIVERSITE' HENRI POINCARE' - NANCY (FRANCE)                            *
+ * (6) MPI FUER FESTKOERPERFORSCHUNG - STUTTGART (GERMANY)                     *
+ * (7) IMPERIAL COLLEGE - LONDON (UK)                                          *
+ * (8) UNIVERSITE' PIERRE ET MARIE CURIE - PARIS (FRANCE)                      *
+ * (9) UNIVERSIDAD DE BARCELONA - BARCELONA (SPAIN)                            *
+ *(10) NIS - NANOSTRUCTURED INTERFACES AND SURFACES - TORINO (ITALY)           *
+ *     http://www.crystal.unito.it                                             *
+ *******************************************************************************
+ EEEEEEEEEE STARTING  DATE 30 11 2012 TIME 09:37:41.0
+                                                                                 
+
+ CRYSTAL CALCULATION
+ (INPUT ACCORDING TO THE INTERNATIONAL TABLES FOR X-RAY CRYSTALLOGRAPHY)
+ CRYSTAL FAMILY                       :  CUBIC       
+ CRYSTAL CLASS  (GROTH - 1921)        :  CUBIC HEXAKISOCTAHEDRAL              
+
+ SPACE GROUP (CENTROSYMMETRIC)        :  F D 3 M         
+
+ LATTICE PARAMETERS  (ANGSTROMS AND DEGREES) - CONVENTIONAL CELL
+        A           B           C        ALPHA        BETA       GAMMA
+     5.43000     5.43000     5.43000    90.00000    90.00000    90.00000
+
+
+ NUMBER OF IRREDUCIBLE ATOMS IN THE CONVENTIONAL CELL:    1
+
+ INPUT COORDINATES
+
+ ATOM AT. N.              COORDINATES
+   1  14     1.250000000000E-01  1.250000000000E-01  1.250000000000E-01
+
+ *******************************************************************************
+
+ << INFORMATION >>: FROM NOW ON, ALL COORDINATES REFER TO THE PRIMITIVE CELL
+
+ *******************************************************************************
+
+ LATTICE PARAMETERS  (ANGSTROMS AND DEGREES) - PRIMITIVE CELL
+       A          B          C         ALPHA     BETA     GAMMA        VOLUME
+    3.83959    3.83959    3.83959    60.00000  60.00000  60.00000     40.025752
+
+ COORDINATES OF THE EQUIVALENT ATOMS (FRACTIONAL UNITS)
+
+ N. ATOM EQUIV AT. N.          X                  Y                  Z
+
+   1   1   1   14 SI    1.25000000000E-01  1.25000000000E-01  1.25000000000E-01
+   2   1   2   14 SI   -1.25000000000E-01 -1.25000000000E-01 -1.25000000000E-01
+
+ NUMBER OF SYMMETRY OPERATORS         :   48
+ *******************************************************************************
+ * GEOMETRY EDITING - INPUT COORDINATES ARE GIVEN IN ANGSTROM         
+ *******************************************************************************
+
+ GEOMETRY NOW FULLY CONSISTENT WITH THE GROUP
+ INFORMATION **** CRYSTA **** INPUT UNITS IN PERIODIC DIRECTIONS: FRACTIONAL
+ *******************************************************************************
+ *  GEOMETRY EDITING
+ *  THE SYMMETRY OF THE CRYSTAL IS KEPT AND APPLIED TO THE PERTURBATION
+ *******************************************************************************
+
+ *******************************************************************************
+ * DISPLACEMENT OF    1 ATOMS
+ *******************************************************************************
+
+ ATOM N.    1 AT. N.  14 DISPLACED BY (A)   0.00000   0.02715   0.02715
+
+ SYMMETRY MAINTAINED -  1 ATOM(S) SYMMETRY-RELATED : SEQUENCE NUMBER OF ATOM(S) 
+   2
+ OLD COORDINATES (FRAC. UNITS)   0.12500   0.12500   0.12500
+ NEW COORDINATES (FRAC. UNITS)   0.13500   0.12500   0.12500
+ THE NUMBER OF SYMMETRY OPERATORS HAS BEEN REDUCED FROM 48 TO  2
+ *******************************************************************************
+ INFORMATION **** CRYSTA **** INPUT UNITS IN PERIODIC DIRECTIONS: ANGSTROM
+
+ *******************************************************************************
+ * CELL DEFORMATION
+ *******************************************************************************
+
+    ELASTIC STRAIN MATRIX (ADIMENSIONAL)
+
+    1   -0.0390939984    0.0000198268   -0.0000077835
+    2    0.0000198268   -0.0390939984   -0.0000077835
+    3   -0.0000058939   -0.0000058939   -0.0391199559
+
+ LATTICE PARAMETERS (ANGSTROMS AND DEGREES) OF
+ (1) ORIGINAL PRIMITIVE CELL
+ (2) ORIGINAL CRYSTALLOGRAPHIC CELL
+ (3) DEFORMED PRIMITIVE CELL
+ (4) DEFORMED CRYSTALLOGRAPHIC CELL
+
+            A           B           C        ALPHA       BETA        GAMMA         VOL
+ (1)    3.839590    3.839590    3.839590   60.000000   60.000000   60.000000   40.025752
+ (2)    5.430000    5.430000    5.430000   90.000000   90.000000   90.000000  160.103007
+ (3)    3.689409    3.689409    3.689561   59.999577   59.999577   59.999999   35.511620
+ (4)    5.217720    5.217720    5.217579   90.000816   90.000816   89.997636  142.046479
+
+ * CELL DEFORMATION COMPLETE - NO. OF SYMMOPS   2
+
+ *******************************************************************************
+ * DISPLACEMENT OF    1 ATOMS
+ *******************************************************************************
+
+ ATOM N.    1 AT. N.  14 DISPLACED BY (A)  -0.01309  -0.01309  -0.02598
+
+ SYMMETRY MAINTAINED -  1 ATOM(S) SYMMETRY-RELATED : SEQUENCE NUMBER OF ATOM(S) 
+   2
+ OLD COORDINATES (FRAC. UNITS)   0.13500   0.12500   0.12500
+ NEW COORDINATES (FRAC. UNITS)   0.13002   0.12002   0.12496
+ INFORMATION **** FULLOPTG **** FULL OPTIMIZATION (ATOMS AND CELL PARAMETERS)
+ INFORMATION **** MAXCYCLE ****   MAXIMUM NUMBER OF OPTIMIZATION CYCLES          10
+
+ IMPORTANT INFORMATION:
+ THE COORDINATE SYSTEM ADOPTED IN THE OPTIMIZATION HAS NOT IN
+ GENERAL HOMOGENEOUS UNITS. FOR THIS REASON THE GRADIENT AND 
+ HESSIAN MATRIX IN TERMS OF THIS SYSTEM ARE GIVEN WITHOUT
+ UNITS. FOR MORE DETAILS SEE THE MANUAL.
+
+ *******************************************************************************
+ COMBINED CELL/ATOM OPTIMIZATION CONTROL
+
+ INITIAL TRUST RADIUS         0.50000 MAXIMUM TRUST RADIUS               4.00000
+ MAXIMUM GRADIENT COMPONENT   0.00045 MAXIMUM DISPLACEMENT COMPONENT     0.00180
+ R.M.S. OF GRADIENT COMPONENT 0.00030 R.M.S. OF DISPLACEMENT COMPONENTS  0.00120
+ THRESHOLD ON ENERGY CHANGE 0.100E-06 EXTRAPOLATING POLYNOMIAL ORDER           2
+ MAXIMUM ALLOWED NUMBER OF STEPS   10 SORTING OF ENERGY POINTS:               NO
+ ANALYTICAL  GRADIENT                 HESSIAN UPDATING                      BFGS
+ STEP SIZE NUMERICAL GRADIENT 0.00100
+ INITIAL HESSIAN MATRIX: SCHLEGEL MODEL 2
+ *******************************************************************************
+
+
+ GCALCO - MAX INDICES DIRECT LATTICE VECTOR    14    14    14
+ NO.OF VECTORS CREATED 6999 STARS 1805 RMAX    73.78577 BOHR
+
+ GEOMETRY FOR WAVE FUNCTION - DIMENSIONALITY OF THE SYSTEM    3
+ (NON PERIODIC DIRECTION: LATTICE PARAMETER FORMALLY SET TO 500)
+ *******************************************************************************
+ LATTICE PARAMETERS (ANGSTROMS AND DEGREES) - BOHR = 0.5291772083 ANGSTROM
+ PRIMITIVE CELL - CENTRING CODE 5/1 VOLUME=    35.511620 - DENSITY  2.616 g/cm^3
+         A              B              C           ALPHA      BETA       GAMMA 
+     3.68940881     3.68940881     3.68956103    59.999577  59.999577  59.999999
+ *******************************************************************************
+ ATOMS IN THE ASYMMETRIC UNIT    1 - ATOMS IN THE UNIT CELL:    2
+     ATOM              X/A                 Y/B                 Z/C    
+ *******************************************************************************
+   1 T  14 SI    1.300198110663E-01  1.200198110663E-01  1.249611345243E-01
+   2 F  14 SI   -1.200198110663E-01 -1.300198110663E-01 -1.249611345243E-01
+
+ TRANSFORMATION MATRIX PRIMITIVE-CRYSTALLOGRAPHIC CELL
+ -1.0000  1.0000  1.0000  1.0000 -1.0000  1.0000  1.0000  1.0000 -1.0000
+
+ *******************************************************************************
+ CRYSTALLOGRAPHIC CELL (VOLUME=        142.04647939)
+         A              B              C           ALPHA      BETA       GAMMA 
+     5.21771959     5.21771959     5.21757864    90.000816  90.000816  89.997636
+
+ COORDINATES IN THE CRYSTALLOGRAPHIC CELL
+     ATOM              X/A                 Y/B                 Z/C    
+ *******************************************************************************
+   1 T  14 SI    1.224904727953E-01  1.274904727953E-01  1.250198110663E-01
+   2 F  14 SI   -1.274904727953E-01 -1.224904727953E-01 -1.250198110663E-01
+
+ T = ATOM BELONGING TO THE ASYMMETRIC UNIT
+
+ ****   2 SYMMOPS - TRANSLATORS IN FRACTIONAL UNITS
+  V INV                   ROTATION MATRICES                       TRANSLATOR
+  1  1  1.00  0.00  0.00  0.00  1.00  0.00  0.00  0.00  1.00    0.00  0.00  0.00
+  2  2 -0.00 -1.00 -0.00 -1.00  0.00 -0.00 -0.00 -0.00 -1.00    0.00  0.00  0.00
+
+ DIRECT LATTICE VECTORS CARTESIAN COMPONENTS (ANGSTROM)
+          X                    Y                    Z
+   0.326976118177E-04   0.260883866222E+01   0.260877331795E+01
+   0.260883866222E+01   0.326976118177E-04   0.260877331795E+01
+   0.260891362404E+01   0.260891362404E+01  -0.320037489411E-04
+
+
+ CARTESIAN COORDINATES - PRIMITIVE CELL
+ *******************************************************************************
+ *      ATOM          X(ANGSTROM)         Y(ANGSTROM)         Z(ANGSTROM)
+ *******************************************************************************
+   1    14 SI    6.391293810153E-01  6.652174406614E-01  6.522926954249E-01
+   2    14 SI   -6.652174406614E-01 -6.391293810153E-01 -6.522926954249E-01
+
+ *******************************************************************************
+ LOCAL ATOMIC FUNCTIONS BASIS SET
+ *******************************************************************************
+   ATOM  X(AU)  Y(AU)  Z(AU)    NO. TYPE  EXPONENT  S COEF   P COEF   D/F/G COEF
+ *******************************************************************************
+   1 SI  1.208  1.257  1.233
+                                  1 S  
+                                         1.612E+04 1.959E-03 0.000E+00 0.000E+00
+                                         2.426E+03 1.493E-02 0.000E+00 0.000E+00
+                                         5.539E+02 7.285E-02 0.000E+00 0.000E+00
+                                         1.563E+02 2.461E-01 0.000E+00 0.000E+00
+                                         5.007E+01 4.859E-01 0.000E+00 0.000E+00
+                                         1.702E+01 3.250E-01 0.000E+00 0.000E+00
+                             2-   5 SP 
+                                         2.927E+02-2.781E-03 4.438E-03 0.000E+00
+                                         6.987E+01-3.571E-02 3.267E-02 0.000E+00
+                                         2.234E+01-1.150E-01 1.347E-01 0.000E+00
+                                         8.150E+00 9.356E-02 3.287E-01 0.000E+00
+                                         3.135E+00 6.030E-01 4.496E-01 0.000E+00
+                             6-   9 SP 
+                                         1.220E+00 1.000E+00 1.000E+00 0.000E+00
+                            10-  13 SP 
+                                         5.500E-01 1.000E+00 1.000E+00 0.000E+00
+                            14-  17 SP 
+                                         2.700E-01 1.000E+00 1.000E+00 0.000E+00
+   2 SI -1.257 -1.208 -1.233
+ INFORMATION **** GUESSP **** SCF GUESS FROM A PREVIOUS RUN DENSITY MATRIX
+ INFORMATION **** MAXCYCLE **** MAX NUMBER OF SCF CYCLES SET TO         600
+ INFORMATION **** LEVSHIFT **** LEVEL SHIFTER ACTIVE
+ *******************************************************************************
+ N. OF ATOMS PER CELL        2  COULOMB OVERLAP TOL         (T1) 10** -6
+ NUMBER OF SHELLS           10  COULOMB PENETRATION TOL     (T2) 10** -6
+ NUMBER OF AO               34  EXCHANGE OVERLAP TOL        (T3) 10** -6
+ N. OF ELECTRONS PER CELL   28  EXCHANGE PSEUDO OVP (F(G))  (T4) 10** -6
+ CORE ELECTRONS PER CELL    20  EXCHANGE PSEUDO OVP (P(G))  (T5) 10**-12
+ N. OF SYMMETRY OPERATORS    2  POLE ORDER IN MONO ZONE                4
+ *******************************************************************************
+ TYPE OF CALCULATION :  RESTRICTED CLOSED SHELL
+ KOHN-SHAM HAMILTONIAN
+
+ (EXCHANGE)[CORRELATION] FUNCTIONAL:(PERDEW-BURKE-ERNZERHOF)[PERDEW-BURKE-ERNZERHOF]
+
+
+ HYBRID EXCHANGE - PERCENTAGE OF FOCK EXCHANGE    25.0000
+ EIGENVALUE LEVEL SHIFTING OF  0.500 HARTREE
+ LOCKING - FERMI ENERGY ALTERED BY LEVEL SHIFTER
+
+ CAPPA:IS1  8;IS2  8;IS3  8; K PTS MONK NET  150; SYMMOPS: K SPACE  4;G SPACE  2
+
+ *******************************************************************************
+ MAX NUMBER OF SCF CYCLES     600  CONVERGENCE ON DELTAP        10**-16
+ WEIGHT OF F(I) IN F(I+1)      30% CONVERGENCE ON ENERGY        10**- 7
+ EIGENVALUE LEVEL SHIFTING OF  0.500 HARTREE
+ LOCKING - FERMI ENERGY ALTERED BY LEVEL SHIFTER
+ SHRINK. FACT.(MONKH.)    8  8  8  NUMBER OF K POINTS IN THE IBZ    150
+ SHRINKING FACTOR(GILAT NET)   16  NUMBER OF K POINTS(GILAT NET)   1098
+ *******************************************************************************
+ *** K POINTS COORDINATES (OBLIQUE COORDINATES IN UNITS OF IS =  8)
+   1-R(  0  0  0)   2-C(  1  0  0)   3-C(  2  0  0)   4-C(  3  0  0)
+   5-R(  4  0  0)   6-C(  1  1  0)   7-C(  2  1  0)   8-C(  3  1  0)
+   9-C(  4  1  0)  10-C(  5  1  0)  11-C(  6  1  0)  12-C(  7  1  0)
+  13-C(  2  2  0)  14-C(  3  2  0)  15-C(  4  2  0)  16-C(  5  2  0)
+  17-C(  6  2  0)  18-C(  3  3  0)  19-C(  4  3  0)  20-C(  5  3  0)
+  21-R(  4  4  0)  22-C(  0  0  1)  23-C(  1  0  1)  24-C(  2  0  1)
+  25-C(  3  0  1)  26-C(  4  0  1)  27-C(  5  0  1)  28-C(  6  0  1)
+  29-C(  7  0  1)  30-C(  1  1  1)  31-C(  2  1  1)  32-C(  3  1  1)
+  33-C(  4  1  1)  34-C(  5  1  1)  35-C(  6  1  1)  36-C(  7  1  1)
+  37-C(  2  2  1)  38-C(  3  2  1)  39-C(  4  2  1)  40-C(  5  2  1)
+  41-C(  6  2  1)  42-C(  7  2  1)  43-C(  3  3  1)  44-C(  4  3  1)
+  45-C(  5  3  1)  46-C(  6  3  1)  47-C(  7  3  1)  48-C(  4  4  1)
+  49-C(  5  4  1)  50-C(  6  4  1)  51-C(  7  4  1)  52-C(  5  5  1)
+  53-C(  6  5  1)  54-C(  7  5  1)  55-C(  6  6  1)  56-C(  7  6  1)
+  57-C(  7  7  1)  58-C(  0  0  2)  59-C(  1  0  2)  60-C(  2  0  2)
+  61-C(  3  0  2)  62-C(  4  0  2)  63-C(  5  0  2)  64-C(  6  0  2)
+  65-C(  7  0  2)  66-C(  1  1  2)  67-C(  2  1  2)  68-C(  3  1  2)
+  69-C(  4  1  2)  70-C(  5  1  2)  71-C(  6  1  2)  72-C(  7  1  2)
+  73-C(  2  2  2)  74-C(  3  2  2)  75-C(  4  2  2)  76-C(  5  2  2)
+  77-C(  6  2  2)  78-C(  7  2  2)  79-C(  3  3  2)  80-C(  4  3  2)
+  81-C(  5  3  2)  82-C(  6  3  2)  83-C(  7  3  2)  84-C(  4  4  2)
+  85-C(  5  4  2)  86-C(  6  4  2)  87-C(  7  4  2)  88-C(  5  5  2)
+  89-C(  6  5  2)  90-C(  7  5  2)  91-C(  6  6  2)  92-C(  7  6  2)
+  93-C(  7  7  2)  94-C(  0  0  3)  95-C(  1  0  3)  96-C(  2  0  3)
+  97-C(  3  0  3)  98-C(  4  0  3)  99-C(  5  0  3) 100-C(  6  0  3)
+ 101-C(  7  0  3) 102-C(  1  1  3) 103-C(  2  1  3) 104-C(  3  1  3)
+ 105-C(  4  1  3) 106-C(  5  1  3) 107-C(  6  1  3) 108-C(  7  1  3)
+ 109-C(  2  2  3) 110-C(  3  2  3) 111-C(  4  2  3) 112-C(  5  2  3)
+ 113-C(  6  2  3) 114-C(  7  2  3) 115-C(  3  3  3) 116-C(  4  3  3)
+ 117-C(  5  3  3) 118-C(  6  3  3) 119-C(  7  3  3) 120-C(  4  4  3)
+ 121-C(  5  4  3) 122-C(  6  4  3) 123-C(  7  4  3) 124-C(  5  5  3)
+ 125-C(  6  5  3) 126-C(  7  5  3) 127-C(  6  6  3) 128-C(  7  6  3)
+ 129-C(  7  7  3) 130-R(  0  0  4) 131-C(  1  0  4) 132-C(  2  0  4)
+ 133-C(  3  0  4) 134-R(  4  0  4) 135-C(  1  1  4) 136-C(  2  1  4)
+ 137-C(  3  1  4) 138-C(  4  1  4) 139-C(  5  1  4) 140-C(  6  1  4)
+ 141-C(  7  1  4) 142-C(  2  2  4) 143-C(  3  2  4) 144-C(  4  2  4)
+ 145-C(  5  2  4) 146-C(  6  2  4) 147-C(  3  3  4) 148-C(  4  3  4)
+ 149-C(  5  3  4) 150-R(  4  4  4)
+
+ DIRECT LATTICE VECTORS COMPON. (A.U.)     RECIP. LATTICE VECTORS COMPON. (A.U.) 
+        X            Y            Z              X            Y            Z
+    0.0000618    4.9299906    4.9298671     -0.6372452    0.6372530    0.6372532
+    4.9299906    0.0000618    4.9298671      0.6372530   -0.6372452    0.6372532
+    4.9301323    4.9301323   -0.0000605      0.6372189    0.6372189   -0.6372428
+
+ DISK SPACE FOR EIGENVECTORS (FTN 10)     339864 REALS
+
+ SYMMETRY ADAPTION OF THE BLOCH FUNCTIONS ENABLED
+
+ DIMENSIONS  P(G)=   18370 F(G)=    3530 P(G),F(G) (IRR)    5713
+ MAX G-VECTOR INDEX FOR 1- AND 2-ELECTRON INTEGRALS  85
+
+ INFORMATION **** GENBUF **** COULOMB BIPO BUFFER LENGTH (WORDS) =       86450
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT INPUT       TELAPSE        0.01 TCPU        0.01
+
+ NEIGHBORS OF THE NON-EQUIVALENT ATOMS
+
+ N = NUMBER OF NEIGHBORS AT DISTANCE R
+    ATOM  N     R/ANG      R/AU   NEIGHBORS (ATOM LABELS AND CELL INDICES)
+   1 SI   2     2.2592     4.2692   2 SI   1 0 0   2 SI   0 1 0
+   1 SI   1     2.2593     4.2695   2 SI   0 0 0
+   1 SI   1     2.2596     4.2700   2 SI   0 0 1
+   1 SI   2     3.6894     6.9720   1 SI  -1 1 0   1 SI   1-1 0
+   1 SI   4     3.6894     6.9720   1 SI  -1 0 0   1 SI   1 0 0   1 SI   0-1 0
+                                    1 SI   0 1 0
+   1 SI   4     3.6895     6.9721   1 SI  -1 0 1   1 SI   1 0-1   1 SI   0-1 1
+                                    1 SI   0 1-1
+
+
+ SYMMETRY ALLOWED ELASTIC DISTORTION 1
+  0.5773503  0.0000000  0.0000000
+  0.0000000  0.5773503  0.0000000
+  0.0000000  0.0000000  0.5773503
+
+ SYMMETRY ALLOWED ELASTIC DISTORTION 2
+  0.4082483  0.0000000  0.0000000
+  0.0000000  0.4082483  0.0000000
+  0.0000000  0.0000000 -0.8164966
+
+ SYMMETRY ALLOWED ELASTIC DISTORTION 3
+  0.0000000  0.7071068  0.0000000
+  0.7071068  0.0000000  0.0000000
+  0.0000000  0.0000000  0.0000000
+
+ SYMMETRY ALLOWED ELASTIC DISTORTION 4
+  0.0000000  0.0000000  0.5000000
+  0.0000000  0.0000000  0.5000000
+  0.5000000  0.5000000  0.0000000
+
+ SYMMETRY ALLOWED INTERNAL DEGREE(S) OF FREEDOM:   2
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT SYMM        TELAPSE        0.01 TCPU        0.01
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT INT_SCREEN  TELAPSE        0.01 TCPU        0.01
+ *******************************************************************************
+ COORDINATE AND CELL OPTIMIZATION - POINT    1
+ INFORMATION **** GENBUF **** COULOMB BIPO BUFFER LENGTH (WORDS) =       86450
+ INFORMATION **** EXCBUF **** EXCH. BIPO BUFFER: WORDS USED =       89658
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT MONIRR      TELAPSE        0.01 TCPU        0.01
+
+ DFT PARAMETERS
+
+     ATOM       ELECTRONS   NET CHARGE   R(ANGSTROM)
+   1  14  SI     14.0000      0.0000     1.17000000
+
+ SIZE OF GRID=       6328
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT MAKE_GRID2  TELAPSE        1.19 TCPU        1.19
+ BECKE WEIGHT FUNCTION
+ RADSAFE =     2.00
+ TOLERANCES - DENSITY:10**- 6; POTENTIAL:10**- 9; GRID WGT:10**-14
+
+ RADIAL INTEGRATION  - INTERVALS (POINTS,UPPER LIMIT):            1( 55,  4.0*R)
+
+ ANGULAR INTEGRATION - INTERVALS (ACCURACY LEVEL [N. POINTS] UPPER LIMIT):
+  1(  1[  38]   0.4)  2(  2[  50]   0.6)  3(  5[ 110]   0.8)  4(  8[ 194]   0.9)
+  5( 11[ 302]   1.1)  6( 13[ 434]   2.3)  7( 11[ 302]   2.4)  8(  8[ 194]   2.6)
+  9(  5[ 110]   2.8) 10(  1[  38]9999.0)
+
+  GAUSS70 FOR COULOMB   GAUSS70 FOR EXCHANGE
+ **SHELL_ORTHODOX** SPACE FOR BIEL. INTEGRALS     9 BUFFERS
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT SHLC        TELAPSE        1.86 TCPU        1.85
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT MONMAD      TELAPSE        1.89 TCPU        1.89
+
+ *******************************************************************************
+                                                                                 
+ CRYSTAL - SCF - TYPE OF CALCULATION :  RESTRICTED CLOSED SHELL
+ *******************************************************************************
+
+ CAPPA:IS1  8;IS2  8;IS3  8; K PTS MONK NET  150; SYMMOPS: K SPACE  4;G SPACE  2
+
+
+ INFORMATION FROM INTEGRAL EVALUATION
+
+ RESTART FROM A PREVIOUS DENSITY MATRIX - DEP ACTIVE
+ NUMBER OF COUPLE SETS (NEW, OLD, FOUND):      27      27      27
+ NUMBER OF IRREDUCIBLE G VECTORS        :     397     327     327
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT SDIK        TELAPSE        1.91 TCPU        1.91
+ CHARGE NORMALIZATION FACTOR   0.99999912
+ TOTAL ATOMIC CHARGES:
+  14.0000000  14.0000000
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT QGAM        TELAPSE        1.91 TCPU        1.91
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT BIEL        TELAPSE        1.95 TCPU        1.94
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT TOTENY      TELAPSE        1.95 TCPU        1.94
+ NUMERICALLY INTEGRATED DENSITY     28.0001456756
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT NUMDFT      TELAPSE        2.24 TCPU        2.24
+ CYC   0 ETOT(AU) -5.786356561441E+02 DETOT -5.79E+02 tst  0.00E+00 PX  1.00E+00
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT FDIK        TELAPSE        2.37 TCPU        2.36
+ INSULATING STATE - LEVEL SHIFTER    0.50 au
+ TOP OF VALENCE BANDS -    BAND     14; K    1; EIG -6.5354818E-02 AU
+ BOTTOM OF VIRTUAL BANDS - BAND     15; K    1; EIG  5.5761721E-02 AU
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT PDIG        TELAPSE        2.39 TCPU        2.38
+ CHARGE NORMALIZATION FACTOR   1.00000000
+ TOTAL ATOMIC CHARGES:
+  14.0000000  14.0000000
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT QGAM        TELAPSE        2.39 TCPU        2.38
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT BIEL        TELAPSE        2.42 TCPU        2.41
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT TOTENY      TELAPSE        2.42 TCPU        2.41
+ NUMERICALLY INTEGRATED DENSITY     28.0001447182
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT NUMDFT      TELAPSE        2.71 TCPU        2.70
+ CYC   1 ETOT(AU) -5.786358711921E+02 DETOT -2.15E-04 tst  0.00E+00 PX  2.73E-02
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT FDIK        TELAPSE        2.77 TCPU        2.76
+ INSULATING STATE - LEVEL SHIFTER    0.50 au
+ TOP OF VALENCE BANDS -    BAND     14; K    1; EIG -5.6562417E-01 AU
+ BOTTOM OF VIRTUAL BANDS - BAND     15; K    1; EIG  5.5900184E-02 AU
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT PDIG        TELAPSE        2.78 TCPU        2.77
+ CHARGE NORMALIZATION FACTOR   1.00000000
+ TOTAL ATOMIC CHARGES:
+  14.0000000  14.0000000
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT QGAM        TELAPSE        2.78 TCPU        2.77
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT BIEL        TELAPSE        2.82 TCPU        2.80
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT TOTENY      TELAPSE        2.82 TCPU        2.81
+ NUMERICALLY INTEGRATED DENSITY     28.0001448938
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT NUMDFT      TELAPSE        3.11 TCPU        3.10
+ CYC   2 ETOT(AU) -5.786358923375E+02 DETOT -2.11E-05 tst  8.40E-06 PX  5.51E-03
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT FDIK        TELAPSE        3.17 TCPU        3.15
+ INSULATING STATE - LEVEL SHIFTER    0.50 au
+ TOP OF VALENCE BANDS -    BAND     14; K    1; EIG -5.6566144E-01 AU
+ BOTTOM OF VIRTUAL BANDS - BAND     15; K    1; EIG  5.5956515E-02 AU
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT PDIG        TELAPSE        3.18 TCPU        3.17
+ CHARGE NORMALIZATION FACTOR   1.00000000
+ TOTAL ATOMIC CHARGES:
+  14.0000000  14.0000000
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT QGAM        TELAPSE        3.18 TCPU        3.17
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT BIEL        TELAPSE        3.22 TCPU        3.20
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT TOTENY      TELAPSE        3.22 TCPU        3.21
+ NUMERICALLY INTEGRATED DENSITY     28.0001449764
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT NUMDFT      TELAPSE        3.51 TCPU        3.50
+ CYC   3 ETOT(AU) -5.786358973851E+02 DETOT -5.05E-06 tst  2.44E-06 PX  2.82E-03
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT FDIK        TELAPSE        3.57 TCPU        3.55
+ INSULATING STATE - LEVEL SHIFTER    0.50 au
+ TOP OF VALENCE BANDS -    BAND     14; K    1; EIG -5.6566089E-01 AU
+ BOTTOM OF VIRTUAL BANDS - BAND     15; K    1; EIG  5.5987152E-02 AU
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT PDIG        TELAPSE        3.58 TCPU        3.57
+ CHARGE NORMALIZATION FACTOR   1.00000000
+ TOTAL ATOMIC CHARGES:
+  14.0000000  14.0000000
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT QGAM        TELAPSE        3.58 TCPU        3.57
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT BIEL        TELAPSE        3.61 TCPU        3.60
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT TOTENY      TELAPSE        3.62 TCPU        3.60
+ NUMERICALLY INTEGRATED DENSITY     28.0001450038
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT NUMDFT      TELAPSE        3.91 TCPU        3.90
+ CYC   4 ETOT(AU) -5.786358980921E+02 DETOT -7.07E-07 tst  4.44E-07 PX  1.19E-03
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT FDIK        TELAPSE        3.97 TCPU        3.95
+ INSULATING STATE - LEVEL SHIFTER    0.50 au
+ TOP OF VALENCE BANDS -    BAND     14; K    1; EIG -5.6566130E-01 AU
+ BOTTOM OF VIRTUAL BANDS - BAND     15; K    1; EIG  5.5998847E-02 AU
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT PDIG        TELAPSE        3.98 TCPU        3.97
+ CHARGE NORMALIZATION FACTOR   1.00000000
+ TOTAL ATOMIC CHARGES:
+  14.0000000  14.0000000
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT QGAM        TELAPSE        3.98 TCPU        3.97
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT BIEL        TELAPSE        4.01 TCPU        4.00
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT TOTENY      TELAPSE        4.01 TCPU        4.00
+ NUMERICALLY INTEGRATED DENSITY     28.0001450097
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT NUMDFT      TELAPSE        4.31 TCPU        4.29
+ CYC   5 ETOT(AU) -5.786358981162E+02 DETOT -2.41E-08 tst  8.28E-08 PX  4.84E-04
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT FDIK        TELAPSE        4.36 TCPU        4.35
+ INSULATING STATE - LEVEL SHIFTER    0.50 au
+ TOP OF VALENCE BANDS -    BAND     14; K    1; EIG -5.6566367E-01 AU
+ BOTTOM OF VIRTUAL BANDS - BAND     15; K    1; EIG  5.6002936E-02 AU
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT PDIG        TELAPSE        4.38 TCPU        4.36
+ CHARGE NORMALIZATION FACTOR   1.00000000
+ TOTAL ATOMIC CHARGES:
+  14.0000000  14.0000000
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT QGAM        TELAPSE        4.38 TCPU        4.36
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT BIEL        TELAPSE        4.41 TCPU        4.40
+ +++ ENERGIES IN A.U. +++
+ ::: EXT EL-POLE : L =  0                         -4.0394835314389E+02
+ ::: EXT EL-POLE : L =  1                         -2.0301659750187E-08
+ ::: EXT EL-POLE : L =  2                         -1.2372986226298E-09
+ ::: EXT EL-POLE : L =  3                         -2.9866259211051E-02
+ ::: EXT EL-POLE : L =  4                         -9.7797263924733E-04
+ ::: EXT EL-SPHEROPOLE                             6.0445376784353E+00
+ ::: BIELET ZONE E-E                               5.6040720728819E+02
+ ::: TOTAL E-E                                     1.6247254756935E+02
+ ::: TOTAL E-N + N-E                              -1.1805950565683E+03
+ ::: TOTAL N-N                                    -1.0708066796444E+02
+ ::: KINETIC ENERGY                                5.7822957272971E+02
+ ::: PSEUDO TOTAL   ENERGY                        -5.4697360423369E+02
+ ::: VIRIAL COEFFICIENT                            1.0277780663403E+00
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT TOTENY      TELAPSE        4.41 TCPU        4.40
+ NUMERICALLY INTEGRATED DENSITY     28.0001450087
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT NUMDFT      TELAPSE        4.71 TCPU        4.69
+ CYC   6 ETOT(AU) -5.786358980752E+02 DETOT  4.10E-08 tst  3.86E-08 PX  4.84E-04
+
+ == SCF ENDED - CONVERGENCE ON ENERGY      E(AU) -5.7863589807519E+02 CYCLES   6
+
+
+ ENERGY EXPRESSION=HARTREE+FOCK EXCH*0.25000+(PBE    EXCH)*0.75000+PBE    CORR
+
+
+ TOTAL ENERGY(DFT)(AU)(  6) -5.7863589807519E+02 DE 4.1E-08 tester 3.9E-08
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT EDFT        TELAPSE        4.71 TCPU        4.69
+
+ *******************************************************************************
+ *                             FORCE CALCULATION                               *
+ *******************************************************************************
+
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT NUMDFG      TELAPSE        9.84 TCPU        9.81
+ INFORMATION **** EXCPOG **** EXCH. BIPO BUFFER LENGTH (WORDS) =      358632
+ INFORMATION **** GENPOG **** BIPO BUFFER LENGTH (WORDS) =       23600
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT SHELXG      TELAPSE       16.74 TCPU       16.68
+
+ CARTESIAN FORCES IN HARTREE/BOHR (ANALYTICAL)
+   ATOM                     X                   Y                   Z
+   1  14             4.899380979050E-05  4.899380976557E-05 -1.007325603388E-04
+   2  14            -4.899380976830E-05 -4.899380978777E-05  1.007325603388E-04
+
+ RESULTANT FORCE     2.220315944990E-14 -2.220315944990E-14  0.000000000000E+00
+
+ATOMIC PART
+
+ SYMMETRY ALLOWED FORCES (ANALYTICAL) (DIRECTION, FORCE)
+
+    1 -5.9739889E-05    2  1.6225541E-04
+
+CELL PART
+
+GRADIENT WITH RESPECT TO THE CELL PARAMETER IN HARTREE/BOHR
+ORDER: -D/DA1X, -D/DA1Y, -D/DA1Z
+       -D/DA2X, -D/DA2Y, -D/DA2Z
+       -D/DA3X, -D/DA3Y, -D/DA3Z
+ -0.612699626636E-03  0.630503418135E-03  0.605867087472E-03
+  0.630503418133E-03 -0.612699626635E-03  0.605867087469E-03
+  0.574558375936E-03  0.574558375934E-03 -0.587967644293E-03
+
+STRESS TENSOR, IN HARTREE/BOHR^3:
+ORDER: 11 12 13
+       21 22 23
+       31 32 33
+ -0.247908547331E-04  0.784144101096E-06 -0.366107520971E-06
+  0.784144101096E-06 -0.247908547331E-04 -0.366107521063E-06
+ -0.368038111478E-06 -0.368038111532E-06 -0.249274620924E-04
+
+PRESSURE FROM THE STRESS TENSOR,
+IN HARTREE/BOHR^3:  0.24836E-04
+PRESSURE IN GIGAPASCAL:  0.7307E+00
+CONVERSION FACTOR: 1 HARTREE/BOHR^3= 29421 GIGAPASCAL
+WHEN USING VALUES FOR BOHR RADIUS AND HARTREE
+FROM IUPAC WEBSITE, APRIL 2009
+ENTHALPY: -5.7862994617595E+02
+
+ SYMMETRY ALLOWED FORCES (ANALYTICAL) (DIRECTION, FORCE)
+
+    1  8.0781822E-03    2 -7.6666896E-06    3 -1.4070741E-04    4  1.4266566E-04
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT TOTGRA_C    TELAPSE       16.99 TCPU       16.93
+ INFORMATION **** optc01 **** GEOMETRY OUTPUT FILE
+ CLASSICAL MODEL (SCHLEGEL) USED AS INITIAL HESSIAN MATRIX
+ REFERENCE GEOMETRY DEFINED
+
+ MAX GRADIENT      0.008078  THRESHOLD              0.000450 CONVERGED NO
+ RMS GRADIENT      0.003300  THRESHOLD              0.000300 CONVERGED NO
+
+ GRADIENT NORM     0.008083  GRADIENT THRESHOLD     0.500000
+
+ EIGENVALUES OF THE ESTIMATED HESSIAN
+  0.1436      0.3939      0.4160      0.7360       1.413       1.512    
+
+ INITIAL TRUST RADIUS    0.5000000000E+00
+
+ PREDICTED ENERGY CHANGE    -0.216E-04
+
+ INITIAL DISPLACEMENTS
+ -0.000071  0.000244  0.005342 -0.000071 -0.000184  0.000068
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT OPTI        TELAPSE       17.00 TCPU       16.94
+
+ OPTOPTOPTOPTOPTOPTOPTOPTOPTOPTOPTOPTOPTOPTOPTOPTOPTOPTOPTOPTOPTOPTOPTOPTOPTOPT
+
+ STARTING GEOMETRY OPTIMIZATION - INFORMATION ON SCF MOVED TO SCFOUT.LOG
+ GEOMETRY OPTIMIZATION INFORMATION STORED IN OPTINFO.DAT
+
+ OPTOPTOPTOPTOPTOPTOPTOPTOPTOPTOPTOPTOPTOPTOPTOPTOPTOPTOPTOPTOPTOPTOPTOPTOPTOPT
+ *******************************************************************************
+ COORDINATE AND CELL OPTIMIZATION - POINT    2
+ *******************************************************************************
+ LATTICE PARAMETERS (ANGSTROMS AND DEGREES) - BOHR = 0.5291772083 ANGSTROM
+ PRIMITIVE CELL - CENTRING CODE 5/1 VOLUME=    35.769721 - DENSITY  2.598 g/cm^3
+         A              B              C           ALPHA      BETA       GAMMA 
+     3.69844320     3.69844320     3.69819374    59.999510  59.999510  60.001892
+ *******************************************************************************
+ ATOMS IN THE ASYMMETRIC UNIT    1 - ATOMS IN THE UNIT CELL:    2
+     ATOM              X/A                 Y/B                 Z/C    
+ *******************************************************************************
+   1 T  14 SI    1.300055596043E-01  1.200055596043E-01  1.249914348874E-01
+   2 F  14 SI   -1.200055596043E-01 -1.300055596043E-01 -1.249914348874E-01
+
+ TRANSFORMATION MATRIX PRIMITIVE-CRYSTALLOGRAPHIC CELL
+ -1.0000  1.0000  1.0000  1.0000 -1.0000  1.0000  1.0000  1.0000 -1.0000
+
+ *******************************************************************************
+ CRYSTALLOGRAPHIC CELL (VOLUME=        143.07888526)
+         A              B              C           ALPHA      BETA       GAMMA 
+     5.23028691     5.23028691     5.23027501    89.997643  89.997643  90.005503
+
+ COORDINATES IN THE CRYSTALLOGRAPHIC CELL
+     ATOM              X/A                 Y/B                 Z/C    
+ *******************************************************************************
+   1 T  14 SI    1.224984972459E-01  1.274984972459E-01  1.250055596043E-01
+   2 F  14 SI   -1.274984972459E-01 -1.224984972459E-01 -1.250055596043E-01
+
+ T = ATOM BELONGING TO THE ASYMMETRIC UNIT
+
+ TOTAL ENERGY(DFT)(AU)(  5) -5.7863591019004E+02     DE (AU)   -1.211E-05
+
+ UPDATED TRUST RADIUS     0.500E+00
+
+ SYMMETRY ALLOWED FORCES  (COORDINATE, FORCE)
+
+    1  1.4286265E-06    2 -1.8124433E-05    3 -4.9115468E-03    4 -2.5739687E-07
+    5  8.7815758E-05    6 -8.9224876E-05
+
+ GRADIENT NORM     0.004913  GRADIENT THRESHOLD     0.500000
+
+ EIGENVALUES OF THE ESTIMATED HESSIAN
+  0.1436      0.3938      0.4159      0.7361       1.413       2.431    
+
+ PREDICTED ENERGY CHANGE    -0.497E-05
+
+ MAX GRADIENT      0.004912  THRESHOLD              0.000450 CONVERGED NO
+ RMS GRADIENT      0.002006  THRESHOLD              0.000300 CONVERGED NO
+ MAX DISPLAC.      0.002020  THRESHOLD              0.001800 CONVERGED NO
+ RMS DISPLAC.      0.000826  THRESHOLD              0.001200 CONVERGED YES
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT OPTI        TELAPSE       32.99 TCPU       32.86
+ *******************************************************************************
+ COORDINATE AND CELL OPTIMIZATION - POINT    3
+ *******************************************************************************
+ LATTICE PARAMETERS (ANGSTROMS AND DEGREES) - BOHR = 0.5291772083 ANGSTROM
+ PRIMITIVE CELL - CENTRING CODE 5/1 VOLUME=    35.671755 - DENSITY  2.605 g/cm^3
+         A              B              C           ALPHA      BETA       GAMMA 
+     3.69499837     3.69499837     3.69494206    60.000224  60.000224  60.000571
+ *******************************************************************************
+ ATOMS IN THE ASYMMETRIC UNIT    1 - ATOMS IN THE UNIT CELL:    2
+     ATOM              X/A                 Y/B                 Z/C    
+ *******************************************************************************
+   1 T  14 SI    1.300045016418E-01  1.200045016418E-01  1.249937556069E-01
+   2 F  14 SI   -1.200045016418E-01 -1.300045016418E-01 -1.249937556069E-01
+
+ TRANSFORMATION MATRIX PRIMITIVE-CRYSTALLOGRAPHIC CELL
+ -1.0000  1.0000  1.0000  1.0000 -1.0000  1.0000  1.0000  1.0000 -1.0000
+
+ *******************************************************************************
+ CRYSTALLOGRAPHIC CELL (VOLUME=        142.68702191)
+         A              B              C           ALPHA      BETA       GAMMA 
+     5.22549952     5.22549952     5.22551200    89.999758  89.999758  90.001367
+
+ COORDINATES IN THE CRYSTALLOGRAPHIC CELL
+     ATOM              X/A                 Y/B                 Z/C    
+ *******************************************************************************
+   1 T  14 SI    1.224991286243E-01  1.274991286243E-01  1.250045016418E-01
+   2 F  14 SI   -1.274991286243E-01 -1.224991286243E-01 -1.250045016418E-01
+
+ T = ATOM BELONGING TO THE ASYMMETRIC UNIT
+
+ TOTAL ENERGY(DFT)(AU)(  4) -5.7863591363465E+02     DE (AU)   -3.445E-06
+
+ UPDATED TRUST RADIUS     0.500E+00
+
+ SYMMETRY ALLOWED FORCES  (COORDINATE, FORCE)
+
+    1 -1.0045453E-05    2  1.3258612E-05    3 -1.8059513E-07    4  1.1540246E-06
+    5  7.9563788E-06    6 -2.0459274E-06
+
+ GRADIENT NORM     0.000019  GRADIENT THRESHOLD     0.500000
+
+ EIGENVALUES OF THE ESTIMATED HESSIAN
+  0.1436      0.3938      0.4158      0.7361       1.413       2.431    
+
+ PREDICTED ENERGY CHANGE    -0.404E-09
+
+ MAX GRADIENT      0.000013  THRESHOLD              0.000450 CONVERGED YES
+ RMS GRADIENT      0.000008  THRESHOLD              0.000300 CONVERGED YES
+ MAX DISPLAC.      0.000030  THRESHOLD              0.001800 CONVERGED YES
+ RMS DISPLAC.      0.000018  THRESHOLD              0.001200 CONVERGED YES
+
+ CONVERGENCE TESTS SATISFIED AFTER   3 ENERGY AND GRADIENT CALCULATIONS
+
+ ******************************************************************
+ * OPT END - CONVERGED * E(AU):  -5.786359136346E+02  POINTS    3 *
+ ******************************************************************
+
+ EIGENVECTORS IN FORTRAN UNIT 10
+
+ NEIGHBORS OF THE NON-EQUIVALENT ATOMS
+
+ N = NUMBER OF NEIGHBORS AT DISTANCE R
+    ATOM  N     R/ANG      R/AU   NEIGHBORS (ATOM LABELS AND CELL INDICES)
+   1 SI   2     2.2627     4.2759   2 SI   1 0 0   2 SI   0 1 0
+   1 SI   1     2.2627     4.2759   2 SI   0 0 0
+   1 SI   1     2.2627     4.2759   2 SI   0 0 1
+   1 SI   2     3.6949     6.9824   1 SI   0 0-1   1 SI   0 0 1
+   1 SI   4     3.6950     6.9825   1 SI  -1 0 1   1 SI   1 0-1   1 SI   0-1 1
+                                    1 SI   0 1-1
+   1 SI   4     3.6950     6.9825   1 SI  -1 0 0   1 SI   1 0 0   1 SI   0-1 0
+                                    1 SI   0 1 0
+
+
+ FINAL OPTIMIZED GEOMETRY - DIMENSIONALITY OF THE SYSTEM      3
+ (NON PERIODIC DIRECTION: LATTICE PARAMETER FORMALLY SET TO 500)
+ *******************************************************************************
+ LATTICE PARAMETERS (ANGSTROMS AND DEGREES) - BOHR = 0.5291772083 ANGSTROM
+ PRIMITIVE CELL - CENTRING CODE 5/1 VOLUME=    35.671755 - DENSITY  2.605 g/cm^3
+         A              B              C           ALPHA      BETA       GAMMA 
+     3.69499837     3.69499837     3.69494206    60.000224  60.000224  60.000571
+ *******************************************************************************
+ ATOMS IN THE ASYMMETRIC UNIT    1 - ATOMS IN THE UNIT CELL:    2
+     ATOM              X/A                 Y/B                 Z/C    
+ *******************************************************************************
+   1 T  14 SI    1.300045016418E-01  1.200045016418E-01  1.249937556069E-01
+   2 F  14 SI   -1.200045016418E-01 -1.300045016418E-01 -1.249937556069E-01
+
+ TRANSFORMATION MATRIX PRIMITIVE-CRYSTALLOGRAPHIC CELL
+ -1.0000  1.0000  1.0000  1.0000 -1.0000  1.0000  1.0000  1.0000 -1.0000
+
+ *******************************************************************************
+ CRYSTALLOGRAPHIC CELL (VOLUME=        142.68702191)
+         A              B              C           ALPHA      BETA       GAMMA 
+     5.22549952     5.22549952     5.22551200    89.999758  89.999758  90.001367
+
+ COORDINATES IN THE CRYSTALLOGRAPHIC CELL
+     ATOM              X/A                 Y/B                 Z/C    
+ *******************************************************************************
+   1 T  14 SI    1.224991286243E-01  1.274991286243E-01  1.250045016418E-01
+   2 F  14 SI   -1.274991286243E-01 -1.224991286243E-01 -1.250045016418E-01
+
+ T = ATOM BELONGING TO THE ASYMMETRIC UNIT
+ INFORMATION **** fort.34 **** GEOMETRY OUTPUT FILE
+
+ DIRECT LATTICE VECTORS CARTESIAN COMPONENTS (ANGSTROM)
+          X                    Y                    Z
+  -0.282229780687E-04   0.261275271150E+01   0.261276409190E+01
+   0.261275271150E+01  -0.282229780687E-04   0.261276409190E+01
+   0.261271858518E+01   0.261271858518E+01   0.161835337242E-04
+
+
+ CARTESIAN COORDINATES - PRIMITIVE CELL
+ *******************************************************************************
+ *      ATOM          X(ANGSTROM)         Y(ANGSTROM)         Z(ANGSTROM)
+ *******************************************************************************
+   1    14 SI    6.401119262486E-01  6.662397355934E-01  6.532165692726E-01
+   2    14 SI   -6.662397355934E-01 -6.401119262486E-01 -6.532165692726E-01
+
+ ****   2 SYMMOPS - TRANSLATORS IN FRACTIONAL UNITS
+  V INV                   ROTATION MATRICES                       TRANSLATOR
+  1  1  1.00  0.00  0.00  0.00  1.00  0.00  0.00  0.00  1.00    0.00  0.00  0.00
+  2  2  0.00 -1.00 -0.00 -1.00  0.00 -0.00  0.00  0.00 -1.00    0.00  0.00  0.00
+ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT END         TELAPSE       49.18 TCPU       48.94
+ EEEEEEEEEE TERMINATION  DATE 30 11 2012 TIME 09:38:30.2

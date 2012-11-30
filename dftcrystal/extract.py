@@ -407,9 +407,15 @@ class ExtractBase(object):
     elif starter.lower() == 'molecule':
       result = Molecule()
     else:
-      raise NotImplementedError('Can only read 3d structures.')
+      raise NotImplementedError( 'Cannot read {0} structures yet.'
+                                 .format(starter) )
 
     result.read_input(tree[starter])
+    # if optimizing geometry, assumes that last break/keepsym is for that.
+    if len(result) > 0                                                         \
+       and result[-1].keyword.lower() in ['breaksym', 'keepsymm']              \
+       and self.params.optgeom.enabled: result.pop(-1)
+      
     return result
 
   def _grep_structure(self, file):
@@ -714,32 +720,23 @@ class ExtractBase(object):
     # Check whether this is a geometry optimization run.
     if not self._is_optgeom: return self.input_crystal
 
-    # Find last operation which is neither ELASTIC nor ATOMDISP
-    incrys, instruct, i = self.input_crystal, self.input_structure, 0
-    looped = False
-    for i, op in enumerate(incrys[::-1]):
-      if op.keyword.lower() not in ['elastic', 'atomdisp']: break
-      looped = True
+    # Structure is not simplified, since that could change the number of
+    # symmetry operations, unless done carefully. Should be done somewhere
+    # else.
+    incrys, instruct = self.input_crystal, self.input_structure
 
-    # deduce structure - last changes in cell-shape or atomic displacements.
-    if looped:
-      incrys = incrys.copy()
-      incrys[:] = incrys[:-i]
-      instruct = incrys.eval()
-
-    # create symmetric strain
+    # create strain -- CRYSTAL allows pure rotations to creep into the lattice
+    # during optimization.
     inv_in = inv(instruct.cell)
     epsilon = dot(self.structure.cell, inv_in) - identity(3, dtype='float64')
-    epsilon = 0.5 * (epsilon + epsilon.T)
     cell = dot(identity(3) + epsilon, instruct.cell)
     inv_out = inv(cell)
-    if any(abs(cell - self.structure.cell) > 1e-8):
-      raise internal('Could not create symmetric strain matrix')
 
     # create field displacement
+    isbreaksym = self.params.optgeom.breaksym
     field = [ dot(cell, dot(inv_out, a.pos) - dot(inv_in, b.pos))
               for a, b in zip(self.structure, instruct)
-              if a.asymmetric ]
+              if a.asymmetric or isbreaksym]
     field = [into_voronoi(u, cell, inv_out) for u in field]
     field = array(field)
 
@@ -748,6 +745,11 @@ class ExtractBase(object):
       return self.input_crystal
 
     result = incrys.copy()
+    # check whether we need to add breaksym or keepsym
+    if incrys.is_breaksym != isbreaksym:
+      result.append('breaksym' if isbreaksym else 'keepsymm')
+    # check whether we need to add 'angstrom'
+    if not result.is_angstrom: result.append('angstrom')
     # add cell shape changes
     if any(abs(epsilon) > 1e-8): 
       a = Elastic()
@@ -757,8 +759,8 @@ class ExtractBase(object):
       result.append(a)
     # Add displacements 
     if any(abs(field.flatten()) > 1e-8):
-      a = DisplaceAtoms(keepsymm=True)
-      atoms = [u for u in instruct if u.asymmetric]
+      a = DisplaceAtoms()
+      atoms = [u for u in instruct if u.asymmetric or isbreaksym]
       for atom, disp in zip(atoms, field):
         if any(abs(disp) > 1e-8): a.add_atom(type=atom.label, pos=disp)
       result.append(a)

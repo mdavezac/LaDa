@@ -76,17 +76,10 @@ def test_removeatoms():
 
   a.raw = '5\n1 2 3 4 5\n'
   assert all(a.labels == arange(5) + 1)
-  assert a.keepsym
   a.raw = a.raw
   assert all(a.labels == arange(5) + 1)
   b = eval(repr(a), {'{0.__name__}'.format(RemoveAtoms): RemoveAtoms})
   assert all(b.labels == arange(5) + 1)
-  assert b.keepsym
-  b.keepsym = False
-  assert b.breaksym
-  b = eval(repr(b), {'{0.__name__}'.format(RemoveAtoms): RemoveAtoms})
-  assert all(b.labels == arange(5) + 1)
-  assert b.breaksym
 
 def test_modifysymmetry():
   from numpy import all, array
@@ -138,22 +131,12 @@ def test_displaceatoms():
   assert a.atoms[1].type == 2
   assert all(abs(a.atoms[0].pos - 0.1) < 1e-8)
   assert all(abs(a.atoms[1].pos - 0.2) < 1e-8)
-  assert a.keepsym
   a.raw = a.raw
   assert len(a.atoms) == 2
   assert a.atoms[0].type == 1
   assert a.atoms[1].type == 2
   assert all(abs(a.atoms[0].pos - 0.1) < 1e-8)
   assert all(abs(a.atoms[1].pos - 0.2) < 1e-8)
-  assert a.keepsym
-  a.breaksym = True
-  b = eval(repr(a), {'DisplaceAtoms': DisplaceAtoms})
-  assert len(b.atoms) == 2
-  assert b.atoms[0].type == 1
-  assert b.atoms[1].type == 2
-  assert all(abs(b.atoms[0].pos - 0.1) < 1e-8)
-  assert all(abs(b.atoms[1].pos - 0.2) < 1e-8)
-  assert not b.keepsym
 
 def test_insertatoms():
   from numpy import all, abs
@@ -166,22 +149,12 @@ def test_insertatoms():
   assert a.atoms[1].type == 'He'
   assert all(abs(a.atoms[0].pos - 0.1) < 1e-8)
   assert all(abs(a.atoms[1].pos - 0.2) < 1e-8)
-  assert a.keepsym
   a.raw = a.raw
   assert len(a.atoms) == 2
   assert a.atoms[0].type == 'H'
   assert a.atoms[1].type == 'He'
   assert all(abs(a.atoms[0].pos - 0.1) < 1e-8)
   assert all(abs(a.atoms[1].pos - 0.2) < 1e-8)
-  assert a.keepsym
-  a.breaksym = True
-  b = eval(repr(a), {'InsertAtoms': InsertAtoms})
-  assert len(b.atoms) == 2
-  assert a.atoms[0].type == 'H'
-  assert a.atoms[1].type == 'He'
-  assert all(abs(b.atoms[0].pos - 0.1) < 1e-8)
-  assert all(abs(b.atoms[1].pos - 0.2) < 1e-8)
-  assert not b.keepsym
 
 def test_affinetransform():
   from numpy import all, abs, array

@@ -1,62 +1,7 @@
 __docformat__ = "restructuredtext en"
-__all__ = ['GeomKeyword', 'AttrBlock']
+__all__ = ['AttrBlock']
 from ..tools.input import AttrBlock as AttrBlockBase, BaseKeyword,             \
                           BoolKeyword as BaseBoolKeyword
-
-class GeomKeyword(BaseKeyword):
-  """ Keyword with breaksymm attribute. """
-  def __init__(self, keyword=None, raw=None, **kwargs):
-    """ Creates a geometry keyword. 
-    
-        :param str keyword: 
-          keyword identifying the block.
-        :param bool keepsym: 
-          Whether to keep symmetries or not. Defaults to True.
-        :param bool breaksym:
-          Whether to break symmetries or not. Defaults to False.
-          Only one of breaksymm needs be specified. If both are, then they
-          should be consistent.
-    """
-    super(GeomKeyword, self).__init__(keyword=keyword, raw=raw)
-    if 'keepsym' in kwargs and 'breaksym' in kwargs:
-      if kwargs['keepsym'] == kwargs['breaksym']:
-        raise ValueError('keepsym and breaksym both specified and equal.')
-    self.breaksym = kwargs.get('breaksym', not kwargs.get('keepsym', True))
-    """ Whether or not to break symmetries.
-    
-        Defaults to False. If symmetries are not broken, then all equivalent
-        atoms are removed.
-    """
-    kwargs.pop('breaksym', None)
-    kwargs.pop('keepsym', None)
-  @property
-  def keepsym(self):
-    """ Not an alias for breaksym. """
-    return not self.breaksym
-  @keepsym.setter
-  def keepsym(self, value):
-    self.breaksym = not value
-  def __repr__(self): 
-    """ Dumps representation to string. """
-    args = []
-    if 'keyword' in self.__dict__:
-      args.append("keyword={0.keyword!r}".format(self))
-    if 'raw' in self.__dict__: args.append("raw={0.raw!r}".format(self))
-    if self.breaksym == True: args.append("breaksym=True")
-    return "{0.__class__.__name__}(".format(self) + ', '.join(args) + ')'
-  def output_map(self, **kwargs):
-    """ Print input to crystal. """
-    from collections import OrderedDict
-    # starts block
-    result = OrderedDict(keepsymm = True) if self.keepsym                      \
-             else OrderedDict(breaksym= True)
-    # prints raw input, if present.
-    raw = getattr(self, 'raw', None)
-    if raw is not None:
-      raw = raw.rstrip().lstrip()
-      if len(raw) == 0: raw = None
-    result[self.keyword] = raw
-    return result
 
 class AttrBlock(AttrBlockBase):
   """ Defines block input to CRYSTAL. 
@@ -94,51 +39,52 @@ class AttrBlock(AttrBlockBase):
     if raw is not None: result.prefix = raw
     return result
 
-  def read_input(self, tree, owner=None):
+  def read_input(self, tree, owner=None, **kwargs):
     """ Parses an input tree. """
     from ..error import internal
     from ..tools.input import Tree
+    from .input import find_sym, find_units
     from . import registered
     if hasattr(self, 'raw') and len(getattr(tree, 'prefix', '')) > 0: 
       try: self.raw = tree.prefix
       except: pass
-    do_breaksym = False
-    has_breakkeep = False
+    breaksym = kwargs.get('breaksym', False)
+    units    = kwargs.get('units', 'angstrom')
     for key, value in tree:
       # parses sub-block.
       # check for special keywords.
-      if key.lower() == 'keepsymm':
-        do_breaksym, has_breakkeep = False, True
-        continue
-      if key.lower() == 'breaksym':
-        do_breaksym, has_breakkeep = True, True
-        continue
-      if key.lower() in self._input: 
-        newobject = self._input[key.lower()] 
+      lowkey = key.lower()
+      if lowkey in self._input: 
+        newobject = self._input[lowkey] 
         if hasattr(newobject, 'read_input'):
-          newobject.read_input(value, owner=self)
+          newobject.read_input( value, owner=self,
+                                breaksym=breaksym,
+                                units=units )
         elif hasattr(newobject, 'raw'): newobject.raw = value
         elif hasattr(newobject, '__set__'): newobject.__set__(self, value)
         else:
           raise internal( "LaDa doesn't understand how to read input to {0}"   \
-                          .format(key.lower()) )
-        if has_breakkeep and hasattr(newobject, 'breaksym'):
-          newobject.breaksym = do_breaksym
-        do_breaksym, has_breakkeep = False, False
+                          .format(lowkey) )
         continue
+      if lowkey == 'breaksym': breaksym = True; continue
+      if lowkey == 'keepsymm': breaksym = False; continue
+      if lowkey == 'bohr':       units = 'bohr'; continue
+      if lowkey == 'angstrom':   units = 'angstrom'; continue
+      if lowkey == 'fractional': units = 'fractional'; continue
       if isinstance(value, Tree):
-        newobject = registered.get(key.lower(), AttrBlock)()
-        newobject.read_input(value, owner=self)
+        newobject = registered.get(lowkey, AttrBlock)()
+        newobject.read_input(value, owner=self, breaksym=breaksym, units=units)
+        breaksym = find_sym(value, result=breaksym)
+        units = find_units(value, result=units)
       # creates new object.
-      elif key.lower() in registered:
-        newobject = registered[key.lower()]()
+      elif lowkey in registered:
+        newobject = registered[lowkey]()
         if len(value) > 0:
           try: newobject.raw = getattr(value, 'raw', value)
           except: pass
       elif len(value) == 0: newobject = True
       else: newobject = value
-      self.add_keyword(key.lower(), newobject)
-      has_breakkeep = False
+      self.add_keyword(lowkey, newobject)
 
   def _read_nested_group(self, tree, owner=None, **kwargs):
     """ Creates nested groups.
@@ -220,4 +166,29 @@ def print_input(map):
       elif item is not None and len(item) > 0 and item != 'False':
         result += key.upper().rstrip().lstrip() + '\n'                         \
                   + item.upper().rstrip() + '\n'
+  return result
+
+def find_units(tree, breakpoint=None, result=None):
+  """ Figures out current units in tree stream. """
+  from ..tools.input import Tree
+  if breakpoint is not None: breakpoint = breakpoint.lower()
+  for key, value in tree:
+    key = key.lower()
+    if breakpoint is not None and key == breakpoint: return result
+    elif key == 'fraction': result = 'fraction'
+    elif key == 'bohr':       result = 'bohr'
+    elif key == 'angstrom':   result = 'angstrom'
+    elif isinstance(value, Tree): result = find_units(value, result=result)
+  return result
+
+def find_sym(tree, breakpoint=None, result=None):
+  """ Figures out current units in tree stream. """
+  from ..tools.input import Tree
+  if breakpoint is not None: breakpoint = breakpoint.lower()
+  for key, value in tree:
+    key = key.lower()
+    if breakpoint is not None and key == breakpoint: return result
+    elif key == 'keepsymm': result = False
+    elif key == 'breaksym': result = True
+    elif isinstance(value, Tree): result = find_sym(value, result=result)
   return result

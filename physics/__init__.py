@@ -5,7 +5,7 @@
     *quantities* package.
 """
 __docformat__ = "restructuredtext en"
-__all__ = [ 'a0', 'bhor_radius', 'h', 'planck', 'h_bar', 'reduced_planck',
+__all__ = [ 'a0', 'bohr_radius', 'h', 'planck', 'h_bar', 'reduced_planck',
             'electronic_mass', 'Ry', 'rydberg', 'Kb', 'boltzmann' ]
 
 import quantities as pq
@@ -24,10 +24,10 @@ Ry = pq.UnitQuantity('Rydberg', 0.5 * pq.hartree, symbol='Ry')
 rydberg = Ry
 """ Rydberg energy units. """
 
-a0 = pq.UnitQuantity('bhor_radius', 0.529177249 * pq.angstrom, symbol='a0')
-""" Bhor radius, unit of length of atomic units. """
-bhor_radius = a0
-""" Bhor radius, unit of length of atomic units. """
+a0 = pq.UnitQuantity('bohr_radius', 0.529177249 * pq.angstrom, symbol='a0')
+""" Bohr radius, unit of length of atomic units. """
+bohr_radius = a0
+""" Bohr radius, unit of length of atomic units. """
 
 emass = pq.UnitQuantity( "electronic_mass", h_bar**2 / (2e0 * Ry * a0**2),
                          symbol='m_e' )
@@ -50,6 +50,6 @@ if 'planck' not in pq.__dict__:      pq.planck          = planck
 if 'h_bar' not in pq.__dict__:       pq.h_bar           = h_bar
 if 'Ry' not in pq.__dict__:          pq.Ry              = Ry
 if 'a0' not in pq.__dict__:          pq.a0              = a0
-if 'bhor_radius' not in pq.__dict__: pq.bhor_radius     = bhor_radius
+if 'bohr_radius' not in pq.__dict__: pq.bohr_radius     = bohr_radius
 if 'boltzmann' not in pq.__dict__:   pq.boltzmann       = boltzmann  
 if 'emass' not in pq.__dict__:       pq.emass           = emass  

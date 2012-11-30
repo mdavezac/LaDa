@@ -116,6 +116,9 @@ class Functional(object):
     """ Reads file or string with CRYSTAL input. """
     from ..error import IOError
     from .. import CRYSTAL_geom_blocks as starters
+    from .input import find_sym, find_units
+
+    kwargs = {'units': 'angstrom', 'breaksym': True, 'owner': self}
 
     self.title = tree.keys()[0]
     tree = tree[self.title]
@@ -126,19 +129,30 @@ class Functional(object):
     if found == False:
       raise IOError('Could not find start of input in file.')
     if 'OPTGEOM' in tree[starter].keys():
-      self.optgeom.read_input(tree[starter]['OPTGEOM'], owner=self)
+      kwargs['breaksym'] = find_sym( tree[starter], 'OPTGEOM', 
+                                     kwargs['breaksym'] )
+      kwargs['units'] = find_units(tree[starter], 'OPTGEOM', kwargs['units'])
+      self.optgeom.read_input(tree[starter]['OPTGEOM'], **kwargs)
 
     # read basis set
     if 'BASISSET' in tree.keys(): 
-      self.basis.read_input(tree['BASISSET'], owner=self)
+      kwargs['breaksym'] = find_sym( tree[starter], 'BASISSET',
+                                     kwargs['breaksym'] )
+      kwargs['units'] = find_units(tree[starter], 'BASISSET', kwargs['units'])
+      self.basis.read_input(tree['BASISSET'], **kwargs)
 
     # read hamiltonian stuff.
     if 'HAMSCF' in tree.keys():  
-      self.scf.read_input(tree['HAMSCF'], owner=self)
+      kwargs['breaksym'] = find_sym( tree[starter], 'HAMSCF',
+                                     kwargs['breaksym'] )
+      kwargs['units'] = find_units(tree[starter], 'HAMSCF', kwargs['units'])
+      self.scf.read_input(tree['HAMSCF'], **kwargs)
+    if len(self.title) == 0: self.title = None
 
   def output_map(self, **kwargs):
     """ Dumps CRYSTAL input to string. """
     from ..tools.input import Tree
+    from .input import find_units, find_sym
 
     if 'crystal' not in kwargs: kwargs['crystal'] = self
     root = Tree()
@@ -160,19 +174,27 @@ class Functional(object):
       # Output map of the structure
       smap = structure.output_map(**kwargs)
       # To which we add the output map of optgeom
+      kwargs['breaksym'] = structure.is_breaksym
+      kwargs['units'] = structure.current_units
       smap[0][1].update(self.optgeom.output_map(**kwargs))
       # finally we add that to inner.
       inner.update(smap)
     else: # no structures. Not a meaningful input, but whatever.
+      kwargs['breaksym'] = False
+      kwargs['units'] = 'angstrom'
       title = getattr(self, 'title', '')
       if title is None: title = ''
       inner = root.descend(title.rstrip().lstrip())
       inner.update(self.optgeom.output_map(**kwargs))
 
+    kwargs['breaksym'] = find_sym(inner, result=kwargs['breaksym'])
+    kwargs['units']    = find_units(inner, result=kwargs['units'])
     # now add basis
     inner['BASISSET'] = self.basis.output_map(**kwargs)
 
     # add scf block
+    kwargs['breaksym'] = find_sym(inner, result=kwargs['breaksym'])
+    kwargs['units']    = find_units(inner, result=kwargs['units'])
     inner.update(self.scf.output_map(**kwargs))
     # end input and return
     return root
@@ -291,8 +313,6 @@ class Functional(object):
     from os.path import join, samefile, exists
     from shutil import rmtree
     from glob import iglob
-    from .external import External
-    from ..crystal import write
     from ..misc import copyfile, Changedir
     from .. import CRYSTAL_filenames, CRYSTAL_delpatterns
 
@@ -605,7 +625,6 @@ class Functional(object):
   def _nb_real_cmplx_kpoints(self, structure):
     """ Number of real and complex k-points. """
     from numpy import dot
-    from numpy.linalg import inv
     from ..math import is_integer
     # we need to compute real and complex k-points differently.
     # real k-points are those which are on the Brillouin zone edege and Gamma.

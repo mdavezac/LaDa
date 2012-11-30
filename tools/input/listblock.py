@@ -30,6 +30,15 @@ class ListBlock(BaseKeyword, list):
       raise ValueError('Wrong argument to {0.keyword}.append().'.format(self))
     list.append(self, keyword)
     return self
+ 
+  def insert(self, i, keyword, raw=None):
+    """ Inserts an item. """
+    from ...error import ValueError
+    if isinstance(keyword, str):
+      keyword = BaseKeyword(keyword=keyword, raw=raw)
+    elif not isinstance(keyword, BaseKeyword):
+      raise ValueError('Wrong argument to {0.keyword}.append().'.format(self))
+    list.insert(self, i, keyword)
 
   
   def output_map(self, **kwargs):

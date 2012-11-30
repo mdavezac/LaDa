@@ -4,14 +4,16 @@ __all__ = [ 'Extract', 'AffineTransform', 'DisplaceAtoms', 'InsertAtoms',
             'ModifySymmetry', 'RemoveAtoms', 'Slabcut', 'read',
             'Slabinfo','Crystal', 'Molecule', 'Slab', 'Functional', 'Shell',
             'read_gaussian_basisset', 'MassExtract', 'read_input', 'exec_input',
-            'Elastic', 'External', 'Supercell', 'Supercon' ]
+            'Elastic', 'External', 'Supercell', 'Supercon', 'KeepSymm', 'BreakSym',
+            'BohrUnits', 'AngstromUnits', 'Fractional' ]
 
 from .basis import Shell
 from .functional import Functional
 from .extract import Extract, MassExtract
 from .geometry import AffineTransform, DisplaceAtoms, InsertAtoms,              \
                       ModifySymmetry, RemoveAtoms, Slabcut, Slabinfo, Slab,     \
-                      Elastic, Supercell, Supercon
+                      Elastic, Supercell, Supercon, BreakSym, KeepSymm,         \
+                      BohrUnits, AngstromUnits, Fractional
 from .crystal import Crystal
 from .external import External
 from .molecule import Molecule
@@ -28,7 +30,12 @@ registered = { 'atomrot':    AffineTransform,
                'supercon':   Supercon,
                'crystal':    Crystal,
                'external':   External,
-               'molecule':   Molecule }
+               'molecule':   Molecule,
+               'breaksym':   BreakSym,
+               'keepsymm':   KeepSymm,
+               'bohr':       BohrUnits,
+               'angstrom':   AngstromUnits,
+               'fraction':   Fractional }
 """ Keywords used in creating the geometry. """
 
 def read(path):
@@ -62,6 +69,9 @@ def read(path):
   func.read_input(b)
   crys.read_input(b[key]['CRYSTAL'])
   crys.name = key
+  if func.optgeom.enabled and len(crys) > 0                                    \
+     and crys[-1].keyword.lower() in ['breaksym', 'keepsymm']:
+     crys.pop(-1)
   return crys, func
 
 

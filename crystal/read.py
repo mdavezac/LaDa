@@ -144,7 +144,7 @@ def castep(file):
                            bar, atm, milli, mol
 
     auv = UnitQuantity('auv', a0*Ry/h_bar) # velocity
-    units = { 'a0': a0, 'bhor': a0, 'm': meter, 'cm': centimeter,
+    units = { 'a0': a0, 'bohr': a0, 'm': meter, 'cm': centimeter,
               'mm': millimeter, 'ang': angstrom, 'me': emass, 'amu': amu, 
               's': second, 'ms': millisecond, 'mus': microsecond, 
               'ns': nanosecond, 'ps': picosecond, 'fs': femtosecond,

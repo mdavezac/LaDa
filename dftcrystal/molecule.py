@@ -1,6 +1,5 @@
 __docformat__ = "restructuredtext en"
 __all__ = ['Molecule']
-from .input import GeomKeyword
 from ..tools.input import ListBlock, BaseKeyword
 class Molecule(ListBlock):
   """ Base class for functional crystal structures for CRYSTAL. """
@@ -109,45 +108,106 @@ class Molecule(ListBlock):
     from . import registered
     self[:] = []
     self.raw = tree.prefix
-    do_breaksym = False
-    has_breakkeep = False
     for key, value in tree:
       # parses sub-block.
       if isinstance(value, Tree): continue
       # check for special keywords.
-      if key.lower() == 'keepsymm':
-        do_breaksym = False
-        has_breakkeep = True
-        continue
-      if key.lower() == 'breaksym':
-        do_breaksym = True
-        has_breakkeep = True
-        continue
-      # finally, creates new object.
       if key.lower() in registered:
         newobject = registered[key.lower()]()
-        if hasattr(newobject, 'breaksym'): newobject.breaksym = do_breaksym
-        if hasattr(newobject, 'read_input'):
-          newobject.read_input(value, owner=self)
-      elif has_breakkeep:
-        newobject = GeomKeyword(keyword=key, breaksym=do_breaksym)
       else: newobject = BaseKeyword(keyword=key)
       if len(value) > 0: 
         try: newobject.raw = getattr(value, 'raw', value)
         except: pass
       self.append(newobject)
-      do_breaksym = False
-      has_breakkeep = False
 
-  def append(self, keyword, raw=None, breaksym=None):
+  def append(self, keyword, raw=None):
     """ Appends an item.
 
+        Some shortcuts are accpted:
+
+        - 'breaksym'
+        - 'keepsymm'
+        - 'angstrom'
+        - 'bohr'
+        - 'fractional'
+            
         :return: self, so calls can be chained. 
     """
-    if breaksym is not None:
-      self.append(GeomKeyword(keyword=keyword, raw=raw, breaksym=None))
-    else: super(Molecule, self).append(keyword, raw)
+    from . import registered
+    if hasattr(keyword, 'lower')                                               \
+       and keyword.lower() in [ 'breaksym', 'keepsymm', 'bohr', 
+                                'fraction', 'angstrom' ]:
+      keyword = registered[keyword]()
+    super(Molecule, self).append(keyword, raw)
     return self
+  def insert(self, i, keyword, raw=None):
+    """ Inserts item at given position. 
+
+        Some shortcuts are accpted:
+
+        - 'breaksym'
+        - 'keepsymm'
+        - 'angstrom'
+        - 'bohr'
+        - 'fractional'
+    """
+    from . import registered
+    if hasattr(keyword, 'lower')                                               \
+       and keyword.lower() in [ 'breaksym', 'keepsymm', 'bohr', 
+                                'fraction', 'angstrom' ]:
+      keyword = registered[keyword]()
+    super(Molecule, self).insert(i, keyword, raw)
+
+  def __setitem__(self, i, value):
+    """ Sets an item.
+
+        Some shortcuts are accpted:
+
+        - 'breaksym'
+        - 'keepsymm'
+        - 'angstrom'
+        - 'bohr'
+        - 'fractional'
+    """
+    from . import registered
+    if hasattr(value, 'lower')                                                 \
+       and value.lower() in [ 'breaksym', 'keepsymm', 'bohr', 
+                              'fraction', 'angstrom' ]:
+      value = registered[value](value=True)
+    super(Molecule, self).__setitem__(i, value)
+
+  @property
+  def current_units(self):
+    """ Current units in transformation list. 
+
+        This will one of "bohr", "angstrom", "fractional", depending on the
+        last encountered keyword in the list,
+    """
+    for u in self[::-1]:
+      if u.keyword == 'fraction':   return 'fraction'
+      elif u.keyword == 'bohr':     return 'bohr'
+      elif u.keyword == 'angstrom': return 'angstrom'
+    return 'angstrom'
+  @property
+  def is_fractional(self):
+    """ True if current units are fractional. """
+    return self.current_units == 'fraction'
+  @property
+  def is_bohr(self):
+    """ True if current units are bohrs. """
+    return self.current_units == 'bohr'
+  @property
+  def is_angstrom(self):
+    """ True if current units are angstrom. """
+    return self.current_units == 'angstrom'
+  @property
+  def is_breaksym(self):
+    """ True if currently keeping symmetries. """
+    for u in self[::-1]:
+      if u.keyword == 'keepsymm':   return False
+      elif u.keyword == 'breaksym': return True
+    return True
+    
 
   def eval(self):
     """ Evaluates current structure. 
@@ -334,5 +394,36 @@ class Molecule(ListBlock):
     # now print map.
     return print_input(map)
   def output_map(self, **kwargs):
+    from ..tools.input import Tree
+    from .input import find_sym, find_units
     if 'structure' not in kwargs: kwargs['structure'] = self
-    return super(Molecule, self).output_map(**kwargs)
+    if kwargs.get('breaksym', None) is None: kwargs['breaksym'] = True
+    if kwargs.get('units', None) is None: kwargs['units'] = 'angstrom' 
+
+    root = Tree()
+    root[self.keyword] = Tree()
+    result = root[self.keyword]
+    if getattr(self, 'raw', None) is not None:
+      result.prefix = str(self.raw)
+    for item in self:
+      keyword = getattr(item, 'keyword', None)
+      value   = getattr(item, 'raw', None)
+      if hasattr(item, 'output_map'):
+        dummy = item.output_map(**kwargs)
+        if dummy is not None:
+          result.update(dummy)
+          kwargs['breaksym'] = find_sym(result, result=kwargs['breaksym'])
+          kwargs['units'] = find_units(result, result=kwargs['units'])
+      elif value is not None:
+        result[keyword] = value
+      elif hasattr(value, '__iter__'):
+        result[keyword] =  ' '.join(str(u) for u in value)
+      else:
+        result[keyword] = str(value)
+      lowkey = keyword.lower()
+      if lowkey == 'breaksym': kwargs['breaksym'] = True
+      elif lowkey == 'keepsymm': kwargs['breaksym'] = False
+      elif lowkey == 'angstrom': kwargs['units'] = 'angstrom'
+      elif lowkey == 'bohr':     kwargs['units'] = 'bohr'
+      elif lowkey == 'fraction': kwargs['units'] = 'fractional'
+    return root

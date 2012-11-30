@@ -1,11 +1,64 @@
 __docformat__ = "restructuredtext en"
 __all__ = [ 'RemoveAtoms', 'Slabinfo', 'Slabcut', 'Slab',
             'DisplaceAtoms', 'InsertAtoms', 'ModifySymmetry',
-            'AffineTransform', 'Elastic', 'Supercell', 'Supercon' ]
-from .input import GeomKeyword
-from ..tools.input import BaseKeyword
+            'AffineTransform', 'Elastic', 'Supercell', 'Supercon',
+            'KeepSymm', 'BreakSym', 'BohrUnits', 'AngstromUnits',
+            'Fractional' ]
+from ..tools.input import BaseKeyword, BoolKeyword
 
-class RemoveAtoms(GeomKeyword):
+class KeepSymm(BoolKeyword):
+  """ Switches to keeping symmetries. """
+  keyword = "keepsymm"
+  def output_map(self, **kwargs):
+    """ Prints to Tape.
+
+        Does not print if breaksym is False on input.
+    """
+    if kwargs.get('breaksym', True) == False: return None
+    return {self.keyword: True}
+class BreakSym(BoolKeyword):
+  """ Switches to breaking symmetries (Default). """
+  keyword = "breaksym"
+  def output_map(self, **kwargs):
+    """ Prints to Tape.
+
+        Does not print if breaksym is True on input.
+    """
+    if kwargs.get('breaksym', False) == True: return None
+    return {self.keyword: True}
+class BohrUnits(BoolKeyword):
+  """ Switches to Bohr units. """
+  keyword = "bohr"
+  def output_map(self, **kwargs):
+    """ Prints to Tape.
+
+        Does not print if units is bohr on input.
+    """
+    if kwargs.get('units', '') == 'bohr': return None
+    return {self.keyword: True}
+class AngstromUnits(BoolKeyword):
+  """ Switches to angstrom units (Default). """
+  keyword = "angstrom"
+  def output_map(self, **kwargs):
+    """ Prints to Tape.
+
+        Does not print if units is angstrom on input.
+    """
+    if kwargs.get('units', '') == 'angstrom': return None
+    return {self.keyword: True}
+class Fractional(BoolKeyword):
+  """ Switches to fractional units. """
+  keyword = "fraction"
+  def output_map(self, **kwargs):
+    """ Prints to Tape.
+
+        Does not print if units is fraction on input.
+    """
+    if kwargs.get('units', '') == 'fraction': return None
+    return {self.keyword: True}
+
+
+class RemoveAtoms(BaseKeyword):
   """ Remove atoms from structure. """
   keyword = 'atomremo'
   """ CRYSTAL keyword. """
@@ -15,13 +68,6 @@ class RemoveAtoms(GeomKeyword):
         :param args:
           Atoms to remove are set by specifying them as arguments to the
           iterator.
-        :param bool breaksym:
-          Keyword argument specifying whether to keep or remove symmetries.
-          If symmetries are kept, then all equivalent atoms are removed from
-          the structure.
-        :param bool keepsym:
-          Opposite of breaksym. If both are specified, then they should make
-          sense...
     """ 
     from copy import copy
     super(RemoveAtoms, self).__init__(**kwargs)
@@ -48,7 +94,6 @@ class RemoveAtoms(GeomKeyword):
   def __repr__(self):
     result = '{0.__class__.__name__}({1}, '                                    \
              .format( self, ', '.join(str(u) for u in self.labels))
-    if self.breaksym == True: result += 'keepsym=False, '
     return result[:-2] + ')'
     
 class Slabinfo(BaseKeyword):
@@ -106,23 +151,22 @@ class Slabcut(Slabinfo):
 Slab = Slabcut
 """ Alias for :py:class`~lada.dftcrystal.geometry.Slabcut`. """
 
-class DisplaceAtoms(GeomKeyword):
+class DisplaceAtoms(BaseKeyword):
   """ Displaces atoms.
   
       This keywords applies a displacement to a set of atoms, identified by
       their labels:
 
       >>> from lada.dftcrystal import DisplaceAtoms
-      >>> disp = DisplaceAtoms(keepsym=True)                                   \\
+      >>> disp = DisplaceAtoms()                                               \\
       ...                     .add_atom(0, 0.01, 0.002, 1)                     \\
       ...                     .add_atom(0, -0.01, 0.05, 5)
       >>> structure.append(disp)
 
 
       The above creates a displacement operations for two atoms, labelled 1 and
-      5, as well as to their symmetric equivalent (``keepsym=True``). The
-      displacements are in cartesian coordinates. It would look as follows in
-      CRYSTAL_'s input:
+      5. The displacements are the current units of the crystal structure. It
+      would look as follows in CRYSTAL_'s input:
 
         | KEEPSYMM
         | ATOMDISP
@@ -492,7 +536,7 @@ class AffineTransform(BaseKeyword):
       args.append('bondtoz={0!r}'.format(self.bondtoz))
     return "{0.__class__.__name__}(".format(self) + ', '.join(args) + ')'
 
-class Elastic(GeomKeyword):
+class Elastic(BaseKeyword):
   """ Elastic deformation of the lattice """
   keyword = 'elastic'
   """ CRYSTAL keyword """
@@ -528,11 +572,11 @@ class Elastic(GeomKeyword):
   def raw(self, value):
     from numpy import array
     value = value.split('\n')
-    type = int(value[0].rstrip().lstrip())
+    type = int(value[0])
     self.is_epsilon = abs(type) == 2
     self.const_volume = type > 0
     self.matrix = array([u.split()[:3] for u in value[1:4]], dtype='float64')
-    if self.is_epsilon: self.matrix = self.matrix.T
+    if not self.is_epsilon: self.matrix = self.matrix.T
 
   def __repr__(self):
     """ Representation of this object. """

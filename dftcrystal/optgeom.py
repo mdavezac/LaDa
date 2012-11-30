@@ -120,8 +120,13 @@ class ExclAttrBlock(AttrBlock):
 
   def output_map(self, **kwargs):
     """ Does not print if disabled. """
+    from ..tools.input import Tree
     if not self.enabled: return None
-    return super(ExclAttrBlock, self).output_map(**kwargs)
+    result = super(ExclAttrBlock, self).output_map(**kwargs)
+    if result is None:
+      result = Tree()
+      result[self.keyword] = Tree()
+    return result
 
   def __getstate__(self):
     d = self.__dict__.copy()
@@ -174,11 +179,29 @@ class OptGeom(ExclAttrBlock):
   """
   keyword = 'optgeom'
   """ CRYSTAL input keyword (class-attribute) """
-  def __init__(self): 
+  def __init__(self, breaksym=None, keepsymm=None): 
     """ Creates an optimization block. """
-    from ..tools.input import QuantityKeyword
     from quantities import UnitQuantity, hartree, angstrom
+    from ..tools.input import QuantityKeyword
+    from ..error import ValueError
+
     super(OptGeom, self).__init__()
+
+    self.breaksym = True
+    """ Whether to keep or break symmetries.
+    
+        This value can be True, False, or None. If True, then symmetries will
+        be broken. If False, symmetries will be kept during the minimization.
+        By default, symmetries are broken.
+    """
+    if breaksym is None and keepsymm is not None:
+      self.breaksym = keepsymm == False
+    elif breaksym is not None and keepsymm is None:
+      self.breaksym = breaksym == True
+    elif breaksym is not None and keepsymm is not None                         \
+         and breaksym == keepsymm:
+      raise ValueError( 'OptGeom: breaksym and keepsymm '                      \
+                        'give opposite instructions.' )
  
     self.maxcycle   = MaxCycle()
     """ Maxium number of iterations in geometry optimization loop. """
@@ -253,8 +276,8 @@ class OptGeom(ExclAttrBlock):
         Convergence criteria as the root mean square of the displacements
         during structural relaxation. Should be a floating point.
     """
-    bohr = UnitQuantity('crystal_bhor', 0.5291772083*angstrom, symbol='bhor')
-    """ Bhor radius as defined by CRYSTAL """
+    bohr = UnitQuantity('crystal_bohr', 0.5291772083*angstrom, symbol='bohr')
+    """ Bohr radius as defined by CRYSTAL """
     self.extpress   = QuantityKeyword(units=hartree/bohr**3)
     """ Hydrostatic pressure in :math:`\\frac{\\text{hartree}}{\\text{bohr}^{3}}`.
     
@@ -287,6 +310,39 @@ class OptGeom(ExclAttrBlock):
     self.verbose     = BoolKeyword(keyword='print')
     """ Verbose printint. """
 
+  @property
+  def keepsymm(self): 
+    """ Alias to the opposite of breaksym. """
+    return self.breaksym != True
+  @keepsymm.setter
+  def keepsymm(self, value): self.breaksym = value != True
+
+  @property
+  def keepsym(self):
+    """ Raise error to avoid errors. """
+    raise AttributeError('OptGeom: did you mean keepsymm (with two m)?')
+  @keepsym.setter
+  def keepsym(self, value):
+    """ Raise error to avoid errors. """
+    raise AttributeError('OptGeom: did you mean keepsymm (with two m)?')
+
   def __ui_repr__(self, imports, name=None, defaults=None, exclude=None):
     """ User-friendly output. """
-    return super(OptGeom, self).__ui_repr__(imports, name, defaults)
+    exclude = ['keepsym', 'keepsymm']
+    return super(OptGeom, self).__ui_repr__(imports, name, defaults, exclude)
+
+  def output_map(self, **kwargs):
+    """ Reads input tape. """
+    from ..tools.input import Tree
+    if self.breaksym != kwargs.get('breaksym', True): 
+      result = Tree()
+      result['breaksym' if self.breaksym else 'keepsymm'] = True
+      result.update(super(OptGeom, self).output_map(**kwargs))
+      if len(result) == 0: return None
+      return result
+    return super(OptGeom, self).output_map(**kwargs)
+  
+  def read_input(self, value, **kwargs):
+    """ Reads input tape. """
+    self.breaksym = kwargs.get('breaksym', True)
+    return super(OptGeom, self).read_input(value, **kwargs)

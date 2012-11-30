@@ -4,7 +4,7 @@ def test():
   from shutil import rmtree
   from os.path import exists
   from os import mkdir
-  from lada.dftcrystal import Crystal, relax, Shell
+  from lada.dftcrystal import Crystal, relax, Shell, DisplaceAtoms
   from lada import default_comm
 
   functional = relax.Relax()
@@ -31,8 +31,12 @@ def test():
   functional.levshift = 5, True
   functional.maxcycle = 600
   functional.guessp = True
+  functional.optgeom.keepsymm = True
 
   crystal = Crystal(227, 5.43).add_atom(0.125, 0.125, 0.125, 'Si')
+  crystal.append('fraction')
+  crystal.append('keepsymm')
+  crystal.append(DisplaceAtoms().add_atom(0.01, 0, 0, 1))
   directory = mkdtemp()
   if directory == '/tmp/test/' and exists(directory):
     rmtree(directory)

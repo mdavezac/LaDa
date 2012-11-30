@@ -28,7 +28,7 @@ def test():
   functional.maxcycle = 600
 
   crystal = Crystal(227, 5.43).add_atom(0.125, 0.125, 0.125, 'Si')
-  directory = mkdtemp() # '/tmp/test/'
+  directory = '/tmp/test/' # mkdtemp()
   try: 
      results = functional(crystal, outdir=directory, comm=default_comm)
      assert results.success

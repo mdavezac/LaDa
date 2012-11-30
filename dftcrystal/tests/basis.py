@@ -24,8 +24,8 @@ def test_chemod():
   a = functional.basis._input['chemod']
   assert len(functional.basis.chemod) == 0
   assert a.output_map(**kwargs) is None
-  assert functional.basis.chemod.breaksym == False
-  assert loads(dumps(a)).breaksym is False
+  assert functional.basis.chemod.breaksym == True
+  assert loads(dumps(a)).breaksym is True
   assert len(loads(dumps(a))) == 0
  
   functional.basis.chemod.keepsym = True

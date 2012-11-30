@@ -3,8 +3,8 @@ def test_general():
   from quantities import angstrom
   from lada.dftcrystal.basis import Shell
   from lada.error import TypeError
-  bhor = 0.5291772083*angstrom # crystal conversion factor
-  invbhor = 1e0/bhor/bhor
+  bohr = 0.5291772083*angstrom # crystal conversion factor
+  invbohr = 1e0/bohr/bohr
   invangs = 1e0/angstrom/angstrom
 
   assert Shell(0).type == 's'  and abs(Shell(0).charge -  2.0) < 1e-8\
@@ -20,7 +20,7 @@ def test_general():
 
   assert len(Shell(0).append(0.5, 0.1)) == 1
   assert len(Shell(0).append(0.5, 0.1).append(0.6, 0.1)) == 2
-  assert abs(Shell(0).append(0.5, 0.1).functions[0][0] - 0.5*invbhor) < 1e-8
+  assert abs(Shell(0).append(0.5, 0.1).functions[0][0] - 0.5*invbohr) < 1e-8
   assert abs(Shell(0).append(0.5*invangs, 0.1).functions[0][0] - 0.5*invangs) < 1e-8
   assert abs(Shell(0).append(0.5*invangs, 0.1).functions[0][0].magnitude - 0.140014258892) < 1e-8
   assert abs(Shell(0).append(0.5*invangs, 0.1).functions[0][1] - 0.1) < 1e-8
@@ -205,8 +205,12 @@ def test_output_map():
   structure = Crystal()
   structure.read_input(parsed['CRYSTAL'])
   o = a.basis.output_map(structure=structure)
+  assert len(o) == 1
+  assert o[0] == ('ghosts', '2\n1 2')
+  a.basis.ghosts.breaksym = False
+  o = a.basis.output_map(structure=structure)
   assert len(o) == 2
-  assert o[0] == ('breaksym', True)
+  assert o[0] == ('keepsymm', True)
   assert o[1] == ('ghosts', '2\n1 2')
   b = Functional()
   b.basis.raw = o.prefix

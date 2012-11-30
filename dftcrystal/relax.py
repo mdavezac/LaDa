@@ -151,11 +151,11 @@ def iter_relax(self, structure=None, outdir=None, maxiter=30, **kwargs):
     # last condition makes it easier to increase tolerance after first few run
     # at lower toldee.
     if extract.optgeom_convergence is True                                     \
-       and extract.optgeom_iterations < self.optgeom.maxcycle                  \
+       and extract.optgeom_iterations == 1                                     \
        and extract.params.toldee >= self.toldee: break
 
   if extract.optgeom_convergence is True                                       \
-     and extract.optgeom_iterations < self.optgeom.maxcycle                    \
+     and extract.optgeom_iterations == 1                                       \
      and extract.params.toldee >= self.toldee:
     # perform static calculation
     self.optgeom.enabled = False

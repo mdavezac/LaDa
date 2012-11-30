@@ -184,9 +184,18 @@ def test_atomspin():
   from lada.dftcrystal.electronic import AtomSpin, Electronic
   from lada.error import TypeError
 
-  Crystal = namedtuple('Crystal', ['dft'])
+  class GuessP:
+    def __init__(self, yes=False):
+      self.yes = yes
+    def output_map(self, **kwargs):
+      return {'guessp': True} if self.yes else None
+  class Scf:
+    def __init__(self, yes=False):
+      self._input = {'guessp': GuessP(yes)}
+
+  Crystal = namedtuple('Crystal', ['dft', 'scf'])
   Dft = namedtuple('Dft', ['spin'])
-  on, off = Crystal(Dft(True)), Crystal(Dft(False))
+  on, off = Crystal(Dft(True), Scf(False)), Crystal(Dft(False), Scf(False))
   a = Electronic()
   b = a._input['atomspin']
   assert a.atomspin.up is None
@@ -204,9 +213,9 @@ def test_atomspin():
   assert c[0] == '3'
   assert all(u == '1' for u in c[2::2])
   assert c[1::2] == ['1', '3', '5']
-  assert eval(repr(b), {'AtomSpin':AtomSpin}).output_map(crystal=on) \
+  assert eval(repr(b), {'AtomSpin':AtomSpin}).output_map(crystal=on)           \
          == b.output_map(crystal=on)
-  assert loads(dumps(b)).output_map(crystal=on) \
+  assert loads(dumps(b)).output_map(crystal=on)                                \
          == b.output_map(crystal=on)
   c = AtomSpin()
   c.read_input(b.output_map(crystal=on)['atomspin'])

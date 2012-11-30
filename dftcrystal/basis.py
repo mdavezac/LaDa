@@ -2,11 +2,11 @@ __docformat__ = "restructuredtext en"
 __all__ = ['BasisSet', 'Shell']
 from collections import MutableMapping
 from quantities import UnitQuantity, angstrom
-from .input import AttrBlock, GeomKeyword
-from ..tools.input import VariableListKeyword
+from .input import AttrBlock
+from ..tools.input import VariableListKeyword, BaseKeyword
 
 crystal_bohr = UnitQuantity('crystal_bohr', 0.5291772083*angstrom, symbol='bohr')
-""" Bhor radius as defined by CRYSTAL. """
+""" Bohr radius as defined by CRYSTAL. """
 crystal_invbohr2 = UnitQuantity( 'crystal_invbohr2',
                                  1e0/crystal_bohr/crystal_bohr, symbol='bohr^-2' )
 
@@ -282,10 +282,16 @@ class Ghosts(VariableListKeyword):
     from ..tools.input import Tree
     if self.value is None: return None
     if len(self.value) == 0: return None
-    results = Tree() 
-    results['keepsymm' if self.keepsym else 'breaksym'] = True
-    results[self.keyword] = self.raw
-    return results
+    if kwargs.get('breaksym', True) != self.breaksym:
+      results = Tree() 
+      results['keepsymm' if self.keepsym else 'breaksym'] = True
+      results[self.keyword] = self.raw
+      return results
+    return {self.keyword: self.raw}
+  def read_input(self, value, owner=None, **kwargs): 
+    """ Reads from input. """
+    self.raw = value
+    self.breaksym = kwargs.get('breaksym', False)
   def __get__(self, instance, owner=None):
     return self
   def __set__(self, instance, value): 
@@ -303,13 +309,21 @@ class Ghosts(VariableListKeyword):
                             '``[integers], True or False``.')
 
 
-class Chemod(GeomKeyword, MutableMapping):
+class Chemod(BaseKeyword, MutableMapping):
   keyword = 'chemod'
   def __init__(self, **kwargs):
-    GeomKeyword.__init__(self, **kwargs)
     MutableMapping.__init__(self)
     self.modifications = {}
     """ Holds chemical modifications. """
+    self.breaksym = kwargs.get('breaksym', not kwargs.get('keepsymm', False))
+    """ Whether to break symmetries or not. """
+  @property
+  def keepsymm(self):
+    """ Alias to not breaksym. """
+    return self.breaksym == False
+  @keepsymm.setter
+  def keepsym(self, value): self.breaksym = value == False
+
   def __getitem__(self, index): return self.modifications[index]
   def __setitem__(self, index, value): self.modifications[index] = value
   def __delitem__(self, index): self.modifications.__delitem__(index)
@@ -354,6 +368,7 @@ class Chemod(GeomKeyword, MutableMapping):
     """ Symmetry modifications, if any. """
     from numpy import allclose
     from .geometry import ModifySymmetry
+    if len(self.modifications) == 0: return None
     if self.keepsym: return None
     result = []
     equivs = self._symequivs(structure)
@@ -384,6 +399,7 @@ class Chemod(GeomKeyword, MutableMapping):
     if len(self.modifications) == 0: return None
     from operator import itemgetter
     from numpy import allclose
+    from ..tools.input import Tree
     equivs = self._symequivs(structure)
     if self.keepsym:
       shells = self.modifications.copy()
@@ -403,12 +419,19 @@ class Chemod(GeomKeyword, MutableMapping):
     raw = "{0}\n".format(len(shells))
     for key, value in sorted(shells.items(), key=itemgetter(0)):
       raw += "{0}  {1}\n".format(key, " ".join(str(u) for u in value))
+    if kwargs.get('breaksym', True) != self.breaksym:
+      results = Tree() 
+      results['keepsymm' if self.keepsym else 'breaksym'] = True
+      results[self.keyword] = raw
+      return results
     return {self.keyword: raw}
 
   def read_input(self, tree, owner=None, **kwargs):
     from numpy import array
     from ..error import ValueError
     if not hasattr(tree, 'prefix'): raise ValueError('Unexpected empty node.')
+    self.breaksym = kwargs.get('breaksym', True)
+
     lines = tree.value.splitlines()
     N = int(lines[0].rstrip().lstrip())
     # breaksym is always false if reading from input.
@@ -532,7 +555,6 @@ class BasisSet(AttrBlock):
     self.chemod = Chemod()
     """ Sets initial electronic occupation. """
 
-
   @property
   def raw(self):
     """ Raw basis set input. """
@@ -648,11 +670,11 @@ class BasisSet(AttrBlock):
     results.prefix = c.raw
     return results
 
-  def read_input(self, tree, owner=None):
+  def read_input(self, tree, owner=None, **kwargs):
     """ Parses an input tree. """
     self._functions = {}
     self._input = self.__class__()._input
-    super(BasisSet, self).read_input(tree, owner=self)
+    super(BasisSet, self).read_input(tree, owner=self, **kwargs)
     if hasattr(tree, 'prefix'): self.raw = tree.prefix
 
   def __ui_repr__(self, imports, name=None, defaults=None, exclude=None):
