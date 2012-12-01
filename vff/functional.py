@@ -6,7 +6,8 @@ class Functional(Vff):
   Extract = ExtractVFF
   """ Extraction object for Vff. """
   def __init__( self, relax=True, method='BFGS', tol=1e-8, maxiter=100,
-                verbose=True, copy=None, cartesian=True, options=None ): 
+                verbose=True, copy=None, cartesian=True, options=None,
+                direction=None ): 
     super(Functional, self).__init__()
 
     self._parameters = {}
@@ -32,6 +33,13 @@ class Functional(Vff):
     """ Additional options for the chosen minimizer. """
     self.cartesian = cartesian
     """ Whether to relax as cartesian or fractional. """
+
+    self.direction = direction
+    """ Epitaxial relaxation direction, if any. 
+
+        This should be None (no epitaxial relaxation) or a 3d-vector. If the
+        latter, than the cellshape is relaxed only in the epitaxial direction. 
+    """
 
     if copy is not None: self.__dict__.update(copy.__dict__)
 
@@ -72,7 +80,8 @@ class Functional(Vff):
       if self._is_static(**kwargs):
         result = super(Functional, self).__call__(structure)
       else: 
-        funcs = self._getfuncs_relaxall(structure)
+        funcs = self._getfuncs_relaxall(structure) if self.direction is None   \
+                else self._getfuncs_epi(structure)
         options = {} if self.options is None else self.options.copy()
         options['disp'] = self.verbose
         options['maxiter'] = self.maxiter
@@ -162,6 +171,59 @@ class Functional(Vff):
     Functions = namedtuple('Functions', ['x0', 'jacobian', 'energy', 'structure'])
     return Functions(x, jacobian, energy, make_structure)
 
+  def _getfuncs_epi(self, structure):
+    """ Functions when relaxing all degrees of freedom. """
+    from collections import namedtuple
+    from numpy import dot, array, zeros, outer, identity
+    from numpy.linalg import inv, det, norm
+    from quantities import angstrom
+    from . import build_tree
+
+    structure = structure.copy()
+    cell0, pos0 = structure.cell.copy(), structure[0].pos
+    tree = build_tree(structure)
+    scale = float(structure.scale.rescale(angstrom))
+    direction = array(self.direction, dtype='float64') / norm(self.direction)
+    strain_template = outer(direction, direction)
+
+    def update_structure(x0, strain):
+      structure.cell = dot(strain, cell0)
+      structure[0].pos = dot(strain, pos0)
+      positions = dot( strain if self.cartesian else structure.cell, 
+                       x0.reshape(-1, 3).T ).T
+      for atom, pos in zip(structure[1:], positions): atom.pos = pos
+
+    def make_structure(x0):
+      strain = strain_template * x0[0] + identity(3)
+      update_structure(x0[1:], strain)
+      return structure
+
+    def energy(x0):
+      strain = strain_template * x0[0] + identity(3)
+      update_structure(x0[1:], strain)
+      return self.energy(structure, _tree=tree).magnitude
+
+    def jacobian(x0):
+      strain = strain_template * x0[0] + identity(3)
+      update_structure(x0[1:], strain)
+
+      stress, forces = self.jacobian(structure, _tree=tree)
+      stress *= -det(structure.scale * structure.cell)
+
+      stress = dot(stress, inv(strain))
+      result = zeros(len(structure)*3-2, dtype='float64')
+      result[0] = dot(dot(direction, stress), direction)
+      result[1:] = dot( (strain if self.cartesian else structure.cell.T)*scale,
+                        forces[1:].T ).T.flatten()
+      return result
+
+    x = zeros(len(structure)*3-2, dtype='float64')
+    for i, atom in enumerate(structure[1:]): x[1+3*i:4+3*i] = atom.pos
+    if not self.cartesian:
+      x[1:] = dot(inv(structure.cell), x[1:].reshape(-1, 3).T).T.flatten()
+
+    Functions = namedtuple('Functions', ['x0', 'jacobian', 'energy', 'structure'])
+    return Functions(x, jacobian, energy, make_structure)
 del stateless
 del assign_attributes
 del Vff
