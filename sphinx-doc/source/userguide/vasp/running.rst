@@ -27,6 +27,6 @@ Finally, vasp parameters can be modified on a one-off basis:
 
 .. note::
   
-   LaDa will *not* overwrite a successfull calculation, unless specifically
-   requested with ``overwrite=True`` in the call, not even one performed
-   without the use of LaDa. 
+   LaDa will *not* overwrite a *successfull* calculation (unless specifically
+   requested to do so with ``overwrite=True`` in the call), not even one
+   performed without the use of LaDa. 

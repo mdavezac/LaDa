@@ -12,6 +12,8 @@ the VASP_ defaults. They can be changed directly in the constructor:
 
 >>> from lada.vasp import Vasp
 >>> vasp = Vasp(ispin=2)
+>>> print vasp.ispin
+2
 
 or later, after creation:
 
@@ -68,7 +70,8 @@ modified just as if it where a pre-existing parameter.
 
 The attribute ``vasp.encut`` is (in this case) an integer which can be
 manipulated as any other python integer. Any python object can be given. It
-will appear in the INCAR as it appears above when printed.
+will appear in the INCAR as it appears when transformed to a string (using
+python's str_ function).
 
 If you do *not* want a parameter printed to the INCAR, i.e. you want to use the
 VASP_ default for that parameter, then simply set that parameter to ``None``:
@@ -83,6 +86,8 @@ VASP_ default for that parameter, then simply set that parameter to ``None``:
    with a simple integer (or float, or whatnot).  Its special behavior
    described above is simply gone.  If you do not like a special behavior, you
    can always do away with it.
+
+.. _str: http://docs.python.org/2/library/functions.html#str
 
 Specifying kpoints
 ------------------
@@ -103,8 +108,7 @@ that case, VASP_ does not reduce the kpoints by symmetry, as explained `here
 
 As a callable function which takes the vasp functional and the structure as
 input. It must return either a string defining a semantically correct KPOINTS_
-file, or an array of kpoints as above (or another similar callable, but why
-would you want to do that?).
+file, or an array of kpoints as above.
 
 >>> def some_function(functional, structure):
 >>>   .... do something
@@ -125,8 +129,7 @@ Pseudo-potentials must be specified explicitely:
 
 The first item is the name of the atomic specie. It corresponds to the type of
 the atom in the structure to compute. The second item is a path to a directory
-where the appropriate *unzipped* POTCAR resides. It is possible to specify more
-species than exists in a given structure. It will not affect calculations.
+where the appropriate *unzipped* POTCAR resides. It will not affect calculations.
 For convenience, the path may be given with the usual unix short-cuts and/or with
 a shell environment variable.
 
@@ -146,3 +149,8 @@ Specie('Tc', '~/pseudos/$PAW/Tc')
 
 At which point, other elemental properties could be added for latter use in a
 script.
+
+.. note::
+ 
+   It is possible to specify more species than exists in a given structure.
+   LaDa will figure out at runtime.

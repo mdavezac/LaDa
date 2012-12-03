@@ -7,7 +7,7 @@ LaDa provides an interface wrapping the VASP_ density functional theory code.
 This interface manages the input to VASP_, launching the code itself (as an
 external program), and retrieving the results as python object. When combined
 with the job framework and its attendant ipython_ interface, it becomes a
-powerful building block easier to create complex computational schemes.
+powerful building block to create complex computational schemes.
 
 The following is an introduction on how to use the interface by itself. It is
 most usefull, however, in conjunction with the high-throughput :ref:`scheme
