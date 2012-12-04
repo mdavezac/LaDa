@@ -50,7 +50,7 @@ def save(jobfolder, path='jobfolder.dict', overwrite=False, timeout=None):
       print path, "exists. Please delete first if you want to save the job folder."
       return
     else: raise IOError('{0} already exists. By default, will not overwrite.'.format(path))
-  with open_exclusive(path, "wb", timeout=None) as file: dump(jobfolder, file)
+  with open_exclusive(path, "wb", timeout=timeout) as file: dump(jobfolder, file)
   if is_interactive: print "Saved job folder to {0}.".format(path)
 
 def load(path='jobfolder.dict', timeout=None): 

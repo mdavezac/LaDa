@@ -37,16 +37,13 @@ def update_fitness(self, individuals):
       
       .. _Polyhedron:: http://cens.ioc.ee/projects/polyhedron
   """
-  from itertools import chain
   from numpy import array, concatenate, dot, max
   from polyhedron import Vrep
   individuals = list(individuals)
   # coordinates of individuals
   points = [u.concentrations[:-1].tolist() + [u.energy] for u in individuals]
   # if a convex-hull already exists, adds generators.
-  if hasattr(self, 'convexhull'): 
-    allpoints = set(chain(self.convexhull.ininc))
-    points.extend(self.generators[list(allpoints)])
+  if hasattr(self, 'convexhull'): points.extend(self.convexhull.generators)
 
   if len(points) == 0: return
 
@@ -55,6 +52,7 @@ def update_fitness(self, individuals):
 
   # create convex hull from all points.
   vrep = Vrep(points)
+  self.convexhull = vrep
   
   # lowers are those half-spaces on the bottom of the energy scale.
   lowers = concatenate((vrep.A, vrep.b[:,None]), axis=1)[vrep.A[:,-1].flat<-0.1]
@@ -62,5 +60,4 @@ def update_fitness(self, individuals):
   # now update individuals
   for indiv in individuals:
     point = array(indiv.concentrations[:-1].tolist() + [indiv.energy])
-    indiv.fitness = max(point[-1] -(dot(lowers[:,:-2], point[:-1]) - lowers[:,-1] ) / lowers[:,-2])
-
+    indiv.fitness = point[-1] - max(dot(lowers[:,:-2], point[:-1]) - lowers[:,-1])

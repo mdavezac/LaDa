@@ -14,7 +14,6 @@ class Extract(object):
         :raises RuntimeError: if no appropriate SHELVECAR can be found.
     """
     from os.path import exists, isfile, isdir
-    from os import makedirs
     from shelve import open as shelve_open
     from ..misc import RelativePath, LockFile
     super(Extract, self).__init__()
