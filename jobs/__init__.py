@@ -46,7 +46,7 @@ def save(jobdict, path=None, overwrite=False, timeout=None):
   if exists(path) and not overwrite: 
     print path, "exists. Please delete first if you want to save the job dictionary."
     return
-  with open_exclusive(path, "wb", timeout=None) as file: dump(jobdict, file)
+  with open_exclusive(path, "wb", timeout=timeout) as file: dump(jobdict, file)
   print "Saved job dictionary to %s." % (path)
 
 @broadcast_result(key=True)
