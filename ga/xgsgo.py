@@ -19,7 +19,7 @@ def strip_points(points):
     for i, cmp in enumerate(result):
       if all(abs(array(point[:-1]) - cmp[:-1]) < 1e-8):
         found = True
-        if point[-1] < cmp[:-1]: result[i] = point
+        if point[-1] < cmp[-1]: result[i] = point
         break
     if not found: result.append(point)
   return array(result)
@@ -37,32 +37,30 @@ def update_fitness(self, individuals):
       
       .. _Polyhedron:: http://cens.ioc.ee/projects/polyhedron
   """
-  from itertools import chain
   from numpy import array, concatenate, dot, max
   from polyhedron import Vrep
   individuals = list(individuals)
   # coordinates of individuals
   points = [u.concentrations[:-1].tolist() + [u.energy] for u in individuals]
   # if a convex-hull already exists, adds generators.
-  if hasattr(self, 'convexhull'): 
-    allpoints = set(chain(self.convexhull.ininc))
-    points.extend(self.generators[list(allpoints)])
+  if hasattr(self, 'convexhull'): points.extend(self.convexhull.generators)
 
   if len(points) == 0: return
 
-  # strip away points at same stiochiometry, keeping only lowest.
-  points = strip_points(points)
+# # strip away points at same stiochiometry, keeping only lowest.
+# points = strip_points(points)
 
   # create convex hull from all points.
   vrep = Vrep(points)
+  self.convexhull = vrep
   
   # lowers are those half-spaces on the bottom of the energy scale.
-  lowers = concatenate((vrep.A, vrep.b[:,None]), axis=1)[vrep.A[:,-1].flat<-0.1]
+  lowers = concatenate((vrep.A, vrep.b[:,None]), axis=1)[vrep.A[:,-1].flat<-0]
 
   # now update individuals
   for indiv in individuals:
     point = array(indiv.concentrations[:-1].tolist() + [indiv.energy])
-    indiv.fitness = max(point[-1] -(dot(lowers[:,:-2], point[:-1]) - lowers[:,-1] ) / lowers[:,-2])
+    indiv.fitness = point[-1] - max(dot(lowers[:,:-2], point[:-1]) - lowers[:,-1])
 
 def rand_cell_gen(angle_range=None, cubic=False):
   """ Returns random cell. 
