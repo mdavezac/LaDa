@@ -224,6 +224,7 @@ class Functional(object):
     from ..misc import copyfile, Changedir
     from ..error import ValueError
     from .. import CRYSTAL_filenames as filenames
+    from ..crystal import write
     from .external import External
 
     # sanity check
@@ -647,24 +648,24 @@ class Functional(object):
 
         - :math:`N_p < N_{AO} * N_k * N_s // dof`
         - :math:`N_p % multipleof == 0`
-	- the number of processors per k-point is never prime
-
-        Where: 
-
-        - :math:`N_p` is the number of cores
-        - :math:`N_k` is the number of irreducible kpoints 
-	- :math:`N_s` is the number of spins
-	- :math:`N_{AO}` is the number of atomic orbitals
-
-	The last condition is somewhat more complex and depends upon the total
-	number of kpoints, the number of k-points at the Brillouin zone edge,
-	and the particular way CRYSTAL_ assigns procs for each k-point. This
+        - the number of processors per k-point is never prime
+        
+              Where: 
+        
+              - :math:`N_p` is the number of cores
+              - :math:`N_k` is the number of irreducible kpoints 
+        - :math:`N_s` is the number of spins
+        - :math:`N_{AO}` is the number of atomic orbitals
+        
+        The last condition is somewhat more complex and depends upon the total
+        number of kpoints, the number of k-points at the Brillouin zone edge,
+        and the particular way CRYSTAL_ assigns procs for each k-point. This
         decomposition is computed in :py:meth:`kpoint_blocking`.
 
         :param structure:
           Crystal structure for which to run the code. 
         :param int multipleof:
-	  Pars down results to multiple of this number (eg cores per node).
+	        Pars down results to multiple of this number (eg cores per node).
         :param int dof:
           Minimum degrees of freedom per processor. 
     """
@@ -673,7 +674,6 @@ class Functional(object):
     kreal, kcmplx = self._nb_real_cmplx_kpoints(structure)
     # we can now define the max and min number of procs.
     nAOs = self._nAOs(structure)
-    nspin = 2 if self.dft.spin else 1
     # the minimum number of procs should be divisible by multipleof
     weightedprocs = kreal + int(cmplxfac * kcmplx)
     minprocs = int(weightedprocs * 2)
@@ -704,13 +704,13 @@ class Functional(object):
   def kpoint_blocking(self, structure, nprocs, nkpoints=None, cmplxfac=None):
     """ Infers the number of procs per kpoint. 
 
-	This function is helpfull in checking whether MPPcrystal will run
-	correcly or not. It returns a list consisting of the number of procs
-	per k-point. It is a list since CRYSTAL_ may assign some k-points with
-	more processors than others, in order to maximize the number of
-	processors used. However, this approach fails when a k-point is
-	assigned a prime number of processors, because of some bug somewhere
-	(see comment in k_space_MPP.f90: asssing_k_to_proc in CRYSTAL_ code).
+        This function is helpfull in checking whether MPPcrystal will run
+        correcly or not. It returns a list consisting of the number of procs
+        per k-point. It is a list since CRYSTAL_ may assign some k-points with
+        more processors than others, in order to maximize the number of
+        processors used. However, this approach fails when a k-point is
+        assigned a prime number of processors, because of some bug somewhere
+        (see comment in k_space_MPP.f90: asssing_k_to_proc in CRYSTAL_ code).
         Unfortunately, MPPCrystal does not recover well from this problem.
     """
     # count real and complex k-points in irreducible Brillouin zone.

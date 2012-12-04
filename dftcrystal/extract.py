@@ -954,38 +954,12 @@ class ExtractBase(object):
     return False
 
   @property
-  @make_cached
-  def atomic_charges(self):
-    """ Atomic Charges. """
-    from numpy import array
-    from quantities import elementary_charge as ec
-    with self.__stdout__() as file:
-      isincharge = False
-      results = []
-      for line in file:
-        if isincharge: 
-          line = line.split()
-          if len(line) == 0:
-            results.append(inner)
-            isincharge = False
-            continue
-          try: dummy = [float(item) for item in line]
-          except:
-            isincharge = False
-            results.append(inner) 
-            continue
-          else: inner.extend(dummy)
-        elif 'TOTAL ATOMIC CHARGES:' in line:
-          inner = []
-          isincharge = True
-      return array(results) * ec
-                   
-  @property
   def scf_converged(self):
     """ Checks if SCF cycle converged. """
     regex = """\s+\=\=\s+SCF\s+ENDED\s+-\s+(TOO MANY CYCLES|CONVERGENCE)"""
     result = self._find_last_STDOUT(regex)
     return False if result is None else result.group(1) == 'CONVERGENCE'
+
   @property
   @make_cached
   def atomic_charges(self):

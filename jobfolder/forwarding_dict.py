@@ -35,7 +35,6 @@ class ForwardingDict(MutableMapping):
            Initializes items from items in dictionary.
     """
     from .. import jobparams_naked_end, jobparams_only_existing, jobparams_readonly
-    """ Tells get/setattr that Forwarding dict is being initialized. """
     super(ForwardingDict, self).__init__()
 
     self.__dict__['readonly']      = jobparams_readonly if readonly is None else readonly
