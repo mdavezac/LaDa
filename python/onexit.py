@@ -30,6 +30,10 @@ def _atexit_onexit():
 
 def _onexit_signal(signum, stackframe):
   from signal import SIGABRT, SIGTERM, signal, SIG_DFL
+
+  abort = _callback_dict.pop('abort', None)
+  term  = _callback_dict.pop('term', None)
+
   _call_callbacks()
 
   if signum == SIGABRT and abort is not None:
