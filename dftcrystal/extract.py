@@ -714,7 +714,6 @@ class ExtractBase(object):
     from numpy import dot, identity, abs, array, any, all
     from numpy.linalg import inv, det
     from ..crystal import into_voronoi
-    from ..error import internal 
     from .geometry import DisplaceAtoms, Elastic
     
     # Check whether this is a geometry optimization run.
@@ -794,7 +793,7 @@ class ExtractBase(object):
   @property
   @make_cached
   def total_energy(self):
-    """ Total energy. """
+    """ Total energy at end of run. """
     from quantities import hartree
     pattern = "TOTAL ENERGY\(\S+\)\(AU\)\(\s*\d+\)\s*(\S+)\s*DE"
     regex = self._find_last_STDOUT(pattern)
@@ -805,8 +804,11 @@ class ExtractBase(object):
 
   @property
   @make_cached
-  def total_energies(self):
-    """ Total energies until convergences. """
+  def emin_energies(self):
+    """ Total energies during electronic minimization.
+    
+        Greps lines "CYC [number] ETOT (AU) [energy]".
+    """
     from numpy import array
     from quantities import hartree
     pattern = r"CYC\s+(?:\d+)\s+ETOT\(AU\)\s+(\S+)"
@@ -815,14 +817,27 @@ class ExtractBase(object):
 
   @property
   @make_cached
+  def total_energies(self):
+    """ Total energies during structural minimization. 
+    
+        Greps lines "TOTAL ENERGY(AU) [energy]".
+    """
+    from numpy import array
+    from quantities import hartree
+    pattern = "TOTAL ENERGY\(\S+\)\(AU\)\(\s*\d+\)\s*(\S+)\s*DE"
+    result = [u.group(1) for u in self._search_STDOUT(pattern)]
+    return array(result, dtype='float64') * hartree
+
+  @property
+  @make_cached
   def ncycles(self):
     """ Number of scf cycles. 
 
-	This is mostly to make it easier to known where a running job is at.
-	It is the number of electronic minimization steps as grepped from the
+        This is mostly to make it easier to known where a running job is at.
+        It is the number of electronic minimization steps as grepped from the
         the last line 
- 
-	 | CYC 4 ETOT(AU) -3.200+04 DETOT -2.22E-04 tst  8.13E-03 PX  9.40E-04
+       
+				| CYC 4 ETOT(AU) -3.200+04 DETOT -2.22E-04 tst  8.13E-03 PX  9.40E-04
 
         in the output file. In the example above, it would be 4.
     """
@@ -953,33 +968,6 @@ class ExtractBase(object):
       if regex in u: return True
     return False
 
-  @property
-  @make_cached
-  def atomic_charges(self):
-    """ Atomic Charges. """
-    from numpy import array
-    from quantities import elementary_charge as ec
-    with self.__stdout__() as file:
-      isincharge = False
-      results = []
-      for line in file:
-        if isincharge: 
-          line = line.split()
-          if len(line) == 0:
-            results.append(inner)
-            isincharge = False
-            continue
-          try: dummy = [float(item) for item in line]
-          except:
-            isincharge = False
-            results.append(inner) 
-            continue
-          else: inner.extend(dummy)
-        elif 'TOTAL ATOMIC CHARGES:' in line:
-          inner = []
-          isincharge = True
-      return array(results) * ec
-                   
   @property
   def scf_converged(self):
     """ Checks if SCF cycle converged. """
