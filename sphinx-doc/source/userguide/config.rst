@@ -14,6 +14,11 @@ Environment Variables
 
    Environment variable specifying the path to the root of the data directories.
 
+.. envvar:: LADA_TMPDIR
+
+   Optional environment variable specifying the path to the root of temporary
+   directories LaDa might need to create.
+
 Configuration variables
 =======================
 
@@ -69,7 +74,12 @@ CRYSTAL
      (notably "crystal.out") are created in the output directory from start,
      and linked to the temporary directory. As such, these files will always be
      there, even if a job is forcefully killed before LaDa has had a change to
-     copy things back.
+     copy things back. If :py:data:`~lada.crystal_inplace` is False, then the
+     files are placed in a temporary directory. This temporary directory is
+     itself located within :envvar:`LADA_TMPDIR` (if the environment variable
+     exists), or within `PBS_TMPDIR` (if that exists), or in the default
+     temporary directory of the system. A special link `workdir` will be
+     created within the output for the duration of the crystal run.
 
   .. py:data:: crystal_program
 

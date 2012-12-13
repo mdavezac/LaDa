@@ -11,7 +11,7 @@ CRYSTAL_input_blocks = set([ 'MARGINS', 'BIDIERD', 'CPHF', 'ELASTCON', 'EOS',
                              'SYMMWF', 'LOCALWF', 'ANISOTRO', 'ECH3', 'EDFT',
                              'EIGSHROT', 'OPTGEOM', 'FIXINDEX', 'GRID3D',
                              'MAPNET', 'POT3', 'DFT', 'PRINTOUT',
-                             'REFLECTANCE', 'ROTCRY' ])                        t \
+                             'REFLECTANCE', 'ROTCRY' ])                        \
                        | CRYSTAL_geom_blocks
 """ List of blocks in CRYSTAL input.
 
