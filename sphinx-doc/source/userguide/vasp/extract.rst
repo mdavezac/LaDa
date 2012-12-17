@@ -64,9 +64,11 @@ The second method is to create an extraction object directly:
 In the above, it is expected that the OUTCAR is called OUTCAR. The path can
 also be made to a file with a name other than OUTCAR. 
 
-.. note:: An extraction object can be created for any OUTCAR, whether obtained
-          *via* LaDa or not. Some information that LaDa automatically appends
-          to an OUTCAR may not be obtainable, however.
+.. note::
+
+   An extraction object can be created for any OUTCAR, whether obtained *via*
+   LaDa or not. Some information that LaDa automatically appends to an OUTCAR
+   may not be obtainable, however.
 
 To find out what LaDa can extract, do ``result.[TAB]`` in the ipython_
 environment. Or checkout :py:class:`~lada.vasp.extract.Extract`.
@@ -98,9 +100,10 @@ It all comes down to a few simple lines:
    '/that/path/':  array(-999.998) * eV
 }
 
-The return is a :py:class:`~lada.jobfolder.forwarding_dict.ForwardingDict`
-instance. It is possible to string together attributes to get to those of
-interest:
+"this/path" and "that/path" are directories in "some/path" where OUTCAR files
+exist.  The return is a
+:py:class:`~lada.jobfolder.forwarding_dict.ForwardingDict` instance. It is
+possible to string together attributes to get to those of interest:
 
 >>> a.structure.scale
 {

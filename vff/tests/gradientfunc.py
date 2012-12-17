@@ -39,12 +39,13 @@ def crystal():
                        .add_atom(pos=(9.25, 0.25, 0.25), type="As")  
   return structure
 
-def test_relaxall():
+def test_relaxall(cartesian):
   """ Tests gradients as implemented in the functional. """
   from numpy import abs
   from lada.vff.functional import Functional
 
   vff = functional()
+  vff.cartesian = cartesian
   structure = crystal()
   epsilon = 1e-5
   
@@ -76,4 +77,5 @@ def test_relaxall():
     assert abs(jac0[i] - (eplus - eminus) / epsilon ) < 1e-6
 
 if __name__ == '__main__':
-  test_relaxall()
+  test_relaxall(False)
+  test_relaxall(True)

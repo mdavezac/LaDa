@@ -8,14 +8,16 @@ def test(Class):
   import gc
   from numpy import all, abs
   from lada.crystal.cppwrappers import Atom
-  from _atom_self import get_static_object, set_static_object
+  from _atom_self import get_static_object, set_static_object, _atom
   
   # checks the static object is an Atom at start.
   a = get_static_object();
   assert a.__class__ is Atom
+  assert a is _atom
   # checks the static object is always itself.
   b = get_static_object();
   assert a is b
+  assert b is _atom
   # checks it can be changed and subclassed.
   a = Class(0.4,0.1,0.2, 'Au')
   set_static_object(a)

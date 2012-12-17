@@ -22,7 +22,8 @@ Or one could use the optimization methods provided by scipy_ with a
 
 First, we need a function capable of creating a strain matrix for the
 particular kind we have in mind, and apply it to the structure. The strain
-matrix can be obtained simply as the outer product of the epitaxial direction with itself.
+matrix can be obtained simply as the outer product of the epitaxial direction
+with itself.
 
 .. literalinclude:: epirelax.py
    :lines: 1-12

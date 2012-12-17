@@ -1,19 +1,17 @@
-set(LIBMATH_HEADERS fuzzy.h gruber.h eigen.h smith_normal_form.h exceptions.h
-                    misc.h quantity.h)
-set(LIBMATH_SOURCES gruber.cc noopt.cc smith_normal_form.cc quantity.cc)
-set(PYMATH_SOURCES methods.hpp module.cc gruber.cc noopt.cc smith_normal_form.cc)
-
-add_library (mathlib SHARED ${LIBMATH_HEADERS} ${LIBMATH_SOURCES})
-SET_SOURCE_FILES_PROPERTIES(noopt.cc PROPERTIES COMPILE_FLAGS -O0)
-target_link_libraries(mathlib ${PYTHON_LIBRARY})
-install(TARGETS mathlib DESTINATION lib64)
-
 include_directories(${PYTHON_INCLUDE_DIR} ${NUMPY_INCLUDES})
-add_library (pymath SHARED ${PYMATH_SOURCES})
+add_library (pymath SHARED module.cc noopt.cc)
+SET_SOURCE_FILES_PROPERTIES(noopt.cc PROPERTIES COMPILE_FLAGS -O0)
 set_target_properties(pymath PROPERTIES OUTPUT_NAME math)
 set_target_properties(pymath PROPERTIES PREFIX "")
-target_link_libraries(pymath mathlib)
 install(TARGETS pymath DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada)
+
+set(PYMATH_HEADERS math.h eigen.h exceptions.h fuzzy.h misc.h
+                   symmetry_operator.h algorithms.h )
+set(PYMATH_SOURCES gruber.cc smith_normal_form.cc methods.cc)
+
+if(NOT noinstall_headers)
+  install(FILES ${PYMATH_HEADERS} DESTINATION include/LaDa/math)
+endif(NOT noinstall_headers)
 
 if(compile_tests OR compile_debug_tests)
   add_subdirectory(tests)

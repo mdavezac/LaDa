@@ -65,9 +65,9 @@
         mesh_.col(2) /= types::t_real(n3_);
         max_ = nr_ / _comm.size();
 
-        bp::object result = math::numpy::create_array<NPY_DOUBLE>(max_, 3, true);
-        npy_intp *strides = math::numpy::get_strides_pointer(result);
-        double * array_data = math::numpy::get_data_pointer<double*>(result);
+        bp::object result = python::numpy::create_array<NPY_DOUBLE>(max_, 3, true);
+        npy_intp *strides = python::numpy::get_strides_pointer(result);
+        double * array_data = python::numpy::get_data_pointer<double*>(result);
         for(size_t i(0); i < max_; ++i)
         {
           int u(i + _comm.rank()*(nr_/_comm.size()));
@@ -161,14 +161,14 @@
         FC_GLOBAL_(escan_wfns_get_array_dimensions, ESCAN_WFNS_GET_ARRAY_dimensions)(&n0, &n2, &g0);
         
         // Creates numpy objects.
-        bp::object wfns = math::numpy::create_array<NPY_CDOUBLE>(n0, n1, n2, true);
-        bp::object gpoints = math::numpy::create_array<NPY_DOUBLE>(g0, g1, true);
-        bp::object projs = math::numpy::create_array<NPY_DOUBLE>(g0, true);
+        bp::object wfns = python::numpy::create_array<NPY_CDOUBLE>(n0, n1, n2, true);
+        bp::object gpoints = python::numpy::create_array<NPY_DOUBLE>(g0, g1, true);
+        bp::object projs = python::numpy::create_array<NPY_DOUBLE>(g0, true);
         bp::object inverse; 
-        if(is_krammer) inverse = math::numpy::create_array<NPY_INT>(g0, true);
+        if(is_krammer) inverse = python::numpy::create_array<NPY_INT>(g0, true);
         
-        math::numpy::get_pyarray_pointer(wfns)->dimensions[0]
-          = math::numpy::get_pyarray_pointer(gpoints)->dimensions[0];
+        python::numpy::get_pyarray_pointer(wfns)->dimensions[0]
+          = python::numpy::get_pyarray_pointer(gpoints)->dimensions[0];
 
         // finally reads wavefunctions
         if(is_krammer)
@@ -177,13 +177,13 @@
                     &n0, &n1, &n2, &g0,  // dimensions
                     &(indices[0]),      // indices_ to wavefunctions
                     // pointer to wavefunctions data
-                    math::numpy::get_data_pointer<double *const>(wfns),    
+                    python::numpy::get_data_pointer<double *const>(wfns),    
                     // pointer to gpoint  data
-                    math::numpy::get_data_pointer<double *const>(gpoints), 
+                    python::numpy::get_data_pointer<double *const>(gpoints), 
                     // pointer to projector data (smooth cutoff)
-                    math::numpy::get_data_pointer<double *const>(projs),   
+                    python::numpy::get_data_pointer<double *const>(projs),   
                     // pointer to -G indices
-                    math::numpy::get_data_pointer<int* const>(inverse)            
+                    python::numpy::get_data_pointer<int* const>(inverse)            
                   );
         else
           FC_GLOBAL_(escan_wfns_read_nokram, ESCAN_WFNS_READ_NOKRAM)
@@ -191,11 +191,11 @@
                     &n0, &n1, &n2, &g0,  // dimensions
                     &(indices[0]),      // indices_ to wavefunctions
                     // pointer to wavefunctions data
-                    math::numpy::get_data_pointer<double *const>(wfns),    
+                    python::numpy::get_data_pointer<double *const>(wfns),    
                     // pointer to gpoint  data
-                    math::numpy::get_data_pointer<double *const>(gpoints), 
+                    python::numpy::get_data_pointer<double *const>(gpoints), 
                     // pointer to projector data (smooth cutoff)
-                    math::numpy::get_data_pointer<double *const>(projs)
+                    python::numpy::get_data_pointer<double *const>(projs)
                   );
         // and cleanup fortran arrays.
         FC_GLOBAL_(escan_wfns_cleanup, ESCAN_WFNS_CLEANUP)(); 
@@ -217,7 +217,7 @@
   //     int a(orig.size());
   //     FC_GLOBAL_(escan_wfns_init, ESCAN_WFNS_INIT)(&a, orig.c_str(), &__commF);
   //     // sanity checks
-  //     if(not math::numpy::check_is_complex_array(_gwfns)) return bp::tuple();
+  //     if(not python::numpy::check_is_complex_array(_gwfns)) return bp::tuple();
   //
   //     PyArrayObject *array = reinterpret_cast<PyArrayObject*>(_gwfns.ptr());
   //     if(array->strides[0] != 16) 

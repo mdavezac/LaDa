@@ -26,6 +26,6 @@ This will launch vasp in the current directory and wait until the calculation
 is finished. We then check whether the calculations completed and print the
 eigenvalues. The latter are a numpy array_, signed with the appropriate `units
 <qantities>`_.  Since they are a python object, it is easy to create more
-complex post-processing.
+complex post-processing. 
 
 .. _array: http://docs.scipy.org/doc/numpy/reference/generated/numpy.array.html

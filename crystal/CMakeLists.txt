@@ -1,33 +1,33 @@
-set(LIBCRYSTAL_HEADERS atom/atom.h atom/pybase.h
-                       structure/structure.h structure/pybase.h
-                       hart-forcade/hart-forcade.h hart-forcade/pybase.h
-                       equivalent_structures.h supercell.h primitive.h
-                       space_group.h map_sites.h periodic_dnc.h neighbors.h
-                       coordination_shells.h confsplit.h )
-set(LIBCRYSTAL_PYHEADERS atom/cdi.hpp atom/getset.hpp atom/members.hpp
-                         structure/cdi.hpp structure/getset.hpp structure/sequence.hpp 
-                         structure/members.hpp 
-                         hart-forcade/cdi.hpp hart-forcade/get.hpp
-                         hart-forcade/members.hpp hart-forcade/macro.hpp )
-set(LIBCRYSTAL_SOURCES atom/pybase.cc 
-                       structure/pybase.cc structure/structure.cc
-                       hart-forcade/pybase.cc
-                       utilities.cc primitive.cc equivalent_structures.cc
-                       space_group.cc periodic_dnc.cc map_sites.cc
-                       neighbors.cc coordination_shells.cc confsplit.cc )
 set(LIBCRYSTAL_PYSOURCES __init__.py read.py write.py ABX.py A2BX4.py bravais.py binary.py)
 
 include_directories(${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDES})
-add_library (crystal SHARED ${LIBCRYSTAL_HEADERS} ${LIBCRYSTAL_PYHEADERS} ${LIBCRYSTAL_SOURCES})
-target_link_libraries(crystal ${PYTHON_LIBRARY} mathlib)
-install(TARGETS crystal DESTINATION lib64)
 
 add_library (pycrystal SHARED module.cc)
-target_link_libraries(pycrystal ${PYTHON_LIBRARY} crystal)
 set_target_properties(pycrystal PROPERTIES OUTPUT_NAME cppwrappers)
 set_target_properties(pycrystal PROPERTIES PREFIX "")
 install(TARGETS pycrystal DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/crystal)
 install(FILES ${LIBCRYSTAL_PYSOURCES} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/crystal)
+
+set(PYCRYSTAL_SOURCES atom/pybase.cc atom/cdi.cc atom/members.cc atom/getset.cc
+                      structure/pybase.cc structure/cdi.cc structure/members.cc
+                      structure/getset.cc structure/sequence.cc
+                      structure/iterator.cc 
+                      hart-forcade/pybase.cc hart-forcade/cdi.cc
+                      hart-forcade/get.cc hart-forcade/members.cc
+                      utilities.cc map_sites.cc equivalent_structures.cc
+                      primitive.cc space_group.cc neighbors.cc
+                      coordination_shells.cc confsplit.cc periodic_dnc.cc
+                      methods.cc )
+
+
+set(PYCRYSTAL_HEADERS atom/atom.h
+                      structure/structure.h
+                      hart-forcade/hart-forcade.h hart-forcade/macro.hpp
+                      utilities.h supercell.h algorithms.h )
+
+if(NOT noinstall_headers)
+  install(FILES ${PYCRYSTAL_HEADERS} DESTINATION include/LaDa/crystal)
+endif(NOT noinstall_headers)
 
 if(compile_tests OR compile_debug_tests)
   add_subdirectory(tests)

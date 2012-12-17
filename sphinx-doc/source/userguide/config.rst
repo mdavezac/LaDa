@@ -31,8 +31,6 @@ previous files.
 
 .. currentmodule:: lada
 
-.. _vasp-config:
-
 General
 -------
 
@@ -55,6 +53,68 @@ General
 
         Only taken into account at ipython start-up. It is ignored if LaDa is
         launched within python.
+
+.. _dftcrystal-config:
+ 
+CRYSTAL
+-------
+
+  These are the variables generally declared in config/dftcrystal.py
+
+  .. py:data:: crystal_inplace
+
+     Whether calculation should be runned directly in the output directory, or
+     in a temporary directory. The latter case avoid clutter, as only a small
+     set of files are copied back to the output directory. Note that some files
+     (notably "crystal.out") are created in the output directory from start,
+     and linked to the temporary directory. As such, these files will always be
+     there, even if a job is forcefully killed before LaDa has had a change to
+     copy things back.
+
+  .. py:data:: crystal_program
+
+     It can be a string defining the path to the serial CRYSTAL_ program. 
+     Or it can be a callable which takes three arguments and returns a string
+     to the appropriate CRYSTAL_ program. It is the following by default.
+
+     .. code-block: python
+
+        def crystal_program(self=None, structure=None, comm=None):
+          """ Path to serial or mpi or MPP crystal program version. 
+          
+              If comm is None, then returns the path to the serial CRYSTAL_ program.
+              Otherwise, if :py:attr:`dftcrystal.Functional.mpp
+              <lada.dftcrystal.electronic.Electronic.mpp>` is
+              True, then returns the path to the MPP version. If that is False, then
+              returns the path to the MPI version.
+          """
+          ser = 'crystal'
+          mpi = 'Pcrystal'
+          mpp = 'MPPcrystal'
+          if self is None or comm is None or comm['n'] == 1: return ser
+          if self.mpp is True: return mpp
+          return mpi
+
+     The three arguments are meant to describe the job for which CRYSTAL_ is
+     lauched as accurately as possible. The first, ``self``, will be the
+     functional making the call, or None. The second, ``structure``, will be
+     the crystal structure to be computed, or None. The third, ``comm``, is a
+     dictionary defining the MPI call, if an MPI call. It contains, for
+     instance, the number of processors on which CRYSTAL_ should be runned. 
+     
+     .. note::
+
+        It is important that the path to the serial code be returned when
+        ``self`` is None, as it allows LaDa to perform the crystalline
+        transforms using CRYSTAL_ directly, and hence to interpret a crystal
+        structure exactly as CRYSTAL_ would.
+
+  .. py:data:: properties_program
+
+     A string defining the path to the properties_ program. By default, it is
+     "properties", expecting the program to be in the path.
+
+.. _vasp-config:
 
 VASP 
 ----

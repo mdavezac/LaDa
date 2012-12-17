@@ -2,12 +2,13 @@
 #include "FCMangle.h"
 
 #include <Python.h>
-#define PY_ARRAY_UNIQUE_SYMBOL lada_math_ARRAY_API
+#define PY_ARRAY_UNIQUE_SYMBOL lada_ewald_ARRAY_API
 #define NO_IMPORT_ARRAY
 #include <numpy/arrayobject.h>
 
-#include <python/numpy_types.h>
-#include <python/object.h>
+#define LADA_NO_IMPORT
+#include <python/python.h>
+
 #include "ewald.h"
 
 extern "C" void FC_GLOBAL( ewaldf, EWALDF )
@@ -48,7 +49,7 @@ namespace LaDa
       double energy(0);
       int error;
       npy_intp dims[3] = {PyArray_DIM(positions, 0), 3, 6};
-      int const nptype = math::numpy::type<double>::value;
+      int const nptype = python::numpy::type<double>::value;
       python::Object forces = PyArray_ZEROS(2, dims, nptype, 0);
       if(not forces) return NULL;
       python::Object cforces = PyArray_ZEROS(2, dims, nptype, 0);

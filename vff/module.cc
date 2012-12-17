@@ -1,20 +1,26 @@
 #include "LaDaConfig.h"
 
 #include <Python.h>
-#define PY_ARRAY_UNIQUE_SYMBOL lada_math_ARRAY_API
+#define PY_ARRAY_UNIQUE_SYMBOL lada_vff_ARRAY_API
 #include <numpy/arrayobject.h>
 
 #include <algorithm>
 
-#include <python/exceptions.h>
-#include <python/numpy_types.h>
+#include <errors/exceptions.h>
+#include <crystal/crystal.h>
 #ifndef PyMODINIT_FUNC	/* declarations for DLL import/export */
 # define PyMODINIT_FUNC void
 #endif
 
 #include "node/pybase.h"
 #include "edge/pybase.h"
-#include "vff/zb.hpp"
+namespace LaDa
+{
+  namespace vff
+  {
+#   include "vff/zb.cc"
+  }
+}
 
 namespace LaDa
 {
@@ -40,6 +46,14 @@ namespace LaDa
 }
 PyMODINIT_FUNC initcppwrappers(void) 
 {
+  char const doc[] =  "Wrapper around C++ vff class and affiliates.";
+  PyObject* module = Py_InitModule3("cppwrappers", LaDa::vff::methods_table, doc);
+  if(not module) return;
+  import_array(); // needed for NumPy 
+  if(not LaDa::python::import()) return;
+  if(not LaDa::math::import()) return;
+  if(not LaDa::crystal::import()) return;
+
   if (PyType_Ready(LaDa::vff::node_type()) < 0) return;
   if (PyType_Ready(LaDa::vff::edge_type()) < 0) return;
   if (PyType_Ready(LaDa::vff::bonditerator_type()) < 0) return;
@@ -52,9 +66,6 @@ PyMODINIT_FUNC initcppwrappers(void)
   Py_INCREF(LaDa::vff::dcbonditerator_type());
   Py_INCREF(LaDa::vff::angleiterator_type());
 
-  char const doc[] =  "Wrapper around C++ vff class and affiliates.";
-  PyObject* module = Py_InitModule3("cppwrappers", LaDa::vff::methods_table, doc);
-  import_array(); // needed for NumPy 
 
   PyModule_AddObject(module, "Node", (PyObject *)LaDa::vff::node_type());
   PyModule_AddObject(module, "Edge", (PyObject *)LaDa::vff::edge_type());

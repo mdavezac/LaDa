@@ -3,7 +3,6 @@
 #include "LaDaConfig.h"
 
 #include <Python.h>
-#include <structmember.h>
 
 #include <vector>
 
