@@ -1057,6 +1057,7 @@ class ExtractBase(object):
       with self.__stdout__() as file: tree = parse(file)
     except: raise GrepError("Could not find CRYSTAL input.")
     result = Functional()
+    result.guessp = None
     result.read_input(tree)
     return result
 
