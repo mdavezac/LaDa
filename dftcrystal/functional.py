@@ -670,6 +670,7 @@ class Functional(object):
           Minimum degrees of freedom per processor. 
     """
     if cmplxfac is None: cmplxfac = getattr(self, 'cmplxfac', 2) 
+    if cmplxfac is None: cmplxfac = 2
     # computes number of real and complex k-points.
     kreal, kcmplx = self._nb_real_cmplx_kpoints(structure)
     # we can now define the max and min number of procs.
@@ -722,6 +723,7 @@ class Functional(object):
     # now perform blocking as in crystal.
     # cmplxfac: computational cost of a complex k-point w.r.t. real k-point.
     if cmplxfac is None: cmplxfac = getattr(self, 'cmplxfac', 2)
+    if cmplxfac is None: cmplxfac = 2
     # weight: total compuational weight of real+complex k-points.
     weight = cmplxfac*kimag + kreal
     # trivial case where there are more k-points than processors.
