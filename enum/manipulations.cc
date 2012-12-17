@@ -1,8 +1,7 @@
 #include "LaDaConfig.h"
 
 #include <Python.h>
-#include <structmember.h>
-#define PY_ARRAY_UNIQUE_SYMBOL enumeration_ARRAY_API
+#define PY_ARRAY_UNIQUE_SYMBOL lada_enum_ARRAY_API
 #define NO_IMPORT_ARRAY
 #include <numpy/arrayobject.h>
 
@@ -10,9 +9,9 @@
 #include <algorithm>
 
 
-#include <python/numpy_types.h>
-#include <python/exceptions.h>
-#include <python/wrap_numpy.h>
+#define LADA_NO_IMPORT
+#include <errors/exceptions.h>
+#include <python/python.h>
 
 #include "manipulations.h"
 
@@ -125,7 +124,7 @@ namespace LaDa
         for(npy_intp i(0); i < size; ++i)
         {
           t_ndim value 
-              = math::numpy::to_type<t_ndim>(iterator.borrowed(), type_num); 
+              = python::numpy::to_type<t_ndim>(iterator.borrowed(), type_num); 
           if(value < 0) value += size;
           if(value < 0 or value >= size)
           {
@@ -148,7 +147,7 @@ namespace LaDa
       }
       Py_INCREF(Py_None);
       _self->arrayin = Py_None;
-      typedef math::numpy::type<t_ndim> t_type;
+      typedef python::numpy::type<t_ndim> t_type;
       _self->counter.resize(size);
       std::fill(_self->counter.begin(), _self->counter.end(), 0);
       npy_intp d[1] = {size};
@@ -191,7 +190,7 @@ namespace LaDa
         return NULL;
       }
       if( ((PyArrayObject*)_in)->descr->type_num 
-            != math::numpy::type<t_ndim>::value ) 
+            != python::numpy::type<t_ndim>::value ) 
       {
         LADA_PYERROR(TypeError, "second argument should be a numpy array "
                                 "yielded by an NDimIterator.");
@@ -359,3 +358,4 @@ namespace LaDa
 
   } // namespace Crystal
 } // namespace LaDa
+

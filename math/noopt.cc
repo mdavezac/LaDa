@@ -1,6 +1,6 @@
 #include "LaDaConfig.h"
 
-#include "fuzzy.h"
+#include "math.h"
 
 namespace LaDa
 {

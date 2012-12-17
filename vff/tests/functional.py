@@ -11,7 +11,7 @@ def functional():
 
   return vff
 
-def test_inas(epsilon = 1e-4):
+def test_inas(epsilon = 1e-4, cartesian=False):
   from tempfile import mkdtemp
   from shutil import rmtree
   from os.path import exists
@@ -21,6 +21,7 @@ def test_inas(epsilon = 1e-4):
   from lada.misc import Changedir
 
   vff = functional()
+  vff.cartesian=cartesian
 
   directory = '/tmp/test' #mkdtemp()
   if directory == '/tmp/test':
@@ -79,6 +80,7 @@ def test_inas(epsilon = 1e-4):
     assert all(abs(newout.structure[1].pos - structure[1].pos) < 1e-8)
     assert abs(newout.structure.energy) < 1e-8
 
+    if cartesian: return
     diff = structure.copy()
     diff[1].pos += [0.01, -0.005, 0.03]
     newout = vff(diff, outdir=directory, tol=1e-10, overwrite=True)
@@ -144,6 +146,7 @@ def test_ingaas():
     structure = crystal()
     vff.method = 'Powell'
     newout = vff(structure, outdir=directory, tol=1e-5, maxiter=200, overwrite=True, verbose=True)
+    assert newout.success
     print newout.structure
     print newout.optimize
     print newout.success
@@ -152,5 +155,6 @@ def test_ingaas():
     
       
 if __name__ == '__main__':
-# test_inas(1e-7)
+  test_inas(1e-7, False)
+  test_inas(1e-7, True)
   test_ingaas()

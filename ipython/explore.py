@@ -97,6 +97,7 @@ def explore(self, cmdl):
             "Please save to file first."
       return
     for name, job in interactive.jobfolder.iteritems():
+      if job.is_tagged: continue
       directory = join(dirname(interactive.jobfolder_path), name)
       extract = job.functional.Extract(directory)
       # successful jobs are not errors.

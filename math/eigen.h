@@ -1,19 +1,11 @@
-#ifndef LADA_MATH_EIGENOPS_H
-#define LADA_MATH_EIGENOPS_H
-
-#include <Eigen/Core>
-#include <Eigen/LU>
-#include <Eigen/Geometry>
-
-#include <misc/types.h>
-
+#if LADA_MATH_MODULE != 1
 namespace LaDa
 {
   namespace math
   {
     //! \f$\pi\f$
     const types::t_real pi = 3.1415926535897932384626433832795028841971693993751058209749445920;
-
+    
     //! 3d-vector of reals. 
     typedef Eigen::Matrix<types::t_real, 3, 1> rVector3d;
     //! 3d-vector of integers. 
@@ -24,12 +16,12 @@ namespace LaDa
     typedef Eigen::Matrix<types::t_real, 5, 1> rVector5d;
     //! 6d-vector of reals. 
     typedef Eigen::Matrix<types::t_real, 6, 1> rVector6d;
-
+    
     //! 3d-matrix of reals. 
     typedef Eigen::Matrix<types::t_real, 3, 3> rMatrix3d;
     //! 3d-vector of integers. 
     typedef Eigen::Matrix<types::t_int, 3, 3> iMatrix3d;
-
+    
     //! \typedef type of the angle axis object to initialize roations.
     typedef Eigen::AngleAxis<types::t_real> AngleAxis;
     //! \typedef type of the translation objects.

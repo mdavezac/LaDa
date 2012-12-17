@@ -4,6 +4,7 @@ def test_supercell():
   from numpy import identity, abs, all, dot
   from numpy.linalg import inv
   from lada.crystal.cppwrappers import supercell, Structure, are_periodic_images as api
+  from quantities import angstrom
   lattice = Structure( 0.0, 0.5, 0.5,
                        0.5, 0.0, 0.5,
                        0.5, 0.5, 0.0, scale=2.0, m=True ) \
@@ -13,7 +14,7 @@ def test_supercell():
                                 [1, -1, 1], 
                                 [1, 1, -1] ] ) )
   assert all(abs(result.cell - identity(3)) < 1e-8)
-  assert abs(result.scale - 2) < 1e-8
+  assert abs(result.scale - 2 * angstrom) < 1e-8
   assert getattr(result, 'm', False) 
   assert all(abs(result[0].pos - [0.00, 0.00, 0.00]) < 1e-8) and result[0].type == "As" \
          and getattr(result[0], 'site', -1) == 0 and api(result[0].pos, lattice[0].pos, inv(lattice.cell))

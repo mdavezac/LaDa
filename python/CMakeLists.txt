@@ -1,22 +1,4 @@
-set(PYLADA_HEADERS debug.hpp misc.hpp numpy_types.h std_map.hpp 
-                   std_map.impl.hpp std_vector.hpp xml.hpp)
-set(PYLADA_PY error.py onexit.py)
-
-if(NOT noinstall_headers)
-  install(FILES ${PYLADA_HEADERS} DESTINATION include/LaDa/python)
-endif(NOT noinstall_headers)
-
-set(do_use_mpi "False")
-if(MPI_FOUND)
-  set(do_use_mpi "True")
-endif(MPI_FOUND)
-
-set(with_ipython "False")
-set(with_ladabase "False")
-if(ipython_interface)
-  set(with_ipython "True")
-endif(ipython_interface)
-
+set(PYLADA_PY onexit.py)
 
 set(which_packages "'math', 'opt', 'crystal'") #, 'physics', 'periodic_table'")
 if(pcm_functional) 
@@ -28,28 +10,15 @@ endif(ce_package)
 if(vasp_functional) 
   set(which_packages "${which_packages}, 'vasp'")
 endif(vasp_functional) 
-# if(escan_functional) 
-#   set(which_packages "${which_packages}, 'escan'")
-# endif(escan_functional) 
-# if(vff_functional) 
-#   set(which_packages "${which_packages}, 'vff'")
-# endif(vff_functional) 
 if(enum_package) 
   set(which_packages "${which_packages}, 'enum'")
 endif(enum_package) 
-# if(minimizer_libs) 
-#   set(which_packages "${which_packages}, 'minimizer'")
-# endif(minimizer_libs) 
 if(jobs_package) 
   set(which_packages "${which_packages}, 'jobfolder'")
 endif(jobs_package) 
 if(ga_package) 
   set(which_packages "${which_packages}, 'ga'")
 endif(ga_package) 
-# if(ladabase_package) 
-#   set(with_ladabase "True")
-#   set(which_packages "${which_packages}, 'ladabase'")
-# endif(ladabase_package) 
 configure_file (
  "${PROJECT_SOURCE_DIR}/python/__init__.in.py"
  "${PROJECT_BINARY_DIR}/python/__init__.py"
@@ -57,13 +26,27 @@ configure_file (
 install(FILES ${PROJECT_BINARY_DIR}/python/__init__.py DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada)
 install(FILES ${PYLADA_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada)
 
-# include_directories(${PYTHON_INCLUDE_DIRS})
-# add_library (pyerror SHARED exceptions.cc exceptions.h object.h quantity.h wrap_numpy.h wrap_numpy.h)
-# target_link_libraries(pyerror ${Boost_PYTHON_LIBRARY})
-# set_target_properties(pyerror PROPERTIES PREFIX "")
-# set_target_properties(pyerror PROPERTIES OUTPUT_NAME error)
-set (EXTRA_FILES exceptions.h object.h wrap_numpy.h wrap_numpy.h)
+include_directories(${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDES})
+add_library (pypython SHARED module.cc)
+target_link_libraries(pypython ${PYTHON_LIBRARY})
+set_target_properties(pypython PROPERTIES OUTPUT_NAME cppwrappers)
+set_target_properties(pypython PROPERTIES PREFIX "")
+install(TARGETS pypython DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada)
+install(FILES ${LIBCRYSTAL_PYSOURCES} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada)
 
-# if(compile_tests OR compile_debug_tests)
-#   add_subdirectory(tests)
-# endif(compile_tests OR compile_debug_tests)
+
+set(PYHELPER_HEADERS python.h types.h wrap_numpy.h numpy_types.h
+                     random_access_list_iterator.h
+                     random_access_tuple_iterator.h
+                     quantity.h
+                     ppslot.hpp ppslot_crystal.hpp ppslot_math.hpp
+                     ppslot_python.hpp )
+set(PYHELPER_SOURCES object.cc quantity.cc)
+
+if(NOT noinstall_headers)
+  install(FILES ${PYHELPER_HEADERS} DESTINATION include/LaDa/python)
+endif(NOT noinstall_headers)
+
+if(compile_tests OR compile_debug_tests)
+  add_subdirectory(tests)
+endif(compile_tests OR compile_debug_tests)

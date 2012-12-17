@@ -59,7 +59,21 @@ class Fractional(BoolKeyword):
 
 
 class RemoveAtoms(BaseKeyword):
-  """ Remove atoms from structure. """
+  """ Remove atoms from structure.
+  
+      Atoms are distinguished by their CRYSTAL label.
+      To remove atoms 1 and 5:
+
+      >>> crystal.append( RemoveAtoms(1, 5) )
+
+      To modify/check that list
+
+      >>> crystal[-1].labels
+      [1, 5]
+      >>> crystal[-1].labels[1] = 6
+      >>> crystal[-1].labels
+      [1, 6]
+  """
   keyword = 'atomremo'
   """ CRYSTAL keyword. """
   def __init__(self, *args, **kwargs):
