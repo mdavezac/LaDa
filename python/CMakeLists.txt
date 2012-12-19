@@ -19,6 +19,9 @@ endif(jobs_package)
 if(ga_package) 
   set(which_packages "${which_packages}, 'ga'")
 endif(ga_package) 
+if(gulp_package) 
+  set(which_packages "${which_packages}, 'gulp'")
+endif(gulp_package) 
 configure_file (
  "${PROJECT_SOURCE_DIR}/python/__init__.in.py"
  "${PROJECT_BINARY_DIR}/python/__init__.py"
