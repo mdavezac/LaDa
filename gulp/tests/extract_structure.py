@@ -66,7 +66,7 @@ def test_opti_anatase(path):
   assert getattr(extract.structure[1], 'label', 0) == 2
   assert abs(getattr(extract.structure[0], 'charge', 0) - 1.131064*e) < 1e-5
   assert abs(getattr(extract.structure[1], 'charge', 0) + 0.565532*e) < 1e-5
-  assert abs(extract.structure.energy + 16.19739956 * eV) < 1e-5
+  assert abs(extract.structure.energy + 16.38287598 * eV) < 1e-5
 
 if __name__ == '__main__':
   from sys import argv

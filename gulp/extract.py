@@ -150,10 +150,13 @@ class ExtractBase(object):
     from re import M
     from quantities import eV
     from ..error import GrepError
-    regex = 'Total\s+lattice\s+energy\s*:\s*\\n'                               \
-            '\s*Primitive\s*unit\s*cell\s*=\s*(\S+)\s*eV'
-    result = self._find_first_STDOUT(regex, M)
-    if result is None: raise GrepError('Could not find energy.')
+    regex = 'Total\s+lattice\s+energy\s*=\s*(\S*)\s*eV'
+    result = self._find_last_STDOUT(regex)
+    if result is None:
+      regex = 'Total\s+lattice\s+energy\s*:\s*\\n'                               \
+              '\s*Primitive\s*unit\s*cell\s*=\s*(\S+)\s*eV'
+      result = self._find_last_STDOUT(regex, M)
+      if result is None: raise GrepError('Could not find energy.')
     return float(result.group(1)) * eV
 
   @property
@@ -176,7 +179,7 @@ class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
     from os.path import exists, isdir, basename, dirname
     from ..misc import RelativePath
        
-    self.STDOUT = 'gulp.gout'
+    self.STDOUT = 'gulp.out'
     """ Name of file to grep. """
     if directory is not None:
       directory = RelativePath(directory).path
