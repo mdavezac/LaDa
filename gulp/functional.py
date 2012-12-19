@@ -47,6 +47,8 @@ class Functional(AttrBlock):
     """ Holds parameters of the two-body Morse interaction. """
     self.buckingham = TwoBody()
     """ Holds parameters of the two-body Buckingham interaction. """
+    self.qeq = BoolKeyword()
+    """ Charge equalization scheme or Rappe and Goddard III. """
 
   def input_string(self, structure=None, **kwargs):
     """ Returns string string with input. """
@@ -64,9 +66,11 @@ class Functional(AttrBlock):
     header = ""
     for key, value in map:
       if value is None or value is True                                        \
-         or (isinstance(value, str) and len(value) == 0):
+         or (isinstance(value, str) and len(value) == 0)                       \
+         or (isinstance(value, str) and value == 'True'):
          header += str(key) + " "
-      else: result += '\n{0}\n{1}'.format(key, value)
+      elif value is not False and value != 'False':
+        result += '\n{0}\n{1}'.format(key, value)
     return header + '\n' + result
 
   def bringup(self, structure, outdir, workdir=None, **kwargs):
