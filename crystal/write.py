@@ -210,3 +210,123 @@ def crystal( structure, file='fort.34',
     pos = atom.pos * float(structure.scale.rescale(angstrom))
     file.write( '{0: >5} {1[0]: > 18.12f} {1[1]: > 18.12f} {1[2]: > 18.12f}\n' \
                 .format(type, pos) )
+
+
+def gulp(structure, file='gulp.in', **kwargs):
+  """ Writes structure as gulp input. 
+  
+      :param structure:
+         A :py:class:`Structure` or
+         :py:class:`~lada.dftcrystal.crystal.Crystal` instance to write in GULP
+         format.
+      :param file:
+         If a string, the it should be a filename. If None, then this function
+         will return a string with structure in GULP input format. Otherwise,
+         it should be a stream with a ``write`` method.
+      :param name: 
+         Name of the structure. Defaults to ``structure.name`` if the attribute
+         exists. Does not include in input name otherwise.
+      :param int periodicity:
+         Dimensionality of the structure. Defaults to figuring it out from the
+         input structure.
+      :param int symmgroup:
+         The name or number of the symmetry group. Defaults to
+         ``structure.symmgroup`` or ``structure.spacegroup`` or 1. If it is not
+         one, then it should be possible to figure out what the symmetry
+         operators are. An error will be thrown otherwise.
+
+      Only the asymmetric (a.k.a symmetrically inequivalent atoms) should be
+      written to the file. As a result, we need a way to determine which atoms
+      are asymmetric. There are a number of ways to do this:
+
+        - the symmetry group (``symmgroup`` keyword) is 1. Hence all atoms are
+          asymmetric
+        - the input is a :py:class:`~lada.dftcrystal.crystal.Crystal` object,
+          and hence everything about its symmetries is known
+        - atoms are marked with a boolean attribute ``asymmetric``
+        - a keyword argument or an attribute ``symmops`` or ``spacegroup``
+          exist containing a list of symmetry operations. These should be all
+          the operations needed to determine the asymmetric unit cells.
+        - the symmetries are determined using :py:func:`space_group`. This is
+          the last resort.
+  """
+  from quantities import angstrom
+  from . import space_group, equivalence_iterator
+
+  def getvalue(name, defaults=None):
+    """ returns value from kwargs or structure. """
+    return kwargs.get(name, getattr(structure, name, defaults))
+
+  result = ""
+  # dump name or title
+  name = getvalue('name')
+  if name is None: name = getvalue('title')
+  if name is not None: 
+    name = name.rstrip().lstrip()
+    if len(name) > 0: result += 'name\n{0}\n'.format(name)
+
+  # Makes sure structure is evaluated (dftcrystal.Crystal) first if necessary.
+  crystal = structure if not hasattr(structure, 'eval') else structure.eval()
+
+  # figures out symmetry group
+  symmgroup = getvalue('symmgroup')
+  if symmgroup is None: symmgroup = getvalue('spacegroup', None)
+  if symmgroup is None or hasattr(symmgroup, '__iter__'):
+    symmgroup = getvalue('space')
+  # figure out periodicity and dumps appropriate cell.
+  periodicity = getvalue('periodicity')
+  if periodicity is None:
+    periodicity = 3
+    if abs(crystal.cell[2, 2] - 500) < 1e-8: periodicity -= 1
+    if abs(crystal.cell[1, 1] - 500) < 1e-8: periodicity -= 1
+    if abs(crystal.cell[0, 0] - 500) < 1e-8: periodicity -= 1
+  if periodicity == 3:
+    result += 'vectors\n'                                                      \
+              '{0[0]: <18.8f} {0[1]: <18.8f} {0[2]: <18.8f}\n'                 \
+              '{1[0]: <18.8f} {1[1]: <18.8f} {1[2]: <18.8f}\n'                 \
+              '{2[0]: <18.8f} {2[1]: <18.8f} {2[2]: <18.8f}\n'                 \
+              .format(*crystal.cell.T)                                       
+    # dump spacegroup number or string
+    if symmgroup is not None: result += 'spacegroup\n{0}\n'.format(symmgroup)
+  elif periodicity == 2:                                                       
+   result += 'svectors\n'                                                      \
+             '{0[0]: <18.8f} {0[1]: <18.8f}\n'                                 \
+             '{1[0]: <18.8f} {1[1]: <18.8f}\n'                                 \
+             .format(*crystal.cell.T)                                         
+  elif periodicity == 1: raise NotImplementedError('Cannot do 1d materials')
+  elif periodicity == 0: raise NotImplementedError('Cannot do 0d materials')
+
+  if len(crystal) == 0: return result
+  charges = getvalue('charges', {})
+  result += 'cartesian\n'
+  
+  # figures out asymmetric atoms.
+  asymatoms = crystal if symmgroup == 1 or symmgroup is None else None
+  if asymatoms is None and all([hasattr(u, 'asymmetric') for u in crystal]):
+    asymatoms = [u for u in crystal if u.asymmetric]
+  if asymatoms is None:
+    symmops = getvalue('symmops', None)
+    if symmops is None: symmops = getvalue('spacegroup', None)
+    if symmops is None and crystal is not structure                            \
+       and hasattr(structure, 'symmetry_operators'):
+      symmops = structure.symmetry_operators
+    if symmops is None or not hasattr(symmops, '__iter__'):
+      symmops = space_group(crystal)
+    if symmops is None or not hasattr(symmops, '__iter__'): 
+      raise ValueError('Could not determine symmetry operations')
+    asymatoms = [crystal[u[0]] for u in equivalence_iterator(crystal, symmops)]
+
+  # now dumps atoms. 
+  for atom in asymatoms:
+    pos = atom.pos * crystal.scale.rescale(angstrom).magnitude
+    result += '{0.type:<4} core {1[0]:> 18.8f} {1[1]:> 18.8f} {1[2]:> 18.8f} ' \
+              .format(atom, pos)
+    charge = getattr(atom, 'charge', charges.get('charge', None))
+    if charge is not None: result += str(charge)
+    result += '\n'
+    if getattr(atom, 'shell', False) is not False:
+      pos = getattr(atom.shell, 'pos', atom.pos)
+      pos = pos * crystal.scale.rescale(angstrom).magnitude
+      result += '{1:<4} core {0[0]:> 18.8f} {0[1]:> 18.8f} {0[2]:> 18.8f} '    \
+                .format(pos, atom.type)
+  return result
