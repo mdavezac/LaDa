@@ -234,6 +234,10 @@ def gulp(structure, file='gulp.in', **kwargs):
          ``structure.symmgroup`` or ``structure.spacegroup`` or 1. If it is not
          one, then it should be possible to figure out what the symmetry
          operators are. An error will be thrown otherwise.
+      :params list freeze:
+         List of 6 boolean specifying whether a strain degree of freedom is
+         *not* allowed to relax. This is the opposite convention from GULP.
+         The list determines each coordinate xx, yy, zz, yz, xz, xy.
 
       Only the asymmetric (a.k.a symmetrically inequivalent atoms) should be
       written to the file. As a result, we need a way to determine which atoms
@@ -249,8 +253,11 @@ def gulp(structure, file='gulp.in', **kwargs):
           the operations needed to determine the asymmetric unit cells.
         - the symmetries are determined using :py:func:`space_group`. This is
           the last resort.
+
+       Furthermore, each atom can have a freeze parameter 
   """
   from quantities import angstrom
+  from ..crystal import _normalize_freeze_cell, _normalize_freeze_atom
   from . import space_group, equivalence_iterator
 
   def getvalue(name, defaults=None):
@@ -288,17 +295,26 @@ def gulp(structure, file='gulp.in', **kwargs):
               .format(*crystal.cell.T)                                       
     # dump spacegroup number or string
     if symmgroup is not None: result += 'spacegroup\n{0}\n'.format(symmgroup)
+    # freeze cell parameters
+    freeze = getvalue('freeze')
+    if freeze is not None:
+      freeze = _normalize_freeze_cell(freeze)
+      result += ' '.join(('0' if f else '1') for f in freeze) + '\n'
   elif periodicity == 2:                                                       
-   result += 'svectors\n'                                                      \
-             '{0[0]: <18.8f} {0[1]: <18.8f}\n'                                 \
-             '{1[0]: <18.8f} {1[1]: <18.8f}\n'                                 \
-             .format(*crystal.cell.T)                                         
+    result += 'svectors\n'                                                     \
+              '{0[0]: <18.8f} {0[1]: <18.8f}\n'                                \
+              '{1[0]: <18.8f} {1[1]: <18.8f}\n'                                \
+              .format(*crystal.cell.T)                                         
+    # freeze cell parameters
+    freeze = getvalue('freeze')
+    if freeze is not None:
+      freeze = _normalize_freeze_cell(freeze, 2)
+      result += ' '.join(('0' if f else '1') for f in freeze) + '\n'
   elif periodicity == 1: raise NotImplementedError('Cannot do 1d materials')
   elif periodicity == 0: raise NotImplementedError('Cannot do 0d materials')
 
   if len(crystal) == 0: return result
   charges = getvalue('charges', {})
-  result += 'cartesian\n'
   
   # figures out asymmetric atoms.
   asymatoms = crystal if symmgroup == 1 or symmgroup is None else None
@@ -316,17 +332,42 @@ def gulp(structure, file='gulp.in', **kwargs):
       raise ValueError('Could not determine symmetry operations')
     asymatoms = [crystal[u[0]] for u in equivalence_iterator(crystal, symmops)]
 
-  # now dumps atoms. 
+  # now dumps atoms into seperate regions, if need be. 
+  regions = {}
   for atom in asymatoms:
     pos = atom.pos * crystal.scale.rescale(angstrom).magnitude
-    result += '{0.type:<4} core {1[0]:> 18.8f} {1[1]:> 18.8f} {1[2]:> 18.8f} ' \
+    string = '{0.type:<4} core {1[0]:> 18.8f} {1[1]:> 18.8f} {1[2]:> 18.8f} '  \
               .format(atom, pos)
     charge = getattr(atom, 'charge', charges.get('charge', None))
-    if charge is not None: result += str(charge)
-    result += '\n'
+    if charge is not None: string += str(charge)
+    freeze = getattr(atom, 'freeze', None)
+    if freeze is not None: 
+      freeze = _normalize_freeze_atom(freeze)
+      string += ' '.join(('0' if f else '1') for f in freeze)
+    string += '\n'
     if getattr(atom, 'shell', False) is not False:
       pos = getattr(atom.shell, 'pos', atom.pos)
       pos = pos * crystal.scale.rescale(angstrom).magnitude
-      result += '{1:<4} core {0[0]:> 18.8f} {0[1]:> 18.8f} {0[2]:> 18.8f} '    \
+      string += '{1:<4} shell {0[0]:> 18.8f} {0[1]:> 18.8f} {0[2]:> 18.8f} '   \
                 .format(pos, atom.type)
+      freeze = getattr(atom.shell, 'freeze', freeze)
+      if freeze is not None: 
+        freeze = _normalize_freeze_atom(freeze)
+        string += ' '.join(('0' if f else '1') for f in freeze)
+      string += '\n'
+    region = getattr(atom, 'region', 0)
+    if region not in regions: regions[region] = string
+    else: regions[region] += string
+
+  # now dump regions to result
+  region_keys = getvalue('regions', {})
+  for key, value in regions.iteritems():
+    keyword = getvalue('region{0}'.format(key), region_keys.get(region, ''))
+
+    if key != 0: index = 'region {0}'.format(key)
+    elif len(keyword) == 0: index = '' 
+    else: index = 'region {0}'.format(max(len(regions) + 1, 3))
+
+    result += 'cartesian {0} {1}\n{2}\n'.format(index, keyword, value)
+    
   return result

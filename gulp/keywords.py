@@ -11,6 +11,25 @@ class OptiKeyword(BoolKeyword):
     if kwargs['gulp'].opti:
       return super(OptiKeyword, self).output_map(**kwargs)
 
+class Optimize(BoolKeyword):
+  """ Sets optimization. """
+  keyword = 'opti'
+  """ Equivalent GULP keyword. """
+  def output_map(self, **kwargs):
+    """ Sets noflag keyword if no other opti keyword is set. """
+    result = super(Optimize, self).output_map(**kwargs)
+    print 'AM HERE', result
+    if result is not None: 
+      gulp = kwargs['gulp']
+      print gulp.conv, gulp.conp, gulp.cellonly, gulp.shell
+      if getattr(gulp, 'conv', None) is not True                               \
+         and getattr(gulp, 'conp', None) is not True                           \
+         and getattr(gulp, 'cellonly', None) is not True                       \
+         and getattr(gulp, 'shell', None) is not True:
+        result.update(noflags=True)  
+    return result
+                                        
+                                        
 class TwoBody(MutableMapping, BaseKeyword):
   """ Defines parameters for a two-body GULP functional. """
   def __init__(self, enabled=False, **kwargs):

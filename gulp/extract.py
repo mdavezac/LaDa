@@ -164,6 +164,30 @@ class ExtractBase(object):
     """ True if job finished. """
     return self._find_first_STDOUT('Job Finished at') is not None
 
+  @property
+  def qeq_charges(self):
+    """ Greps QEq charges from output. """
+    from re import compile
+    from numpy import array
+    from quantities import e
+    from ..error import GrepError
+    if not self.qeq: raise GrepError('Not a QEq calculation.')
+    with self.__stdout__() as file:
+      found = False
+      pattern = ['Final', 'charges', 'from', 'QEq', ':']
+      for line in file:
+        if line.split() == pattern: found = True; break
+      if not found: raise GrepError('Could not find QEq charges.')
+
+      pattern = compile('^\s*\d+\s+\d+\s+(\S*)\s*$')
+      for line in file:
+        if pattern.match(line) is not None: break
+      result = [float(line.split()[-1])]
+      for line in file:
+        found = pattern.match(line)
+        if found is None: break
+        result.append(float(found.group(1)))
+    return array(result) * e
 
 
 class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):

@@ -13,7 +13,7 @@ class Functional(AttrBlock):
   def __init__(self, program=None, copy=None, **kwargs):
     """ Creates the GULP wrapper. """
     from ..tools.input.keywords import BoolKeyword
-    from .keywords import TwoBody, OptiKeyword
+    from .keywords import TwoBody, OptiKeyword, Optimize
     super(Functional, self).__init__()
     
     self.program = program
@@ -21,7 +21,7 @@ class Functional(AttrBlock):
 
         If this attribute is None, then :py:data:`~lada.gulp_program` is used.
     """ 
-    self.opti = BoolKeyword()
+    self.opti = Optimize()
     """ If True, then performs structural optimization. """
     self.conp = OptiKeyword()
     """ If True, then performs constant pressure optimization.
@@ -40,6 +40,11 @@ class Functional(AttrBlock):
     """
     self.conv = OptiKeyword()
     """ If True, then performs constant volume optimization.
+    
+        This keywords prints to the GULP input only if :py:attr:`opti` is on.
+    """
+    self.shell = OptiKeyword()
+    """ If True, optimizes only shells internal degrees of freedom. 
     
         This keywords prints to the GULP input only if :py:attr:`opti` is on.
     """
