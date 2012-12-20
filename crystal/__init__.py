@@ -228,3 +228,50 @@ def which_site(atom, lattice, invcell=None, tolerance=1e-8):
   for i, site in enumerate(lattice):
     if api(pos, site, invcell, tolerance): return i
   return -1
+
+
+def _normalize_freeze_cell(freeze, periodicity=3):
+  """ Transforms freeze parameters into a normalized form. 
+  
+      The normalized form is a list of six boolean where, if True, each of xx,
+      yy, zz, yz, xy, xz is *frozen*. The other forms allow strings, list of
+      strings, or the same list of booleans as the output.
+
+      If periodicity is 2, then the degrees of freedom are xx, yy.
+  """
+  from numpy import array
+  if isinstance(freeze, str): freeze = freeze.split()
+  if periodicity == 3:
+    if len(freeze) == 6                                                          \
+       and all(isinstance(u, bool) or isinstance(u, int) for u in freeze):
+         return [u == True for u in freeze]
+    freeze = set([u.lower() for u in freeze])
+    return array([ 'xx' in freeze,
+                   'yy' in freeze,
+                   'zz' in freeze,
+                   ('yz' in freeze or 'zy' in freeze),
+                   ('xy' in freeze or 'yx' in freeze),
+                   ('xz' in freeze or 'zx' in freeze) ])
+  elif periodicity == 2:
+    if len(freeze) == 2                                                          \
+       and all(isinstance(u, bool) or isinstance(u, int) for u in freeze):
+         return [u == True for u in freeze]
+    freeze = set([u.lower() for u in freeze])
+    return array(['xx' in freeze, 'yy' in freeze])
+
+def _normalize_freeze_atom(freeze):
+  """ Transforms freeze parameters into a normalized form. 
+  
+      The normalized form is a list of 3 boolean where, if True, each of x, y,
+      z is *frozen*. The other forms allow strings, list of strings, or the
+      same list of booleans as the output.
+  """
+  from numpy import array
+  from ..error import TypeError
+  if hasattr(freeze, '__iter__') and len(freeze) == 3                          \
+     and all(isinstance(u, bool) or isinstance(u, int) for u in freeze):
+       return [u == True for u in freeze]
+  elif not hasattr(freeze, 'lower'):
+    raise TypeError('Could not make sense of freeze parameter.')
+  freeze = freeze.lower()
+  return array(['x' in freeze, 'y' in freeze, 'z' in freeze])
