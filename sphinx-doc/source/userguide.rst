@@ -13,6 +13,8 @@ Contents:
 
    Interface to VASP  <userguide/vasp>
 
+   Interface to CRYSTAL <userguide/dftcrystal>
+
    Organized high-thoughput calculations: job-folders <userguide/jobfolders>
 
    IPython high-throughput interface <userguide/ipython>

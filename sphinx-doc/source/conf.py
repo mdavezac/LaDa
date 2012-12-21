@@ -225,4 +225,5 @@ rst_epilog = """
 .. _KPOINTS: http://cms.mpi.univie.ac.at/wiki/index.php/KPOINTS
 .. _INCAR: http://cms.mpi.univie.ac.at/wiki/index.php/INCAR
 .. _CRYSTAL: http://www.crystal.unito.it/
+.. _properties: http://www.crystal.unito.it/
 """

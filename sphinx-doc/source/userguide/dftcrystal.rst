@@ -15,7 +15,7 @@ properties_.
 
    Configuring LaDa for CRYSTAL <dftcrystal/config>
 
-..  CRYSTAL's approach to crystal structures: transformation chains <dftcrystal/crystal>
+   CRYSTAL's approach to crystal structures <dftcrystal/crystal>
 ..
 ..  A fast primer <dftcrystal/primer> 
 ..

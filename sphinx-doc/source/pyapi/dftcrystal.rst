@@ -10,7 +10,7 @@ three kinds of objects:
   
   - :py:class:`~crystal.Crystal`, :py:class:`~molecule.Molecule`, which define
     the structure to be optimized in a functional manner (as opposed to the
-    declarative approach of :py:class:`~lada.crystal.cppwrapper.Structure`)
+    declarative approach of :py:class:`~lada.crystal.cppwrappers.Structure`)
   - :py:class:`~functional.Functional`, which handles writing the input and
     calling CRYSTAL_ itself
   - :py:class:`~extract.Extract`, which handles grepping values from the output
