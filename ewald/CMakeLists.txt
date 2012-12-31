@@ -3,7 +3,7 @@ set(PYEWALD_F90 ep_com.f90 ewaldf.f90)
 set(PYEWALD_HEADERS ewald.h)
 set(PYEWALD_SOURCES ewald.cc module.cc erfc.cc)
 
-include_directories(${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDES})
+include_directories(${PYTHON_INCLUDE_DIR} ${NUMPY_INCLUDES})
 add_library (pyewald SHARED ${PYEWALD_SOURCES} ${PYEWALD_HEADERS} ${PYEWALD_F90})
 set_target_properties(pyewald PROPERTIES OUTPUT_NAME cppwrappers)
 set_target_properties(pyewald PROPERTIES PREFIX "")

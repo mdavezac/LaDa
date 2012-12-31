@@ -26,7 +26,7 @@ configure_file (
 install(FILES ${PROJECT_BINARY_DIR}/python/__init__.py DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada)
 install(FILES ${PYLADA_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada)
 
-include_directories(${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDES})
+include_directories(${PYTHON_INCLUDE_DIR} ${NUMPY_INCLUDES})
 add_library (pypython SHARED module.cc)
 target_link_libraries(pypython ${PYTHON_LIBRARY})
 set_target_properties(pypython PROPERTIES OUTPUT_NAME cppwrappers)
