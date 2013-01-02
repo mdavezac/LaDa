@@ -10,6 +10,44 @@ class External(Molecule):
       also accepts functional modifications which will act upon the initial
       structure, much as :py:class:`~lada.dftcrystal.crystal.Crystal`
       instances.
+
+      There are two ways of initializing an instance. The first allows the same
+      interface as :py:class:`~lada.crystal.cppwrappers.Structure`.
+
+      >>> from quantities import angstrom
+      >>> from lada.dftcrystal import External
+      >>> external = External([[0, 0.5, 0.5],
+      ...                      [0.5, 0, 0.5],
+      ...                      [0.5, 0.5, 0], scale=5.45*angstrom)            \\
+      ...                    .add_atom(0,0,0, 'Si')                           \\
+      ...                    .add_atom(0.25, 0.25, 0.25, 'Si')
+
+      The second approach is to use a predefined
+      :py:class:`~lada.crystal.cppwrappers.Structure` instance:
+
+      >>> from lada.dftcrystal import External
+      >>> external = External(copy=diamond)
+
+      Where ``diamond`` in the snippet above is the instance in question. Note
+      that it is deepcopied upon initialization.  In both cases, the initial
+      structure can be accessed as :py:attr:`initial`. 
+
+      In both cases, CRYSTAL_ transformations can be added to modify the
+      initial structure.
+
+      >>> external.append('bohr')
+      >>> external.append(DiplaceAtoms().add_atom(0.1, 0, 0, 1))
+
+      In the snippet above, the displacement is in the current units of the
+      structure, as understood by CRYSTAL_. E.g. in "bohr"'s here. In other
+      words, the transformations should reference the structure the way
+      CRYSTAL_ understands it. It might be indicated to use :py:meth:`eval`.
+
+      .. note::
+         
+         LaDa will attempt to discover the symmetries at run time. It is also
+         possible to enter them explicitely by setting :py:attr:`initial`'s
+         ``spacegroup`` attribute to a list of 4x3 matrices.
   """
   keyword = 'external'
   """ CRYSTAL keyword. """
@@ -22,7 +60,10 @@ class External(Molecule):
     del self.__dict__['atoms']
 
     self.initial = kwargs.pop('copy', None)
-    """ Initial structure. """
+    """ Initial structure. 
+    
+        This is a :py:class:`~lada.crystal.cppwrappers.Structure` instance.
+    """
     if self.initial is None: self.initial = Structure(*args, **kwargs)
     else: self.initial = self.initial.copy()
 

@@ -28,7 +28,6 @@ install(FILES ${PYLADA_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada)
 
 include_directories(${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDES})
 add_library (pypython SHARED module.cc)
-target_link_libraries(pypython ${PYTHON_LIBRARY})
 set_target_properties(pypython PROPERTIES OUTPUT_NAME cppwrappers)
 set_target_properties(pypython PROPERTIES PREFIX "")
 install(TARGETS pypython DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada)

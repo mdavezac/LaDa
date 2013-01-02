@@ -91,10 +91,10 @@ class Molecule(ListBlock):
   def raw(self, value):
     """ Reads crystal input. """
     from ..periodic_table import find as find_specie
-    if not hasattr(value, '__iter__'): value = value.split('\n')
-    self.symmgroup = int(value.pop(0).split())
+    if not hasattr(value, '__iter__'): value = value.splitlines()
+    self.symmgroup = int(value.pop(0))
 
-    n = int(value.pop(0).split()[0])
+    n = int(value.pop(0))
     self.atoms = []
     for line in value[:n]:
       line = line.split()
