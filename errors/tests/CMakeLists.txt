@@ -1,4 +1,4 @@
-include_directories(${PYTHON_INCLUDE_DIR} ${NUMPY_INCLUDES})
+include_directories(${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDES})
 
 if(NOT compile_debug_tests)
 

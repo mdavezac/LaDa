@@ -4,11 +4,10 @@ set (ENUM_H ndimiterator.h fciterator.h manipulations.h)
 
 install(FILES ${ENUM_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/enum)
 
-include_directories(${PYTHON_INCLUDE_DIR} ${NUMPY_INCLUDES})
+include_directories(${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDES})
 add_library (pyenum SHARED ${ENUM_CC} ${ENUM_H})
 set_target_properties(pyenum PROPERTIES OUTPUT_NAME cppwrappers)
 set_target_properties(pyenum PROPERTIES PREFIX "")
-target_link_libraries(pyenum ${PYTHON_LIBRARY})
 install(TARGETS pyenum DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/enum)
 
 if(compile_tests OR compile_debug_tests)

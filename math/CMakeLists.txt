@@ -1,4 +1,4 @@
-include_directories(${PYTHON_INCLUDE_DIR} ${NUMPY_INCLUDES})
+include_directories(${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDES})
 add_library (pymath SHARED module.cc noopt.cc)
 SET_SOURCE_FILES_PROPERTIES(noopt.cc PROPERTIES COMPILE_FLAGS -O0)
 set_target_properties(pymath PROPERTIES OUTPUT_NAME math)

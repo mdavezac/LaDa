@@ -13,7 +13,7 @@ endif(ESCAN_FOUND)
 python_add_module (pyescan ${PYESCAN_F90} ${PYESCAN_HEADERS} ${PYESCAN_SOURCES})
 
 include_directories( ${MPI_INCLUDE_PATH} 
-                     ${PYTHON_INCLUDE_DIR} 
+                     ${PYTHON_INCLUDE_DIRS} 
                      ${ESCAN_INCLUDE_DIRS}
                      ${NUMPY_INCLUDES} )
 target_link_libraries( pyescan ${Boost_PYTHON_LIBRARY} ${Boost_SYSTEM_LIBRARY} )

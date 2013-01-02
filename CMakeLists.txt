@@ -5,10 +5,6 @@ set (LaDa_VERSION_MINOR 0)
 
 option(noinstall_headers    "Will not install header files." on)
 mark_as_advanced(noinstall_headers)
-option(use_gsl "Whether to use GSL as minimizers." on)
-mark_as_advanced(use_gsl)
-option(use_minuit2 "Whether to use Minuit2 as minimizers." on)
-mark_as_advanced(use_minuit2)
 
 # Project package options 
 option(ewald_functional       "Include Point Charge Ion functional."       off)
@@ -60,8 +56,9 @@ include(FortranCInterface)
 FortranCInterface_HEADER(${PROJECT_BINARY_DIR}/FCMangle.h
                          MACRO_NAMESPACE "FC_"
                          SYMBOL_NAMESPACE "FC_" )
-find_package(PythonInterp)
-find_package(PythonLibs)
+find_package(PythonInterp REQUIRED)
+find_package(PythonLibs REQUIRED)
+
 # look for python version.
 if(NOT PYTHON_VERSION AND PYTHONINTERP_FOUND)
   execute_process( 
@@ -104,7 +101,7 @@ if("${BOOST_ROOT}" STREQUAL "")
     set(BOOST_ROOT $ENV{BOOST_ROOT} CACHE PATH "Path to boost libraries and headers.")
   endif ("$ENV{BOOST_ROOT}" STRGREATER "")
 endif("${BOOST_ROOT}" STREQUAL "")
-set(boost_packages python mpi mpi_python regex serialization system filesystem )
+set(boost_packages python mpi_python regex serialization system filesystem)
 if(ewald_functional)
   set(boost_packages ${boost_packages} math_c99 math_c99l math_c99f )
 endif(ewald_functional)
@@ -115,17 +112,9 @@ find_package( eigen REQUIRED )
 include_directories(${eigen_INCLUDE_DIR})
 set(LADA_WITH_EIGEN3 ${is_eigen3})
 
-find_package(MPI)
+find_package(MPI) # only required for some tests in process and jobfolders
 FortranCInterface_VERIFY()
-
-if( MPI_FOUND )
-  set(LADA_MPI TRUE)
-  find_package(Boost 1.36.0 REQUIRED COMPONENTS mpi)
-endif( MPI_FOUND )
-  
-
-
-
+find_package(numpy REQUIRED) # has to be after FortranCInterface_VERIFY for some reason
 
 #include root source directory
 include_directories("${PROJECT_SOURCE_DIR}")
@@ -150,9 +139,6 @@ endif(ga_package)
 if(ipython_interface)
   set(jobfolder_package on)
 endif(ipython_interface)
-
-# now includes packages.
-find_package(numpy REQUIRED)
 
 if( vasp_functional )
   set(DOVASP True)

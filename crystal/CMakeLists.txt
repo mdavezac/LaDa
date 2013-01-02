@@ -1,6 +1,6 @@
 set(LIBCRYSTAL_PYSOURCES __init__.py read.py write.py ABX.py A2BX4.py bravais.py binary.py)
 
-include_directories(${PYTHON_INCLUDE_DIR} ${NUMPY_INCLUDES})
+include_directories(${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDES})
 
 add_library (pycrystal SHARED module.cc)
 set_target_properties(pycrystal PROPERTIES OUTPUT_NAME cppwrappers)
