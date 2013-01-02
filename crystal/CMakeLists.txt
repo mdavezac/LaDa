@@ -1,4 +1,5 @@
-set(LIBCRYSTAL_PYSOURCES __init__.py read.py write.py ABX.py A2BX4.py bravais.py binary.py)
+set(LIBCRYSTAL_PYSOURCES __init__.py read.py write.py ABX.py A2BX4.py
+                         bravais.py binary.py iterator.py)
 
 include_directories(${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDES})
 

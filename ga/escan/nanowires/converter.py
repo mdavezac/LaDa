@@ -97,7 +97,7 @@ class Converter(object):
   def to_wire(self, bitstring):
     """ Returns a structure constructed from a bitstring. """
     from numpy import dot
-    from ....crystal import shell_iterator
+    from ....crystal.iterator import shell as shell_iterator
     # creates an array of shell types, including nanowire core.
     shells = self.all_shells(bitstring)
     # create the superstructure which will contain the nanowire.
@@ -119,7 +119,7 @@ class Converter(object):
   def to_bitstring(self, nanowire):
     """ Constructs a bitstring from a nanowire. """
     from numpy import array, dot
-    from ....crystal import shell_iterator
+    from ....crystal.iterator import shell as shell_iterator
 
     result = []
     # finds the center of the cell (and nanowire).

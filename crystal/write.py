@@ -136,7 +136,7 @@ def crystal( structure, file='fort.34',
   from StringIO import StringIO
   from numpy import zeros
   from quantities import angstrom
-  from ..crystal import equivalence_iterator
+  from ..crystal.iterator import equivalence as equivalence_iterator
   from ..periodic_table import find as find_specie
   from . import space_group
   # makes sure file is a stream.

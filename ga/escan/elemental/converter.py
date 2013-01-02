@@ -49,7 +49,7 @@ class Converter(object):
     
   def to_superlattice(self, bitstring):
     """ Returns a structure constructed from a bitstring. """
-    from ....crystal import layer_iterator
+    from ....crystal.iterator import layer as layer_iterator
     # create the superstructure which will contain the superlattices.
     superlattice = self.superstructure(len(bitstring))
 
@@ -68,7 +68,7 @@ class Converter(object):
   def to_bitstring(self, superlattice):
     """ Constructs a bitstring from a superlattice. """
     from numpy import array
-    from ....crystal import layer_iterator
+    from ....crystal.iterator import layer as layer_iterator
 
     result = []
     # loop over bitstring in superlattice.

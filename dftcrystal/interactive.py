@@ -168,7 +168,7 @@ def crystal_equivlabels(line):
       structure, and to atom 6.
   """
   from re import split
-  from ..crystal import equivalence_iterator
+  from ..crystal.iterator import equivalence as equivalence_iterator
   from ..dftcrystal import Molecule
   from ..interactive import jobfolder as cjf
 
