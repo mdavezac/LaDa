@@ -23,6 +23,11 @@ class ExtractBase(object):
     return self._find_first_STDOUT('\*\s*conp\s*\-\s*constant') is not None
   @property
   @make_cached
+  def conv(self):
+    """ True if optimizing at constant volume. """
+    return self._find_first_STDOUT('\*\s*conv\s*\-\s*constant') is not None
+  @property
+  @make_cached
   def qeq(self):
     """ True if using QEe. """
     return self._find_first_STDOUT('\*\s*QEq\s*\-\s*electroneg') is not None
@@ -32,6 +37,7 @@ class ExtractBase(object):
     """ Greps output cell. """
     # static case
     if not self.optimize: return self.input_cell
+    if self.conv: return self.input_cell
 
     from re import M
     from numpy import array
@@ -44,11 +50,26 @@ class ExtractBase(object):
     if result is None: raise GrepError('Could not grep cell')
     return array(result.group(0).split()[-9:], dtype='float64')                \
                 .reshape(3,3) * angstrom
-  
+
+  @property
+  @make_cached
+  def dimensionality(self):
+    """ Dimensionality of the structure. """
+    from ..error import GrepError
+    result = self._find_first_STDOUT('Dimensionality\s*=\s*(0|1|2|3)')
+    if result is None: raise GrepError('Could not determine dimensionality.')
+    return int(result.group(1))
   @property
   @make_cached
   def input_cell(self):
     """ Greps input cell. """
+    from numpy import identity
+    if self.dimensionality == 3: return self._input_cell3d()
+    elif self.dimensionality == 2: return self._input_cell2d()
+    return identity(3, dtype='float64') * 500.0
+
+  def _input_cell3d(self):
+    """ Greps input cell from crystal calculation. """
     from re import M
     from numpy import array
     from quantities import angstrom
@@ -61,44 +82,76 @@ class ExtractBase(object):
     return array(result.group(0).split()[-9:], dtype='float64')                \
                 .reshape(3,3) * angstrom
 
+  def _input_cell2d(self):
+    """ Greps input cell from thin film calculation. """
+    from re import M
+    from numpy import array, sqrt, cross, sum
+    from quantities import angstrom
+    from ..error import GrepError
+    expr = '\s*Surface\s*Cartesian\s+vectors\s*\(Angstroms\)\s*:\s*'           \
+           '\\n\s*\\n'                                                         \
+           '(?:\s*(?:(\S*)\s*){3}\s*\\n){2}'
+    result = self._find_first_STDOUT(expr, M)
+    if result is None: raise GrepError('Could not grep cell')
+    a0 = array(result.group(0).split()[-6:-3], dtype='float64')
+    a1 = array(result.group(0).split()[-3:], dtype='float64')
+    a2 = cross(a0, a1)
+    a2 = a2 * 500e0 / sqrt(sum(a2*a2))
+    return array([a0, a1, a2]).T * angstrom
+
   @property 
   @make_cached
   def structure(self):
     """ Greps output structure. """
-    # static case
     if not self.optimize: return self.input_structure
 
     from re import compile
     from itertools import chain
+    from numpy import dot, array
+    from numpy.linalg import inv
     from quantities import e, angstrom
-    from ..crystal import Structure
+    from ..crystal import Structure, into_cell
     from ..error import GrepError
-    regex = compile('Final asymmetric unit coordinates') 
+    regex0 = compile('Final asymmetric unit coordinates') 
+    regex1 = compile( 'Final fractional(?:/Cartesian)? coordinates '           \
+                      'of (?:atoms|surface)' )
     with self.__stdout__() as file:
       # find beginning of final structure
       found = None
       for line in file:
-        found = regex.search(line)
+        found = regex0.search(line)
+        if found is not None: break
+        found = regex1.search(line)
         if found is not None: break
       if found is None: raise GrepError('Could not grep atoms.')
       # find first atom
-      regex = compile('(\d+)\s+([A-Z][a-z]?(?:\d+)?)\s+\S(\s+\S+){5}')
+      regex = compile('(\d+)\s+([A-Z][a-z]?(?:\d+)?)\s+(?:c\s+)?\S(\s+\S+){3,5}')
       for line in file:
-        found = regex.search(line)
+        found = regex.search(line.replace('*', ''))
         if found: break
       if found is None: raise GrepError('Could not grep atoms.')
       # create result
       result = Structure()
       result.cell = self.cell
+      invcell = inv(self.cell)
       for line in chain([line], file):
+        line = line.replace('*', '')
         found = regex.search(line)
         if found is None: break
         data = line.split()
-        result.add_atom( pos=[float(i) for i in data[3:6]],
-                         type=data[1], label=int(data[0]) )
-        radius = float(data[6])
+        
+        # figure out cartesian coords
+        pos = array(data[3:6], dtype='float64')
+        if self.dimensionality > 0: 
+          d = self.dimensionality
+          pos[:d] = dot(result.cell[:d,:d], pos[:d])
+          pos[:d] = into_cell(pos, result.cell, invcell)[:d]
+
+        # adds atom
+        result.add_atom(pos=pos, type=data[1], label=int(data[0]))
+        radius = float(data[6]) if len(data) > 6 else 0
         if abs(radius) > 1e-8: result[-1].radius = radius * angstrom
-        charge = float(data[7])
+        charge = float(data[7]) if len(data) > 7 else 0
         if abs(charge) > 1e-8: result[-1].charge = charge * e
       # add more info
       try: result.energy = self.energy
@@ -111,15 +164,20 @@ class ExtractBase(object):
     """ Greps input structure. """
     from re import compile
     from itertools import chain
+    from numpy import dot, array
+    from numpy.linalg import inv
     from quantities import e
-    from ..crystal import Structure
+    from ..crystal import Structure, into_cell
     from ..error import GrepError
-    regex = compile('Fractional coordinates of asymmetric unit :')
+    regex0 = compile('Fractional coordinates of asymmetric unit :')
+    regex1 = compile('Mixed fractional/Cartesian coordinates of surface :')
     with self.__stdout__() as file:
       # find beginning of final structure
       found = None
       for line in file:
-        found = regex.search(line)
+        found = regex0.search(line)
+        if found is not None: break
+        found = regex1.search(line)
         if found is not None: break
       if found is None: raise GrepError('Could not grep atoms.')
       # find first atom
@@ -131,12 +189,21 @@ class ExtractBase(object):
       # create result
       result = Structure()
       result.cell = self.input_cell
+      invcell = inv(result.cell)
       for line in chain([line], file):
         found = regex.search(line)
         if found is None: break
         data = line.replace('*', '').split()
-        result.add_atom( pos=[float(i) for i in data[3:6]],
-                         type=data[1], label=int(data[0]) )
+        
+        # figure out cartesian coords
+        pos = array(data[3:6], dtype='float64')
+        if self.dimensionality > 0: 
+          d = self.dimensionality
+          pos[:d] = dot(result.cell[:d,:d], pos[:d])
+          pos[:d] = into_cell(pos, result.cell, invcell)[:d]
+
+        # adds atom
+        result.add_atom(pos=pos, type=data[1], label=int(data[0]))
         charge = float(data[6])
         if abs(charge) > 1e-8: result[-1].charge = charge * e
         occupancy = float(data[7])
@@ -188,7 +255,6 @@ class ExtractBase(object):
         if found is None: break
         result.append(float(found.group(1)))
     return array(result) * e
-
 
 class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
   """ Extracts GULP data from an output file. """

@@ -136,8 +136,8 @@ def crystal( structure, file='fort.34',
   from StringIO import StringIO
   from numpy import zeros
   from quantities import angstrom
-  from ..crystal.iterator import equivalence as equivalence_iterator
   from ..periodic_table import find as find_specie
+  from .iterator import equivalence as equivalence_iterator
   from . import space_group
   # makes sure file is a stream.
   # return string when necessary
@@ -257,8 +257,8 @@ def gulp(structure, file='gulp.in', **kwargs):
        Furthermore, each atom can have a freeze parameter 
   """
   from quantities import angstrom
-  from ..crystal import _normalize_freeze_cell, _normalize_freeze_atom
-  from . import space_group, equivalence_iterator
+  from .iterator import equivalence as equivalence_iterator
+  from . import space_group, _normalize_freeze_cell, _normalize_freeze_atom
 
   def getvalue(name, defaults=None):
     """ returns value from kwargs or structure. """
@@ -339,6 +339,7 @@ def gulp(structure, file='gulp.in', **kwargs):
     string = '{0.type:<4} core {1[0]:> 18.8f} {1[1]:> 18.8f} {1[2]:> 18.8f} '  \
               .format(atom, pos)
     charge = getattr(atom, 'charge', charges.get('charge', None))
+    if hasattr(charge, 'rescale'): charge = float(charge.rescale('e'))
     if charge is not None: string += str(charge)
     freeze = getattr(atom, 'freeze', None)
     if freeze is not None: 
