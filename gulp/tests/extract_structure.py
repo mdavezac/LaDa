@@ -145,7 +145,32 @@ def test_optinosym(path):
   from lada.gulp import Extract
 
   extract = Extract(join(path, 'opti_nosym.gout'))
-  print extract.structure
+  assert all( abs( extract.cell 
+                   - array([[ 4.585767,  0.      , -0.      ],
+                            [ 0.      ,  4.585767,  0.      ],
+                            [-0.      ,  0.      ,  2.957967]]) * angstrom )
+              < 1e-8 )
+  input = array([a.pos for a in extract.structure])
+  test = array([[ 0.        ,  0.        ,  0.        ],
+                [ 2.2928835 ,  2.2928835 ,  1.4789835 ],
+                [ 1.38293893,  1.38293893,  0.        ],
+                [ 3.20282807,  3.20282807,  0.        ],
+                [ 3.67582243,  0.90994457,  1.4789835 ],
+                [ 0.90994457,  3.67582243,  1.4789835 ]])
+  assert all(abs(test - input) < 1e-6)
+  assert all( abs( extract.input_cell 
+                   - array([[ 4.585767,  0.      , -0.      ],
+                            [ 0.      ,  4.585767,  0.      ],
+                            [-0.      ,  0.      ,  2.957968]]) * angstrom )
+              < 1e-8 )
+  input = array([a.pos for a in extract.input_structure])
+  test = array([[ 0.        ,  0.        ,  0.        ],
+                [ 2.2928835 ,  2.2928835 ,  1.478984  ],
+                [ 1.40394632,  1.40394632,  0.        ],
+                [ 3.18182068,  3.18182068,  0.        ],
+                [ 3.69682982,  0.88893718,  1.478984  ],
+                [ 0.88893718,  3.69682982,  1.478984  ]])
+  assert all(abs(test - input) < 1e-6)
 
 
 if __name__ == '__main__':
