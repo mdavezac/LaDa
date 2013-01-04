@@ -1,6 +1,6 @@
 """ Holds definition of GULP specific input classes. """
 __docformat__ = "restructuredtext en"
-__all__ = ['OptiKeyword', 'TwoBody'] 
+__all__ = ['OptiKeyword', 'TwoBody', 'Species', 'Spring', 'Conv', 'Conp'] 
 from collections import MutableMapping
 from ..tools.input.keywords import BoolKeyword, BaseKeyword
 
@@ -10,6 +10,27 @@ class OptiKeyword(BoolKeyword):
     """ Only prints if opti is on. """
     if kwargs['gulp'].opti:
       return super(OptiKeyword, self).output_map(**kwargs)
+class Conv(OptiKeyword):
+  """ Adds exclusive keyword behavior. """
+  keyword = 'conv'
+  """ Equivalent GULP keyword. """
+  def __set__(self, instance, value):
+    """ Makes sure only one of conv, conp is on. """
+    if value is not None and value == True                                    \
+       and getattr(instance, 'conp', False):
+      instance.conp = False
+    self.value = value
+class Conp(OptiKeyword):
+  """ Adds exclusive keyword behavior. """
+  keyword = 'conp'
+  """ Equivalent GULP keyword. """
+  def __set__(self, instance, value):
+    """ Makes sure only one of conv, conp is on. """
+    if value is not None and value == True                                    \
+       and getattr(instance, 'conv', False):
+      instance.conv = False
+    self.value = value
+      
 
 class Optimize(BoolKeyword):
   """ Sets optimization. """
@@ -82,9 +103,9 @@ class TwoBody(MutableMapping, BaseKeyword):
     # header is the keyword + additional parameters.
     header = self.keyword
     for key, value in self.__dict__.iteritems():
-      if key[0] == '_' or key in ['params', 'keyword', 'enabled'] or not value:
-        continue
-      header += ' ' + str(key) 
+      if key[0] == '_' or key in ['params', 'keyword', 'enabled']: continue
+      if not isinstance(value, bool): header += ' ' + str(value)
+      elif value:                     header += ' ' + key
     # creates list of interactions.
     result = ""
     for key, value in self.params.iteritems():
@@ -113,5 +134,99 @@ class TwoBody(MutableMapping, BaseKeyword):
     for key, value in self.params.iteritems():
       index = ', '.join(repr(u) for u in key.split('-'))
       key = "{0}[{1}]".format(name, index)
-      results[key] = ', '.join(str(u) for u in value)
+      results[key] = str(float(value)) if not hasattr(value, '__iter__')       \
+                     else ', '.join(str(u) for u in value) 
     return results
+
+class Species(MutableMapping, BaseKeyword):
+  """ Defines parameters for atomic parameters. """
+  keyword = 'species'
+  """ Equivalent GULP keyword. """
+  def __init__(self, enabled=False, **kwargs):
+    """ Creates the instance. """
+    super(Species, self).__init__()
+    self.params = {}
+    """ Holds functional parameters. """
+    self.enabled = enabled
+    """ Whether this interaction is enabled or not. """
+    
+  def _key(self, key):
+    """ Returns regex-formatted value of a key. """
+    from re import compile
+    from ..error import IndexError
+    regex = compile('([A-Z][a-z]?\d*)\s*\|?\s*(core|shell|)')
+    groups = regex.match(key).groups()
+    if groups is None:
+      raise IndexError('Could not make sense of atom {0}.'.format(key))
+    return groups[0] + '|' + ('core' if len(groups[1]) == 0 else groups[1])
+  def __getitem__(self, key):
+    """ Retrieves atomic parameters for given specie. """
+    return self.params[self._key(key)]
+  def __setitem__(self, key, value):
+    """ Sets atomic parameters for given specie. """
+    self.params[self._key(key)] = value
+  def __delitem__(self, key, value):
+    """ Deletes atomic parameters for given specie. """
+    del self.params[self._key(key)] 
+  def __len__(self):
+    """ Number of independant sets of atomic paramters. """
+    return len(self.params)
+  def __iter__(self):
+    """ Iterates over atomic parameters. """
+    for k in self.params: yield k.split('-')
+
+  def output_map(self, **kwargs):
+    """ Returns output map. """
+    # whether to print this or not.
+    if self.enabled == False: return 
+    # list of structures. 
+    species = None
+    if kwargs.get('structure', None) is not None:
+      species = set([u.type for u in kwargs['structure']])
+    # header is the keyword + additional parameters.
+    header = self.keyword
+    for key, value in self.__dict__.iteritems():
+      if key[0] == '_' or key in ['params', 'keyword', 'enabled']: continue
+      if not isinstance(value, bool): header += ' ' + str(value)
+      elif value:                     header += ' ' + key
+    # creates list of interactions.
+    result = ""
+    for key, value in self.params.iteritems():
+      # if structure in input, check that interaction is needed.
+      if species is not None and key.split('|')[0] not in species: continue
+      # print interaction.
+      result += key.replace('|', ' ')  + '     '
+      if hasattr(value, '__iter__'):
+        result += ' '.join(str(float(u)) for u in value)
+      else: result += str(float(value))
+      result += '\n'
+    return {header: result}
+
+  def __ui_repr__(self, imports, name=None, defaults=None, exclude=None):
+    """ User-friendly representation of the functional. """
+    from ..tools.uirepr import template_ui_repr
+    if exclude is None: exclude = ['params']
+    else: exclude.append('params')
+
+    results = template_ui_repr(self, imports, name, defaults, exclude)
+    if defaults is None or self.enabled == True or len(self.params):
+      results['{0}.enabled'.format(name)] = repr(self.enabled)
+    for key, value in self.params.iteritems():
+      index = ', '.join(repr(u) for u in key.split('-'))
+      key = "{0}[{1}]".format(name, index)
+      results[key] = str(float(value)) if not hasattr(value, '__iter__')       \
+                     else ', '.join(str(u) for u in value) 
+    return results
+
+class Springs(Species):
+  keyword = 'spring'
+  """ GULP equivalent keyword. """
+  def _key(self, key):
+    """ Returns regex-formatted value of a key. """
+    from re import compile
+    from ..error import IndexError
+    regex = compile('([A-Z][a-z]?\d*)')
+    groups = regex.match(key).groups()
+    if groups is None:
+      raise IndexError('Could not make sense of atom {0}.'.format(key))
+    return groups[0] 

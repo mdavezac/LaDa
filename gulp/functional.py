@@ -13,7 +13,8 @@ class Functional(AttrBlock):
   def __init__(self, program=None, copy=None, **kwargs):
     """ Creates the GULP wrapper. """
     from ..tools.input.keywords import BoolKeyword
-    from .keywords import TwoBody, OptiKeyword, Optimize
+    from .keywords import TwoBody, OptiKeyword, Optimize, Conv, Conp, Species, \
+                          Springs
     super(Functional, self).__init__()
     
     self.program = program
@@ -23,11 +24,6 @@ class Functional(AttrBlock):
     """ 
     self.opti = Optimize()
     """ If True, then performs structural optimization. """
-    self.conp = OptiKeyword()
-    """ If True, then performs constant pressure optimization.
-    
-        This keywords prints to the GULP input only if :py:attr:`opti` is on.
-    """
     self.cellonly = OptiKeyword()
     """ If True, optimization will run on cell degrees of freedom only.
     
@@ -38,8 +34,13 @@ class Functional(AttrBlock):
     
         This keywords prints to the GULP input only if :py:attr:`opti` is on.
     """
-    self.conv = OptiKeyword()
+    self.conv = Conv()
     """ If True, then performs constant volume optimization.
+    
+        This keywords prints to the GULP input only if :py:attr:`opti` is on.
+    """
+    self.conp = Conp()
+    """ If True, then performs constant pressure optimization.
     
         This keywords prints to the GULP input only if :py:attr:`opti` is on.
     """
@@ -48,12 +49,16 @@ class Functional(AttrBlock):
     
         This keywords prints to the GULP input only if :py:attr:`opti` is on.
     """
+    self.qeq = BoolKeyword()
+    """ Charge equalization scheme or Rappe and Goddard III. """
     self.morse = TwoBody()
     """ Holds parameters of the two-body Morse interaction. """
     self.buckingham = TwoBody()
     """ Holds parameters of the two-body Buckingham interaction. """
-    self.qeq = BoolKeyword()
-    """ Charge equalization scheme or Rappe and Goddard III. """
+    self.species = Species()
+    """ Atomic parameters. """
+    self.springs = Springs()
+    """ Springs between cores and shells. """
 
   def input_string(self, structure=None, **kwargs):
     """ Returns string string with input. """
