@@ -1,12 +1,12 @@
 # to be run from a compound directory, (so ../input_generic works, etc).
 import os, os.path
-from lada.vasp.nlep.mpopt import *
+from pylada.vasp.nlep.mpopt import *
 
-#from lada.opt import read_input
-from lada.vasp import read_input
-from lada.vasp.extract import Extract, ExtractGW
-from lada.vasp.specie import U, nlep
-from lada.vasp import Vasp
+#from pylada.opt import read_input
+from pylada.vasp import read_input
+from pylada.vasp.extract import Extract, ExtractGW
+from pylada.vasp.specie import U, nlep
+from pylada.vasp import Vasp
 # Things which need to be put into dictionary of input script.
 #global_dict = { "Extract": Extract, "ExtractGW": ExtractGW, "Vasp": Vasp, "nlep": nlep, "U": U }
 
@@ -69,7 +69,7 @@ def load_test(run, job=None, rank=None, system=None, files_dest_dir=None, getdir
   import shutil
   import os
   import os.path
-  from lada.vasp.extract import Extract
+  from pylada.vasp.extract import Extract
 
   generic_input = load_run_input()
   if (getdir == None):

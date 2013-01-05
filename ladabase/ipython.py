@@ -9,11 +9,11 @@ def _getcomment(self=None, filename = None):
   try: from .. import database_username
   except ImportError:
     print >>stderr, "Could not import database_username with which to tag files in database.\n"\
-                    "Please add `database_username = 'my full name'` in ~/.lada.\n"
+                    "Please add `database_username = 'my full name'` in ~/.pylada.\n"
     return
   if len(database_username) == 0:
     print >>stderr, "Username with which to tag files in database is empty.\n"\
-                    "Please add `database_username = 'my full name'` in ~/.lada.\n"
+                    "Please add `database_username = 'my full name'` in ~/.pylada.\n"
     return
 
   if self == None: self = get_ipy()
@@ -158,7 +158,7 @@ def push_database(self, cmdl):
   try: from .. import database_username
   
   except:
-    print "Could not find database_username. Please edit the file '~/.lada', and add:"
+    print "Could not find database_username. Please edit the file '~/.pylada', and add:"
     print ">>> database_username = \"Jane Doe\""
     print "Without '>>>', with 'database_username' flushed left, and your name "\
           "within explicit quotation marks on the right hand side." 

@@ -1,7 +1,7 @@
-#include "LaDaConfig.h"
+#include "PyladaConfig.h"
 
 #include <Python.h>
-#define PY_ARRAY_UNIQUE_SYMBOL lada_enum_ARRAY_API
+#define PY_ARRAY_UNIQUE_SYMBOL pylada_enum_ARRAY_API
 #include <numpy/arrayobject.h>
 
 #include <errors/exceptions.h>
@@ -14,7 +14,7 @@
 # define PyMODINIT_FUNC void
 #endif
 
-namespace LaDa
+namespace Pylada
 {
   namespace enumeration
   {
@@ -23,7 +23,7 @@ namespace LaDa
     {
       if(not PyArray_Check(_array))
       {
-        LADA_PYERROR(TypeError, "input must be a numpy array.\n");
+        PYLADA_PYERROR(TypeError, "input must be a numpy array.\n");
         return NULL;
       }
       if(PyArray_ISINTEGER(_array)) Py_RETURN_TRUE;
@@ -31,10 +31,10 @@ namespace LaDa
       if(not iterator) return NULL;
       PyObject* i_iterator = iterator.borrowed();
       int const type = ((PyArrayObject*)_array)->descr->type_num;
-#     ifdef LADA_IFTYPE
-#       error LADA_IFTYPE already defined
+#     ifdef PYLADA_IFTYPE
+#       error PYLADA_IFTYPE already defined
 #     endif
-#     define LADA_IFTYPE(TYPENUM, TYPE)                                        \
+#     define PYLADA_IFTYPE(TYPENUM, TYPE)                                        \
         if(type == TYPENUM)                                                    \
         {                                                                      \
           while(PyArray_ITER_NOTDONE(i_iterator))                              \
@@ -44,53 +44,53 @@ namespace LaDa
             PyArray_ITER_NEXT(i_iterator);                                     \
           }                                                                    \
         }
-      LADA_IFTYPE(NPY_FLOAT, python::numpy::type<npy_float>::np_type)
-      else LADA_IFTYPE(NPY_DOUBLE, python::numpy::type<npy_double>::np_type)
-      else LADA_IFTYPE(NPY_LONGDOUBLE, python::numpy::type<npy_longdouble>::np_type)
-#     undef LADA_WITH_DATA_TYPE
+      PYLADA_IFTYPE(NPY_FLOAT, python::numpy::type<npy_float>::np_type)
+      else PYLADA_IFTYPE(NPY_DOUBLE, python::numpy::type<npy_double>::np_type)
+      else PYLADA_IFTYPE(NPY_LONGDOUBLE, python::numpy::type<npy_longdouble>::np_type)
+#     undef PYLADA_WITH_DATA_TYPE
       Py_RETURN_TRUE;
     }
     PyObject* lexcompare(PyObject *_module, PyObject *_args)
     {
-#     ifdef LADA_DEBUG
+#     ifdef PYLADA_DEBUG
       if(_args == NULL)
       {
-        LADA_PYERROR(TypeError, "_lexcompare expects two arguments.");
+        PYLADA_PYERROR(TypeError, "_lexcompare expects two arguments.");
         return NULL;
       }
       if(PyTuple_Size(_args) != 2)
       {
-        LADA_PYERROR(TypeError, "_lexcompare expects two arguments.");
+        PYLADA_PYERROR(TypeError, "_lexcompare expects two arguments.");
         return NULL;
       }
 #     endif
       PyArrayObject *first = (PyArrayObject*) PyTuple_GET_ITEM(_args, 0);
       PyArrayObject *second = (PyArrayObject*) PyTuple_GET_ITEM(_args, 1);
-#     ifdef LADA_DEBUG
+#     ifdef PYLADA_DEBUG
       if(not PyArray_Check(first))
       {
-        LADA_PYERROR(TypeError, "First argument to _lexcompare is not a numpy array.");
+        PYLADA_PYERROR(TypeError, "First argument to _lexcompare is not a numpy array.");
         return NULL;
       }
       if(not PyArray_Check(second))
       {
-        LADA_PYERROR(TypeError, "Second argument to _lexcompare is not a numpy array.");
+        PYLADA_PYERROR(TypeError, "Second argument to _lexcompare is not a numpy array.");
         return NULL;
       }
       if(PyArray_NDIM(first) != 1 or PyArray_NDIM(second) != 1)
       {
-        LADA_PYERROR(TypeError, "_lexcompare arguments should be 1d array.");
+        PYLADA_PYERROR(TypeError, "_lexcompare arguments should be 1d array.");
         return NULL;
       }
       if(PyArray_DIM(first, 0) != PyArray_DIM(second, 0))
       {
-        LADA_PYERROR(TypeError, "_lexcompare arguments should have the same size.");
+        PYLADA_PYERROR(TypeError, "_lexcompare arguments should have the same size.");
         return NULL;
       }
       if( first->descr->type_num != python::numpy::type<t_ndim>::value
           or second->descr->type_num != python::numpy::type<t_ndim>::value )
       {
-        LADA_PYERROR(TypeError, "Wrong kind for _lexcompare arguments.");
+        PYLADA_PYERROR(TypeError, "Wrong kind for _lexcompare arguments.");
         return NULL;
       }
 #     endif
@@ -130,20 +130,20 @@ namespace LaDa
 PyMODINIT_FUNC initcppwrappers(void) 
 {
   char const doc[] =  "Wrapper around C++ enumeration methods.";
-  PyObject* module = Py_InitModule3("cppwrappers", LaDa::enumeration::methods_table, doc);
+  PyObject* module = Py_InitModule3("cppwrappers", Pylada::enumeration::methods_table, doc);
   if(not module) return;
   import_array(); // needed for NumPy 
-  if(not LaDa::python::import()) return;
-  if(not LaDa::math::import()) return;
+  if(not Pylada::python::import()) return;
+  if(not Pylada::math::import()) return;
 
-  if (PyType_Ready(LaDa::enumeration::ndimiterator_type()) < 0) return;
-  Py_INCREF(LaDa::enumeration::ndimiterator_type());
-  if (PyType_Ready(LaDa::enumeration::manipulations_type()) < 0) return;
-  Py_INCREF(LaDa::enumeration::manipulations_type());
-  if (PyType_Ready(LaDa::enumeration::fciterator_type()) < 0) return;
-  Py_INCREF(LaDa::enumeration::fciterator_type());
+  if (PyType_Ready(Pylada::enumeration::ndimiterator_type()) < 0) return;
+  Py_INCREF(Pylada::enumeration::ndimiterator_type());
+  if (PyType_Ready(Pylada::enumeration::manipulations_type()) < 0) return;
+  Py_INCREF(Pylada::enumeration::manipulations_type());
+  if (PyType_Ready(Pylada::enumeration::fciterator_type()) < 0) return;
+  Py_INCREF(Pylada::enumeration::fciterator_type());
 
-  PyModule_AddObject(module, "NDimIterator", (PyObject *)LaDa::enumeration::ndimiterator_type());
-  PyModule_AddObject(module, "Manipulations", (PyObject *)LaDa::enumeration::manipulations_type());
-  PyModule_AddObject(module, "FCIterator", (PyObject *)LaDa::enumeration::fciterator_type());
+  PyModule_AddObject(module, "NDimIterator", (PyObject *)Pylada::enumeration::ndimiterator_type());
+  PyModule_AddObject(module, "Manipulations", (PyObject *)Pylada::enumeration::manipulations_type());
+  PyModule_AddObject(module, "FCIterator", (PyObject *)Pylada::enumeration::fciterator_type());
 }

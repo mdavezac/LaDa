@@ -1,6 +1,6 @@
 import quantities
 def _rigged_deepcopy(self, memo):
-  """ Rig by LaDa so deepcopy of scalars works.
+  """ Rig by Pylada so deepcopy of scalars works.
   
       This likely a numpy bug, since deepcopying a scalar array yields a
       builtin type, rather than a scalar array. It is ticket#1176 in numpy bug

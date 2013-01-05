@@ -3,8 +3,8 @@ def test_doubleatomsymm():
   from tempfile import mkdtemp
   from shutil import rmtree
   from os.path import exists
-  from lada.dftcrystal import Crystal
-  from lada.misc import Changedir
+  from pylada.dftcrystal import Crystal
+  from pylada.misc import Changedir
 
 
   c = Crystal(136, 4.63909875, 2.97938395, 

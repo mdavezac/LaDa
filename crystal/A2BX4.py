@@ -8,7 +8,7 @@ __all__ = [ 'b1', 'b10', 'b10I', 'b11', 'b12', 'b15', 'b16', 'b18', 'b19',
 
 def d1I():
   """ d1I lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 1, 0, 0,\
                     0, 1, 0,\
                     0, 0, 0.745,\
@@ -44,7 +44,7 @@ def d1I():
 
 def b21():
   """ b21 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 0.384, 0.384, 0,\
                     -0.664, 0.664, 0,\
                     0, 0, 1,\
@@ -66,7 +66,7 @@ def b21():
 
 def b1I():
   """ b1I lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 0.288, 0, 0,\
                     0, 0.288, 0,\
                     0, 0, 1,\
@@ -88,7 +88,7 @@ def b1I():
 
 def b19():
   """ b19 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 0.3165, 0, 0.633,\
                     0.5, 0, 0,\
                     0, 0.771, 0,\
@@ -110,7 +110,7 @@ def b19():
 
 def s1():
   """ s1 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 1, 0, 0,\
                     0, 0.601, 0,\
                     0, 0, 0.994,\
@@ -174,7 +174,7 @@ def s1():
 
 def b36():
   """ b36 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 1, 0, 0,\
                     0, 0.402, 0,\
                     0, 0, 0.214,\
@@ -210,7 +210,7 @@ def b36():
 
 def b5():
   """ b5 (spinel) lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 0, 0.5, 0.5,\
                     0.5, 0, 0.5,\
                     0.5, 0.5, 0,\
@@ -232,7 +232,7 @@ def b5():
 
 def b35():
   """ b35 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 0.81, 0, 0,\
                     0, 0.266, 0,\
                     0, 0, 1,\
@@ -268,7 +268,7 @@ def b35():
 
 def b6():
   """ b6 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 0.305, 0.61, 0,\
                     0.305, 0, 0.61,\
                     0.5, 0, 0,\
@@ -290,7 +290,7 @@ def b6():
 
 def s3I():
   """ s3I lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 0.611, 0, 0,\
                     0, 1, 0,\
                     0, 0, 0.347,\
@@ -312,7 +312,7 @@ def s3I():
 
 def b38():
   """ b38 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 0.05194, 0.05194, 0,\
                     -0.08997, 0.08997, 0,\
                     0, 0, 1,\
@@ -341,7 +341,7 @@ def b38():
 
 def b8():
   """ b8 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 0.5, 1, 0,\
                     0, 0, 1.026,\
                     0.161, 0, 0,\
@@ -363,7 +363,7 @@ def b8():
 
 def b12():
   """ b12 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 0.584, 0, -0.055,\
                     0, 0.734, 0,\
                     0, 0, 1,\
@@ -399,7 +399,7 @@ def b12():
 
 def b5I():
   """ b5I (inverse spinel) lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 0, 0.5, 0.5,\
                     0.5, 0, 0.5,\
                     0.5, 0.5, 0,\
@@ -421,7 +421,7 @@ def b5I():
 
 def b5D():
   """ b5D lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 0, 0.5, 0.5,\
                     0.5, 0, 0.5,\
                     0.5, 0.5, 0,\
@@ -443,7 +443,7 @@ def b5D():
 
 def s2I():
   """ s2I lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 0.987, 0, 0,\
                     0, 0.295, 0,\
                     0, 0, 1,\
@@ -479,7 +479,7 @@ def s2I():
 
 def b15():
   """ b15 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 1, 0, 0,\
                     0, 0.975471, 0,\
                     0, 0, 0.550978,\
@@ -515,7 +515,7 @@ def b15():
 
 def b7():
   """ b7 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 0.388, 0.776, 0,\
                     0.388, 0, 0.776,\
                     0.5, 0, 0,\
@@ -537,7 +537,7 @@ def b7():
 
 def b2():
   """ b2 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 1, 0, 0,\
                     0, 1, 0,\
                     0, 0, 0.59,\
@@ -552,7 +552,7 @@ def b2():
 
 def b18():
   """ b18 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 0, 0.476, 0.476,\
                     1, 0, 1,\
                     0.798, 0.798, 0,\
@@ -574,7 +574,7 @@ def b18():
 
 def b37():
   """ b37 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 0.05168, 0.05168, 0,\
                     -0.08951, 0.08951, 0,\
                     0, 0, 1,\
@@ -603,7 +603,7 @@ def b37():
 
 def s1I():
   """ s1I lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 1, 0, 0,\
                     0, 0.601, 0,\
                     0, 0, 0.994,\
@@ -667,7 +667,7 @@ def s1I():
 
 def b16():
   """ b16 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 1, 0, 0,\
                     0, 0.6, 0,\
                     -0.314435, 0, 0.97351,\
@@ -703,7 +703,7 @@ def b16():
 
 def b33():
   """ b33 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 0.577, 0.577, 0.577,\
                     -1, 1, -0.333,\
                     0, 0, 0.257,\
@@ -753,7 +753,7 @@ def b33():
 
 def b4I():
   """ b4I lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 1, 0, 0,\
                     0, 1, 0,\
                     0, 0, 1,\
@@ -768,7 +768,7 @@ def b4I():
 
 def s3():
   """ s3 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 0.611, 0, 0,\
                     0, 1, 0,\
                     0, 0, 0.347,\
@@ -790,7 +790,7 @@ def s3():
 
 def b11():
   """ b11 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 0.743, 0, 0,\
                     0, 0.573, 0,\
                     0, 0, 1,\
@@ -826,7 +826,7 @@ def b11():
 
 def b2I():
   """ b2I lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 1, 0, 0,\
                     0, 1, 0,\
                     0, 0, 0.59,\
@@ -841,7 +841,7 @@ def b2I():
 
 def d1():
   """ d1 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 1, 0, 0,\
                     0, 1, 0,\
                     0, 0, 0.745,\
@@ -877,7 +877,7 @@ def d1():
 
 def b34():
   """ b34 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 0.808, 0, 0,\
                     0, 0.281, 0,\
                     0, 0, 1,\
@@ -913,7 +913,7 @@ def b34():
 
 def d3():
   """ d3 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 0.5, -0.74, 1,\
                     0.1495, 0, 0,\
                     0, 0.438, 0,\
@@ -928,7 +928,7 @@ def d3():
 
 def b9I():
   """ b9I lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 0.862, 0, 0,\
                     0, 1, 0,\
                     0, 0, 0.282,\
@@ -964,7 +964,7 @@ def b9I():
 
 def d3I():
   """ d3I lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 1, 0, -0.74,\
                     0, 0.299, 0,\
                     0, 0, 0.438,\
@@ -986,7 +986,7 @@ def d3I():
 
 def s2():
   """ s2 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 0.987, 0, 0,\
                     0, 0.295, 0,\
                     0, 0, 1,\
@@ -1022,7 +1022,7 @@ def s2():
 
 def b1():
   """ b1 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 0.144, 0.288, 0,\
                     0.144, 0, 0.288,\
                     0.5, 0, 0,\
@@ -1037,7 +1037,7 @@ def b1():
 
 def b9():
   """ b9 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 0.862, 0, 0,\
                     0, 1, 0,\
                     0, 0, 0.282,\
@@ -1073,7 +1073,7 @@ def b9():
 
 def b10():
   """ b10 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 1, 0, 0,\
                     0, 0.585098, 0,\
                     0, 0, 0.522491,\
@@ -1109,7 +1109,7 @@ def b10():
 
 def d9():
   """ d9 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 0.5, 1, 0,\
                     0.5, 0, 1,\
                     0.5, 0, 0,\
@@ -1131,7 +1131,7 @@ def d9():
 
 def b10I():
   """ b10I lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 1, 0, 0,\
                     0, 0.585, 0,\
                     0, 0, 0.522,\
@@ -1167,7 +1167,7 @@ def b10I():
 
 def b20():
   """ b20 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 0.298, 0.298, 0,\
                     -0.516, 0.516, 0,\
                     0, 0, 1,\
@@ -1189,7 +1189,7 @@ def b20():
 
 def b4():
   """ b4 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 1, 0, 0,\
                     0, 1, 0,\
                     0, 0, 1,\

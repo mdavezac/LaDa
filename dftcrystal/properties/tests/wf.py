@@ -3,9 +3,9 @@ def test():
   from shutil import rmtree
   from os.path import join, exists
   from os import mkdir
-  from lada.dftcrystal import Crystal, Functional, Shell
-  from lada.dftcrystal.properties import Properties
-  from lada import default_comm
+  from pylada.dftcrystal import Crystal, Functional, Shell
+  from pylada.dftcrystal.properties import Properties
+  from pylada import default_comm
 
   functional = Functional()
   functional.basis['Si'] = [

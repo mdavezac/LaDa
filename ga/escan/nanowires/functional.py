@@ -12,7 +12,7 @@ class Darwin(DarwinBase):
     """ Initializes a GA functional. 
          
         :Parameters:
-          evaluator : `lada.ga.escan.elemental.Bandgap`
+          evaluator : `pylada.ga.escan.elemental.Bandgap`
             Functional which uses vff and escan for evaluating physical properties.
         :Kwarg nmax: 
           Maximum size of bitstrings. Defaults to 20.

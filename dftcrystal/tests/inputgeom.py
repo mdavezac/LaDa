@@ -963,9 +963,9 @@ def test_geom():
   from numpy import all, abs
   import numpy
   import quantities
-  from lada.dftcrystal.geometry import Crystal
-  from lada.dftcrystal.parse import parse
-  from lada.dftcrystal import input, geometry
+  from pylada.dftcrystal.geometry import Crystal
+  from pylada.dftcrystal.parse import parse
+  from pylada.dftcrystal import input, geometry
   a = Crystal()
 
   global string 
@@ -996,9 +996,9 @@ def test_geom():
 def test_basis():
   import numpy
   import quantities
-  from lada.dftcrystal.basis import BasisSet, Shell
-  from lada.dftcrystal.parse import parse
-  from lada.dftcrystal import input, basis
+  from pylada.dftcrystal.basis import BasisSet, Shell
+  from pylada.dftcrystal.parse import parse
+  from pylada.dftcrystal import input, basis
 
   execdict = input.__dict__.copy()
   execdict.update(basis.__dict__)
@@ -1096,10 +1096,10 @@ def test_functional():
   from numpy import all, array
   import numpy
   import quantities
-  from lada.dftcrystal.functional import Functional
-  from lada.dftcrystal.basis import BasisSet
-  from lada.dftcrystal.parse import parse
-  from lada.dftcrystal import input, basis
+  from pylada.dftcrystal.functional import Functional
+  from pylada.dftcrystal.basis import BasisSet
+  from pylada.dftcrystal.parse import parse
+  from pylada.dftcrystal import input, basis
 
   execdict = input.__dict__.copy()
   execdict.update(basis.__dict__)
@@ -1136,8 +1136,8 @@ def test_functional():
   assert all(a.tolinteg == array([7, 7, 7, 7, 14]))
 
 def test_uirepr():
-  from lada.dftcrystal.parse import parse
-  from lada.dftcrystal.functional import Functional
+  from pylada.dftcrystal.parse import parse
+  from pylada.dftcrystal.functional import Functional
   a = Functional()
   global string 
   b = parse(string)

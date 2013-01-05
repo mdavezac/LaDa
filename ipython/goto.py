@@ -5,7 +5,7 @@ def goto(self, cmdl):
   from os.path import exists, join, split as splitpath, isdir
   from .explore import explore
   from . import get_shell
-  from lada import interactive
+  from pylada import interactive
 
   shell = get_shell(self)
 
@@ -66,7 +66,7 @@ def goto(self, cmdl):
 
 def iterate(self, event):
   """ Goes to next (untagged) job. """
-  from lada import interactive
+  from pylada import interactive
   if interactive.jobfolder is None: return
 
   args = event.split()
@@ -74,8 +74,8 @@ def iterate(self, event):
     print "Invalid argument {0}.".format(event)
     return
   elif len(args) == 0:
-    if "_lada_subjob_iterator" in interactive.__dict__:
-      iterator = interactive._lada_subjob_iterator
+    if "_pylada_subjob_iterator" in interactive.__dict__:
+      iterator = interactive._pylada_subjob_iterator
     else:
       iterator = interactive.jobfolder.root.itervalues()
     while True:
@@ -85,30 +85,30 @@ def iterate(self, event):
         return 
       if job.is_tagged: continue
       break
-    interactive._lada_subjob_iterator = iterator
-    if "_lada_subjob_iterated" not in interactive.__dict__:
-      interactive._lada_subjob_iterated = []
-    interactive._lada_subjob_iterated.append(interactive.jobfolder.name)
+    interactive._pylada_subjob_iterator = iterator
+    if "_pylada_subjob_iterated" not in interactive.__dict__:
+      interactive._pylada_subjob_iterated = []
+    interactive._pylada_subjob_iterated.append(interactive.jobfolder.name)
     goto(self, job.name)
     print "In job ", interactive.jobfolder.name
   elif args[0] == "reset" or args[0] == "restart":
     # remove any prior iterator stuff.
-    interactive.__dict__.pop("_lada_subjob_iterator", None)
-    interactive.__dict__.pop("_lada_subjob_iterated", None)
+    interactive.__dict__.pop("_pylada_subjob_iterator", None)
+    interactive.__dict__.pop("_pylada_subjob_iterated", None)
     print "In job ", interactive.jobfolder.name
   elif args[0] == "back" or args[0] == "previous":
-    if "_lada_subjob_iterated" not in interactive.__dict__:
+    if "_pylada_subjob_iterated" not in interactive.__dict__:
       print "No previous job to go to. "
     else:
-      goto(self, interactive._lada_subjob_iterated.pop(-1))
-      if len(interactive._lada_subjob_iterated) == 0:
-        del interactive._lada_subjob_iterated
+      goto(self, interactive._pylada_subjob_iterated.pop(-1))
+      if len(interactive._pylada_subjob_iterated) == 0:
+        del interactive._pylada_subjob_iterated
       print "In job ", interactive.jobfolder.name
 
 
 def completer(self, event):
   from IPython import TryNext
-  from lada import interactive
+  from pylada import interactive
   if len(event.line.split()) > 2: raise TryNext()
 
   if '/' in event.symbol:
@@ -124,7 +124,7 @@ def completer(self, event):
     result = [a + "/" for a in interactive.jobfolder.children.keys()]
     result.extend(["/", "next", "reset"])
     if interactive.jobfolder.parent is not None: result.append("../")
-    if len(getattr(interactive, "_lada_subjob_iterated", [])) != 0:
+    if len(getattr(interactive, "_pylada_subjob_iterated", [])) != 0:
       result.append("previous")
     return result
 

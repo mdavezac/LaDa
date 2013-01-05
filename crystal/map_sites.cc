@@ -3,12 +3,12 @@ bool map_sites( Structure const &_mapper, Structure &_mappee,
 {
   if(_mapper.size() == 0) 
   {
-    LADA_PYERROR(ValueError, "Empty mapper structure.");
+    PYLADA_PYERROR(ValueError, "Empty mapper structure.");
     return false;
   }
   if(_mappee.size() == 0) 
   {
-    LADA_PYERROR(ValueError, "Empty mappee structure.");
+    PYLADA_PYERROR(ValueError, "Empty mappee structure.");
     return false;
   }
 
@@ -25,7 +25,7 @@ bool map_sites( Structure const &_mapper, Structure &_mappee,
   math::rMatrix3d const intcell_ = invcell * _mappee.cell() * ratio;
   if(not math::is_integer(intcell_, _tolerance))
   {
-    LADA_PYERROR(ValueError, "Mappee not a supercell of mapper.");
+    PYLADA_PYERROR(ValueError, "Mappee not a supercell of mapper.");
     return false;
   }
 
@@ -68,7 +68,7 @@ bool map_sites( Structure const &_mapper, Structure &_mappee,
     }
     if( math::eq(fneigh_dist, sneigh_dist, tolerance) and sneigh_index != -1)
     {
-      LADA_PYERROR(ValueError, "Found two atoms at the same site.");
+      PYLADA_PYERROR(ValueError, "Found two atoms at the same site.");
       return false;
     }
     if(fneigh_dist > tolerance) 
@@ -95,7 +95,7 @@ bool map_sites( Structure const &_mapper, Structure &_mappee,
       }
       else
       {
-        LADA_PYERROR(ValueError, "Callable is expected to return True or False");
+        PYLADA_PYERROR(ValueError, "Callable is expected to return True or False");
         return false;
       }
     }
@@ -110,7 +110,7 @@ bool map_sites( Structure const &_mapper, Structure &_mappee,
       if(not pyint)
       { 
         PyErr_Clear(); 
-        LADA_PYERROR(internal, "Could not create python integer."); 
+        PYLADA_PYERROR(internal, "Could not create python integer."); 
         return false;
       }
       i_atom->pyattr("site", pyint.borrowed());

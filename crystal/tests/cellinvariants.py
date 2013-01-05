@@ -3,8 +3,8 @@ def test(cell, numops):
   """ Test structure initialization. """
   from numpy import all, abs, dot, array
   from numpy.linalg import inv, det
-  from lada.crystal.cppwrappers import cell_invariants, Structure
-  from lada.math import is_integer
+  from pylada.crystal.cppwrappers import cell_invariants, Structure
+  from pylada.math import is_integer
 
   ops = cell_invariants(cell) 
   if isinstance(cell, Structure): cell = cell.cell.copy()
@@ -29,7 +29,7 @@ if __name__ == "__main__":
   if len(argv) > 0: path.extend(argv[1:])
   
   def test_(cell, numops):
-    from lada.crystal.cppwrappers import Structure
+    from pylada.crystal.cppwrappers import Structure
     from numpy import array
     test(array(cell), numops)
     # also good test to make sure that structure storage is correct.

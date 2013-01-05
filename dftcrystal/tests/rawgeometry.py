@@ -1,6 +1,6 @@
 def test_crystal():
   from numpy import all, abs, array
-  from lada.dftcrystal.crystal import Crystal
+  from pylada.dftcrystal.crystal import Crystal
   a = Crystal()
   a.raw = '0 0 0\n'\
           '136\n'\
@@ -71,7 +71,7 @@ def test_crystal():
 
 def test_removeatoms():
   from numpy import all, arange
-  from lada.dftcrystal.geometry import RemoveAtoms
+  from pylada.dftcrystal.geometry import RemoveAtoms
   a = RemoveAtoms()
 
   a.raw = '5\n1 2 3 4 5\n'
@@ -83,7 +83,7 @@ def test_removeatoms():
 
 def test_modifysymmetry():
   from numpy import all, array
-  from lada.dftcrystal.geometry import ModifySymmetry
+  from pylada.dftcrystal.geometry import ModifySymmetry
   a = ModifySymmetry()
 
   raw = '5\n1 A 2 A 3 0 4 0 5 0\n'
@@ -99,7 +99,7 @@ def test_modifysymmetry():
 
 def test_slabinfo():
   from numpy import all, array
-  from lada.dftcrystal.geometry import Slabinfo
+  from pylada.dftcrystal.geometry import Slabinfo
 
   a = Slabinfo()
   a.raw = '1 1 0'
@@ -110,7 +110,7 @@ def test_slabinfo():
 
 def test_slabcut():
   from numpy import all, array
-  from lada.dftcrystal.geometry import Slabcut
+  from pylada.dftcrystal.geometry import Slabcut
 
   a = Slabcut()
   a.raw = '1 1 0\n1 5\n'
@@ -122,7 +122,7 @@ def test_slabcut():
 
 def test_displaceatoms():
   from numpy import all, abs
-  from lada.dftcrystal.geometry import DisplaceAtoms
+  from pylada.dftcrystal.geometry import DisplaceAtoms
 
   a = DisplaceAtoms()
   a.raw = '2\n1 0.1 0.1 0.1\n2 0.2 0.2 0.2'
@@ -140,7 +140,7 @@ def test_displaceatoms():
 
 def test_insertatoms():
   from numpy import all, abs
-  from lada.dftcrystal.geometry import InsertAtoms
+  from pylada.dftcrystal.geometry import InsertAtoms
 
   a = InsertAtoms()
   a.raw = '2\n1 0.1 0.1 0.1\n2 0.2 0.2 0.2'
@@ -159,7 +159,7 @@ def test_insertatoms():
 def test_affinetransform():
   from numpy import all, abs, array
   from quantities import degree, angstrom
-  from lada.dftcrystal.geometry import AffineTransform
+  from pylada.dftcrystal.geometry import AffineTransform
   a = AffineTransform()
 
   raw = '4\n'\

@@ -207,7 +207,7 @@ def delete_folder(self, event):
 
 def copy_completer(self, event):
   from IPython import TryNext
-  from lada import interactive
+  from pylada import interactive
 
   line = event.line.split()[1:]
   result = []
@@ -230,13 +230,13 @@ def copy_completer(self, event):
     result += [a + "/" for a in interactive.jobfolder.children.keys()]
     result.extend(["/"])
     if interactive.jobfolder.parent is not None: result.append("../")
-    if len(getattr(interactive, "_lada_subjob_iterated", [])) != 0:
+    if len(getattr(interactive, "_pylada_subjob_iterated", [])) != 0:
       result.append("previous")
     return result
 
 def delete_completer(self, event):
   from IPython import TryNext
-  from lada import interactive
+  from pylada import interactive
 
   line = event.line.split()[1:]
   result = []
@@ -260,6 +260,6 @@ def delete_completer(self, event):
     result += [a + "/" for a in interactive.jobfolder.children.keys()]
     result.extend(["/"])
     if interactive.jobfolder.parent is not None: result.append("../")
-    if len(getattr(interactive, "_lada_subjob_iterated", [])) != 0:
+    if len(getattr(interactive, "_pylada_subjob_iterated", [])) != 0:
       result.append("previous")
     return result

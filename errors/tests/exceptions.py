@@ -1,6 +1,6 @@
 import sys
 sys.path = ["@CMAKE_CURRENT_BINARY_DIR@"] + sys.path # "@PROJECT_BINARY_DIR@/testdir/", 
-from lada import error
+from pylada import error
 import exception_@TYPE@
 
 exception_@TYPE@.nothrow()

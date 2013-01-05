@@ -1,8 +1,8 @@
-#include "LaDaConfig.h"
+#include "PyladaConfig.h"
 
 #include "math.h"
 
-namespace LaDa
+namespace Pylada
 {
   namespace math
   {

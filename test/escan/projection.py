@@ -5,7 +5,7 @@ class Projections(object):
   def __init__(self): object.__init__(self)
   def __call__(self, outdir, comm=None, **kwargs): 
     from os.path import join
-    from lada.escan import KExtract
+    from pylada.escan import KExtract
     extract = KExtract(outdir, comm=comm)
     for value in extract:
       filename = join(value.directory, "PROJECT_BS")
@@ -24,8 +24,8 @@ class Projections(object):
     from numpy import zeros, dot, array, exp, sum
     from numpy.linalg import norm
     from quantities import angstrom
-    from lada import periodic_table as table
-    from lada.crystal import gaussian_projector
+    from pylada import periodic_table as table
+    from pylada.crystal import gaussian_projector
     species = set([u.type for u in extract.structure.atoms])
     species = sorted(list(species))
     result = {}
@@ -50,7 +50,7 @@ class Projections(object):
 
   def iter(self, outdir, **kwargs):
     from os.path import join
-    from lada.escan import KExtract
+    from pylada.escan import KExtract
     extract = KExtract(outdir)
     for value in extract:
       filename = join(value.directory, "PROJECT_BS")
@@ -58,8 +58,8 @@ class Projections(object):
 
 def compute_bs():
   from numpy import array
-  from lada.escan import read_input, exec_input, ReducedBPoints
-  from lada.vff import Vff
+  from pylada.escan import read_input, exec_input, ReducedBPoints
+  from pylada.vff import Vff
 
   # reads input file.
   input = read_input("input.py")

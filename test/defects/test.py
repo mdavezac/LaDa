@@ -1,6 +1,6 @@
 # Structure definition.
-from lada.crystal import Structure
-from lada.crystal.defects import third_order_charge_correction
+from pylada.crystal import Structure
+from pylada.crystal.defects import third_order_charge_correction
 from quantities import eV
 
 structure = Structure()

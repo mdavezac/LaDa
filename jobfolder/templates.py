@@ -11,11 +11,11 @@ def default_pbs( file, walltime=None, mppwidth=8, ppernode=None, queue=None, \
           File object to which to write. 
         walltime
          must be a string in "hh:mm:ss" format, or anything
-         acceptable to the PBS implementation. If None, defaults to `lada.default_walltime`.
+         acceptable to the PBS implementation. If None, defaults to `pylada.default_walltime`.
         mppwidth
           Number of processes (not processors) to use.
         ppernode 
-          Number of processes per node. If None, uses `lada.cpus_per_node` in lada.
+          Number of processes per node. If None, uses `pylada.cpus_per_node` in pylada.
         queue
           Queue to use
         account
@@ -61,7 +61,7 @@ def default_pbs( file, walltime=None, mppwidth=8, ppernode=None, queue=None, \
   if outdir is None: file.write("cd $PBS_O_WORKDIR\n")
   else: file.write("cd {0}\n".format(outdir))
 # if memlim < 0:
-#   file.write( "ulimit -v `python -c \"from lada.opt import total_memory; print total_memory() / {0}\"`\n"\
+#   file.write( "ulimit -v `python -c \"from pylada.opt import total_memory; print total_memory() / {0}\"`\n"\
 #               .format(ppernode) )
 # elif memlim > 0:
 #   file.write( "ulimit -v {0}\n".format(memlim) )
@@ -90,7 +90,7 @@ def default_slurm( file, walltime = "05:45:00", mppwidth = 8, ppernode=None, acc
         mppwidth
           umber of processes (not processors) to use.
         ppernode
-          Number of processes per node. If None, uses `lada.cpus_per_node`.
+          Number of processes per node. If None, uses `pylada.cpus_per_node`.
         account
           Account to use. Defaults to BES000.
         name
@@ -132,7 +132,7 @@ def default_slurm( file, walltime = "05:45:00", mppwidth = 8, ppernode=None, acc
                "#SBATCH -o \"{0}/out.%j\"\n".format(pbsdir))
   if outdir is not None: file.write("#SBATCH -D {0}\n".format(abspath(outdir)))
 # if memlim == "guess":
-#   file.write( "ulimit -v `python -c \"from lada.opt import total_memory; print total_memory() / {0}\"`\n"\
+#   file.write( "ulimit -v `python -c \"from pylada.opt import total_memory; print total_memory() / {0}\"`\n"\
 #               .format(ppernode) )
 # elif memlim is not None: 
 #   file.write( "ulimit -v {0}".format(memlim) )

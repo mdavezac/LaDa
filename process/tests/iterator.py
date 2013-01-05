@@ -3,9 +3,9 @@ def test(executable):
   from tempfile import mkdtemp
   from shutil import rmtree
   from numpy import all, arange, abs, array
-  from lada.process.iterator import IteratorProcess
-  from lada.process import Fail, NotStarted
-  from lada import default_comm
+  from pylada.process.iterator import IteratorProcess
+  from pylada.process import Fail, NotStarted
+  from pylada import default_comm
   from functional import Functional
   comm = default_comm.copy()
   dir = mkdtemp()

@@ -10,12 +10,12 @@ bool _init_hft( PyHFTObject* _self,
 {
   if(std::abs(_lattice.determinant()) < 1e-8)
   {
-    LADA_PYERROR(ValueError, "Unit-cell is singular.");
+    PYLADA_PYERROR(ValueError, "Unit-cell is singular.");
     return false;
   }
   if(std::abs(_supercell.determinant()) < 1e-8)
   {
-    LADA_PYERROR(ValueError, "Supercell is singular.");
+    PYLADA_PYERROR(ValueError, "Supercell is singular.");
     return false;
   }
   math::iMatrix3d left, right, hf;
@@ -28,7 +28,7 @@ bool _init_hft( PyHFTObject* _self,
       int_cell(i,j) = types::t_int( rint( inv_lat_cell(i,j) ) ); 
       if( math::neq(types::t_real(int_cell(i,j)), inv_lat_cell(i,j), 1e-2) )
       {
-        LADA_PYERROR(ValueError, "Second argument is not a supercell of first.");
+        PYLADA_PYERROR(ValueError, "Second argument is not a supercell of first.");
         return false;
       }
     }
@@ -41,15 +41,15 @@ bool _init_hft( PyHFTObject* _self,
   }
   catch(error::internal &_e)
   {
-    LADA_PYERROR(internal, "HFTransform: Could not create smith normal form.");
+    PYLADA_PYERROR(internal, "HFTransform: Could not create smith normal form.");
   }
   catch(std::exception &_e)
   {
-    LADA_PYERROR_FORMAT(internal, "HFTransform: Caught c++ exception %s.", _e.what());
+    PYLADA_PYERROR_FORMAT(internal, "HFTransform: Caught c++ exception %s.", _e.what());
   }
   catch(...)
   {
-    LADA_PYERROR(internal, "HFTransform: Caught unknown c++ exception.");
+    PYLADA_PYERROR(internal, "HFTransform: Caught unknown c++ exception.");
   }
   return false;
 }
@@ -67,13 +67,13 @@ int hftransform_init(PyHFTObject* _self, PyObject* _args, PyObject *_kwargs)
   if(check_structure(lattice)) cell = ((PyStructureObject*)lattice)->cell;
   else if(not python::numpy::convert_to_matrix(lattice, cell))
   { 
-    LADA_PYERROR(TypeError,"hart-forcade: Could not translate input to matrix."); 
+    PYLADA_PYERROR(TypeError,"hart-forcade: Could not translate input to matrix."); 
     return -1; 
   }
   if(check_structure(supercell)) bigcell = ((PyStructureObject*)supercell)->cell;
   else if(not python::numpy::convert_to_matrix(supercell, bigcell))
   { 
-    LADA_PYERROR(TypeError,"hart-forcade: Could not translate input to matrix."); 
+    PYLADA_PYERROR(TypeError,"hart-forcade: Could not translate input to matrix."); 
     return -1; 
   }
   

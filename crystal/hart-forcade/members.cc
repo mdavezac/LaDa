@@ -54,12 +54,12 @@ PyObject* hftransform_setstate(PyHFTObject* _self, PyObject *_tuple)
 {
   if(not PyTuple_Check(_tuple))
   {
-    LADA_PYERROR(TypeError, "Expected state to be a tuple.");
+    PYLADA_PYERROR(TypeError, "Expected state to be a tuple.");
     return NULL;
   }
   if(PyTuple_Size(_tuple) != 2)
   {
-    LADA_PYERROR(TypeError, "Expected state to be a 2-tuple.");
+    PYLADA_PYERROR(TypeError, "Expected state to be a 2-tuple.");
     return NULL;
   }
   // first cell and scale.
@@ -99,8 +99,8 @@ PyObject* hftransform_flat_index( PyHFTObject* _self,
     return NULL;
   math::rVector3d pos;
   if(not python::numpy::convert_to_vector(posatom, pos)) return NULL;
-  LADA_HFTRANSFORM_SHARED1(_self->quotient, _self->transform, pos, LADA_PYERROR, return NULL);
-  LADA_HFTRANSFORM_SHARED0(_self->quotient, vector_result, site);
+  PYLADA_HFTRANSFORM_SHARED1(_self->quotient, _self->transform, pos, PYLADA_PYERROR, return NULL);
+  PYLADA_HFTRANSFORM_SHARED0(_self->quotient, vector_result, site);
   return PyInt_FromLong(flat_result);
 }
 // Computes hf indices of position \a _pos.
@@ -108,7 +108,7 @@ PyObject* hftransform_indices(PyHFTObject* _self, PyObject* _args)
 {
   math::rVector3d pos;
   if(not python::numpy::convert_to_vector(_args, pos)) return NULL;
-  LADA_HFTRANSFORM_SHARED1(_self->quotient, _self->transform, pos, LADA_PYERROR, return NULL);
+  PYLADA_HFTRANSFORM_SHARED1(_self->quotient, _self->transform, pos, PYLADA_PYERROR, return NULL);
   return python::numpy::wrap_to_numpy(vector_result);
 }
 // undefs macros also used in hf.

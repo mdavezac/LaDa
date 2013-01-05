@@ -1,6 +1,6 @@
 def test_bool():
   from pickle import loads, dumps
-  from lada.vasp import Vasp
+  from pylada.vasp import Vasp
   a = Vasp()
 
   assert a._input['addgrid'].keyword == 'addgrid'
@@ -40,7 +40,7 @@ def test_bool():
 
 def test_choice():
   from pickle import loads, dumps
-  from lada.vasp import Vasp
+  from pylada.vasp import Vasp
   a = Vasp()
 
   assert a.ispin is None
@@ -85,8 +85,8 @@ def test_choice():
   assert repr(loads(dumps(o))) == repr(o)
 
 def test_alias():
-  from lada.vasp import Vasp
-  from lada.error import ValueError
+  from pylada.vasp import Vasp
+  from pylada.error import ValueError
   a = Vasp()
 
   assert a.ismear is None
@@ -110,8 +110,8 @@ def test_alias():
   else: raise Exception()
 
 def test_typed():
-  from lada.vasp import Vasp
-  from lada.error import ValueError
+  from pylada.vasp import Vasp
+  from pylada.error import ValueError
   a = Vasp()
 
   assert a.nbands is None

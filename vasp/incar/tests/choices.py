@@ -1,6 +1,6 @@
 def test():
   from pickle import loads, dumps
-  from lada.vasp.incar._params import Choices
+  from pylada.vasp.incar._params import Choices
 
   a = Choices('algo', {'A': ['aa', 0], 'B': ['bb', 1]})
   a.value = 'a'

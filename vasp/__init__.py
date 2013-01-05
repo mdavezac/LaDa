@@ -1,12 +1,12 @@
 """ Module providing an interface to VASP code.
 
     The interface is separated into 4 conceptual areas:
-      - VASP parameterization: mostly contained within :py:mod:`incar <lada.vasp.incar>` submodule
+      - VASP parameterization: mostly contained within :py:mod:`incar <pylada.vasp.incar>` submodule
       - Launching vasp: a single-shot run is performed with a :py:class:`Vasp` object
-      - Extracting data from vasp output: to be found in :py:mod:`extract <lada.vasp.extract>` submodule
+      - Extracting data from vasp output: to be found in :py:mod:`extract <pylada.vasp.extract>` submodule
       - Methods: One can chain vasp runs together for more complex calculations
 
-    The :py:class:`Vasp <lada.vasp.functional.Vasp>` class  combines the first
+    The :py:class:`Vasp <pylada.vasp.functional.Vasp>` class  combines the first
     three concepts together.  It allows us to launch vasp and retrieve
     information from the output. It checks for errors and avoids running the
     same job twice. Hence data retrieval and vasp calculations can be performed
@@ -104,7 +104,7 @@ def read_incar(filename='INCAR'):
         
         Defaults to 'INCAR'.
       :returns: A vasp functional equivalent to the INCAR_.
-      :rtype: :py:class:`~lada.vasp.functional.Vasp`
+      :rtype: :py:class:`~pylada.vasp.functional.Vasp`
   """
   from .functional import Vasp
   parsed = parse_incar(filename)

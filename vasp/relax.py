@@ -52,14 +52,14 @@ class RelaxExtract(Extract):
   def is_running(self):
     """ True if program is running on this functional. 
          
-        A file '.lada_is_running' is created in the output folder when it is
+        A file '.pylada_is_running' is created in the output folder when it is
         set-up to run CRYSTAL_. The same file is removed when CRYSTAL_ returns
-        (more specifically, when the :py:class:`lada.process.ProgramProcess` is
+        (more specifically, when the :py:class:`pylada.process.ProgramProcess` is
         polled). Hence, this file serves as a marker of those jobs which are
         currently running.
     """
     from os.path import join, exists
-    if exists(join(self.directory, '.lada_is_running')): return True
+    if exists(join(self.directory, '.pylada_is_running')): return True
     for value in self.details.itervalues():
       if value.is_running: return True
     return False
@@ -87,10 +87,10 @@ def iter_relax( vasp, structure, outdir=None, first_trial=None,
       ionic-relaxations.
 
       :param vasp:
-        :py:class:`Vasp <lada.vasp.functional.Vasp>` object with which to
+        :py:class:`Vasp <pylada.vasp.functional.Vasp>` object with which to
         perform the relaxation.
       :param structure:
-        :py:class:`Structure <lada.crystal.Structure>` object for which to
+        :py:class:`Structure <pylada.crystal.Structure>` object for which to
         perform the relaxation.
       :param outdir:
         Directory where to perform the calculations. Defaults to current
@@ -135,11 +135,11 @@ def iter_relax( vasp, structure, outdir=None, first_trial=None,
         * negative (default): argument is ignored.
       :param kwargs:
         Other parameters are applied to the input
-        :py:class:`~lada.vasp.functional.Vasp` object.
+        :py:class:`~pylada.vasp.functional.Vasp` object.
 
       :return: At each step, yields an extraction object if the relevant VASP
                calculation already exists. Otherwise, it yields a
-               :py:class:`~lada.process.program.ProgramProcess` object
+               :py:class:`~pylada.process.program.ProgramProcess` object
                detailing the call to the external VASP program.
   """
   from re import sub
@@ -259,9 +259,9 @@ def iter_relax( vasp, structure, outdir=None, first_trial=None,
 iter_relax.Extract = RelaxExtract
 """ Extraction method for relaxation runs. """
 
-relax = makefunc('relax', iter_relax, module='lada.vasp.relax')
-Relax = makeclass( 'Relax', Vasp, iter_relax, None, module='lada.vasp.relax',
-                   doc = 'Functional form of the :py:class:`lada.vasp.relax.iter_relax` method.' )
+relax = makefunc('relax', iter_relax, module='pylada.vasp.relax')
+Relax = makeclass( 'Relax', Vasp, iter_relax, None, module='pylada.vasp.relax',
+                   doc = 'Functional form of the :py:class:`pylada.vasp.relax.iter_relax` method.' )
 
 def _get_is_converged(vasp, structure, convergence=None, minrelsteps=-1, **kwargs):
   """ Returns convergence function. """
@@ -316,10 +316,10 @@ def iter_epitaxial(vasp, structure, outdir=None, direction=[0,0,1], epiconv = 1e
       maximum accuracy.
 
       :param vasp: 
-        :py:class:`Vasp <lada.vasp.functional.Vasp>` functional with wich to
+        :py:class:`Vasp <pylada.vasp.functional.Vasp>` functional with wich to
         perform the relaxation.
       :param structure:
-        :py:class:`Structure <lada.crystal.Structure>` for which to perform the
+        :py:class:`Structure <pylada.crystal.Structure>` for which to perform the
         relaxation.
       :param str outdir: 
         Directory where to perform calculations. If None, defaults to current
@@ -332,7 +332,7 @@ def iter_epitaxial(vasp, structure, outdir=None, direction=[0,0,1], epiconv = 1e
       
       :return: At each step, yields an extraction object if the relevant VASP
                calculation already exists. Otherwise, it yields a
-               :py:class:`~lada.process.program.ProgramProcess` object
+               :py:class:`~pylada.process.program.ProgramProcess` object
                detailing the call to the external VASP program.
   """
   from os import getcwd
@@ -436,6 +436,6 @@ def iter_epitaxial(vasp, structure, outdir=None, direction=[0,0,1], epiconv = 1e
 
 iter_epitaxial.Extract = RelaxExtract
 """ Extraction method for epitaxial relaxation runs. """
-Epitaxial = makeclass( 'Epitaxial', Vasp, iter_epitaxial, None, module='lada.vasp.relax',
-                       doc='Functional form of the :py:class:`lada.vasp.relax.iter_epitaxial` method.' )
-epitaxial = makefunc('epitaxial', iter_epitaxial, module='lada.vasp.relax')
+Epitaxial = makeclass( 'Epitaxial', Vasp, iter_epitaxial, None, module='pylada.vasp.relax',
+                       doc='Functional form of the :py:class:`pylada.vasp.relax.iter_epitaxial` method.' )
+epitaxial = makefunc('epitaxial', iter_epitaxial, module='pylada.vasp.relax')

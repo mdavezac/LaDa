@@ -1,7 +1,7 @@
 """ Launch interactive function.
 
  
-    This launch strategy will interactively compute each lada job. This will
+    This launch strategy will interactively compute each pylada job. This will
     block the interpreter.
 """ 
 __docformat__ = "restructuredtext en"

@@ -1,4 +1,4 @@
-#if LADA_CRYSTAL_MODULE == 100 || LADA_CRYSTAL_MODULE == 0
+#if PYLADA_CRYSTAL_MODULE == 100 || PYLADA_CRYSTAL_MODULE == 0
   //! \brief Describes basic atom type. 
   //! \details This is a python object. 
   struct PyAtomObject
@@ -19,50 +19,50 @@
 #endif 
 
       
-#if LADA_CRYSTAL_MODULE != 1
+#if PYLADA_CRYSTAL_MODULE != 1
   //! Returns pointer to atom type.
-  LADA_INLINE PyTypeObject* atom_type()
-    LADA_END(return (PyTypeObject*)api_capsule[LADA_SLOT(crystal)];)
+  PYLADA_INLINE PyTypeObject* atom_type()
+    PYLADA_END(return (PyTypeObject*)api_capsule[PYLADA_SLOT(crystal)];)
 #else
-  api_capsule[LADA_SLOT(crystal)] = (void *)atom_type();
+  api_capsule[PYLADA_SLOT(crystal)] = (void *)atom_type();
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(crystal))
-#include LADA_ASSIGN_SLOT(crystal)
+#define BOOST_PP_VALUE BOOST_PP_INC(PYLADA_SLOT(crystal))
+#include PYLADA_ASSIGN_SLOT(crystal)
         
-#if LADA_CRYSTAL_MODULE != 1
+#if PYLADA_CRYSTAL_MODULE != 1
   //! Creates a new atom.
-  LADA_INLINE PyAtomObject* new_atom()
-    LADA_END( return ((PyAtomObject*(*)()) api_capsule[LADA_SLOT(crystal)])();)
+  PYLADA_INLINE PyAtomObject* new_atom()
+    PYLADA_END( return ((PyAtomObject*(*)()) api_capsule[PYLADA_SLOT(crystal)])();)
 #else
-  api_capsule[LADA_SLOT(crystal)] = (void *)((PyAtomObject*(*)())new_atom);
+  api_capsule[PYLADA_SLOT(crystal)] = (void *)((PyAtomObject*(*)())new_atom);
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(crystal))
-#include LADA_ASSIGN_SLOT(crystal)
+#define BOOST_PP_VALUE BOOST_PP_INC(PYLADA_SLOT(crystal))
+#include PYLADA_ASSIGN_SLOT(crystal)
 
-#if LADA_CRYSTAL_MODULE != 1
+#if PYLADA_CRYSTAL_MODULE != 1
   //! Creates a new atom with a given type, also calling initialization.
-  LADA_INLINE PyAtomObject* new_atom(PyTypeObject* _type, PyObject *_args, PyObject *_kwargs)
-    LADA_END( return (*(PyAtomObject*(*)(PyTypeObject*, PyObject*, PyObject*))
-                      api_capsule[LADA_SLOT(crystal)])(_type, _args, _kwargs); )
+  PYLADA_INLINE PyAtomObject* new_atom(PyTypeObject* _type, PyObject *_args, PyObject *_kwargs)
+    PYLADA_END( return (*(PyAtomObject*(*)(PyTypeObject*, PyObject*, PyObject*))
+                      api_capsule[PYLADA_SLOT(crystal)])(_type, _args, _kwargs); )
 #else
-  api_capsule[LADA_SLOT(crystal)]
+  api_capsule[PYLADA_SLOT(crystal)]
          = (void *)((PyAtomObject*(*)(PyTypeObject*, PyObject*, PyObject*))new_atom);
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(crystal))
-#include LADA_ASSIGN_SLOT(crystal)
+#define BOOST_PP_VALUE BOOST_PP_INC(PYLADA_SLOT(crystal))
+#include PYLADA_ASSIGN_SLOT(crystal)
 
-#if LADA_CRYSTAL_MODULE != 1
+#if PYLADA_CRYSTAL_MODULE != 1
   //! Creates a deepcopy of atom.
-  LADA_INLINE PyAtomObject *copy_atom(PyAtomObject* _self, PyObject *_memo=NULL)
-    LADA_END( return (*(PyAtomObject*(*)(PyAtomObject*, PyObject*))
-                      api_capsule[LADA_SLOT(crystal)])(_self, _memo); )
+  PYLADA_INLINE PyAtomObject *copy_atom(PyAtomObject* _self, PyObject *_memo=NULL)
+    PYLADA_END( return (*(PyAtomObject*(*)(PyAtomObject*, PyObject*))
+                      api_capsule[PYLADA_SLOT(crystal)])(_self, _memo); )
 #else
   api_capsule[3] = (void *)copy_atom;
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(crystal))
-#include LADA_ASSIGN_SLOT(crystal)
+#define BOOST_PP_VALUE BOOST_PP_INC(PYLADA_SLOT(crystal))
+#include PYLADA_ASSIGN_SLOT(crystal)
 
-#if LADA_CRYSTAL_MODULE != 1
+#if PYLADA_CRYSTAL_MODULE != 1
   //! Checks type of an object.
   inline bool check_atom(PyObject *_self)
     { return PyObject_TypeCheck(_self, atom_type()); }
@@ -104,7 +104,7 @@
       {
         if(_in != NULL and not check_atom(_in))
         {
-          LADA_PYTHROW(TypeError, "Cannot acquire object which is not an Atom or subclass.");
+          PYLADA_PYTHROW(TypeError, "Cannot acquire object which is not an Atom or subclass.");
         }
         PyObject *dummy = (PyObject*)object_;
         object_ = (PyObject*)_in;
@@ -162,7 +162,7 @@
         if(_atom == NULL) return Atom((PyAtomObject*)_atom);
         if(not Atom::check(_atom))
         {
-          LADA_PYERROR_FORMAT( TypeError,
+          PYLADA_PYERROR_FORMAT( TypeError,
                                "Expected an Atom or subtype, not %.200s",
                                _atom->ob_type->tp_name );
           return Atom();

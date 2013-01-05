@@ -21,7 +21,7 @@ int structure_setcell(PyStructureObject *_self, PyObject *_value, void *_closure
 {
   if(_value == NULL)
   {
-    LADA_PYERROR(TypeError, "Cannot delete cell attribute.");
+    PYLADA_PYERROR(TypeError, "Cannot delete cell attribute.");
     return -1;
   }
   return python::numpy::convert_to_matrix(_value, _self->cell) ? 0: -1;
@@ -38,7 +38,7 @@ int structure_setscale(PyStructureObject *_self, PyObject *_value, void *_closur
 {
   if(_value == NULL) 
   {
-    LADA_PYERROR(TypeError, "Cannot delete scale attribute.");
+    PYLADA_PYERROR(TypeError, "Cannot delete scale attribute.");
     return -1;
   }
   PyObject *result = python::fromPy_quantity(_value, _self->scale);

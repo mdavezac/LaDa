@@ -2,9 +2,9 @@ from os.path import join, exists
 from os import makedirs
 from shutil import rmtree, copy
 from boost.mpi import world
-from lada.escan import call_escan as escan_as_library
-from lada.opt.changedir import Changedir
-from lada.opt import Redirect
+from pylada.escan import call_escan as escan_as_library
+from pylada.opt.changedir import Changedir
+from pylada.opt import Redirect
 
 # pseudo files
 pseudo_files = [ "maskr", "vq.Ge", "vq.Si", "vq.SiGe.Ge", "vq.SiGe.Si", "vwr.pso" ]

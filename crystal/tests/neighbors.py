@@ -1,14 +1,14 @@
 """ Checks neighbor routine. """
 def check_bcc():
   """ Check on BCC structure. """
-  from lada.crystal.cppwrappers import Structure, neighbors
+  from pylada.crystal.cppwrappers import Structure, neighbors
   structure = Structure([[-0.5,0.5,0.5],[0.5,-0.5,0.5],[0.5,0.5,-0.5]])\
                        .add_atom(0,0,0,"Mo")
   print neighbors(structure, 12, [0,0,0])
 
 def check(structure, center, tolerance=1e-8):
   from numpy import abs, sqrt, all
-  from lada.crystal.cppwrappers import neighbors
+  from pylada.crystal.cppwrappers import neighbors
   
   # check we get the neighbors of zinc-blende.
   neighs = neighbors(structure, 46, center, tolerance);
@@ -52,7 +52,7 @@ if __name__ == "__main__":
 
   from random import random
   from numpy import array
-  from lada.crystal.cppwrappers import supercell, Structure
+  from pylada.crystal.cppwrappers import supercell, Structure
 
   lattice = Structure([[0, 0.5, 0.5],[0.5, 0, 0.5], [0.5, 0.5, 0]]) \
                      .add_atom(0, 0, 0, "Si")                       \

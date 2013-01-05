@@ -4,7 +4,7 @@ def Extract(outdir=None):
   from os import getcwd
   from collections import namedtuple
   from pickle import load
-  from lada.misc import Changedir
+  from pylada.misc import Changedir
 
   if outdir == None: outdir = getcwd()
   Extract = namedtuple('Extract', ['success', 'directory', 'energy', 'structure', 'value', 'functional'])
@@ -20,7 +20,7 @@ def functional(structure, outdir=None, value=False, **kwargs):
   from copy import deepcopy
   from pickle import dump
   from random import random
-  from lada.misc import Changedir
+  from pylada.misc import Changedir
 
   structure = deepcopy(structure)
   structure.value = value
@@ -33,8 +33,8 @@ functional.Extract = Extract
 
 def create_jobs():
   """ Simple job-folders. """
-  from lada.jobfolder import JobFolder
-  from lada.crystal.binary import zinc_blende
+  from pylada.jobfolder import JobFolder
+  from pylada.crystal.binary import zinc_blende
 
   root = JobFolder()
   

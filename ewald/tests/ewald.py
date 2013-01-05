@@ -1,7 +1,7 @@
 def test():
   from numpy import all, abs, sqrt
-  from lada.crystal import Structure
-  from lada.ewald import ewald
+  from pylada.crystal import Structure
+  from pylada.ewald import ewald
   from quantities import angstrom, a0, Ry
   structure = Structure( [ [1,0,0],
                            [0,1,0],

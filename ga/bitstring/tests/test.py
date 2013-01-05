@@ -3,7 +3,7 @@ def test(program):
   from tempfile import mkdtemp
   from shutil import rmtree
   from gafunc import Functional as GAFunc
-  from lada import default_comm
+  from pylada import default_comm
   # something screwing with the seed... 
   # possibly uuid. Can't make this a deterministic test so easily.
   functional = GAFunc(program, 10, popsize=20, rate=0.5)

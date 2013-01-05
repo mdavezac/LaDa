@@ -18,17 +18,17 @@ class ForwardingDict(MutableMapping):
     
         :param bool readonly: 
            Whether or not the items in the dictionary can be modified. If None,
-           defaults to :py:data:`lada.jobparams_read_only`.
+           defaults to :py:data:`pylada.jobparams_read_only`.
         :param bool naked_end:
            When only one item exists with the last forwarded attribute, whether
            it should be returned itself, or whether a
            :py:class:`ForwardingDict` should still be returned. Former is
            easier when examining objects interactively, latter is better in
-           scripts. If None, defaults to :py:data:`lada.jobparams_naked_end`.
+           scripts. If None, defaults to :py:data:`pylada.jobparams_naked_end`.
         :param bool only_existing: 
            When setting attributes, whether to allow creation of new attributes
            for items which do not posses it. If None, defaults to
-           :py:data:`lada.jobparams_only_existing`
+           :py:data:`pylada.jobparams_only_existing`
         :param _attr_list: 
            A list of strings making up the attributes to unroll. Private.
         :param dict dictionary:

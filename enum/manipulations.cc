@@ -1,7 +1,7 @@
-#include "LaDaConfig.h"
+#include "PyladaConfig.h"
 
 #include <Python.h>
-#define PY_ARRAY_UNIQUE_SYMBOL lada_enum_ARRAY_API
+#define PY_ARRAY_UNIQUE_SYMBOL pylada_enum_ARRAY_API
 #define NO_IMPORT_ARRAY
 #include <numpy/arrayobject.h>
 
@@ -9,13 +9,13 @@
 #include <algorithm>
 
 
-#define LADA_NO_IMPORT
+#define PYLADA_NO_IMPORT
 #include <errors/exceptions.h>
 #include <python/python.h>
 
 #include "manipulations.h"
 
-namespace LaDa
+namespace Pylada
 {
   namespace enumeration
   {
@@ -81,18 +81,18 @@ namespace LaDa
     {
       if(not PyArray_Check(_subs))
       {
-        LADA_PYERROR(TypeError, "first argument should be a numpy array.");
+        PYLADA_PYERROR(TypeError, "first argument should be a numpy array.");
         return 0;
       }
       npy_intp const ndim = PyArray_NDIM(_subs);
       if(not PyArray_ISINTEGER(_subs))
       {
-        LADA_PYERROR(TypeError, "Non-integral permutation array.");
+        PYLADA_PYERROR(TypeError, "Non-integral permutation array.");
         return 0;
       }
       if(ndim != 2)
       {
-        LADA_PYERROR(TypeError, "Permutation array should be 2d.");
+        PYLADA_PYERROR(TypeError, "Permutation array should be 2d.");
         return 0;
       }
       return PyArray_DIM(_subs, 0);
@@ -103,7 +103,7 @@ namespace LaDa
     {
       if(_kwargs != NULL and PyDict_Size(_kwargs))
       {
-        LADA_PYERROR(TypeError, "Manipulations does not expect keyword arguments.");
+        PYLADA_PYERROR(TypeError, "Manipulations does not expect keyword arguments.");
         return -1;
       }
       int length = 0;
@@ -128,7 +128,7 @@ namespace LaDa
           if(value < 0) value += size;
           if(value < 0 or value >= size)
           {
-            LADA_PYERROR(IndexError, "Invalid permutation index.");
+            PYLADA_PYERROR(IndexError, "Invalid permutation index.");
             return -1;
           }
           i_first->push_back(value);
@@ -154,23 +154,23 @@ namespace LaDa
       _self->arrayout = (PyArrayObject*)
           PyArray_SimpleNewFromData(1, d, t_type::value, &_self->counter[0]);
       if(not _self->arrayout) return -1;
-#     ifdef LADA_MACRO
-#       error LADA_MACRO already defined
+#     ifdef PYLADA_MACRO
+#       error PYLADA_MACRO already defined
 #     endif
 #     ifdef NPY_ARRAY_WRITEABLE
-#       define LADA_MACRO NPY_ARRAY_WRITEABLE
+#       define PYLADA_MACRO NPY_ARRAY_WRITEABLE
 #     else
-#       define LADA_MACRO NPY_WRITEABLE
+#       define PYLADA_MACRO NPY_WRITEABLE
 #     endif
-      if(_self->arrayout->flags & LADA_MACRO) _self->arrayout->flags -= LADA_MACRO;
-#     undef LADA_MACRO
+      if(_self->arrayout->flags & PYLADA_MACRO) _self->arrayout->flags -= PYLADA_MACRO;
+#     undef PYLADA_MACRO
 #     ifdef NPY_ARRAY_C_CONTIGUOUS
-#       define LADA_MACRO NPY_ARRAY_C_CONTIGUOUS;
+#       define PYLADA_MACRO NPY_ARRAY_C_CONTIGUOUS;
 #     else 
-#       define LADA_MACRO NPY_C_CONTIGUOUS
+#       define PYLADA_MACRO NPY_C_CONTIGUOUS
 #     endif
-      if(not (_self->arrayout->flags & LADA_MACRO)) _self->arrayout->flags += LADA_MACRO;
-#     undef LADA_MACRO
+      if(not (_self->arrayout->flags & PYLADA_MACRO)) _self->arrayout->flags += PYLADA_MACRO;
+#     undef PYLADA_MACRO
       Py_INCREF(_self);
       _self->arrayout->base = (PyObject*)_self;
       return 0;
@@ -185,45 +185,45 @@ namespace LaDa
       }
       if(not PyArray_Check(_in))
       {
-        LADA_PYERROR(TypeError, "second argument should be a numpy array "
+        PYLADA_PYERROR(TypeError, "second argument should be a numpy array "
                                 "yielded by an NDimIterator.");
         return NULL;
       }
       if( ((PyArrayObject*)_in)->descr->type_num 
             != python::numpy::type<t_ndim>::value ) 
       {
-        LADA_PYERROR(TypeError, "second argument should be a numpy array "
+        PYLADA_PYERROR(TypeError, "second argument should be a numpy array "
                                 "yielded by an NDimIterator.");
         return NULL;
       }
       if(PyArray_NDIM(_in) != 1)
       {
-        LADA_PYERROR(TypeError, "second argument should be a numpy array "
+        PYLADA_PYERROR(TypeError, "second argument should be a numpy array "
                                 "with ndim == 1.");
         return NULL;
       }
       if(PyArray_DIM(_in, 0) != _self->counter.size())
       {
-        LADA_PYERROR(TypeError, "first argument should be a numpy array "
+        PYLADA_PYERROR(TypeError, "first argument should be a numpy array "
                                 "of length > 0.");
         return NULL;
       }
-#     ifdef LADA_DEBUG
+#     ifdef PYLADA_DEBUG
 #       ifdef NPY_ARRAY_C_CONTIGUOUS
-#         define LADA_MACRO NPY_ARRAY_C_CONTIGUOUS;
+#         define PYLADA_MACRO NPY_ARRAY_C_CONTIGUOUS;
 #       else 
-#         define LADA_MACRO NPY_C_CONTIGUOUS
+#         define PYLADA_MACRO NPY_C_CONTIGUOUS
 #       endif
         if(not (((PyArrayObject*)_in)->flags && NPY_C_CONTIGUOUS) )
         {
-          LADA_PYERROR( TypeError, 
+          PYLADA_PYERROR( TypeError, 
                         "second argument should be a c-contiguous numpy array." );
           return NULL;
         }
-#       undef LADA_MACRO
+#       undef PYLADA_MACRO
         if(PyArray_STRIDE(_in, 0) != sizeof(t_ndim) / sizeof(char))
         {
-          LADA_PYERROR(TypeError, "Wrong stride for first argument.");
+          PYLADA_PYERROR(TypeError, "Wrong stride for first argument.");
           return NULL;
         }
 #     endif
@@ -238,12 +238,12 @@ namespace LaDa
     {
       if(_in == NULL)
       {
-        LADA_PYERROR(TypeError, "The manipulations object expects one argument.");
+        PYLADA_PYERROR(TypeError, "The manipulations object expects one argument.");
         return NULL;
       }
       if(PyTuple_Size(_in) != 1)
       {
-        LADA_PYERROR(TypeError, "The manipulations object expects only one argument.");
+        PYLADA_PYERROR(TypeError, "The manipulations object expects only one argument.");
         return NULL;
       }
       return __call__((Manipulations*)_self, PyTuple_GET_ITEM(_in, 0));
@@ -290,20 +290,20 @@ namespace LaDa
     // Returns pointer to manipulations type.
     PyTypeObject* manipulations_type()
     {
-#     ifdef LADA_DECLARE
-#       error LADA_DECLARE already declared
+#     ifdef PYLADA_DECLARE
+#       error PYLADA_DECLARE already declared
 #     endif
-#     define LADA_DECLARE(name, func, args, doc) \
+#     define PYLADA_DECLARE(name, func, args, doc) \
         {#name, (PyCFunction)func, METH_ ## args, doc} 
       static PyMethodDef methods[] = {
-        LADA_DECLARE(__call__, __call__, NOARGS, "Sets array to manipulate."),
+        PYLADA_DECLARE(__call__, __call__, NOARGS, "Sets array to manipulate."),
           {NULL}  /* Sentinel */
       };
-#     undef LADA_DECLARE
+#     undef PYLADA_DECLARE
       static PyTypeObject dummy = {
           PyObject_HEAD_INIT(NULL)
           0,                                 /*ob_size*/
-          "lada.enum.cppwrappers.Manipulations",   /*tp_name*/
+          "pylada.enum.cppwrappers.Manipulations",   /*tp_name*/
           sizeof(Manipulations),              /*tp_basicsize*/
           0,                                 /*tp_itemsize*/
           (destructor)dealloc,               /*tp_dealloc*/
@@ -357,5 +357,5 @@ namespace LaDa
     }
 
   } // namespace Crystal
-} // namespace LaDa
+} // namespace Pylada
 

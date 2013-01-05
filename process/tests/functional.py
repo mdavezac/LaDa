@@ -2,7 +2,7 @@ class ExtractSingle(object):
   def __init__(self, outdir):
     from os.path import exists, isfile, isdir, join
     from re import search
-    from lada.misc import RelativePath
+    from pylada.misc import RelativePath
     super(ExtractSingle, self).__init__()
 
     outdir = RelativePath(outdir).path
@@ -43,7 +43,7 @@ class ExtractMany(object):
   def __init__(self, outdir, order=None):
     from glob import iglob
     from os.path import join, basename
-    from lada.misc import RelativePath
+    from pylada.misc import RelativePath
 
     super(ExtractMany, self).__init__()
 
@@ -99,8 +99,8 @@ class Functional(object):
   def iter(self, outdir=None, sleep=None, overwrite=False, comm=None):
     from copy import deepcopy
     from os.path import join
-    from lada.process.program import ProgramProcess
-    from lada.misc import RelativePath
+    from pylada.process.program import ProgramProcess
+    from pylada.misc import RelativePath
     self = deepcopy(self)
     outdir = RelativePath(outdir).path
     if sleep is not None: self.sleep = sleep
@@ -117,7 +117,7 @@ class Functional(object):
                             outdir=outdir, stdout=stdout, stderr=stderr, dompi=True, comm=comm)
   
   def __call__(self, outdir=None, sleep=None, overwrite=False, comm=None):
-    from lada.misc import RelativePath
+    from pylada.misc import RelativePath
     outdir = RelativePath(outdir).path
     for program in self.iter(outdir, sleep, overwrite):
       if getattr(program, 'success', False) == False:
@@ -139,8 +139,8 @@ class SerialFunctional(object):
   def iter(self, outdir=None, sleep=None, overwrite=False, comm=None):
     from copy import deepcopy
     from os.path import join
-    from lada.process.program import ProgramProcess
-    from lada.misc import RelativePath
+    from pylada.process.program import ProgramProcess
+    from pylada.misc import RelativePath
     self = deepcopy(self)
     outdir = RelativePath(outdir).path
     if sleep is not None: self.sleep = sleep
@@ -155,7 +155,7 @@ class SerialFunctional(object):
                             outdir=outdir, stdout=stdout, stderr=stderr, dompi=False, comm=comm)
   
   def __call__(self, outdir=None, sleep=None, overwrite=False, comm=None):
-    from lada.misc import RelativePath
+    from pylada.misc import RelativePath
     outdir = RelativePath(outdir).path
     for program in self.iter(outdir, sleep, overwrite):
       if getattr(program, 'success', False) == False:

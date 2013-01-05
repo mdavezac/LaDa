@@ -4,10 +4,10 @@ def test(path):
   from os import makedirs
   from tempfile import mkdtemp
   from numpy import abs
-  from lada.crystal import Structure
-  from lada.vasp import Vasp
-  from lada.vasp.relax import epitaxial
-  from lada import default_comm
+  from pylada.crystal import Structure
+  from pylada.vasp import Vasp
+  from pylada.vasp.relax import epitaxial
+  from pylada import default_comm
 
     
     

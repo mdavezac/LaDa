@@ -31,7 +31,7 @@ def explore(self, cmdl):
 
   import argparse
   from os.path import join, dirname
-  from lada import interactive
+  from pylada import interactive
 
   # options supported by all.
   parser = argparse.ArgumentParser(prog='%explore',
@@ -141,7 +141,7 @@ def _explore_impl(self, args):
   from ..jobfolder import load, JobFolder
   from ..jobfolder import JobParams, MassExtract as Collect
   from ..misc import LockFile, RelativePath
-  from lada import interactive
+  from pylada import interactive
 
   shell = get_ipython()
 
@@ -154,15 +154,15 @@ def _explore_impl(self, args):
       return
 
     if "collect" in shell.user_ns: shell.user_ns["collect"].uncache()
-    interactive.__dict__.pop("_lada_subjob_iterator", None)
-    interactive.__dict__.pop("_lada_subjob_iterated", None)
+    interactive.__dict__.pop("_pylada_subjob_iterator", None)
+    interactive.__dict__.pop("_pylada_subjob_iterated", None)
     return 
 
   # delete stuff from namespace.
   shell.user_ns.pop("collect", None)
   shell.user_ns.pop("jobparams", None)
-  interactive.__dict__.pop("_lada_subjob_iterator", None)
-  interactive.__dict__.pop("_lada_subjob_iterated", None)
+  interactive.__dict__.pop("_pylada_subjob_iterator", None)
+  interactive.__dict__.pop("_pylada_subjob_iterated", None)
 
   if args.is_file == False and args.is_expression == False                     \
      and isfile(RelativePath(args.jobfolder).path)                             \

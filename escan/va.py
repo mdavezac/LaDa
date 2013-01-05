@@ -56,7 +56,7 @@ class VA(object):
 
   def _print_escan_input():
     from os.path import join as make_path
-    from lada.physics import a0
+    from pylada.physics import a0
 
     file = open(make_path(self.dir, self.vff_inputfile), "w")
     for i in xrange(3):

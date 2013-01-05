@@ -1,4 +1,4 @@
-#include "LaDaConfig.h"
+#include "PyladaConfig.h"
 
 #include <Python.h>
 #include <structmember.h>
@@ -10,10 +10,10 @@
 #ifndef PyMODINIT_FUNC	/* declarations for DLL import/export */
 # define PyMODINIT_FUNC void
 #endif
-#define LADA_PYTHON_MODULE 0
+#define PYLADA_PYTHON_MODULE 0
 #include "python.h"
 
-namespace LaDa
+namespace Pylada
 {
   namespace python
   {
@@ -29,9 +29,9 @@ namespace LaDa
 
 PyMODINIT_FUNC initcppwrappers(void) 
 {
-  using namespace LaDa::python;
-  using namespace LaDa;
-  static void *api_capsule[LADA_SLOT(python)];
+  using namespace Pylada::python;
+  using namespace Pylada;
+  static void *api_capsule[PYLADA_SLOT(python)];
   static PyMethodDef methods_table[] = { {NULL, NULL, 0, NULL} };
   PyObject *c_api_object;
 
@@ -43,14 +43,14 @@ PyMODINIT_FUNC initcppwrappers(void)
   import_array(); // needed for NumPy 
 
   /* Initialize the C API pointer array */
-# undef LADA_PYTHON_PYTHON_H
+# undef PYLADA_PYTHON_PYTHON_H
 # include "python.h"
 
   /* Create a Capsule containing the API pointer array's address */
-  # ifdef LADA_PYTHONTWOSIX
+  # ifdef PYLADA_PYTHONTWOSIX
       c_api_object = PyCObject_FromVoidPtr((void *)api_capsule, NULL);
   # else
-      static const char name[] = "lada.cppwrappers._C_API";
+      static const char name[] = "pylada.cppwrappers._C_API";
       c_api_object = PyCapsule_New((void *)api_capsule, name, NULL);
   # endif
   if (c_api_object != NULL) PyModule_AddObject(module, "_C_API", c_api_object);

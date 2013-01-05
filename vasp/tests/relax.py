@@ -1,7 +1,7 @@
 def test():
   from pickle import loads, dumps
-  from lada.vasp import Vasp
-  from lada.error import ValueError
+  from pylada.vasp import Vasp
+  from pylada.error import ValueError
  
   a = Vasp()
 

@@ -1,6 +1,6 @@
-from lada.crystal import Structure
-from lada.pcm import Clj, bond_name
-from lada.physics import a0, Ry
+from pylada.crystal import Structure
+from pylada.pcm import Clj, bond_name
+from pylada.physics import a0, Ry
 from quantities import angstrom, eV, hartree
 
 clj  = Clj()
@@ -21,8 +21,8 @@ structure.add_atom = (a0.rescale(angstrom)/structure.scale,0,0), "B"
 print clj.ewald(structure).energy, hartree.rescale(eV)
 
 
-from lada.crystal.A2BX4 import b5
-from lada.crystal import fill_structure
+from pylada.crystal.A2BX4 import b5
+from pylada.crystal import fill_structure
 from numpy import array
 clj.ewald_cutoff = 20 * Ry
 lattice = b5()

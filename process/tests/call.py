@@ -4,9 +4,9 @@ def test(executable):
   from os.path import join
   from shutil import rmtree
   from numpy import all, arange, abs, array
-  from lada.process.call import CallProcess
-  from lada.process import Fail, NotStarted
-  from lada import default_comm
+  from pylada.process.call import CallProcess
+  from pylada.process import Fail, NotStarted
+  from pylada import default_comm
   from functional import Functional
   comm = default_comm.copy()
   dir = mkdtemp()

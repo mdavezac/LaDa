@@ -308,9 +308,9 @@ class ExtractBase(object):
     with self.__stdout__() as file:
       for line in file:
         if "GEOMETRY INPUT FROM EXTERNAL FILE" in line:
-          line = "LADA FOUND LINE"
+          line = "PYLADA FOUND LINE"
           break
-      if line != "LADA FOUND LINE": 
+      if line != "PYLADA FOUND LINE": 
         raise GrepError('Could not determine whether molecular calculation')
       try: line = file.next()
       except:
@@ -503,7 +503,7 @@ class ExtractBase(object):
   @property
   @make_cached
   def input_structure(self):
-    """ Input structure, LaDa format. """
+    """ Input structure, Pylada format. """
     # First finds end of structural input. It may be the end-of the file in
     # testgeom runs.
     with self.__stdout__() as file:
@@ -525,12 +525,12 @@ class ExtractBase(object):
   @property
   @make_cached
   def _initial_structure(self):
-    """ Initial structure, LaDa format. 
+    """ Initial structure, Pylada format. 
     
         This greps the input structure from the output file. CRYSTAL_ does not
         allow any way to create this file from the outset. As such, it is
         necessary to add it  by hand to the output. This is generally done by
-        LaDa automatically, unless the run stopped abruptly, e.g by the
+        Pylada automatically, unless the run stopped abruptly, e.g by the
         supercomputer's resource manager. In that case, use the magic function
         ``%complete_crystal`` with a jobfolder loaded.
     """
@@ -565,7 +565,7 @@ class ExtractBase(object):
   @property
   @make_cached
   def structure(self):
-    """ Output structure, LaDa format. """
+    """ Output structure, Pylada format. """
     from ..error import NotImplementedError
     if not self._is_optgeom: result = self.input_structure
     elif self.dimensionality == 0: result = self._update_pos_only
@@ -1062,7 +1062,7 @@ class ExtractBase(object):
     """ Computational parameters. 
 
         Recreates the functional used in the calculation by reading the
-        CRYSTAL_ input file. This means no extra LaDa behavior, e.g. atomspin
+        CRYSTAL_ input file. This means no extra Pylada behavior, e.g. atomspin
         when atomspin is actually disabled in the calculation because guessp is
         True. 
     """
@@ -1108,7 +1108,7 @@ class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
           actually called OUTCAR.
     """
     from os.path import exists, isdir, basename, dirname
-    from lada.misc import RelativePath
+    from pylada.misc import RelativePath
        
     self.STDOUT = 'crystal.out'
     """ Name of file to grep. """
@@ -1228,14 +1228,14 @@ class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
   def is_running(self):
     """ True if program is running on this functional. 
          
-        A file '.lada_is_running' is created in the output folder when it is
+        A file '.pylada_is_running' is created in the output folder when it is
         set-up to run CRYSTAL_. The same file is removed when CRYSTAL_ returns
-        (more specifically, when the :py:class:`lada.process.ProgramProcess` is
+        (more specifically, when the :py:class:`pylada.process.ProgramProcess` is
         polled). Hence, this file serves as a marker of those jobs which are
         currently running.
     """
     from os.path import join, exists
-    return exists(join(self.directory, '.lada_is_running'))
+    return exists(join(self.directory, '.pylada_is_running'))
 
     
 
@@ -1247,7 +1247,7 @@ class MassExtract(AbstractMassExtract):
 
       Usage is simply:
 
-      >>> from lada.dftcrystal import MassExtract
+      >>> from pylada.dftcrystal import MassExtract
       >>> a = MassExtract('path') # or nothing if path is current directory.
       >>> a.success
       {
@@ -1272,7 +1272,7 @@ class MassExtract(AbstractMassExtract):
             should be CRYSTAL output files.
         :param kwargs:
             Passed on to
-            :py:class:`~lada.jobfolder.extract.AbstractMassExtract`
+            :py:class:`~pylada.jobfolder.extract.AbstractMassExtract`
     """
     from os import getcwd
     if path is None: path = getcwd()

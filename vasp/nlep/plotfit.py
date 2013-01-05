@@ -1,5 +1,5 @@
 # how should this go?
-# should have lada-parsed version of all VASP data.
+# should have pylada-parsed version of all VASP data.
 # instead I have my own script that parses OUTCAR and
 # draws plots
 import matplotlib 
@@ -45,7 +45,7 @@ def main():
 
     ncat = len(cations)
     nan = len(anions)
-    basedir = "/Users/pgraf/work/cid/lada/nlep/"
+    basedir = "/Users/pgraf/work/cid/pylada/nlep/"
     subdir1 = "/nlep_materials_from_slany"
     name1 = "OUTCAR_gw"
     #if (four_char_names):

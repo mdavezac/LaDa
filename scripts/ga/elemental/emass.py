@@ -4,12 +4,12 @@ def gajobs(path, inputpath = "input.py"):
   import IPython.ipapi
   from numpy import array, all
 
-  from lada.ga.escan.elemental.functional import Darwin as Functional
-  from lada.ga.escan.elemental.evaluator  import EffectiveMass as Evaluator
-  from lada.ga.escan.elemental            import Converter
-  from lada.ga.functional                 import minimize
-  from lada.jobs import JobFolder
-  from lada.escan import read_input
+  from pylada.ga.escan.elemental.functional import Darwin as Functional
+  from pylada.ga.escan.elemental.evaluator  import EffectiveMass as Evaluator
+  from pylada.ga.escan.elemental            import Converter
+  from pylada.ga.functional                 import minimize
+  from pylada.jobs import JobFolder
+  from pylada.escan import read_input
 
   # reads input file.
   input = read_input(inputpath)

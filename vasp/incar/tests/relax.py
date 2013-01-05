@@ -1,6 +1,6 @@
 """ Check relaxation property. """
 def test():
-  from lada.vasp.incar import Relaxation
+  from pylada.vasp.incar import Relaxation
   from collections import namedtuple
   from pickle import loads, dumps
   Vasp = namedtuple('Vasp', ['ediff', 'ediffg'])

@@ -181,7 +181,7 @@ def iter_emass( functional, structure=None, outdir=None, center=None,
 
       First runs a vasp calculation using the first input argument, regardless
       of whether a restart keyword argument is also passed. In practice,
-      following the general LaDa philosophy of never overwritting previous
+      following the general Pylada philosophy of never overwritting previous
       calculations, this will not rerun a calculation if one exists in
       ``outdir``. 
       Second, a static non-self-consistent calculation is performed to compute
@@ -198,7 +198,7 @@ def iter_emass( functional, structure=None, outdir=None, center=None,
            effective mass is computed.
       
       :param structure: The structure for wich to compute effective masses.
-      :type structure: `~lada.crystal._cppwrapper.Structure`
+      :type structure: `~pylada.crystal._cppwrapper.Structure`
 
       :param center:
           Central k-point of the taylor expansion. This should be given in
@@ -342,13 +342,13 @@ def iter_emass( functional, structure=None, outdir=None, center=None,
 
 iter_emass.Extract = Extract
 """ Extractor class for the reciprocal method. """
-EMass = makeclass( 'EMass', Vasp, iter_emass, None, module='lada.vasp.emass',
+EMass = makeclass( 'EMass', Vasp, iter_emass, None, module='pylada.vasp.emass',
                     doc='Functional form of the '                              \
-                        ':py:class:`lada.emass.relax.iter_emass` method.' )
+                        ':py:class:`pylada.emass.relax.iter_emass` method.' )
 
 # Function call to effective mass. No iterations. returns when calculations are
 # done or fail.
-effective_mass = makefunc('effective_mass', iter_emass, 'lada.vasp.emass')
+effective_mass = makefunc('effective_mass', iter_emass, 'pylada.vasp.emass')
 effective_mass.Extract = iter_emass.Extract
 
 del makefunc

@@ -24,7 +24,7 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
             Communicator containing as many processes as were used to perform
             calculations. This is only mandatory when using wavefunctions in
             some way.
-          escan : lada.escan.Escan
+          escan : pylada.escan.Escan
             Wrapper around the escan functional.
     """
     from ..vff import Extract as VffExtract
@@ -345,14 +345,14 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
         
         - a spin by N by x matrix holding the N wavefuntions/spinor.
         - a 3 by x matrix with each row a G-vector in units of
-          `lada.physics.reduced_reciprocal_au`.
+          `pylada.physics.reduced_reciprocal_au`.
         - a 3 by x matrix with each row a R-vector in atomic units.
         - one-dimensional array of real coefficients to smooth higher energy G-vectors.
         - one-dimensional array of integer indices to map G-vectors to -G.
     """
     # check for mpi first
-    from .. import lada_with_mpi
-    assert lada_with_mpi, RuntimeError("Lada loaded without mpi. Cannot read wavefunctions.")
+    from .. import pylada_with_mpi
+    assert pylada_with_mpi, RuntimeError("Pylada loaded without mpi. Cannot read wavefunctions.")
     # then check for function.
     from os.path import exists
     from numpy import sqrt, abs, array
@@ -477,7 +477,7 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
   def effective_mass_tensor(self, attenuate=False, degeneracy=1e-8):
     """ Returns list of effective mass tensor (1/m_xy) for each band. """
     from numpy import zeros, outer, identity
-    from lada.physics import electronic_mass, h_bar
+    from pylada.physics import electronic_mass, h_bar
 
     # gets dipoles.
     dipoles = zeros((len(self.eigenvalues), len(self.eigenvalues), 3), dtype="complex64") #self.dipoles(attenuate)

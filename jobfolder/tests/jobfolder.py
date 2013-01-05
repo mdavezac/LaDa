@@ -4,7 +4,7 @@ def test():
   from os import makedirs
   from os.path import exists, join
   from pickle import loads, dumps
-  from lada.jobfolder import JobFolder
+  from pylada.jobfolder import JobFolder
   from copy import deepcopy
   from dummy import functional
 

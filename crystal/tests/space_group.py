@@ -2,7 +2,7 @@
 def test_fcc():
   """ Test fcc space-group and equivalents """
   from numpy import all, abs, dot
-  from lada.crystal.cppwrappers import space_group, Structure, equivalent, transform
+  from pylada.crystal.cppwrappers import space_group, Structure, equivalent, transform
 
   structure = Structure([[0,0.5,0.5],[0.5,0,0.5],[0.5,0.5,0]], m=True).add_atom(0,0,0,"Si", m=True)
   ops = space_group(structure)
@@ -28,10 +28,10 @@ def test_b5(u):
   from numpy import all, abs, dot, pi
   from numpy.linalg import inv, norm
   from numpy.random import random_sample
-  from lada.crystal.cppwrappers import space_group, Structure, equivalent,     \
+  from pylada.crystal.cppwrappers import space_group, Structure, equivalent,     \
                                        transform
-  from lada.math import Rotation
-  from lada.crystal import which_site
+  from pylada.math import Rotation
+  from pylada.crystal import which_site
 
 
   x, y = u, 0.25-u
@@ -136,8 +136,8 @@ def test_b5(u):
     
 def test_zb():
   from numpy import all, abs, dot
-  from lada.crystal import space_group, transform, binary
-  from lada.crystal.cppwrappers import equivalent
+  from pylada.crystal import space_group, transform, binary
+  from pylada.crystal.cppwrappers import equivalent
 
   structure = binary.zinc_blende()
   ops = space_group(structure)

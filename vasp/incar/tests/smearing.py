@@ -2,7 +2,7 @@
 def test():
   from quantities import eV, J
   from pickle import loads, dumps
-  from lada.vasp.incar import Smearing
+  from pylada.vasp.incar import Smearing
 
   assert Smearing(None).value is None
   assert Smearing("fermi").value == "fermi"

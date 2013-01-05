@@ -80,7 +80,7 @@ def nlep(type = 1, l=2, U0=0e0, U1=None, fitU0=False, fitU1=False,
     raise ConfigError( 'vasp_has_nlep is False. Cannot use NLEP.\n'            \
                        'If you have VASP compiled for NLEP, '                  \
                        'please vasp_has_nlep to True in your '                 \
-                       'lada configuration file.\n' )
+                       'pylada configuration file.\n' )
   if hasattr(type, "lower"):
     type = type.lower()
     if type == "liechtenstein": type = 1

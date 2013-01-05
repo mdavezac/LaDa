@@ -3,8 +3,8 @@ def test(path):
   from quantities import eV, hartree
   import quantities 
   import numpy
-  from lada.vasp import Vasp
-  from lada.crystal import Structure
+  from pylada.vasp import Vasp
+  from pylada.crystal import Structure
 
   structure = Structure([[0, 0.5, 0.5],[0.5, 0, 0.5], [0.5, 0.5, 0]], scale=5.43, name='has a name')\
                        .add_atom(0,0,0, "Si")\

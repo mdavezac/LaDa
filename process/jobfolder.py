@@ -8,7 +8,7 @@ class JobFolderProcess(Process):
 
       If a folder does not execute correctly, then the failure code or
       exception is stored in :py:attr:`errors` until all folders have been
-      executed. Only then is a :py:exc:`~lada.process.Fail` exception raised. 
+      executed. Only then is a :py:exc:`~pylada.process.Fail` exception raised. 
 
       .. note:: 
 
@@ -16,7 +16,7 @@ class JobFolderProcess(Process):
         created. To modify :py:attr:`jobfolder`, one should call
         :py:meth:`update`.
 
-      .. seealso:: :py:class:`~lada.process.pool.PoolProcess`
+      .. seealso:: :py:class:`~pylada.process.pool.PoolProcess`
   """
   def __init__( self, jobfolder, outdir, maxtrials=1, nbpools=1,
                 keepalive=False, **kwargs ):
@@ -27,7 +27,7 @@ class JobFolderProcess(Process):
           The name of the folders to launch are determined which
           :py:meth:`__init__` is acalled. If ``jobfolder`` changes, then one
           should call :py:meth:`update`.
-        :type jobfolder: :py:class:`~lada.jobfolder.jobfolder.JobFolder` 
+        :type jobfolder: :py:class:`~pylada.jobfolder.jobfolder.JobFolder` 
         :param str outdir: 
           Path where the python child process should be executed.
         :param int nbpools:
@@ -66,8 +66,8 @@ class JobFolderProcess(Process):
     """ List of currently running processes. 
     
         Each item consists of an index into the job-folder,
-        an instance derived from :py:class:`~lada.process.process.Process`,
-        e.g. :py:class:`~lada.process.call.CallProcess`, and a communicator
+        an instance derived from :py:class:`~pylada.process.process.Process`,
+        e.g. :py:class:`~pylada.process.call.CallProcess`, and a communicator
         used by that process.
     """
     self.nbpools = nbpools

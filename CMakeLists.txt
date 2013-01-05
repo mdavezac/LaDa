@@ -1,7 +1,7 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
-project (LaDa)
-set (LaDa_VERSION_MAJOR 5)
-set (LaDa_VERSION_MINOR 0)
+project (Pylada)
+set (Pylada_VERSION_MAJOR 5)
+set (Pylada_VERSION_MINOR 0)
 
 option(noinstall_headers    "Will not install header files." on)
 mark_as_advanced(noinstall_headers)
@@ -110,7 +110,7 @@ include_directories(${Boost_INCLUDE_DIRS})
 #   -- eigen2
 find_package( eigen REQUIRED )
 include_directories(${eigen_INCLUDE_DIR})
-set(LADA_WITH_EIGEN3 ${is_eigen3})
+set(PYLADA_WITH_EIGEN3 ${is_eigen3})
 
 find_package(MPI) # only required for some tests in process and jobfolders
 FortranCInterface_VERIFY()
@@ -177,15 +177,15 @@ endif(jobfolder_package)
 # Configure file.
 if (CMAKE_BUILD_TYPE)
   if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-    set(LADA_DEBUG TRUE)
+    set(PYLADA_DEBUG TRUE)
   endif (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
 endif (CMAKE_BUILD_TYPE)
 configure_file (
- "${PROJECT_SOURCE_DIR}/LaDaConfig.h.in"
- "${PROJECT_BINARY_DIR}/LaDaConfig.h"
+ "${PROJECT_SOURCE_DIR}/PyladaConfig.h.in"
+ "${PROJECT_BINARY_DIR}/PyladaConfig.h"
 )
 
 # adds root_exception to install.
 if(NOT noinstall_headers)
-  install(FILES root_exceptions.h DESTINATION include/LaDa)
+  install(FILES root_exceptions.h DESTINATION include/Pylada)
 endif(NOT noinstall_headers)

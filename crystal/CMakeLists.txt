@@ -6,8 +6,8 @@ include_directories(${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDES})
 add_library (pycrystal SHARED module.cc)
 set_target_properties(pycrystal PROPERTIES OUTPUT_NAME cppwrappers)
 set_target_properties(pycrystal PROPERTIES PREFIX "")
-install(TARGETS pycrystal DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/crystal)
-install(FILES ${LIBCRYSTAL_PYSOURCES} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/crystal)
+install(TARGETS pycrystal DESTINATION ${CMAKE_PYINSTALL_PREFIX}/pylada/crystal)
+install(FILES ${LIBCRYSTAL_PYSOURCES} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/pylada/crystal)
 
 set(PYCRYSTAL_SOURCES atom/pybase.cc atom/cdi.cc atom/members.cc atom/getset.cc
                       structure/pybase.cc structure/cdi.cc structure/members.cc
@@ -27,7 +27,7 @@ set(PYCRYSTAL_HEADERS atom/atom.h
                       utilities.h supercell.h algorithms.h )
 
 if(NOT noinstall_headers)
-  install(FILES ${PYCRYSTAL_HEADERS} DESTINATION include/LaDa/crystal)
+  install(FILES ${PYCRYSTAL_HEADERS} DESTINATION include/Pylada/crystal)
 endif(NOT noinstall_headers)
 
 if(compile_tests OR compile_debug_tests)

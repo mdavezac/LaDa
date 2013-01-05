@@ -1,12 +1,12 @@
-#include "LaDaConfig.h"
+#include "PyladaConfig.h"
 #include "FCMangle.h"
 
 #include <Python.h>
-#define PY_ARRAY_UNIQUE_SYMBOL lada_ewald_ARRAY_API
+#define PY_ARRAY_UNIQUE_SYMBOL pylada_ewald_ARRAY_API
 #define NO_IMPORT_ARRAY
 #include <numpy/arrayobject.h>
 
-#define LADA_NO_IMPORT
+#define PYLADA_NO_IMPORT
 #include <python/python.h>
 
 #include "ewald.h"
@@ -26,7 +26,7 @@ extern "C" void FC_GLOBAL( ewaldf, EWALDF )
                   const int *const,    // dimension of arrays.
                   int * const          // ERROR
                 );
-namespace LaDa
+namespace Pylada
 {
   namespace pcm
   {
@@ -75,7 +75,7 @@ namespace LaDa
       );
       if(error == 1)
       {
-        LADA_PYERROR(internal, "Could not find optimal alpha for ewald summation.");
+        PYLADA_PYERROR(internal, "Could not find optimal alpha for ewald summation.");
         return NULL;
       }
       python::Object result = PyTuple_New(4);
@@ -89,4 +89,4 @@ namespace LaDa
       return result.release();
     }
   } // namespace pcm
-} // namespace LaDa
+} // namespace Pylada

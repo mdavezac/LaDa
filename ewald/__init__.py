@@ -17,7 +17,7 @@ def ewald(structure, charges=None, cutoff=None, **kwargs):
          The structure to optimize. The charge of each atom can be given as a
          ``charge`` attribute. Otherwise, they should be in the ``charges``
          map.
-      :type structure: py:attr:`~lada.crystal.Structure`
+      :type structure: py:attr:`~pylada.crystal.Structure`
       :param dict charges:
         Map from atomic-types to charges. If not signed by a unit, then should
         be in units of elementary electronic charge. If an atom has a

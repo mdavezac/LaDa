@@ -1,6 +1,6 @@
-import lada
-lada.lada_with_mpi = False
-from lada.vasp import read_input
+import pylada
+pylada.pylada_with_mpi = False
+from pylada.vasp import read_input
 
 input = read_input("input.py")
 input.structure.name = "has a name"

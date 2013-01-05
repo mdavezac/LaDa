@@ -1,4 +1,4 @@
-from lada.vasp.specie import nlep
+from pylada.vasp.specie import nlep
 
 def_rng = 5
 def_rng3 = 5

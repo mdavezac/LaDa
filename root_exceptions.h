@@ -1,7 +1,7 @@
-#ifndef LADA_ROOTEXCEPTIONS_H
-#define LADA_ROOTEXCEPTIONS_H
+#ifndef PYLADA_ROOTEXCEPTIONS_H
+#define PYLADA_ROOTEXCEPTIONS_H
 
-#include "LaDaConfig.h"
+#include "PyladaConfig.h"
 
 #include <string>
 #include <stdexcept>
@@ -12,11 +12,11 @@
 #include <boost/exception/all.hpp>
 
 
-namespace LaDa
+namespace Pylada
 {
   namespace error
   {
-    //! Root exception for all lada exceptions.
+    //! Root exception for all pylada exceptions.
     struct root: virtual boost::exception, virtual std::exception {};
 
     //! Root of input errors.

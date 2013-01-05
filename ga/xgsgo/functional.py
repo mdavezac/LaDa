@@ -70,14 +70,14 @@ class Functional(GAFunctional):
         appropriate. 
 
         By default, it creates a
-        :py:class:`~lada.process.pool.PoolProcess` where each job is allocated
+        :py:class:`~pylada.process.pool.PoolProcess` where each job is allocated
         the N procs, where N is the even number closest from below to the
         number of atoms in the stucturel.
 
         The process is not saved when self is pickled. It is created anew each
         time this functional runs.
     """ 
-    from lada.process import PoolProcess
+    from pylada.process import PoolProcess
     def nbprocs(job):
       return len(job.structure) - len(job.structure) % 2
     if '_process' not in self.__dict__: 

@@ -39,7 +39,7 @@ class Objective(object):
     from os.path import exists
     from shutil import rmtree
     from boost.mpi import world
-    from lada.crystal import Structure
+    from pylada.crystal import Structure
 
     self.gw = gw
     self.dft = dft
@@ -89,9 +89,9 @@ class Objective(object):
   def __call__(self, args):
     from os.path import join
     from boost.mpi import world
-    from lada.opt.changedir import Changedir
-    from lada.vasp import files
-    from lada.vasp.extract import Extract
+    from pylada.opt.changedir import Changedir
+    from pylada.vasp import files
+    from pylada.vasp.extract import Extract
     # transfers parameters to vasp object
     self.x = args
     # performs calculation in new directory
@@ -121,9 +121,9 @@ class Objective(object):
 def main():
   from boost.mpi import world
   from scipy.optimize import fmin as scipy_simplex
-  from lada.vasp import Extract, ExtractGW, Vasp, Specie
-  from lada.vasp.specie import nlep as nlep_parameters, U as u_parameters
-  from lada.vasp.incar import Standard, NBands
+  from pylada.vasp import Extract, ExtractGW, Vasp, Specie
+  from pylada.vasp.specie import nlep as nlep_parameters, U as u_parameters
+  from pylada.vasp.incar import Standard, NBands
   from sys import exit
 
   indir = "SnO2"

@@ -741,13 +741,13 @@ class Electronic(AttrBlock):
     """ Reads density matrix from disk.
     
         - If True *and*
-          :py:attr:`~lada.dftcrystal.functional.Functional.restart` is not
+          :py:attr:`~pylada.dftcrystal.functional.Functional.restart` is not
           None, then copies crystal.f9 to fort.20 in the working directory and
           adds GUESSP keyword to the input. Alternatively, if a later
           crystal.f98 file is found, then it is transformed to an unformatted
           file and copied to fort.20.
     
-        - If True but :py:attr:`~lada.dftcrystal.functional.Functional.restart`
+        - If True but :py:attr:`~pylada.dftcrystal.functional.Functional.restart`
           is None or the file crystal.f9 does not exist, then does nothing.
     
         - If False or None, does nothing.    
@@ -806,7 +806,7 @@ class Electronic(AttrBlock):
         If True and more than one process is requested, switches to using
         MPPcrystal as opposed to Pcrystal.
         This only works under the assumption that
-        :py:data:`lada.crystal_program` is implemented correctly.
+        :py:data:`pylada.crystal_program` is implemented correctly.
     """
     self.spinlock = SpinLock()
     """ Difference in occupation between the two spin-channels. 
@@ -869,8 +869,8 @@ class Electronic(AttrBlock):
 
           A number of settings will disable this keyword:
 
-            - py:attr:`~lada.dftcrystal.functional.dft.spin` is False
-	    - py:attr:`~lada.dftcrystal.functional.dft.spin` is None or True,
+            - py:attr:`~pylada.dftcrystal.functional.dft.spin` is False
+	    - py:attr:`~pylada.dftcrystal.functional.dft.spin` is None or True,
 	      and the appropriate wavefunction exists.
     """
     self.betalock = BetaLock()

@@ -1,15 +1,15 @@
-#if LADA_CRYSTAL_MODULE != 1
+#if PYLADA_CRYSTAL_MODULE != 1
   template<class T_DERIVED>
     Structure supercell(Structure const &_lattice, Eigen::DenseBase<T_DERIVED> const &_supercell)
     {
       if(_lattice.size() == 0) 
       {
-        LADA_PYTHROW(ValueError, "Lattice is empty.");
+        PYLADA_PYTHROW(ValueError, "Lattice is empty.");
         return Structure();
       }
       namespace bt = boost::tuples;
       Structure result = _lattice.copy(); 
-      if(not result) { LADA_PYTHROW(ValueError, "Could not deepcopy the lattice.");}
+      if(not result) { PYLADA_PYTHROW(ValueError, "Could not deepcopy the lattice.");}
       result.clear();
       result->cell = _supercell;
       if(_lattice.hasattr("name") and PyString_Check(_lattice.pyattr("name").borrowed()) )
@@ -19,7 +19,7 @@
         {
           std::string const name = "supercell of " + std::string(attr);
           PyObject* pyname = PyString_FromString(name.c_str());
-          if(not pyname) { LADA_PYTHROW(internal, "Could not create string."); }
+          if(not pyname) { PYLADA_PYTHROW(internal, "Could not create string."); }
           result.pyattr("name", pyname);
           Py_DECREF(pyname);
           if(PyErr_Occurred()) BOOST_THROW_EXCEPTION(error::internal());
@@ -46,12 +46,12 @@
             for(Structure::const_iterator i_site(i_site_begin); i_site != i_site_end; ++i_site, ++l)
             {
               Atom atom = i_site->copy();
-              if(not atom) LADA_PYTHROW(ValueError, "Could not deepcopy atom.");
+              if(not atom) PYLADA_PYTHROW(ValueError, "Could not deepcopy atom.");
               atom->pos = into_cell(vec+i_site->pos(), result->cell, inv_cell);
               python::Object site = PyInt_FromLong(l);
-              if(not atom) LADA_PYTHROW(internal, "Could not create python integer.");
+              if(not atom) PYLADA_PYTHROW(internal, "Could not create python integer.");
               if(not atom.pyattr("site", site) ) 
-                LADA_PYTHROW(internal, "Could not set site index attribute.");
+                PYLADA_PYTHROW(internal, "Could not set site index attribute.");
               result.push_back(atom);
             }
           }

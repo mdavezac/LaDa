@@ -1,20 +1,20 @@
 #ifndef PYLADA_MATH_MODULE_H
 #define PYLADA_MATH_MODULE_H
 #ifndef __cplusplus
-# error LaDa requires a cpp compiler
+# error Pylada requires a cpp compiler
 #endif
 
 
-#ifndef LADA_MATH_MODULE
-#  define LADA_MATH_MODULE 100
+#ifndef PYLADA_MATH_MODULE
+#  define PYLADA_MATH_MODULE 100
 #endif 
 
-#if LADA_MATH_MODULE != 1
-# include "LaDaConfig.h"
+#if PYLADA_MATH_MODULE != 1
+# include "PyladaConfig.h"
 # include <Python.h>
-# ifndef LADA_PYTHONTWOSIX
+# ifndef PYLADA_PYTHONTWOSIX
 #   if PY_MAJOR_VERSION == 2 && PY_MINOR_VERSION < 7
-#     define LADA_PYTHONTWOSIX
+#     define PYLADA_PYTHONTWOSIX
 #   endif
 # endif
 
@@ -27,7 +27,7 @@
 # include <boost/preprocessor/arithmetic/inc.hpp>
 # include <python/ppslot.hpp>
 # define BOOST_PP_VALUE 0
-# include LADA_ASSIGN_SLOT(math)
+# include PYLADA_ASSIGN_SLOT(math)
 
 # include <python/types.h>
 # include <Eigen/Core>
@@ -36,15 +36,15 @@
 
 # include <errors/exceptions.h>
 
-# if LADA_MATH_MODULE == 100
+# if PYLADA_MATH_MODULE == 100
 
-    namespace LaDa
+    namespace Pylada
     {
 
       namespace math
       {
-        /* This section is used in modules that use lada.math's API */
-#       ifdef LADA_NO_IMPORT
+        /* This section is used in modules that use pylada.math's API */
+#       ifdef PYLADA_NO_IMPORT
           extern
 #       endif 
         void **api_capsule; 
@@ -56,16 +56,16 @@
           // PyCapsule_Import will set an exception if there's an error.
           inline bool import(void)
           {
-            PyObject *module = PyImport_ImportModule("lada.math");
+            PyObject *module = PyImport_ImportModule("pylada.math");
             if(not module) return false;
-#           ifdef LADA_PYTHONTWOSIX
+#           ifdef PYLADA_PYTHONTWOSIX
               PyObject* c_api_object = PyObject_GetAttrString(module, "_C_API");
 	      if (c_api_object == NULL) { Py_DECREF(module); return false; }
               if (PyCObject_Check(c_api_object))
                 api_capsule = (void **)PyCObject_AsVoidPtr(c_api_object);
               Py_DECREF(c_api_object);
 #           else
-              api_capsule = (void **)PyCapsule_Import("lada.math._C_API", 0);
+              api_capsule = (void **)PyCapsule_Import("pylada.math._C_API", 0);
 #           endif
             Py_DECREF(module);
             return api_capsule != NULL;
@@ -76,24 +76,24 @@
 # endif
 #else
 # define BOOST_PP_VALUE 0
-# include LADA_ASSIGN_SLOT(math)
+# include PYLADA_ASSIGN_SLOT(math)
 #endif
 
-#if LADA_MATH_MODULE != 1
-#  ifdef LADA_INLINE
-#    error LADA_INLINE already defined
+#if PYLADA_MATH_MODULE != 1
+#  ifdef PYLADA_INLINE
+#    error PYLADA_INLINE already defined
 #  endif
-#  if LADA_MATH_MODULE == 100
-#    define LADA_INLINE inline
-#  elif LADA_MATH_MODULE == 0
-#    define LADA_INLINE
+#  if PYLADA_MATH_MODULE == 100
+#    define PYLADA_INLINE inline
+#  elif PYLADA_MATH_MODULE == 0
+#    define PYLADA_INLINE
 #  endif
-#  ifdef LADA_END
-#    error LADA_END already defined
-#  elif LADA_MATH_MODULE == 0
-#    define LADA_END(X) ;
-#  elif LADA_MATH_MODULE == 100
-#    define LADA_END(X) { X }
+#  ifdef PYLADA_END
+#    error PYLADA_END already defined
+#  elif PYLADA_MATH_MODULE == 0
+#    define PYLADA_END(X) ;
+#  elif PYLADA_MATH_MODULE == 100
+#    define PYLADA_END(X) { X }
 #  endif
 #endif
 
@@ -103,8 +103,8 @@
 // different namespace
 # include "exceptions.h"
 
-#if LADA_MATH_MODULE != 1
-  namespace LaDa
+#if PYLADA_MATH_MODULE != 1
+  namespace Pylada
   {
     namespace math 
     {
@@ -117,7 +117,7 @@
 #       include "symmetry_operator.h"
 #       include "algorithms.h"
         
-#if LADA_MATH_MODULE != 1
+#if PYLADA_MATH_MODULE != 1
       }
     }
   }
@@ -125,24 +125,24 @@
 
 
 // get ready for second inclusion
-#ifdef LADA_MATH_MODULE 
-# if LADA_MATH_MODULE == 0
-#   undef LADA_MATH_MODULE 
-#   define LADA_MATH_MODULE 1
-# elif LADA_MATH_MODULE == 1
-#   undef LADA_MATH_MODULE 
-#   define LADA_MATH_MODULE 0
+#ifdef PYLADA_MATH_MODULE 
+# if PYLADA_MATH_MODULE == 0
+#   undef PYLADA_MATH_MODULE 
+#   define PYLADA_MATH_MODULE 1
+# elif PYLADA_MATH_MODULE == 1
+#   undef PYLADA_MATH_MODULE 
+#   define PYLADA_MATH_MODULE 0
 # endif
 #endif 
-#ifdef LADA_INLINE
-# undef LADA_INLINE
+#ifdef PYLADA_INLINE
+# undef PYLADA_INLINE
 #endif
-#ifdef LADA_END
-# undef LADA_END
+#ifdef PYLADA_END
+# undef PYLADA_END
 #endif
 
-#if LADA_MATH_MODULE == 100
-# undef LADA_MATH_MODULE
+#if PYLADA_MATH_MODULE == 100
+# undef PYLADA_MATH_MODULE
 #endif
 
 #endif 

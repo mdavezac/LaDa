@@ -6,12 +6,12 @@ def gajobs(path, inputpath = "input.py", collector=None):
   from numpy import array, arange, any, isnan
   from quantities import eV
 
-  from lada.ga.functional import maximize, minimize
-  from lada.ga.ce.functional import Darwin as Functional
-  from lada.ga.ce.evaluator  import LocalSearchEvaluator as Evaluator
-  from lada.jobs import JobFolder
-  from lada.escan import MassExtract
-  from lada.ce import read_input
+  from pylada.ga.functional import maximize, minimize
+  from pylada.ga.ce.functional import Darwin as Functional
+  from pylada.ga.ce.evaluator  import LocalSearchEvaluator as Evaluator
+  from pylada.jobs import JobFolder
+  from pylada.escan import MassExtract
+  from pylada.ce import read_input
 
   # reads input file.
   input = read_input(inputpath, {"maximize": maximize, "minimize": minimize, "eV": eV, "arange": arange})

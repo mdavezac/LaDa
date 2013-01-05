@@ -1,8 +1,8 @@
 __docformat__ = "restructuredtext en"
 __all__ = ['qstat']
-from lada import lada_with_slurm
+from pylada import pylada_with_slurm
 
-if lada_with_slurm:
+if pylada_with_slurm:
   def qstat(self, arg):
     """ squeue --user=`whoami` -o "%7i %.3C %3t  --   %50j" """
     from subprocess import Popen, PIPE

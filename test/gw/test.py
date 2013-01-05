@@ -1,6 +1,6 @@
-from lada.crystal.binary import zinc_blende
-from lada.mpi import world
-from lada.vasp import GWVasp
+from pylada.crystal.binary import zinc_blende
+from pylada.mpi import world
+from pylada.vasp import GWVasp
 
 lattice = zinc_blende()
 lattice.scale = 5.45

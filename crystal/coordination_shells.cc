@@ -100,7 +100,7 @@ PyObject* coordination_shells( crystal::Structure const &_structure, Py_ssize_t 
     ++i_point;
     if(i_point == i_point_end)
     {
-      LADA_PYERROR(InternalError, "Could not find any point at non-zero distance from origin.");
+      PYLADA_PYERROR(InternalError, "Could not find any point at non-zero distance from origin.");
       return NULL;
     }
     current_norm = i_point->distance;

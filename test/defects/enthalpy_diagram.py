@@ -1,6 +1,6 @@
 """" Creates diagram of formation enthalpies with respect to Fermi energy. """
-from lada.jobs import AbstractMassExtract
-from lada.opt.decorators import make_cached
+from pylada.jobs import AbstractMassExtract
+from pylada.opt.decorators import make_cached
 
 class PointDefectExtactor(object):
   """ Extracts output across all charged states of a defect. """
@@ -67,7 +67,7 @@ class PointDefectExtactor(object):
     """ Potential alignments for all jobs. """
     from numpy import array
     from quantities import eV
-    from lada.crystal.point_defects import potential_alignment
+    from pylada.crystal.point_defects import potential_alignment
     return array([ potential_alignment(state, self.host, self.pa_maxdiff) \
                    for state in self._all_jobs() ]) * eV
 
@@ -77,7 +77,7 @@ class PointDefectExtactor(object):
     """ Band-filling for all jobs. """
     from numpy import array
     from quantities import eV
-    from lada.crystal.point_defects import band_filling
+    from pylada.crystal.point_defects import band_filling
     return array([ band_filling(state, self.host, maxdiff=self.pa_maxdiff) \
                    for state in self._all_jobs() ]) * eV
 
@@ -364,7 +364,7 @@ class PointDefectMassExtractorImpl(AbstractMassExtract):
   """ Enthalpy for a series of defects for a given material and lattice. """
   def __init__(self, path=None, epsilon = 1e0, pa_maxdiff=0.5, Extractor=None, **kwargs):
     """ Initializes an enthalpy function. """
-    from lada.vasp import MassExtract
+    from pylada.vasp import MassExtract
     super(PointDefectMassExtractor, self).__init__(**kwargs)
 
     self.Extractor = Extractor

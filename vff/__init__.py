@@ -89,7 +89,7 @@ def build_tree(structure, overlap=1.2, **kwargs):
   # returns net as a list.
   return net.values()
 
-from lada import is_interactive
+from pylada import is_interactive
 if is_interactive:
   def plot_tree(structure, overlap=0.5):
     """ Plots a tree using mayavi. """

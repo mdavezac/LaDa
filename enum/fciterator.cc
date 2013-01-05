@@ -1,8 +1,8 @@
-#include "LaDaConfig.h"
+#include "PyladaConfig.h"
 
 #include <Python.h>
 #include <structmember.h>
-#define PY_ARRAY_UNIQUE_SYMBOL lada_enum_ARRAY_API
+#define PY_ARRAY_UNIQUE_SYMBOL pylada_enum_ARRAY_API
 #define NO_IMPORT_ARRAY
 #include <numpy/arrayobject.h>
 
@@ -10,13 +10,13 @@
 #include <algorithm>
 
 
-#define LADA_NO_IMPORT
+#define PYLADA_NO_IMPORT
 #include <python/python.h>
 #include <errors/exceptions.h>
 
 #include "fciterator.h"
 
-namespace LaDa
+namespace Pylada
 {
   namespace enumeration
   {
@@ -74,7 +74,7 @@ namespace LaDa
     {
       if(_kwargs != NULL and PyDict_Size(_kwargs))
       {
-        LADA_PYERROR(TypeError, "FCIterator does not expect keyword arguments.");
+        PYLADA_PYERROR(TypeError, "FCIterator does not expect keyword arguments.");
         return -1;
       }
       int length = 0;
@@ -82,18 +82,18 @@ namespace LaDa
         return -1;
       if(length <= 0)
       {
-        LADA_PYERROR(ValueError, "length argument should be strictly positive.");
+        PYLADA_PYERROR(ValueError, "length argument should be strictly positive.");
         return -1;
       }
       if(_self->ntrue <= 0)
       {
-        LADA_PYERROR(ValueError, "The second argument (number of '1's) "
+        PYLADA_PYERROR(ValueError, "The second argument (number of '1's) "
                                  "should be strictly positive.");
         return -1;
       }
       if(_self->ntrue > length)
       {
-        LADA_PYERROR(ValueError, "The second argument (number of '1's) "
+        PYLADA_PYERROR(ValueError, "The second argument (number of '1's) "
                                  "should be smaller or equalt to the first"
                                  "(bitstring size).");
         return -1;
@@ -113,23 +113,23 @@ namespace LaDa
       _self->yielded = (PyArrayObject*)
           PyArray_SimpleNewFromData(1, d, t_type::value, &_self->counter[0]);
       if(not _self->yielded) return -1;
-#     ifdef LADA_MACRO
-#       error LADA_MACRO already defined
+#     ifdef PYLADA_MACRO
+#       error PYLADA_MACRO already defined
 #     endif
 #     ifdef NPY_ARRAY_WRITEABLE
-#       define LADA_MACRO NPY_ARRAY_WRITEABLE
+#       define PYLADA_MACRO NPY_ARRAY_WRITEABLE
 #     else
-#       define LADA_MACRO NPY_WRITEABLE
+#       define PYLADA_MACRO NPY_WRITEABLE
 #     endif
-      if(_self->yielded->flags & LADA_MACRO) _self->yielded->flags -= LADA_MACRO;
-#     undef LADA_MACRO
+      if(_self->yielded->flags & PYLADA_MACRO) _self->yielded->flags -= PYLADA_MACRO;
+#     undef PYLADA_MACRO
 #     ifdef NPY_ARRAY_C_CONTIGUOUS
-#       define LADA_MACRO NPY_ARRAY_C_CONTIGUOUS;
+#       define PYLADA_MACRO NPY_ARRAY_C_CONTIGUOUS;
 #     else 
-#       define LADA_MACRO NPY_C_CONTIGUOUS
+#       define PYLADA_MACRO NPY_C_CONTIGUOUS
 #     endif
-      if(not (_self->yielded->flags & LADA_MACRO)) _self->yielded->flags += LADA_MACRO;
-#     undef LADA_MACRO
+      if(not (_self->yielded->flags & PYLADA_MACRO)) _self->yielded->flags += PYLADA_MACRO;
+#     undef PYLADA_MACRO
       _self->yielded->base = (PyObject*)_self;
       Py_INCREF(_self);
       return 0;
@@ -152,15 +152,15 @@ namespace LaDa
       if(_self->is_first)
       {
         _self->is_first = false; 
-#       ifdef LADA_DEBUG
+#       ifdef PYLADA_DEBUG
           if(_self->yielded == NULL)
           {
-            LADA_PYERROR(internal, "Yielded was not initialized.");
+            PYLADA_PYERROR(internal, "Yielded was not initialized.");
             return NULL;
           }
           if(_self->yielded->data != (char*)&_self->counter[0])
           {
-            LADA_PYERROR(internal, "Yielded does not reference counter.");
+            PYLADA_PYERROR(internal, "Yielded does not reference counter.");
             return NULL;
           }
 #       endif
@@ -217,15 +217,15 @@ namespace LaDa
         *i_one = false;
       }
       
-#     ifdef LADA_DEBUG
+#     ifdef PYLADA_DEBUG
         if(_self->yielded == NULL)
         {
-          LADA_PYERROR(internal, "Yielded was not initialized.");
+          PYLADA_PYERROR(internal, "Yielded was not initialized.");
           return NULL;
         }
         if(_self->yielded->data != (char*)&_self->counter[0])
         {
-          LADA_PYERROR(internal, "Yielded does not reference counter.");
+          PYLADA_PYERROR(internal, "Yielded does not reference counter.");
           return NULL;
         }
 #     endif
@@ -237,7 +237,7 @@ namespace LaDa
     {
       if(_self->counter.size() == 0)
       {
-        LADA_PYERROR(internal, "Iterator was never initialized");
+        PYLADA_PYERROR(internal, "Iterator was never initialized");
         return NULL;
       }
       std::fill(_self->counter.rbegin(), _self->counter.rbegin() + _self->ntrue, 1);
@@ -256,29 +256,29 @@ namespace LaDa
     // Returns pointer to fciterator type.
     PyTypeObject* fciterator_type()
     {
-#     ifdef LADA_DECLARE
-#       error LADA_DECLARE already declared
+#     ifdef PYLADA_DECLARE
+#       error PYLADA_DECLARE already declared
 #     endif
-#     define LADA_DECLARE(name, func, args, doc) \
+#     define PYLADA_DECLARE(name, func, args, doc) \
         {#name, (PyCFunction)func, METH_ ## args, doc} 
       static PyMethodDef methods[] = {
-        LADA_DECLARE(reset, reset, NOARGS, "Resets iterator."),
+        PYLADA_DECLARE(reset, reset, NOARGS, "Resets iterator."),
           {NULL}  /* Sentinel */
       };
-#     undef LADA_DECLARE
-#     define LADA_DECLARE(name, object, doc) \
+#     undef PYLADA_DECLARE
+#     define PYLADA_DECLARE(name, object, doc) \
         { const_cast<char*>(#name), T_OBJECT_EX, \
           offsetof(FCIterator, object), 0, const_cast<char*>(doc) }
       static PyMemberDef members[] = {
-        LADA_DECLARE(yielded, yielded, "Object to be yielded."),
+        PYLADA_DECLARE(yielded, yielded, "Object to be yielded."),
         {NULL, 0, 0, 0, NULL}  /* Sentinel */
       };
-#     undef LADA_DECLARE
+#     undef PYLADA_DECLARE
 
       static PyTypeObject dummy = {
           PyObject_HEAD_INIT(NULL)
           0,                                 /*ob_size*/
-          "lada.enum.cppwrappers.FCIterator",   /*tp_name*/
+          "pylada.enum.cppwrappers.FCIterator",   /*tp_name*/
           sizeof(FCIterator),              /*tp_basicsize*/
           0,                                 /*tp_itemsize*/
           (destructor)fciterator_dealloc,  /*tp_dealloc*/
@@ -355,4 +355,4 @@ namespace LaDa
     }
 
   } // namespace Crystal
-} // namespace LaDa
+} // namespace Pylada

@@ -24,7 +24,7 @@ def _call_callbacks():
 
 @register
 def _atexit_onexit(): 
-  """ Specific at-exit function for lada. """
+  """ Specific at-exit function for pylada. """
   _call_callbacks()
 
 

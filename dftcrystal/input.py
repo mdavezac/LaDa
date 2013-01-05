@@ -63,7 +63,7 @@ class AttrBlock(AttrBlockBase):
         elif hasattr(newobject, 'raw'): newobject.raw = value
         elif hasattr(newobject, '__set__'): newobject.__set__(self, value)
         else:
-          raise internal( "LaDa doesn't understand how to read input to {0}"   \
+          raise internal( "Pylada doesn't understand how to read input to {0}"   \
                           .format(lowkey) )
         continue
       if lowkey == 'breaksym': breaksym = True; continue

@@ -2,8 +2,8 @@ def test_smith():
   from numpy import dot, all
   from numpy.random import randint
   from numpy.linalg import det
-  from lada.math import smith_normal_form
-  from lada.error import input
+  from pylada.math import smith_normal_form
+  from pylada.error import input
   
   for i in xrange(50):
     cell = randint(-5, 5, size=(3,3))

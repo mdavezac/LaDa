@@ -1,11 +1,11 @@
-#include "LaDaConfig.h"
+#include "PyladaConfig.h"
 
 #include <Python.h>
 #include <errors/exceptions.h>
 
 #include "productilj.h"
 
-namespace LaDa
+namespace Pylada
 {
   namespace ce
   {
@@ -83,7 +83,7 @@ namespace LaDa
       }
       else 
       {
-        LADA_PYERROR(TypeError, "First argument to ProductILJ is not iterable.");
+        PYLADA_PYERROR(TypeError, "First argument to ProductILJ is not iterable.");
         return -1;
       }
       _self->N = PyList_Size(_self->sequence);
@@ -160,7 +160,7 @@ namespace LaDa
       static PyTypeObject dummy = {
           PyObject_HEAD_INIT(NULL)
           0,                                 /*ob_size*/
-          "lada.ce.cppwrappers.ProductILJ",  /*tp_name*/
+          "pylada.ce.cppwrappers.ProductILJ",  /*tp_name*/
           sizeof(ProductILJIterator),        /*tp_basicsize*/
           0,                                 /*tp_itemsize*/
           (destructor)dealloc,               /*tp_dealloc*/
@@ -205,4 +205,4 @@ namespace LaDa
     }
 
   } // namespace Crystal
-} // namespace LaDa
+} // namespace Pylada

@@ -9,7 +9,7 @@ import os
 
 
 def is_valid(flavorbase, x):
-  from lada import enumeration, crystal
+  from pylada import enumeration, crystal
 
   types = [ i for i in enumeration.IntegerIterator(flavorbase,x) ]
   return 2*len([i for i in types if i == 0]) == len(types)
@@ -18,7 +18,7 @@ def is_valid(flavorbase, x):
 def enum( n, lattice ):
   from math import pow
   from numpy import dot as np_dot
-  from lada import enumeration, math, crystal
+  from pylada import enumeration, math, crystal
 
   supercells = enumeration.find_all_cells(lattice, n)
   smiths = enumeration.create_smith_groups(lattice, supercells)
@@ -89,7 +89,7 @@ def enum( n, lattice ):
         if specialized_database[x]: yield x, smith, supercell, flavorbase
 
 def create_database(lattice, n0=1, n1=4):
-  from lada import enumeration, crystal
+  from pylada import enumeration, crystal
   from math import pow
 
   # prints lattice
@@ -156,7 +156,7 @@ def create_database(lattice, n0=1, n1=4):
 
 def read_database(filename, withperms=True):
   from numpy import array as np_array, dot as np_dot, zeros as np_zeros
-  from lada import crystal, enumeration
+  from pylada import crystal, enumeration
 
   lattice = crystal.Lattice()
   with open(filename, "r") as file:

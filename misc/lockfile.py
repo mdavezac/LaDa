@@ -77,7 +77,7 @@ class LockFile(object):
   def lock_directory(self):
     """ Name of lock directory. """
     from os.path import join, basename
-    return join(self._parent_directory, "." + basename(self.filename) + "-lada_lockdir")
+    return join(self._parent_directory, "." + basename(self.filename) + "-pylada_lockdir")
  
   @property
   def _parent_directory(self):

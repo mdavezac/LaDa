@@ -1,13 +1,13 @@
-#ifndef LADA_PYTHON_ESCAN_WAVEFUNCTIONS_HPP
-#define LADA_PYTHON_ESCAN_WAVEFUNCTIONS_HPP
+#ifndef PYLADA_PYTHON_ESCAN_WAVEFUNCTIONS_HPP
+#define PYLADA_PYTHON_ESCAN_WAVEFUNCTIONS_HPP
 
-#include "LaDaConfig.h"
+#include "PyladaConfig.h"
 
-namespace LaDa
+namespace Pylada
 {
   namespace python
   {
     void expose_wfns();
   }
-} // namespace LaDa
+} // namespace Pylada
 #endif

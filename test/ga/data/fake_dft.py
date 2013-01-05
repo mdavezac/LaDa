@@ -8,7 +8,7 @@ import os
 if os.uname()[1] == "head": 
   sys.path.append("/uhome/mdavezac/usr/lib/python2.6/site-packages")
 
-from lada import ce, crystal
+from pylada import ce, crystal
 
 
 functional = ce.Cubic()

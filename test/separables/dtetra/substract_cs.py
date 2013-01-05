@@ -1,6 +1,6 @@
 #! /usr/bin/python
 from readpi import importPiStructure, SFtoCE_Structure
-from LaDa import rMatrix3d, rVector3d, make_rMatrix3d, Lattice, \
+from Pylada import rMatrix3d, rVector3d, make_rMatrix3d, Lattice, \
                  tetragonalCS
 from sys import exit
 from numpy import array

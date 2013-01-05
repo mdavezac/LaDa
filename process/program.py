@@ -31,11 +31,11 @@ class ProgramProcess(Process):
 
       .. note ::
         
-        A :py:class:`~lada.process.Fail` exception is thrown when the program
+        A :py:class:`~pylada.process.Fail` exception is thrown when the program
         returns with a non-zero exit code. However, some propietary MPI
         crapware, such as Cray's. will return 0 whenever ``MPI::Finalize()`` is
         called, even when the program itself returns non-zero. As a result, it
-        is not possible to rely on a :py:class:`~lada.process.Fail` exception
+        is not possible to rely on a :py:class:`~pylada.process.Fail` exception
         being thrown correctly on all machines at all times.
 
       .. __ : http://docs.python.org/library/subprocess.html#subprocess.Popen
@@ -78,10 +78,10 @@ class ProgramProcess(Process):
         :param bool dompi:
           If True, then the external program is launched with MPI.
           The MPI infrastructure should be set up correctly, meaning
-          :py:func:`lada.launch_program`,
-          :py:func:`lada.machine_dependent_call_modifier`,
-          :py:func:`lada.modify_global_comm`, :py:data:`lada.mpirun_exe`,
-          :py:data:`~lada.default_comm`, :py:data:`~lada.figure_out_machines`.
+          :py:func:`pylada.launch_program`,
+          :py:func:`pylada.machine_dependent_call_modifier`,
+          :py:func:`pylada.modify_global_comm`, :py:data:`pylada.mpirun_exe`,
+          :py:data:`~pylada.default_comm`, :py:data:`~pylada.figure_out_machines`.
         :param cmdlmodifier:
           This function is called prior to launching the program. It can be
           used to modify the formatting dictionary. It should return a

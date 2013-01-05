@@ -98,14 +98,14 @@ class RelaxExtract(Extract):
   def is_running(self):
     """ True if program is running on this functional. 
          
-        A file '.lada_is_running' is created in the output folder when it is
+        A file '.pylada_is_running' is created in the output folder when it is
         set-up to run CRYSTAL_. The same file is removed when CRYSTAL_ returns
-        (more specifically, when the :py:class:`lada.process.ProgramProcess` is
+        (more specifically, when the :py:class:`pylada.process.ProgramProcess` is
         polled). Hence, this file serves as a marker of those jobs which are
         currently running.
     """
     from os.path import join, exists
-    if exists(join(self.directory, '.lada_is_running')): return True
+    if exists(join(self.directory, '.pylada_is_running')): return True
     for value in self.details.itervalues():
       if value.is_running: return True
     return False
@@ -170,7 +170,7 @@ iter_relax.Extract = RelaxExtract
 """ Extraction object for relaxation meta-functional. """
 
 Relax = makeclass( 'Relax', Functional, iter_relax, None,
-                   module='lada.dftcrystal.relax',
+                   module='pylada.dftcrystal.relax',
 	            	   doc='Functional form of the '                               \
-                       ':py:class:`lada.dftcrystal.relax.iter_relax` method.' )
-relax = makefunc('relax', iter_relax, module='lada.dftcrystal.relax')
+                       ':py:class:`pylada.dftcrystal.relax.iter_relax` method.' )
+relax = makefunc('relax', iter_relax, module='pylada.dftcrystal.relax')

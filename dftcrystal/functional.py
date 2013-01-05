@@ -9,7 +9,7 @@ class Functional(object):
       modelled loosely after CRYSTAL_'s input:
 
         - The OPTGEOM keyword of the first code block can be accessed through
-          the :py:class:`optgeom <lada.dftcrystal.optgeom.OptGeom>`
+          the :py:class:`optgeom <pylada.dftcrystal.optgeom.OptGeom>`
           :py:attr:`attribute <optgeom>`:
           
           .. code-block:: python
@@ -23,7 +23,7 @@ class Functional(object):
           first line above. 
         - The interface to the second block of input (basis-functions) can be
           accessed through the :py:class:`basis
-          <lada.dftcrystal.basis.BasisSet>` :py:attr:`attribute <basis>`. It
+          <pylada.dftcrystal.basis.BasisSet>` :py:attr:`attribute <basis>`. It
           allows to set the basis set itself, as well as keywords specific to
           the basis set:
 
@@ -34,7 +34,7 @@ class Functional(object):
 
         - The third input block (Hamiltonian and miscellaneous) can be accessed
           directly through the functional, or, alternatively, *via* the
-          :py:class:`scf <lada.dftcrystal.electronic.Electronic>`
+          :py:class:`scf <pylada.dftcrystal.electronic.Electronic>`
           :py:attr:`attribute <scf>`.
         
           .. code-block:: python
@@ -75,7 +75,7 @@ class Functional(object):
     self.program = program
     """ Path to crystal program.
 
-        If this attribute is None, then :py:data:`~lada.crystal_program` is
+        If this attribute is None, then :py:data:`~pylada.crystal_program` is
         used.
     """ 
     self.restart = None
@@ -300,7 +300,7 @@ class Functional(object):
         except OSError: pass
     
     # creates a file in the directory, to say we are going to work here
-    with open(join(outdir, '.lada_is_running'), 'w') as file: pass
+    with open(join(outdir, '.pylada_is_running'), 'w') as file: pass
         
 
   def bringdown(self, structure, workdir, outdir):
@@ -319,8 +319,8 @@ class Functional(object):
 
     with Changedir(outdir) as cwd:
       # remove 'is running' file marker.
-      if exists('.lada_is_running'):
-        try: remove('.lada_is_running')
+      if exists('.pylada_is_running'):
+        try: remove('.pylada_is_running')
         except OSError: pass
 
       for key, value in CRYSTAL_filenames.iteritems():
@@ -369,7 +369,7 @@ class Functional(object):
         object for the stored results are given.
 
         :param structure:  
-            :py:class:`~lada.crystal.Structure` structure to compute.
+            :py:class:`~pylada.crystal.Structure` structure to compute.
         :param outdir:
             Output directory where the results should be stored.  This
             directory will be checked for restart status, eg whether
@@ -782,7 +782,7 @@ class Functional(object):
     """ Checks whether CRYSTAL run succeeded.
 
         Crystal reports an error when reaching maximum iteration without
-        converging. This screws up how LaDa does things.
+        converging. This screws up how Pylada does things.
     """
     def __init__(self, extract):
       self.extract = extract

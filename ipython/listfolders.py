@@ -1,7 +1,7 @@
 def listfolders(self, arg):
   """ Lists sub-folders. """
   from fnmatch import fnmatch
-  from lada import interactive
+  from pylada import interactive
   from ..jobfolder import JobParams
   if interactive.jobfolder is None: return
   if len(arg) == 0:

@@ -1,4 +1,4 @@
-namespace LaDa
+namespace Pylada
 {
   namespace vff
   {
@@ -52,7 +52,7 @@ namespace LaDa
     {
       if(_self->N != _self->parent->bonds.size())
       {
-        LADA_PYERROR(IndexError, "Bonds changed mid-iteration.");
+        PYLADA_PYERROR(IndexError, "Bonds changed mid-iteration.");
         return NULL;
       }
       if(_self->i_first != _self->i_end) 
@@ -93,7 +93,7 @@ namespace LaDa
     {
       if(_self->N != _self->parent->bonds.size())
       {
-        LADA_PYERROR(IndexError, "Bonds changed mid-iteration.");
+        PYLADA_PYERROR(IndexError, "Bonds changed mid-iteration.");
         return NULL;
       }
       if(_self->i_first != _self->i_end) 

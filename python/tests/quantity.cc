@@ -1,4 +1,4 @@
-#include "LaDaConfig.h"
+#include "PyladaConfig.h"
 
 #include <Python.h>
 #include <numpy/arrayobject.h>
@@ -8,7 +8,7 @@
 #include "../python.h"
 
 
-using namespace LaDa::python;
+using namespace Pylada::python;
 PyObject* is_quantity(PyObject *_module, PyObject *_in)
 { 
   if(not check_quantity(_in)) Py_RETURN_FALSE;
@@ -30,7 +30,7 @@ PyObject* fromPy(PyObject *_module, PyObject *_args)
 }
 PyObject* get_angstrom(PyObject *_module, PyObject *_in)
 {
-  LaDa::types::t_real result(get_quantity(_in, "angstrom"));
+  Pylada::types::t_real result(get_quantity(_in, "angstrom"));
   if(std::abs(result) < 1e-8 and PyErr_Occurred())
   {
     PyErr_Clear();
@@ -41,7 +41,7 @@ PyObject* get_angstrom(PyObject *_module, PyObject *_in)
 
 PyObject* as_real(PyObject *_module, PyObject *_in)
 {
-  LaDa::types::t_real result(get_quantity(_in));
+  Pylada::types::t_real result(get_quantity(_in));
   if(std::abs(result) < 1e-8 and PyErr_Occurred())
   {
     PyErr_Clear();
@@ -54,7 +54,7 @@ PyObject* get_as(PyObject *_module, PyObject *_args)
   PyObject *number;
   PyObject *units;
   if(not PyArg_ParseTuple(_args, "OO", &number, &units)) return NULL;
-  LaDa::types::t_real result(get_quantity(number, units));
+  Pylada::types::t_real result(get_quantity(number, units));
   if(std::abs(result) < 1e-8 and PyErr_Occurred())
   {
     PyErr_Clear();
@@ -66,27 +66,27 @@ PyObject* get_as(PyObject *_module, PyObject *_args)
 # define PyMODINIT_FUNC void
 #endif
 
-#ifdef LADA_DECLARE
-#  error LADA_DECLARE already defined.
+#ifdef PYLADA_DECLARE
+#  error PYLADA_DECLARE already defined.
 #endif
-#define LADA_DECLARE(name, args) {#name, (PyCFunction)name, METH_ ## args, ""} 
+#define PYLADA_DECLARE(name, args) {#name, (PyCFunction)name, METH_ ## args, ""} 
 
 static PyMethodDef methods[] = { 
-  LADA_DECLARE(is_quantity, O),
-  LADA_DECLARE(fromC, VARARGS),
-  LADA_DECLARE(fromPy, VARARGS),
-  LADA_DECLARE(get_angstrom, O),
-  LADA_DECLARE(as_real, O),
-  LADA_DECLARE(get_as, VARARGS),
+  PYLADA_DECLARE(is_quantity, O),
+  PYLADA_DECLARE(fromC, VARARGS),
+  PYLADA_DECLARE(fromPy, VARARGS),
+  PYLADA_DECLARE(get_angstrom, O),
+  PYLADA_DECLARE(as_real, O),
+  PYLADA_DECLARE(get_as, VARARGS),
   {NULL},
 };
 
-#undef LADA_DECLARE
+#undef PYLADA_DECLARE
 
 PyMODINIT_FUNC init_quantity(void) 
 {
   PyObject* module = Py_InitModule("_quantity", methods);
   if(not module) return;
   import_array();
-  if(not LaDa::python::import()) return;
+  if(not Pylada::python::import()) return;
 }

@@ -34,11 +34,11 @@ bool append_neighbor_impl_( python::Object const &_list,
   return result;
 }
       
-#ifdef LADA_DISTANCE
-#  error LADA_DISTANCE already defined.
+#ifdef PYLADA_DISTANCE
+#  error PYLADA_DISTANCE already defined.
 #endif
- //! \macro LADA_DISTANCE returns distance attribute from nth item in list.
-#define LADA_DISTANCE(list, n)  \
+ //! \macro PYLADA_DISTANCE returns distance attribute from nth item in list.
+#define PYLADA_DISTANCE(list, n)  \
    PyFloat_AS_DOUBLE(PyTuple_GET_ITEM(PyList_GET_ITEM(list, n), 2))
      
       
@@ -100,7 +100,7 @@ PyObject* neighbors( crystal::Structure const &_structure, Py_ssize_t _nmax,
            Py_ssize_t const N(PyList_GET_SIZE(result.borrowed()));
            for(; i_found < N; ++i_found )
            {
-             double const dist = LADA_DISTANCE(result.borrowed(), i_found);
+             double const dist = PYLADA_DISTANCE(result.borrowed(), i_found);
              if(distance < dist) break;
            }
            if( i_found != N)
@@ -122,13 +122,13 @@ PyObject* neighbors( crystal::Structure const &_structure, Py_ssize_t _nmax,
   Py_ssize_t const rN(PyList_GET_SIZE(result.borrowed()));
   if(rN <= _nmax)
   {
-    LADA_PYERROR(InternalError, "Supercell too small.");
+    PYLADA_PYERROR(InternalError, "Supercell too small.");
     return NULL;
   }
-  types::t_real lastdist = LADA_DISTANCE(result.borrowed(), _nmax-1);
+  types::t_real lastdist = PYLADA_DISTANCE(result.borrowed(), _nmax-1);
   Py_ssize_t i(_nmax);
   for(; i < rN; ++i) 
-    if(math::gt(LADA_DISTANCE(result.borrowed(), i), lastdist, _tolerance)) break;
+    if(math::gt(PYLADA_DISTANCE(result.borrowed(), i), lastdist, _tolerance)) break;
   if(i == rN)
   {
     result.reset(PyList_New(0));
@@ -139,4 +139,4 @@ PyObject* neighbors( crystal::Structure const &_structure, Py_ssize_t _nmax,
   for(Py_ssize_t j(rN-1); j >= i; --j) PySequence_DelItem(result.borrowed(), j);
   return result.release();
 }
-#undef LADA_DISTANCE
+#undef PYLADA_DISTANCE

@@ -1,7 +1,7 @@
 """ Checks coordination shell routine. """
 def check(structure, center, tolerance=1e-8):
   from numpy import abs, sqrt, all
-  from lada.crystal.cppwrappers import coordination_shells
+  from pylada.crystal.cppwrappers import coordination_shells
   
   # check we get the coordination_shells of zinc-blende.
   neighs = coordination_shells(structure, 5, center, tolerance);
@@ -33,7 +33,7 @@ def check(structure, center, tolerance=1e-8):
 
 def check_against_neighbors(structure, tolerance=1e-8):
   from numpy import abs, sqrt, all
-  from lada.crystal.cppwrappers import coordination_shells, neighbors
+  from pylada.crystal.cppwrappers import coordination_shells, neighbors
 
   a = neighbors(structure, 150, [0,0,0], tolerance) 
   result = []
@@ -56,7 +56,7 @@ if __name__ == "__main__":
 
   from random import random
   from numpy import array
-  from lada.crystal.cppwrappers import supercell, Structure
+  from pylada.crystal.cppwrappers import supercell, Structure
 
   lattice = Structure([[0, 0.5, 0.5],[0.5, 0, 0.5], [0.5, 0.5, 0]]) \
                      .add_atom(0, 0, 0, "Si")                       \

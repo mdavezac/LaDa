@@ -1,4 +1,4 @@
-#if LADA_PYTHON_MODULE != 1
+#if PYLADA_PYTHON_MODULE != 1
   //! \brief Thin wrapper around a python tuple implementing random access stl iterators.
   //! \details No reference count management. The point is that the tuple
   //!          should be owned and stable throughout the life of the iterator. 
@@ -26,7 +26,7 @@
       {
         if(index_ >= (int)PyTuple_GET_SIZE(object_) or index_ < 0)
         {
-          LADA_PYERROR(IndexError, "List iterator is out of range.");
+          PYLADA_PYERROR(IndexError, "List iterator is out of range.");
           BOOST_THROW_EXCEPTION(error::IndexError());
         }
         return PyTuple_GET_ITEM(object_, index_);
@@ -36,7 +36,7 @@
       {
         if(index_ >= (int)PyTuple_GET_SIZE(object_) or index_ < 0)
         {
-          LADA_PYERROR(IndexError, "List iterator is out of range.");
+          PYLADA_PYERROR(IndexError, "List iterator is out of range.");
           BOOST_THROW_EXCEPTION(error::IndexError());
         }
         return PyTuple_GET_ITEM(object_, index_);
@@ -46,7 +46,7 @@
       {
         if(index_ >= (int)PyTuple_GET_SIZE(object_) or index_ < 0)
         {
-          LADA_PYERROR(IndexError, "List iterator is out of range.");
+          PYLADA_PYERROR(IndexError, "List iterator is out of range.");
           BOOST_THROW_EXCEPTION(error::IndexError());
         }
         return &PyTuple_GET_ITEM(object_, index_);
@@ -56,7 +56,7 @@
       {
         if(index_ >= (int)PyTuple_GET_SIZE(object_) or index_ < 0)
         {
-          LADA_PYERROR(IndexError, "List iterator is out of range.");
+          PYLADA_PYERROR(IndexError, "List iterator is out of range.");
           BOOST_THROW_EXCEPTION(error::IndexError());
         }
         return &PyTuple_GET_ITEM(object_, index_);

@@ -1,7 +1,7 @@
 def test_magmom():
   from pickle import loads, dumps
-  from lada.crystal.cppwrappers import Structure
-  from lada.vasp import Vasp
+  from pylada.crystal.cppwrappers import Structure
+  from pylada.vasp import Vasp
 
   u = 0.25
   x, y = u, 0.25-u

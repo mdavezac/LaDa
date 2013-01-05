@@ -14,7 +14,7 @@ class Transforms(object):
           4x3 matrix representing the transformation.
         :param lattice: 
           Lattice which forms the back-bone on which to enumerate structures.
-        :type lattice: :py:class:`~lada.crystal.cppwrappers.Structure`
+        :type lattice: :py:class:`~pylada.crystal.cppwrappers.Structure`
     """
     from numpy import dot
     from numpy.linalg import inv
@@ -120,7 +120,7 @@ class Transforms(object):
         :param cell:
            Cell for which the operations should be invariant.
         :type cell:
-           :py:attr:`~lada.crystal.cppwrappers.Structure` or 3x3 matrix
+           :py:attr:`~pylada.crystal.cppwrappers.Structure` or 3x3 matrix
         :returns:
            An boolean array with the same length as the numbers of row returned
            by :py:method:`transformations`.

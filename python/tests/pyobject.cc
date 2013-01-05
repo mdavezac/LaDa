@@ -1,4 +1,4 @@
-#include "LaDaConfig.h"
+#include "PyladaConfig.h"
 
 #include <Python.h>
 #include <numpy/arrayobject.h>
@@ -6,7 +6,7 @@
 #include "../python.h"
 
 
-using namespace LaDa::python;
+using namespace Pylada::python;
 PyObject* represent(PyObject *_module, PyObject *_in)
 { 
   Object o = Object::acquire(_in);
@@ -14,7 +14,7 @@ PyObject* represent(PyObject *_module, PyObject *_in)
   try { sstr << o; }
   catch(std::exception &_e)
   {
-    LADA_PYERROR(internal, "caught error");
+    PYLADA_PYERROR(internal, "caught error");
     return NULL;
   }
   return PyString_FromString(sstr.str().c_str());
@@ -43,24 +43,24 @@ PyObject* equality(PyObject* _module, PyObject* _args)
 # define PyMODINIT_FUNC void
 #endif
 
-#ifdef LADA_DECLARE
-#  error LADA_DECLARE already defined.
+#ifdef PYLADA_DECLARE
+#  error PYLADA_DECLARE already defined.
 #endif
-#define LADA_DECLARE(name, args) {#name, (PyCFunction)name, METH_ ## args, ""} 
+#define PYLADA_DECLARE(name, args) {#name, (PyCFunction)name, METH_ ## args, ""} 
 
 static PyMethodDef methods[] = { 
-  LADA_DECLARE(represent, O),
-  LADA_DECLARE(add_attribute, VARARGS),
-  LADA_DECLARE(callme, O),
-  LADA_DECLARE(equality, VARARGS),
+  PYLADA_DECLARE(represent, O),
+  PYLADA_DECLARE(add_attribute, VARARGS),
+  PYLADA_DECLARE(callme, O),
+  PYLADA_DECLARE(equality, VARARGS),
   {NULL},
 };
 
-#undef LADA_DECLARE
+#undef PYLADA_DECLARE
 
 PyMODINIT_FUNC init_pyobject(void) 
 {
   PyObject* module = Py_InitModule("_pyobject", methods);
   if(not module) return;
-  if(not LaDa::python::import()) return;
+  if(not Pylada::python::import()) return;
 }

@@ -11,9 +11,9 @@ def main():
   from os import getcwd, environ
   from os.path import abspath, join, relpath
   from optparse import OptionParser
-  from lada.mpi import world
-  from lada import jobs
-  from lada.opt.changedir import Changedir
+  from pylada.mpi import world
+  from pylada import jobs
+  from pylada.opt.changedir import Changedir
 
   # below would go additional imports.
 

@@ -41,7 +41,7 @@ def machine_dependent_call_modifier(formatter=None, comm=None, env=None):
       .. note:: 
       
          Also, the hostname were shortened to exclude cx1.hpc.imperial.ac.uk
-         domain name in :py:function:`~lada.modify_global_comm`. 
+         domain name in :py:function:`~pylada.modify_global_comm`. 
   """
   if len(getattr(comm, 'machines', [])) == 0: return ""
 

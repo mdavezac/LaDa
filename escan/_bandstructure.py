@@ -3,7 +3,7 @@ __docformat__  = 'restructuredtext en'
 __all__ = ['BPoints', 'ReducedBPoints', 'InnerBPoints', 'ReducedInnerBPoints', 'plot_bands', 'plot_alloybands']
 
 from .kpoints import KPoints, _reduced_grids_factory
-from lada import try_import_matplotlib
+from pylada import try_import_matplotlib
 
 class BPoints(KPoints):
   """ *Grid* of kpoints for bands-structure calculation. """

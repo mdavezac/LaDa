@@ -10,8 +10,8 @@ set_target_properties(pyewald PROPERTIES PREFIX "")
 target_link_libraries(pyewald ${Boost_MATH_C99_LIBRARY}
                               ${Boost_MATH_C99L_LIBRARYl}
                               ${BOOST_C99F_LIBRARY} )
-install(TARGETS pyewald DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/ewald)
-install(FILES ${PYEWALD_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/ewald)
+install(TARGETS pyewald DESTINATION ${CMAKE_PYINSTALL_PREFIX}/pylada/ewald)
+install(FILES ${PYEWALD_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/pylada/ewald)
 
 if(compile_tests OR compile_debug_tests)
   add_subdirectory(tests)

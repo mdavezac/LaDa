@@ -3,12 +3,12 @@
 def filters(self, cmdl):
   """ Provides a stack of filters through which to filter the database. """
   import argparse
-  import lada
+  import pylada
   from .massextract import MassExtract
 
-  if not hasattr(lada, "filters_stack"):
-    lada.filters_stack = [("True", MassExtract(namespace=ip.user_ns, mongofilter={'groundstates': {'$exists:1'}}))]
-  stack = lada.filters_stack
+  if not hasattr(pylada, "filters_stack"):
+    pylada.filters_stack = [("True", MassExtract(namespace=ip.user_ns, mongofilter={'groundstates': {'$exists:1'}}))]
+  stack = pylada.filters_stack
 
   # empty commandline. Print filters.
   if len(cmdl.rstrip()) == 0: cmdl = "--view"
@@ -70,18 +70,18 @@ including the \".\" (dot) and hit TAB.
       if i == 0: continue
       else: print "{0:>2}. {1}".format(i, filter)
   elif args.iterate: 
-    if not hasattr(lada, "iterstack"): lada.iterstack = 0
+    if not hasattr(pylada, "iterstack"): pylada.iterstack = 0
     else: stack.pop(-1)
     stopiter = True
     for i, key in enumerate(stack[-1][1]):
-      if i == lada.iterstack: stopiter = False; break
+      if i == pylada.iterstack: stopiter = False; break
     if stopiter == True:
       print "Reached last filtered element."
       key = stack[-1][1].keys()[-1]
-    else: lada.iterstack += 1
+    else: pylada.iterstack += 1
     stack.append(("id == {0}".format(repr(key)), stack[-1][1]["id == {0}".format(repr(key))]))
   elif args.pop and len(stack) > 1:
-    if hasattr(lada, "iterstack"): del lada.iterstack
+    if hasattr(pylada, "iterstack"): del pylada.iterstack
     stack.pop(-1)
   elif args.outcar:
     if len(stack[-1][1]) != 1:
@@ -108,7 +108,7 @@ including the \".\" (dot) and hit TAB.
     dictionary.pop("$all", None)
     stack = [["True", MassExtract(namespace=self.api.user_ns, mongofilter=mongofilter)]]
   else: 
-    if hasattr(lada, "iterstack"): del lada.iterstack
+    if hasattr(pylada, "iterstack"): del pylada.iterstack
     cmdl = " ".join(args.exprs)
     try:
       add = stack[-1][1][cmdl]
@@ -124,7 +124,7 @@ including the \".\" (dot) and hit TAB.
         print "This filter has not been added to the list."
       else: stack.append((cmdl, add))
 
-  lada.filters_stack = stack
+  pylada.filters_stack = stack
   self.api.user_ns["collect"] = stack[-1][1]
 
 def completer(self, event):
@@ -134,10 +134,10 @@ def completer(self, event):
 def init(ip):
   """ Initializes filters stuff. """
   from .massextract import MassExtract
-  import lada
+  import pylada
   ip.expose_magic("filters", filters)
   ip.set_hook('complete_command', completer, re_key = '\s*%?filter')
-  if not hasattr(lada, "filters_stack"):
-    lada.filters_stack = [("True", MassExtract(namespace=ip.user_ns, mongofilter={'groundstate': {'$exists': 1}}))]
-  ip.user_ns["collect"] = lada.filters_stack[-1][1]
+  if not hasattr(pylada, "filters_stack"):
+    pylada.filters_stack = [("True", MassExtract(namespace=ip.user_ns, mongofilter={'groundstate': {'$exists': 1}}))]
+  ip.user_ns["collect"] = pylada.filters_stack[-1][1]
 

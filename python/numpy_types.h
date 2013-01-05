@@ -1,4 +1,4 @@
-#if LADA_PYTHON_MODULE != 1
+#if PYLADA_PYTHON_MODULE != 1
   //! An mpl integer defining the type.
   template<class T> class type;
   
@@ -151,7 +151,7 @@
       case NPY_USHORT    : return sizeof(type<npy_ushort>::np_type) > sizeof(T);
       default: break;
     };
-    LADA_PYERROR(ValueError, "Unknown numpy array type.");
+    PYLADA_PYERROR(ValueError, "Unknown numpy array type.");
   }
 
   //! Casts data to requested type
@@ -174,7 +174,7 @@
       case NPY_USHORT    : return (T)*((type<npy_ushort>::np_type const * const)     _data);
       default: break;
     };
-    LADA_PYERROR(ValueError, "Unknown numpy array type.");
+    PYLADA_PYERROR(ValueError, "Unknown numpy array type.");
     return T(0);
   }
   
@@ -214,7 +214,7 @@
           return static_cast<T>(*((type<npy_ushort>::np_type*)     ptr_data));
         default: break;
       };
-      LADA_PYERROR(ValueError, "Unknown numpy type on input.");
+      PYLADA_PYERROR(ValueError, "Unknown numpy type on input.");
       return T(-1);
     }
 #endif

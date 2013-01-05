@@ -1,7 +1,7 @@
-#ifdef LADA_GET_TRANS
-#  error LADA_GET_TRANS already defined
+#ifdef PYLADA_GET_TRANS
+#  error PYLADA_GET_TRANS already defined
 #endif
-#define LADA_GET_TRANS(NEIGH) \
+#define PYLADA_GET_TRANS(NEIGH) \
     (math::rVector3d::Scalar*)PyArray_DATA(PyTuple_GET_ITEM((PyTupleObject*)NEIGH, 1))
 typedef Eigen::Map<math::rVector3d> t_NpMap;
 typedef python::RAList_iterator pylist_iter;
@@ -16,23 +16,23 @@ pylist_iter max_xelement( pylist_iter & _first,
   if (_first == _last) return _first;
   do
   {
-    t_NpMap const trans(LADA_GET_TRANS(*_first));
+    t_NpMap const trans(PYLADA_GET_TRANS(*_first));
     if(not (math::is_null((_x - trans).squaredNorm()) or 
             math::is_null(_x.cross(trans).squaredNorm()))) break;
   }
   while (++_first != _last);
   if(_first == _last) return _last;
   pylist_iter _result = _first;
-  t_NpMap resultpos(LADA_GET_TRANS(*_first));
+  t_NpMap resultpos(PYLADA_GET_TRANS(*_first));
   while (++_first != _last)
   {
-    t_NpMap const vec(LADA_GET_TRANS(*_first));
+    t_NpMap const vec(PYLADA_GET_TRANS(*_first));
     if(math::is_null( (_x - vec).squaredNorm())) continue;
     if(math::is_null(_x.cross(vec).squaredNorm())) continue;
     if(math::lt(resultpos.dot(_x), vec.dot(_x)))
     {
       _result = _first;
-      new(&resultpos) t_NpMap(LADA_GET_TRANS(*_first));
+      new(&resultpos) t_NpMap(PYLADA_GET_TRANS(*_first));
     }
   }
   return _result;
@@ -49,8 +49,8 @@ struct CmpFromCoord
   CmpFromCoord(CmpFromCoord const &_in) : x(_in.x), y(_in.y), z(_in.z) {}
   bool operator()(PyObject* const _a, PyObject* const _b) const
   {
-    t_NpMap const a(LADA_GET_TRANS(_a));
-    t_NpMap const b(LADA_GET_TRANS(_b));
+    t_NpMap const a(PYLADA_GET_TRANS(_a));
+    t_NpMap const b(PYLADA_GET_TRANS(_b));
     const types::t_real x1(a.dot(x)), x2(b.dot(x));
     if( math::neq(x1, x2) ) return math::gt(x1, x2);
     const types::t_real y1(a.dot(y)), y2(b.dot(y));
@@ -89,7 +89,7 @@ PyObject *convert_bitset( std::vector<PyObject*> const &_bitset,
   std::vector<PyObject*>::const_iterator i_end = _bitset.end();
   for(size_t i(0); i_first != i_end; ++i_first, ++i)
   {
-    t_NpMap const vec(LADA_GET_TRANS(*i_first));
+    t_NpMap const vec(PYLADA_GET_TRANS(*i_first));
     PyObject *item = create_tuple(*i_first, vec.dot(_x), vec.dot(_y), vec.dot(_z));
     if(not item) return NULL;
     PyTuple_SET_ITEM(result.borrowed(), i, item);
@@ -117,8 +117,8 @@ bool cmp_to_confs( PyObject *const _config,
   for(; i_b != i_end; ++i_b, ++i_a)
   {
     if(not cmp_atom_types(*i_a, *i_b)) return false; 
-    t_NpMap const vecA(LADA_GET_TRANS(*i_a));
-    t_NpMap const vecB(LADA_GET_TRANS(*i_b));
+    t_NpMap const vecA(PYLADA_GET_TRANS(*i_a));
+    t_NpMap const vecB(PYLADA_GET_TRANS(*i_b));
     if(math::neq(vecA(0), vecB(0), _tolerance)) return false;
     if(math::neq(vecA(1), vecB(1), _tolerance)) return false;
     if(math::neq(vecA(2), vecB(2), _tolerance)) return false;
@@ -172,7 +172,7 @@ bool splitconfigs( Structure const &_structure,
   for(size_t n(0); i_xpos != i_xpos_end; ++i_xpos, ++n)
   {
     math::rVector3d const
-      x(normalized(t_NpMap(LADA_GET_TRANS(*i_xpos))));
+      x(normalized(t_NpMap(PYLADA_GET_TRANS(*i_xpos))));
 
     // finds positions defining y.
     // Stores possible y positions.
@@ -190,16 +190,16 @@ bool splitconfigs( Structure const &_structure,
     }
     if(i_ypositions == pylist_iter(epositions.borrowed())) 
     {
-      LADA_PYERROR(ValueError, "Pathological molecules. Could not determine y coordinate.");
+      PYLADA_PYERROR(ValueError, "Pathological molecules. Could not determine y coordinate.");
       return false;
     }
     const types::t_real max_x_scalar_pos
-      (t_NpMap(LADA_GET_TRANS(*max_x_element)).dot(x));
+      (t_NpMap(PYLADA_GET_TRANS(*max_x_element)).dot(x));
     pylist_iter i_ypos = pylist_iter(*i_ypositions, 0);
     pylist_iter const i_ypos_end = pylist_iter(*i_ypositions);
     for(; i_ypos != i_ypos_end; ++i_ypos)
     {
-      t_NpMap const ypos(LADA_GET_TRANS(*i_ypos));
+      t_NpMap const ypos(PYLADA_GET_TRANS(*i_ypos));
       if( math::neq(ypos.dot(x), max_x_scalar_pos) ) continue;
       if( math::is_null( (ypos - x).squaredNorm() ) ) continue;
       ypossibles.push_back(*i_ypos);
@@ -215,7 +215,7 @@ bool splitconfigs( Structure const &_structure,
     for(; i_ypossible != i_ypossible_end; ++i_ypossible, ++n)
     {
       // at this point, we can define the complete coordinate system.
-      const math::rVector3d yvec(LADA_GET_TRANS(*i_ypossible) );
+      const math::rVector3d yvec(PYLADA_GET_TRANS(*i_ypossible) );
       const math::rVector3d y(normalized(yvec - yvec.dot(x)*x));
       const math::rVector3d z( x.cross(y) );
 
@@ -290,4 +290,4 @@ bool splitconfigs( Structure const &_structure,
   } // end of loop over equivalent  x coords.
   return true;
 }
-#undef LADA_GET_TRANS
+#undef PYLADA_GET_TRANS

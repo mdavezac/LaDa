@@ -1,14 +1,14 @@
-#ifndef _LADA_PYTHON_ESCAN_HPP_
-#define _LADA_PYTHON_ESCAN_HPP_
+#ifndef PYLADA_PYTHON_ESCAN_HPP
+#define PYLADA_PYTHON_ESCAN_HPP
 
-#include "LaDaConfig.h"
+#include "PyladaConfig.h"
 
 
-namespace LaDa
+namespace Pylada
 {
   namespace python
   {
     void expose_escan();
   }
-} // namespace LaDa
+} // namespace Pylada
 #endif

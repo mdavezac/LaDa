@@ -4,7 +4,7 @@ __all__ = ['bcc', 'fcc']
 
 def bcc():
   """ Creates a BCC lattice with a single site. """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( -0.5, 0.5, 0.5,\
                     0.5, -0.5, 0.5,\
                     0.5, 0.5, -0.5,\
@@ -13,7 +13,7 @@ def bcc():
 
 def fcc():
   """ Creates an FCC lattice with a single site. """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 0, 0.5, 0.5,\
                     0.5, 0, 0.5,\
                     0.5, 0.5, 0,\

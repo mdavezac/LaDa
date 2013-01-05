@@ -4,8 +4,8 @@ def test():
   from shutil import rmtree
   from os.path import exists
   from os import mkdir
-  from lada.dftcrystal import Crystal, relax, Shell, DisplaceAtoms
-  from lada import default_comm
+  from pylada.dftcrystal import Crystal, relax, Shell, DisplaceAtoms
+  from pylada import default_comm
 
   functional = relax.Relax()
   functional.basis['Si'] = [

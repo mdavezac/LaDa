@@ -1,7 +1,7 @@
-""" Checks crystal method `lada.crystal.equivalent`. """
+""" Checks crystal method `pylada.crystal.equivalent`. """
 def scale(A, B):
   """ Check changes to scale. """
-  from lada.crystal.cppwrappers import equivalent
+  from pylada.crystal.cppwrappers import equivalent
   B = B.copy()
   A.name = "A"
   B.name = "B"
@@ -19,7 +19,7 @@ def scale(A, B):
 def motif(A, B):
   """ Check changes in motif. """
   from numpy import dot
-  from lada.crystal.cppwrappers import cell_invariants
+  from pylada.crystal.cppwrappers import cell_invariants
   for op in cell_invariants(A)[1:]:
     print "op: ", op
     C = B.copy()
@@ -30,8 +30,8 @@ def motif(A, B):
 def basis(A, B):
   """ Adds rotation and translation of cartesian basis. """
   from numpy import dot, pi
-  from lada.crystal.cppwrappers import cell_invariants, transform
-  from lada.math import Translation, Rotation
+  from pylada.crystal.cppwrappers import cell_invariants, transform
+  from pylada.math import Translation, Rotation
   from random import random
   motif(A, B)
 # motif(A, transform(B, Rotation(0.5 * pi, [1,0,0])))
@@ -44,8 +44,8 @@ def decoration(A, B, lattice):
   """ Adds changes to the motif. """
   from numpy import dot
   from numpy.linalg import inv
-  from lada.crystal.cppwrappers import SmithTransform
-  from lada.math import is_integer
+  from pylada.crystal.cppwrappers import SmithTransform
+  from pylada.math import is_integer
   basis(A, B)
   return
 
@@ -69,7 +69,7 @@ def decoration(A, B, lattice):
     basis(A, B)
 
 def test0():
-  from lada.crystal.cppwrappers import Structure
+  from pylada.crystal.cppwrappers import Structure
 
   zb = Structure( 0,0.5,0.5,
                   0.5,0,0.5,
@@ -79,7 +79,7 @@ def test0():
   basis(zb, zb)
 
 def test1():
-  from lada.crystal.cppwrappers import Structure, supercell
+  from pylada.crystal.cppwrappers import Structure, supercell
 
   zb = Structure( 0,0.5,0.5,
                   0.5,0,0.5,
@@ -94,7 +94,7 @@ def test1():
 
 def test2():
   from random import random
-  from lada.crystal.cppwrappers import Structure, supercell
+  from pylada.crystal.cppwrappers import Structure, supercell
 
   zb = Structure( 0,0.5,0.5,
                   0.5,0,0.5,

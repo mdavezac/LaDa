@@ -1,6 +1,6 @@
 Vasp class
 **********
-.. automodule:: lada.vasp.functional
+.. automodule:: pylada.vasp.functional
 .. autoclass:: Vasp
    :show-inheritance:
    :exclude-members: iter, Extract, add_specie, bringup, bringdown,

@@ -1,31 +1,31 @@
 PyObject* pyis_integer(PyObject *_module, PyObject* _in)
 {
-  using namespace LaDa;
+  using namespace Pylada;
   if(not PyArray_Check(_in))
   {
-    LADA_PYERROR(TypeError, "Argument should be a numpy array.");
+    PYLADA_PYERROR(TypeError, "Argument should be a numpy array.");
     return NULL;
   }
   int const type = PyArray_TYPE(_in);
-# ifdef  LADA_NPYITER
-#   error LADA_NPYITER already defined
+# ifdef  PYLADA_NPYITER
+#   error PYLADA_NPYITER already defined
 # endif
-# define LADA_NPYITER(TYPE, NUM_TYPE)                                     \
+# define PYLADA_NPYITER(TYPE, NUM_TYPE)                                     \
     if(type == NUM_TYPE)                                                  \
     {                                                                     \
       python::Object iterator = PyArray_IterNew(_in);                     \
       while(PyArray_ITER_NOTDONE(iterator.borrowed()))                    \
       {                                                                   \
         TYPE const x = *((TYPE*)PyArray_ITER_DATA(iterator.borrowed()));  \
-        if(not LaDa::math::eq(x, TYPE(std::floor(x+0.1))) )               \
+        if(not Pylada::math::eq(x, TYPE(std::floor(x+0.1))) )               \
           { Py_RETURN_FALSE; }                                            \
         PyArray_ITER_NEXT(iterator.borrowed());                           \
       }                                                                   \
       Py_RETURN_TRUE;                                                     \
     }
-  LADA_NPYITER( npy_float,      NPY_FLOAT)      
-  else LADA_NPYITER( npy_double,     NPY_DOUBLE     )
-  else LADA_NPYITER( npy_longdouble, NPY_LONGDOUBLE )
+  PYLADA_NPYITER( npy_float,      NPY_FLOAT)      
+  else PYLADA_NPYITER( npy_double,     NPY_DOUBLE     )
+  else PYLADA_NPYITER( npy_longdouble, NPY_LONGDOUBLE )
   else if(    type == NPY_INT
            or type == NPY_UINT        
            or type == NPY_LONG        
@@ -36,18 +36,18 @@ PyObject* pyis_integer(PyObject *_module, PyObject* _in)
            or type == NPY_USHORT     ) Py_RETURN_TRUE;
   else
   {
-    LADA_PYERROR(TypeError, "Unknown numpy array type.");
+    PYLADA_PYERROR(TypeError, "Unknown numpy array type.");
     return NULL;
   }
-# undef LADA_NPYITER
+# undef PYLADA_NPYITER
 }
 
 PyObject* pyfloor_int(PyObject *_module, PyObject* _in)
 {
-  using namespace LaDa;
+  using namespace Pylada;
   if(not PyArray_Check(_in))
   {
-    LADA_PYERROR(TypeError, "Argument should be a numpy array.");
+    PYLADA_PYERROR(TypeError, "Argument should be a numpy array.");
     return NULL;
   }
   python::Object result = PyArray_SimpleNew( PyArray_NDIM(_in),
@@ -62,10 +62,10 @@ PyObject* pyfloor_int(PyObject *_module, PyObject* _in)
   PyObject* py_iterout = iter_out.borrowed();
 
   int const type = PyArray_TYPE(_in);
-# ifdef  LADA_NPYITER
-#   error LADA_NPYITER already defined
+# ifdef  PYLADA_NPYITER
+#   error PYLADA_NPYITER already defined
 # endif
-# define LADA_NPYITER(TYPE, NUM_TYPE)                                       \
+# define PYLADA_NPYITER(TYPE, NUM_TYPE)                                       \
     if(type == NUM_TYPE)                                                    \
     {                                                                       \
       while(PyArray_ITER_NOTDONE(py_iterin))                                \
@@ -76,9 +76,9 @@ PyObject* pyfloor_int(PyObject *_module, PyObject* _in)
         PyArray_ITER_NEXT(py_iterout);                                      \
       }                                                                     \
     }
-  LADA_NPYITER( npy_float,      NPY_FLOAT)      
-  else LADA_NPYITER( npy_double,     NPY_DOUBLE     )
-  else LADA_NPYITER( npy_longdouble, NPY_LONGDOUBLE )
+  PYLADA_NPYITER( npy_float,      NPY_FLOAT)      
+  else PYLADA_NPYITER( npy_double,     NPY_DOUBLE     )
+  else PYLADA_NPYITER( npy_longdouble, NPY_LONGDOUBLE )
   else if(    type == NPY_INT
            or type == NPY_UINT        
            or type == NPY_LONG        
@@ -89,10 +89,10 @@ PyObject* pyfloor_int(PyObject *_module, PyObject* _in)
            or type == NPY_USHORT     ) Py_RETURN_TRUE;
   else
   {
-    LADA_PYERROR(TypeError, "Unknown numpy array type.");
+    PYLADA_PYERROR(TypeError, "Unknown numpy array type.");
     return NULL;
   }
-# undef LADA_NPYITER
+# undef PYLADA_NPYITER
   return result.release();
 }
 
@@ -110,7 +110,7 @@ PyObject* Rotation1( PyObject *_module,
   rVector3d vector;
   if(not python::numpy::convert_to_vector(_vector, vector)) return NULL;
   
-# ifndef LADA_WITH_EIGEN3 
+# ifndef PYLADA_WITH_EIGEN3 
     // \typedef type of the affine transformations.
     typedef Eigen::Transform<types::t_real, 3> Affine;
 # else
@@ -135,7 +135,7 @@ PyObject* Rotation1( PyObject *_module,
 }
 PyObject *translation(PyObject *_module, PyObject *_args)
 {
-# ifndef LADA_WITH_EIGEN3 
+# ifndef PYLADA_WITH_EIGEN3 
     // \typedef type of the affine transformations.
     typedef Eigen::Transform<types::t_real, 3> Affine;
 # else
@@ -179,17 +179,17 @@ PyObject* pygruber(PyObject* _module, PyObject* _args, PyObject *_kwargs)
   }
   catch(error::singular_matrix& _e)
   {
-    LADA_PYERROR(input, "Singular matrix in gruber.");
+    PYLADA_PYERROR(input, "Singular matrix in gruber.");
     return NULL;
   }
   catch(error::infinite_loop& _e)
   {
-    LADA_PYERROR(internal, "Maximum number of iterations reached in gruber.");
+    PYLADA_PYERROR(internal, "Maximum number of iterations reached in gruber.");
     return NULL;
   }
   catch(...)
   {
-    LADA_PYERROR(internal, "Error encoutered in smith normal form.");
+    PYLADA_PYERROR(internal, "Error encoutered in smith normal form.");
     return NULL;
   }
 }
@@ -203,12 +203,12 @@ PyObject* pysmith(PyObject* _module, PyObject* _matrix)
   try { smith_normal_form(S, L, matrix, R); }
   catch(error::singular_matrix& _e)
   {
-    LADA_PYERROR(input, "Cannot compute smith normal form of singular matrix.");
+    PYLADA_PYERROR(input, "Cannot compute smith normal form of singular matrix.");
     return NULL;
   }
   catch(...)
   {
-    LADA_PYERROR(internal, "Error encoutered in smith normal form.");
+    PYLADA_PYERROR(internal, "Error encoutered in smith normal form.");
     return NULL;
   }
   PyObject *result = PyTuple_New(3);
@@ -252,10 +252,10 @@ static PyMethodDef methods_table[] = {
      ":type cell:  numpy 3x3 array\n"
      ":param int itermax:\n  Maximum number of iterations. Defaults to 0, ie infinite.\n"
      ":param float tolerance:\n  Tolerance parameter when comparing real numbers. "
-        "Defaults to LaDa internals.\n"
+        "Defaults to Pylada internals.\n"
      ":returns: An equivalent standardized cell.\n"
-     ":raises lada.error.input: If the input matrix is singular.\n"
-     ":raises lada.error.internal: If the maximum number of iterations is reached.\n"},
+     ":raises pylada.error.input: If the input matrix is singular.\n"
+     ":raises pylada.error.internal: If the maximum number of iterations is reached.\n"},
      {"smith_normal_form", (PyCFunction)pysmith, METH_O,
       "Computes smith normal form of a matrix.\n\n"
       "If ``M`` is the input matrix, then the smith normal form is\n"

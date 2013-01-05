@@ -3,7 +3,7 @@ def Extract(outdir=None):
   from os import getcwd
   from collections import namedtuple
   from pickle import load
-  from lada.misc import Changedir
+  from pylada.misc import Changedir
 
   if outdir == None: outdir = getcwd()
   Extract = namedtuple('Extract', ['success', 'directory', 'indiv', 'functional'])
@@ -15,7 +15,7 @@ def Extract(outdir=None):
   
 
 def functional(indiv, outdir=None, value=False, **kwargs):
-  from lada.misc import Changedir
+  from pylada.misc import Changedir
   from pickle import dump
 
   with Changedir(outdir) as pwd:

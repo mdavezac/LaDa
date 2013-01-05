@@ -1,4 +1,4 @@
-#if LADA_MATH_MODULE != 1
+#if PYLADA_MATH_MODULE != 1
 
   //! Exponentiation for integer powers.
   template<class T>
@@ -9,10 +9,10 @@
       return result;
     }
 
-# ifdef LADA_MACRO
-#   error LADA_MACRO already defined.
+# ifdef PYLADA_MACRO
+#   error PYLADA_MACRO already defined.
 # endif
-# define LADA_MACRO(name, default_) \
+# define PYLADA_MACRO(name, default_) \
     template<class T_DERIVED>                                                   \
       inline bool name( Eigen::DenseBase<T_DERIVED> const & _in,                \
                         typename Eigen::DenseBase<T_DERIVED>::RealScalar const &_tol ) \
@@ -30,9 +30,9 @@
             if(not name(_in.coeff(i,j))) return false;                          \
         return true;                                                            \
       }
-  LADA_MACRO(is_integer, types::t_real _tol = types::tolerance)
-  LADA_MACRO(is_null,    types::t_real _tol = types::tolerance)
-# undef LADA_MACRO
+  PYLADA_MACRO(is_integer, types::t_real _tol = types::tolerance)
+  PYLADA_MACRO(is_null,    types::t_real _tol = types::tolerance)
+# undef PYLADA_MACRO
   //! True if an eigen array or matrix is the identity.
   template<class T_DERIVED>
     inline bool is_identity( Eigen::DenseBase<T_DERIVED> const & _in,
@@ -79,7 +79,7 @@
       typedef typename Eigen::DenseBase<T_DERIVED0>::RealScalar t_real0;
       typedef typename Eigen::DenseBase<T_DERIVED1>::RealScalar t_real1;
       BOOST_STATIC_ASSERT((boost::is_same<t_real0, t_real1>::value));
-#     ifdef LADA_DEBUG
+#     ifdef PYLADA_DEBUG
         if(_a.rows() != _b.rows() or _a.cols() != _b.cols())
           BOOST_THROW_EXCEPTION(error::array_of_different_sizes());
 #     endif
@@ -96,7 +96,7 @@
       typedef typename Eigen::DenseBase<T_DERIVED0>::RealScalar t_real0;
       typedef typename Eigen::DenseBase<T_DERIVED1>::RealScalar t_real1;
       BOOST_STATIC_ASSERT((boost::is_same<t_real0, t_real1>::value));
-#     ifdef LADA_DEBUG
+#     ifdef PYLADA_DEBUG
         if(_a.rows() != _b.rows() or _a.cols() != _b.cols())
           BOOST_THROW_EXCEPTION(error::array_of_different_sizes());
 #     endif

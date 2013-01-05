@@ -64,11 +64,11 @@ END
 #################### END INPUT FILE ####################
 
 #################### FUNCTIONAL ####################
-from lada.dftcrystal.basis import Ghosts, Shell, Chemod
-from lada.dftcrystal.electronic import BetaLock, AtomSpin, Broyden, SpinLock, Shrink, LevShift
-from lada.dftcrystal.hamiltonian import Dft, Angular, Radial
-from lada.dftcrystal.input import SetPrint
-from lada.dftcrystal.relax import Relax
+from pylada.dftcrystal.basis import Ghosts, Shell, Chemod
+from pylada.dftcrystal.electronic import BetaLock, AtomSpin, Broyden, SpinLock, Shrink, LevShift
+from pylada.dftcrystal.hamiltonian import Dft, Angular, Radial
+from pylada.dftcrystal.input import SetPrint
+from pylada.dftcrystal.relax import Relax
 
 functional = Relax()
 functional.anderson              = None

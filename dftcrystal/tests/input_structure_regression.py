@@ -1320,7 +1320,7 @@ def test():
   from tempfile import mkdtemp
   from shutil import rmtree
   from os.path import join
-  from lada.dftcrystal import Extract
+  from pylada.dftcrystal import Extract
 
   directory = mkdtemp()
   try:

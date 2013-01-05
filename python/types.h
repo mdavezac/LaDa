@@ -1,12 +1,12 @@
 #ifndef _MY_TYPES_H_
 #define _MY_TYPES_H_
 
-#include "LaDaConfig.h"
+#include "PyladaConfig.h"
 
 #include <complex>
 #include <limits>
 
-namespace LaDa
+namespace Pylada
 {
   //! Names a few simple variable types and globals for portability purposes
   namespace types 
@@ -24,5 +24,5 @@ namespace LaDa
     //! roundoff term for numerical noise crap.
     types::t_real const roundoff(5e3 * std::numeric_limits<types::t_real>::epsilon());
   }
-} // namespace LaDa
+} // namespace Pylada
 #endif

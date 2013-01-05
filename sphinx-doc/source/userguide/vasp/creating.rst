@@ -10,7 +10,7 @@ As shown in the quick primer above, it is relatively easy to setup a new
 :py:class:`~functional.Vasp`. The parameters to the calculation are generally
 the VASP_ defaults. They can be changed directly in the constructor:
 
->>> from lada.vasp import Vasp
+>>> from pylada.vasp import Vasp
 >>> vasp = Vasp(ispin=2)
 >>> print vasp.ispin
 2
@@ -44,19 +44,19 @@ one of those. It can be specified:
   - as floating point larger than 3, in which case it will printed as is in the INCAR.
   - as floating point signed by a quantity:
 
-    >>> from lada.physics import Ry
+    >>> from pylada.physics import Ry
     >>> vasp.encut = 10*Ry
 
     In that case, the result will be converted to electron-Volts in the INCAR.
 
-To see the full list of parameters  defined by LaDa, do ``vasp.[TAB]`` on the
-ipython_ command line, or go :py:class:`~lada.vasp.functional.Vasp`.
+To see the full list of parameters  defined by Pylada, do ``vasp.[TAB]`` on the
+ipython_ command line, or go :py:class:`~pylada.vasp.functional.Vasp`.
 
 
-Adding parameters LaDa does not know about
+Adding parameters Pylada does not know about
 ------------------------------------------
 
-A large number of parameters control VASP_. LaDa only knows about the most
+A large number of parameters control VASP_. Pylada only knows about the most
 common. However, it is fairly easy to add parameters which are not there yet.
 
 >>> vasp.add_keyword('encut', 300)
@@ -82,7 +82,7 @@ VASP_ default for that parameter, then simply set that parameter to ``None``:
 
    The examples above specifies a parameter which already exists,
    :py:attr:`~functional.Vasp.encut`.  In this case, when calling
-   :py:meth:`~lada.functional.Vasp.add_keyword`,  the parameter is replaced
+   :py:meth:`~pylada.functional.Vasp.add_keyword`,  the parameter is replaced
    with a simple integer (or float, or whatnot).  Its special behavior
    described above is simply gone.  If you do not like a special behavior, you
    can always do away with it.
@@ -137,7 +137,7 @@ a shell environment variable.
 
 To specify a Hubbard U parameter, do:
 
->>> from lada.vasp.specie import U
+>>> from pylada.vasp.specie import U
 >>> vasp.add_specie = 'Tc', '~/pseudos/$PAW/Tc', U('dudarev', l=2, U=1.5)
 
 The species can be latter accessed through a dictionary in the vasp object:
@@ -153,4 +153,4 @@ script.
 .. note::
  
    It is possible to specify more species than exists in a given structure.
-   LaDa will figure out at runtime.
+   Pylada will figure out at runtime.

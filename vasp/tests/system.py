@@ -1,6 +1,6 @@
 def test_system():
-  from lada.crystal.cppwrappers import Structure
-  from lada.vasp import Vasp
+  from pylada.crystal.cppwrappers import Structure
+  from pylada.vasp import Vasp
   a = Vasp()
   b = Structure()
 

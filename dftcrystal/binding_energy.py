@@ -6,10 +6,10 @@ def binding_energy(crystal, structure):
       :param crystal:
         Functional with which to minimize the structure. 
   """
-  from lada.jobfolder import JobFolder
-  from lada.dftcrystal import Molecule, RemoveAtoms
-  from lada.error import ValueError
-  from lada.crystal import neighbors
+  from pylada.jobfolder import JobFolder
+  from pylada.dftcrystal import Molecule, RemoveAtoms
+  from pylada.error import ValueError
+  from pylada.crystal import neighbors
   system = structure.copy()
   # look for index op where molecule is added.
   for addmol, value in enumerate(system): 
@@ -1052,6 +1052,6 @@ if __name__ == '__main__':
      """cx1-8-2-9\n"""\
      """cx1-8-2-9\n""" 
 
-  from lada.dftcrystal import read
+  from pylada.dftcrystal import read
   crys, func = read(string)
   print binding_energy(func, crys)

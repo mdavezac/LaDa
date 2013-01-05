@@ -1,6 +1,6 @@
 from numpy import array
-from lada.escan import read_input, exec_input, ReducedBPoints
-from lada.crystal.binary import zinc_blende
+from pylada.escan import read_input, exec_input, ReducedBPoints
+from pylada.crystal.binary import zinc_blende
 
 X = array( [1,0,0], dtype="float64" )
 G = array( [0,0,0], dtype="float64" )

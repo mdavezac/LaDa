@@ -24,7 +24,7 @@ def linear_profile(extract, direction=(0,0,1), nbpoints=20, sigma=None, indices=
   from numpy import dot, max, arange, array, tensordot, exp, multiply, sum
   from numpy.linalg import inv, norm
   from quantities import angstrom
-  from lada.physics import a0
+  from pylada.physics import a0
 
   direction = array(direction, dtype="float64")
   assert norm(direction) > 1e-12, ValueError("Direction cannot be null.")
@@ -99,7 +99,7 @@ def linear_rprofile(extract, direction=(0,0,1), nbpoints=20, sigma=0.2, indices=
   from numpy import dot, max, arange, array, exp, multiply, sum
   from numpy.linalg import inv, norm
   from quantities import angstrom
-  from lada.physics import a0
+  from pylada.physics import a0
 
   direction = array(direction, dtype="float64")
   assert norm(direction) > 1e-12, ValueError("Direction cannot be null.")

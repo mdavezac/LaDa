@@ -2,7 +2,7 @@
 __docformat__ = "restructuredtext en"
 __all__ = ['KEscan', 'Extract']
 from .functional import Escan
-from .. import __all__ as all_lada_packages
+from .. import __all__ as all_pylada_packages
 from ..opt import AbstractExtractBase
 from ..opt.decorators import make_cached
 from ._extract import Extract as EscanExtract
@@ -18,7 +18,7 @@ class Extract(AbstractExtractBase):
         :Parameters:
           directory : str
             Directory where calculations are saved.
-          comm : None or `lada.mpi.Communicator`
+          comm : None or `pylada.mpi.Communicator`
             MPI Communicator grouping processes participating in the calculation.
           unreduce : bool
             Whether to iterate over all k-points, or only over k-points in the
@@ -338,7 +338,7 @@ class KEscan(Escan):
 
 
   # need jobs package to run this code.
-  if 'jobs' in all_lada_packages: 
+  if 'jobs' in all_pylada_packages: 
     def __call__(self, structure, outdir=None, comm=None, **kwargs):
       """ Performs calculcations. """
       from inspect import getargspec

@@ -19,7 +19,7 @@ class Vasp(AttrBlock):
 
       First, one creates the actual functional:
 
-      >>> from lada.vasp import Vasp
+      >>> from pylada.vasp import Vasp
       >>> functional = Vasp()
 
       The one sets it up, taking care that all the required pseudo-potentials
@@ -61,7 +61,7 @@ class Vasp(AttrBlock):
 
       >>> result = vasp(structure, 'this/directory', sigma=-1)
 
-      The first argument is a :py:class:`lada.crystal.Structure` instance on
+      The first argument is a :py:class:`pylada.crystal.Structure` instance on
       which to perform the calculation. The species in the structure should all
       have a pseudo-potential declared vias :py:attr:`add_specie`. The second
       argument is the directory where the calculations should take place. Other
@@ -70,18 +70,18 @@ class Vasp(AttrBlock):
 
       The result is an extraction object capable of grepping different
       properties from the OUTCAR. The major property is
-      :py:attr:`~lada.vasp.extract.Extract.success`. For more, please see
-      :py:class:`~lada.vasp.extract.Extract`.
+      :py:attr:`~pylada.vasp.extract.Extract.success`. For more, please see
+      :py:class:`~pylada.vasp.extract.Extract`.
 
       The best way to use this functional is in conjunction with the
-      high-throughput interface :py:mod:`lada.jobfolder`.
+      high-throughput interface :py:mod:`pylada.jobfolder`.
   """
   Extract = staticmethod(ExtractVasp)
   """ Extraction class.
   
       This extraction class is used to grep output from an OUTCAR file.
       This attribute merely describes the type of the extraction object as
-      :py:class:`~lada.vasp.extract.Extract`.
+      :py:class:`~pylada.vasp.extract.Extract`.
   """
 
   def __init__(self, copy=None, species=None, kpoints=None, **kwargs):
@@ -112,7 +112,7 @@ class Vasp(AttrBlock):
         :py:attr:`istruc`, this calculation will copy the charge density,
         wavefunctions, and structure from this object. It should be either
         None, or an extraction object returned by a previous calculation (e.g.
-        :py:class:`~lada.vasp.extract.Extract`):
+        :py:class:`~pylada.vasp.extract.Extract`):
 
         .. code-block:: python
 
@@ -122,7 +122,7 @@ class Vasp(AttrBlock):
         The snippet above performs a non-self-consistent calculation using the
         first calculation. In this example, it is expected that
         :py:attr:`istart`, :py:attr:`icharg`, and :py:attr:`istruc` are all set
-        to 'auto', in which case LaDa knows to do the right thing, e.g. copy
+        to 'auto', in which case Pylada knows to do the right thing, e.g. copy
         whatever is available, and nothing is ``vasp.restart is None``.
 
         .. note:: 
@@ -138,8 +138,8 @@ class Vasp(AttrBlock):
     
         Can be one of the following:
 
-          - None: defaults to :py:attr:`~lada.vasp_program`.
-            :py:attr:`~lada.vasp_program` can take the same values as described
+          - None: defaults to :py:attr:`~pylada.vasp_program`.
+            :py:attr:`~pylada.vasp_program` can take the same values as described
             here, except for None.
           - string: Should be the path to the vasp executable. It can be either
             a full path, or an executable within the environment's $PATH
@@ -169,10 +169,10 @@ class Vasp(AttrBlock):
     """ Starting wavefunctions.
     
         This tag is about which wavefunction (WAVECAR_) file to read from, if
-        any.  It is best to keep this attribute set to -1, in which case, LaDa
+        any.  It is best to keep this attribute set to -1, in which case, Pylada
         takes care of copying the relevant files.
     
-          - -1, 'auto': (Default) Automatically determined by LaDA. Depends on
+          - -1, 'auto': (Default) Automatically determined by Pylada. Depends on
             the value of :py:attr:`restart` and the existence of the relevant
             files. If a WAVECAR_ file exists, then ISTART_ will be set to 1
             (constant cutoff).
@@ -209,9 +209,9 @@ class Vasp(AttrBlock):
     
         This tag decides whether to restart from a previously calculated charge
         density, or not. It is best to keep this attribute set to -1, in which
-        case, LaDa takes care of copying the relevant files.
+        case, Pylada takes care of copying the relevant files.
     
-          - -1: (Default) Automatically determined by LaDA. Depends on the
+          - -1: (Default) Automatically determined by Pylada. Depends on the
                 value of :py:attr:`restart` and the existence of the relevant
                 files. Also takes care of non-scf bit.
     
@@ -261,7 +261,7 @@ class Vasp(AttrBlock):
         makes it possible to restart a crashed job from the latest contcar.
         There are two possible options:
     
-          - auto: LaDa determines automatically what to use. If a CONTCAR
+          - auto: Pylada determines automatically what to use. If a CONTCAR
                   exists in either the current directory or in the restart
                   directory (if any), then uses the latest. Otherwise, uses
                   input structure.
@@ -527,8 +527,8 @@ class Vasp(AttrBlock):
           - scgw
           - scgw0
     
-        If :py:data:`~lada.is_vasp_4` is an existing configuration variable of
-        :py:mod:`lada` the parameters marked as vasp 5 will fail.
+        If :py:data:`~pylada.is_vasp_4` is an existing configuration variable of
+        :py:mod:`pylada` the parameters marked as vasp 5 will fail.
     
         .. warning:: The string None is not  allowed, as it would lead to
            confusion with the python object None. Please use "Nothing" instead.
@@ -827,7 +827,7 @@ class Vasp(AttrBlock):
      
         This is a generator which yields two types of objects: 
 
-           - :py:class:`~lada.process.program.ProgramProcess`: once started,
+           - :py:class:`~pylada.process.program.ProgramProcess`: once started,
              this process will run an actual VASP_ calculation.
            - :py:attr:`Extract`: once the program has been runned, and
              extraction object is yielded, in order that the results of the run
@@ -839,23 +839,23 @@ class Vasp(AttrBlock):
         Thie generator function makes it possible to run different instances of
         VASP_ simultaneously. It also makes it possible to create more complex
         calculations which necessitate more than one actual call to VASP_ (see
-        :py:class:`~lada.vasp.relax.iter_relax`), while retaining the ability
+        :py:class:`~pylada.vasp.relax.iter_relax`), while retaining the ability
         to run multiple VASP_ programs simultaneously.
 
         If successful results (see :py:attr:`Extract.success`) already exist in
-        outdir, LaDa defaults to *not* repeating the calculations. In that
+        outdir, Pylada defaults to *not* repeating the calculations. In that
         case, the first object described above is *skipped* and only an
         extraction object is yielded.
 
         The :py:meth:`__call__` method loops over this generator and makes
         actual VASP_ calls. Looking at its code is a good place to start, if
         you want to understand this looping business. The benefit of this
-        approach can be seen in :py:class:`~lada.vasp.relax.iter_relax` (more
+        approach can be seen in :py:class:`~pylada.vasp.relax.iter_relax` (more
         complex calculations) and
-        :py:class:`lada.process.jobfolder.JobFolderProcess`. 
+        :py:class:`pylada.process.jobfolder.JobFolderProcess`. 
 
         :param structure:  
-            :py:class:`~lada.crystal.Structure` structure to compute.
+            :py:class:`~pylada.crystal.Structure` structure to compute.
         :param outdir:
             Output directory where the results should be stored.  This
             directory will be checked for restart status, eg whether
@@ -949,7 +949,7 @@ class Vasp(AttrBlock):
         for s in specieset(structure):
           potcar.writelines( self.species[s].read_potcar() )
       # Add is running file marker.
-      with open('.lada_is_running', 'w') as file: pass
+      with open('.pylada_is_running', 'w') as file: pass
     
   def bringdown(self, directory, structure):
      """ Copies contcar to outcar. """
@@ -977,7 +977,7 @@ class Vasp(AttrBlock):
          outcar.write('\n################ FUNCTIONAL ################\n')
          outcar.write(repr(self))
          outcar.write('\n################ END FUNCTIONAL ################\n')
-       if exists('.lada_is_running'): remove('.lada_is_running')
+       if exists('.pylada_is_running'): remove('.pylada_is_running')
 
   def write_incar(self, structure, path=None, **kwargs):
     """ Writes incar file. """

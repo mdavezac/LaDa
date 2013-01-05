@@ -1,6 +1,6 @@
 def test():
   from pickle import loads, dumps
-  from lada.tools.input import ListBlock, BaseKeyword
+  from pylada.tools.input import ListBlock, BaseKeyword
 
   a = ListBlock()
   d = {'ListBlock': a.__class__}

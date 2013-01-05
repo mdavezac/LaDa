@@ -1,8 +1,8 @@
 def test():
   from collections import namedtuple
   from pickle import loads, dumps
-  from lada.crystal.cppwrappers import Structure
-  from lada.vasp.incar._params import ExtraElectron
+  from pylada.crystal.cppwrappers import Structure
+  from pylada.vasp.incar._params import ExtraElectron
 
   u = 0.25
   x, y = u, 0.25-u

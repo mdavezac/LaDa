@@ -3,8 +3,8 @@
 #
 
 def  main():
-  from lada.ga import darwin as dd, bitstring, standard, ce
-  from lada import crystal
+  from pylada.ga import darwin as dd, bitstring, standard, ce
+  from pylada import crystal
   import boost.mpi
   import numpy
   import copy

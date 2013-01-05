@@ -6,7 +6,7 @@ class Process(object):
       This class defines the interface for processes. Derived classes should
       overload :py:meth:`start`, :py:meth:`poll`, and :py:meth:`wait`. The
       first is called to actually launch the sub-process (for instance, an
-      actual call to vasp in :py:class:`~lada.process.program.ProgramProcess`).
+      actual call to vasp in :py:class:`~pylada.process.program.ProgramProcess`).
       It receives a dictionary or :py:class:`Communicator` instance with a
       description of how the process should be launched, eg the number of
       processors, nodes, and so forth. At this point, an external child program
@@ -51,7 +51,7 @@ class Process(object):
         This is the sub-process handled by this instance. At the lowest
         level, it is likely an instance of `subprocess.Popen`__. It may,
         however, be a further abstraction, such as a
-        :py:class:`~lada.process.program.ProgramProcess` instance.
+        :py:class:`~pylada.process.program.ProgramProcess` instance.
 
         .. __ : http://docs.python.org/library/subprocess.html#subprocess.Popen
     """

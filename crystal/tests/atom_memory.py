@@ -52,7 +52,7 @@ def test(Class):
   assert len(gc.garbage) == 0
 
 if __name__ == "__main__": 
-  from lada.crystal.cppwrappers import Atom
+  from pylada.crystal.cppwrappers import Atom
   from sys import argv, path 
   if len(argv) > 0: path.extend(argv[1:])
   

@@ -51,11 +51,11 @@ def effective_mass_tensor(escan, structure, outdir=None, comm=None, attenuate=No
       :Parameters:
         escan : escan.Escan
           Straight off escan functional. Calculations must be full diagonalization.
-        structure : lada.crystal.Structure
+        structure : pylada.crystal.Structure
           Crystal structure for which to perform calculations.
         outdir : str or None
           Output directory. Defaults to current directory.
-        comm : lada.mpi.communicator.
+        comm : pylada.mpi.communicator.
           MPI communicator with which to perform calculation. 
 
       :return: a numpy array with units of an electronic mass, with the 

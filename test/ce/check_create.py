@@ -1,6 +1,6 @@
 def inequivalent_sites(lattice):
   """ Returns a list containing only one site index per inequivalent sub-lattice. """
-  from lada.crystal import which_site
+  from pylada.crystal import which_site
 
   result = set( i for i in range(len(lattice.sites)) ) 
   for i, site in enumerate(lattice.sites):
@@ -11,8 +11,8 @@ def inequivalent_sites(lattice):
   return result
 
 from numpy.linalg import norm
-from lada.crystal import A2BX4
-from lada.ce import create_clusters
+from pylada.crystal import A2BX4
+from pylada.ce import create_clusters
 from math import exp
 
 # input

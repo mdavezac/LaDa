@@ -1,21 +1,21 @@
-#ifndef LADA_PYTHON_PYTHON_H
-#define LADA_PYTHON_PYTHON_H
+#ifndef PYLADA_PYTHON_PYTHON_H
+#define PYLADA_PYTHON_PYTHON_H
 #ifndef __cplusplus
-# error LaDa requires a cpp compiler
+# error Pylada requires a cpp compiler
 #endif
 
-#ifndef LADA_PYTHON_MODULE
-#  define LADA_PYTHON_MODULE 100
+#ifndef PYLADA_PYTHON_MODULE
+#  define PYLADA_PYTHON_MODULE 100
 #endif
 
-#if LADA_PYTHON_MODULE != 1
+#if PYLADA_PYTHON_MODULE != 1
 
-# include "LaDaConfig.h"
+# include "PyladaConfig.h"
 # include <Python.h>
 # include <structmember.h>
-# ifndef LADA_PYTHONTWOSIX
+# ifndef PYLADA_PYTHONTWOSIX
 #   if PY_MAJOR_VERSION == 2 && PY_MINOR_VERSION < 7
-#     define LADA_PYTHONTWOSIX
+#     define PYLADA_PYTHONTWOSIX
 #   endif
 # endif
 
@@ -28,21 +28,21 @@
 # include <boost/preprocessor/arithmetic/inc.hpp>
 # include <python/ppslot.hpp>
 # define BOOST_PP_VALUE 0
-# include LADA_ASSIGN_SLOT(python)
+# include PYLADA_ASSIGN_SLOT(python)
 
 # include <Eigen/Core>
 
 # include <errors/exceptions.h>
 # include "types.h"
 
-  namespace LaDa
+  namespace Pylada
   {
     namespace python
     {
 
-#     if LADA_PYTHON_MODULE == 100
-        /* This section is used in modules that use lada.python's API */
-#       ifdef LADA_NO_IMPORT
+#     if PYLADA_PYTHON_MODULE == 100
+        /* This section is used in modules that use pylada.python's API */
+#       ifdef PYLADA_NO_IMPORT
           extern
 #       endif 
         void **api_capsule;
@@ -53,16 +53,16 @@
           // PyCapsule_Import will set an exception if there's an error.
           inline bool import(void)
           {
-            PyObject *module = PyImport_ImportModule("lada.cppwrappers");
+            PyObject *module = PyImport_ImportModule("pylada.cppwrappers");
             if(not module) return false;
-#           ifdef LADA_PYTHONTWOSIX
+#           ifdef PYLADA_PYTHONTWOSIX
               PyObject* c_api_object = PyObject_GetAttrString(module, "_C_API");
 	      if (c_api_object == NULL) { Py_DECREF(module); return false; }
               if (PyCObject_Check(c_api_object))
                 api_capsule = (void **)PyCObject_AsVoidPtr(c_api_object);
               Py_DECREF(c_api_object);
 #           else
-              api_capsule = (void **)PyCapsule_Import("lada.cppwrappers._C_API", 0);
+              api_capsule = (void **)PyCapsule_Import("pylada.cppwrappers._C_API", 0);
 #           endif
             Py_DECREF(module);
             return api_capsule != NULL;
@@ -71,73 +71,73 @@
 #     endif
 #else
 # define BOOST_PP_VALUE 0
-# include LADA_ASSIGN_SLOT(python)
+# include PYLADA_ASSIGN_SLOT(python)
 #endif
 
-#if LADA_PYTHON_MODULE != 1
-#  ifdef LADA_INLINE
-#    error LADA_INLINE already defined
+#if PYLADA_PYTHON_MODULE != 1
+#  ifdef PYLADA_INLINE
+#    error PYLADA_INLINE already defined
 #  endif
-#  if LADA_PYTHON_MODULE == 100
-#    define LADA_INLINE inline
-#  elif LADA_PYTHON_MODULE == 0
-#    define LADA_INLINE
+#  if PYLADA_PYTHON_MODULE == 100
+#    define PYLADA_INLINE inline
+#  elif PYLADA_PYTHON_MODULE == 0
+#    define PYLADA_INLINE
 #  endif
-#  ifdef LADA_END
-#    error LADA_END already defined
-#  elif LADA_PYTHON_MODULE == 0
-#    define LADA_END(X) ;
-#  elif LADA_PYTHON_MODULE == 100
-#    define LADA_END(X) { X }
+#  ifdef PYLADA_END
+#    error PYLADA_END already defined
+#  elif PYLADA_PYTHON_MODULE == 0
+#    define PYLADA_END(X) ;
+#  elif PYLADA_PYTHON_MODULE == 100
+#    define PYLADA_END(X) { X }
 #  endif
 #endif
 
-#if LADA_PYTHON_MODULE != 1
+#if PYLADA_PYTHON_MODULE != 1
   class Object;
   namespace
   {
 #endif
-#if LADA_PYTHON_MODULE != 1
+#if PYLADA_PYTHON_MODULE != 1
   //! Object reset function.
   //! Declared as friend to object so that it can be linked at runtime.
-  LADA_INLINE void object_reset(PyObject*& _object, PyObject *_in)
-    LADA_END( return ( *(void(*)(PyObject*&, PyObject*))
-                       api_capsule[LADA_SLOT(python)])(_object, _in); ) 
+  PYLADA_INLINE void object_reset(PyObject*& _object, PyObject *_in)
+    PYLADA_END( return ( *(void(*)(PyObject*&, PyObject*))
+                       api_capsule[PYLADA_SLOT(python)])(_object, _in); ) 
 #else
-  api_capsule[LADA_SLOT(python)] = (void *)((void(*)(PyObject*&, PyObject*)) object_reset);
+  api_capsule[PYLADA_SLOT(python)] = (void *)((void(*)(PyObject*&, PyObject*)) object_reset);
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(python))
-#include LADA_ASSIGN_SLOT(python)
+#define BOOST_PP_VALUE BOOST_PP_INC(PYLADA_SLOT(python))
+#include PYLADA_ASSIGN_SLOT(python)
   
-#if LADA_PYTHON_MODULE != 1
-  LADA_INLINE bool object_equality_op(Object const& _self, Object const &_b)
-    LADA_END( return ( *(bool(*)(Object const&, Object const&))
-                       api_capsule[LADA_SLOT(python)])(_self, _b); )
+#if PYLADA_PYTHON_MODULE != 1
+  PYLADA_INLINE bool object_equality_op(Object const& _self, Object const &_b)
+    PYLADA_END( return ( *(bool(*)(Object const&, Object const&))
+                       api_capsule[PYLADA_SLOT(python)])(_self, _b); )
 #else
-  api_capsule[LADA_SLOT(python)] = (void *)object_equality_op;
+  api_capsule[PYLADA_SLOT(python)] = (void *)object_equality_op;
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(python))
-#include LADA_ASSIGN_SLOT(python)
+#define BOOST_PP_VALUE BOOST_PP_INC(PYLADA_SLOT(python))
+#include PYLADA_ASSIGN_SLOT(python)
 
-#if LADA_PYTHON_MODULE != 1
-  LADA_INLINE std::ostream& operator<<(std::ostream &_stream, Object const &_ob)
-    LADA_END( return ( (std::ostream&(*)(std::ostream&, Object const&)) 
-                       api_capsule[LADA_SLOT(python)] )(_stream, _ob); )
+#if PYLADA_PYTHON_MODULE != 1
+  PYLADA_INLINE std::ostream& operator<<(std::ostream &_stream, Object const &_ob)
+    PYLADA_END( return ( (std::ostream&(*)(std::ostream&, Object const&)) 
+                       api_capsule[PYLADA_SLOT(python)] )(_stream, _ob); )
 #else
-  api_capsule[LADA_SLOT(python)] = (void*)
+  api_capsule[PYLADA_SLOT(python)] = (void*)
        ( (std::ostream&(*)(std::ostream&, Object const&)) operator<< );
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(python))
-#include LADA_ASSIGN_SLOT(python)
+#define BOOST_PP_VALUE BOOST_PP_INC(PYLADA_SLOT(python))
+#include PYLADA_ASSIGN_SLOT(python)
 
-#if LADA_PYTHON_MODULE != 1
+#if PYLADA_PYTHON_MODULE != 1
   }
 #endif
 
-// in namespace LaDa::python, but not anonymous.
+// in namespace Pylada::python, but not anonymous.
 # include "object.h"
 
-#if LADA_PYTHON_MODULE != 1
+#if PYLADA_PYTHON_MODULE != 1
   namespace
   {
     //! \brief Acquires a reference to an object.
@@ -155,11 +155,11 @@
   }
 #endif
 
-// in namespace LaDa::python, but not anonymous.
+// in namespace Pylada::python, but not anonymous.
 # include "random_access_list_iterator.h"
 # include "random_access_tuple_iterator.h"
 
-#if LADA_PYTHON_MODULE != 1
+#if PYLADA_PYTHON_MODULE != 1
   namespace numpy
   {
     namespace 
@@ -169,7 +169,7 @@
 #     include "numpy_types.h"
 #     include "wrap_numpy.h"
 
-#if LADA_PYTHON_MODULE != 1
+#if PYLADA_PYTHON_MODULE != 1
     }
   }
   namespace 
@@ -178,29 +178,29 @@
 
 # include "quantity.h"
 
-#if LADA_PYTHON_MODULE != 1
+#if PYLADA_PYTHON_MODULE != 1
       }
     } // python
-  } // LaDa
+  } // Pylada
 #endif
 
-#ifdef LADA_INLINE
-# undef LADA_INLINE
+#ifdef PYLADA_INLINE
+# undef PYLADA_INLINE
 #endif
-#ifdef LADA_END
-# undef LADA_END
+#ifdef PYLADA_END
+# undef PYLADA_END
 #endif
-#if LADA_PYTHON_MODULE == 100
-#  undef LADA_PYTHON_MODULE
+#if PYLADA_PYTHON_MODULE == 100
+#  undef PYLADA_PYTHON_MODULE
 #endif
 // get ready for second inclusion
-#ifdef LADA_PYTHON_MODULE 
-# if LADA_PYTHON_MODULE == 0
-#   undef LADA_PYTHON_MODULE 
-#   define LADA_PYTHON_MODULE 1
-# elif LADA_PYTHON_MODULE == 1
-#   undef LADA_PYTHON_MODULE 
-#   define LADA_PYTHON_MODULE 0
+#ifdef PYLADA_PYTHON_MODULE 
+# if PYLADA_PYTHON_MODULE == 0
+#   undef PYLADA_PYTHON_MODULE 
+#   define PYLADA_PYTHON_MODULE 1
+# elif PYLADA_PYTHON_MODULE == 1
+#   undef PYLADA_PYTHON_MODULE 
+#   define PYLADA_PYTHON_MODULE 0
 # endif
 #endif 
 

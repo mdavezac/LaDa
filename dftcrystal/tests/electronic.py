@@ -1,8 +1,8 @@
 def test_shrink():
   from pickle import loads, dumps
   from numpy import array, all
-  from lada.dftcrystal.electronic import Shrink
-  from lada.dftcrystal.molecule import Molecule
+  from pylada.dftcrystal.electronic import Shrink
+  from pylada.dftcrystal.molecule import Molecule
 
   a = Shrink()
   assert a.mp is None
@@ -88,8 +88,8 @@ def test_shrink():
 def test_levshift():
   from pickle import loads, dumps
   from quantities import hartree, UnitQuantity, eV, kbar
-  from lada.dftcrystal.electronic import LevShift, Electronic
-  from lada.error import ValueError
+  from pylada.dftcrystal.electronic import LevShift, Electronic
+  from pylada.error import ValueError
 
   a = LevShift()
   assert a.output_map() is None
@@ -149,7 +149,7 @@ def test_levshift():
 def test_spinlock():
   from collections import namedtuple
   from pickle import loads, dumps
-  from lada.dftcrystal.electronic import SpinLock, Electronic
+  from pylada.dftcrystal.electronic import SpinLock, Electronic
 
   Crystal = namedtuple('Crystal', ['dft'])
   Dft = namedtuple('Dft', ['spin'])
@@ -181,8 +181,8 @@ def test_spinlock():
 def test_atomspin():
   from pickle import loads, dumps
   from collections import namedtuple
-  from lada.dftcrystal.electronic import AtomSpin, Electronic
-  from lada.error import TypeError
+  from pylada.dftcrystal.electronic import AtomSpin, Electronic
+  from pylada.error import TypeError
 
   class GuessP:
     def __init__(self, yes=False):
@@ -303,9 +303,9 @@ def test_atomspin():
 
 def test_broyden():
   from pickles import loads, dumps
-  from lada.dftcrystal import Functional
-  from lada.dftcrystal.electronic import Broyden
-  from lada.error import ValueError, TypeError
+  from pylada.dftcrystal import Functional
+  from pylada.dftcrystal.electronic import Broyden
+  from pylada.error import ValueError, TypeError
 
   a = Functional()
   b = a.scf._input['broyden']

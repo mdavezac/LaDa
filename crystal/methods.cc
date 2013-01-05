@@ -1,14 +1,14 @@
-#ifdef LADA_MACRO 
-#  error LADA_MACRO ALREADY defined.
+#ifdef PYLADA_MACRO 
+#  error PYLADA_MACRO ALREADY defined.
 #endif
-#define LADA_MACRO(NAME)                                                             \
+#define PYLADA_MACRO(NAME)                                                             \
  /** Wrapper around NAME function */                                                 \
  PyObject* NAME ## _wrapper(PyObject *_module, PyObject *_args)                      \
  {                                                                                   \
    Py_ssize_t const N = PyTuple_Size(_args);                                         \
    if(N != 3 and N != 2)                                                             \
    {                                                                                 \
-     LADA_PYERROR(TypeError, #NAME " expects two vectors and a matrix as input.");   \
+     PYLADA_PYERROR(TypeError, #NAME " expects two vectors and a matrix as input.");   \
      return NULL;                                                                    \
    }                                                                                 \
    math::rMatrix3d cell, invcell;                                                    \
@@ -40,7 +40,7 @@
      {                                                                               \
        if(not PyErr_Occurred())                                                      \
        {                                                                             \
-         LADA_PYERROR(internal, ( std::string("Caught c++ exception: ")              \
+         PYLADA_PYERROR(internal, ( std::string("Caught c++ exception: ")              \
                                   + _e.what()).c_str());                             \
        }                                                                             \
        return NULL;                                                                  \
@@ -49,7 +49,7 @@
      {                                                                               \
        if(not PyErr_Occurred())                                                      \
        {                                                                             \
-         LADA_PYERROR(internal, "Caught c++ exception: ");                           \
+         PYLADA_PYERROR(internal, "Caught c++ exception: ");                           \
        }                                                                             \
        return NULL;                                                                  \
      }                                                                               \
@@ -60,7 +60,7 @@
      npy_intp *shape = PyArray_DIMS(positions);                                      \
      if(shape[ndim-1] != 3)                                                          \
      {                                                                               \
-       LADA_PYERROR( ValueError,                                                     \
+       PYLADA_PYERROR( ValueError,                                                     \
                      "Last dimension of input numpy array is not of length 3.");     \
        return NULL;                                                                  \
      }                                                                               \
@@ -97,19 +97,19 @@
    }                                                                                 \
    return NULL;                                                                      \
  }
- LADA_MACRO(into_cell)
- LADA_MACRO(into_voronoi)
- LADA_MACRO(zero_centered)
-#undef LADA_MACRO
-#ifdef LADA_CATCH
-#  error LADA_CATCH macro already defined
+ PYLADA_MACRO(into_cell)
+ PYLADA_MACRO(into_voronoi)
+ PYLADA_MACRO(zero_centered)
+#undef PYLADA_MACRO
+#ifdef PYLADA_CATCH
+#  error PYLADA_CATCH macro already defined
 #endif
-#define LADA_CATCH                                                              \
+#define PYLADA_CATCH                                                              \
  catch(std::exception &_e)                                                      \
  {                                                                              \
    if(not PyErr_Occurred())                                                     \
    {                                                                            \
-     LADA_PYERROR(internal, ( std::string("Caught c++ exception: ")             \
+     PYLADA_PYERROR(internal, ( std::string("Caught c++ exception: ")             \
                               + _e.what()).c_str());                            \
    }                                                                            \
    return NULL;                                                                 \
@@ -118,7 +118,7 @@
  {                                                                              \
    if(not PyErr_Occurred())                                                     \
    {                                                                            \
-     LADA_PYERROR(internal, "Caught c++ exception: ");                          \
+     PYLADA_PYERROR(internal, "Caught c++ exception: ");                          \
    }                                                                            \
    return NULL;                                                                 \
  }
@@ -129,7 +129,7 @@ PyObject* are_periodic_images_wrapper(PyObject *_module, PyObject *_args)
   Py_ssize_t const N = PyTuple_Size(_args);
   if(N != 3 and N != 4)
   {
-    LADA_PYERROR(TypeError, "are_periodic_images expects two vectors and a matrix as input.");
+    PYLADA_PYERROR(TypeError, "are_periodic_images expects two vectors and a matrix as input.");
     return NULL;
   }
   math::rMatrix3d invcell;
@@ -148,14 +148,14 @@ PyObject* are_periodic_images_wrapper(PyObject *_module, PyObject *_args)
       else if(PyInt_Check(o)) tolerance = PyInt_AS_LONG(o);
       else
       {
-        LADA_PYERROR(TypeError, "Tolerance should be a number.");
+        PYLADA_PYERROR(TypeError, "Tolerance should be a number.");
         return NULL;
       }
       if(math::are_periodic_images(a, b, invcell, tolerance)) Py_RETURN_TRUE;
     }
     Py_RETURN_FALSE;
   }
-  LADA_CATCH;
+  PYLADA_CATCH;
   return NULL;
 }
 //! Wrapper around the supercell method.
@@ -171,14 +171,14 @@ PyObject* supercell_wrapper(PyObject *_module, PyObject *_args, PyObject *_kwarg
     return NULL;
   if(not check_structure(lattice))
   {
-    LADA_PYERROR(TypeError, "Input is not a crystal.Structure object."); 
+    PYLADA_PYERROR(TypeError, "Input is not a crystal.Structure object."); 
     return NULL;
   }
   math::rMatrix3d cell;
   if(not python::numpy::convert_to_matrix(cellin, cell)) return NULL;
   // create supercell.
   try { return supercell(Structure::acquire(lattice), cell).release(); } 
-  LADA_CATCH;
+  PYLADA_CATCH;
   return NULL;
 }
 
@@ -187,25 +187,25 @@ PyObject* primitive_wrapper(PyObject* _module, PyObject *_args)
   Py_ssize_t const N(PyTuple_Size(_args));
   if(N != 1 and N != 2)
   {
-    LADA_PYERROR(TypeError, "primitive expects a structure as input, and optionally a tolerance.");
+    PYLADA_PYERROR(TypeError, "primitive expects a structure as input, and optionally a tolerance.");
     return NULL;
   }
   if(not check_structure(PyTuple_GET_ITEM(_args, 0)))
   {
-    LADA_PYERROR(TypeError, "First input argument to primitive is not a structure.");
+    PYLADA_PYERROR(TypeError, "First input argument to primitive is not a structure.");
     return NULL;
   }
   Structure const lattice = Structure::acquire(PyTuple_GET_ITEM(_args, 0));
   PyObject *tolobj = N == 2? PyTuple_GET_ITEM(_args, 1): NULL;
   if(N == 2 and (PyInt_Check(tolobj) == false and PyFloat_Check(tolobj) == false))
   {
-    LADA_PYERROR(TypeError, "First input argument to primitive is not a structure.");
+    PYLADA_PYERROR(TypeError, "First input argument to primitive is not a structure.");
     return NULL;
   }
   types::t_real tolerance = N == 1 ? -1:
           ( PyInt_Check(tolobj) ? PyInt_AS_LONG(tolobj): PyFloat_AS_DOUBLE(tolobj) );
   try { return primitive(lattice, tolerance).release(); } 
-  LADA_CATCH;
+  PYLADA_CATCH;
   return NULL;
 };
 
@@ -214,19 +214,19 @@ PyObject* is_primitive_wrapper(PyObject* _module, PyObject *_args)
   Py_ssize_t const N(PyTuple_Size(_args));
   if(N != 1 and N != 2)
   {
-    LADA_PYERROR(TypeError, "primitive expects a structure as input, and optionally a tolerance.");
+    PYLADA_PYERROR(TypeError, "primitive expects a structure as input, and optionally a tolerance.");
     return NULL;
   }
   if(not check_structure(PyTuple_GET_ITEM(_args, 0)))
   {
-    LADA_PYERROR(TypeError, "First input argument to primitive is not a structure.");
+    PYLADA_PYERROR(TypeError, "First input argument to primitive is not a structure.");
     return NULL;
   }
   Structure const lattice = Structure::acquire(PyTuple_GET_ITEM(_args, 0));
   PyObject *tolobj = N == 2? PyTuple_GET_ITEM(_args, 1): NULL;
   if(N == 2 and (PyInt_Check(tolobj) == false and PyFloat_Check(tolobj) == false))
   {
-    LADA_PYERROR(TypeError, "First input argument to primitive is not a structure.");
+    PYLADA_PYERROR(TypeError, "First input argument to primitive is not a structure.");
     return NULL;
   }
   types::t_real tolerance = N == 1 ? -1:
@@ -236,7 +236,7 @@ PyObject* is_primitive_wrapper(PyObject* _module, PyObject *_args)
     if(is_primitive(lattice, tolerance)) Py_RETURN_TRUE;
     Py_RETURN_FALSE;
   } 
-  LADA_CATCH;
+  PYLADA_CATCH;
   return NULL;
 };
 
@@ -245,7 +245,7 @@ PyObject* cell_invariants_wrapper(PyObject *_module, PyObject *_args)
   Py_ssize_t const N(PyTuple_Size(_args));
   if(N != 1 and N != 2)
   {
-    LADA_PYERROR(TypeError, "cell_invariants expects one or two arguments only.");
+    PYLADA_PYERROR(TypeError, "cell_invariants expects one or two arguments only.");
     return NULL;
   }
   PyObject * const arg0 = PyTuple_GET_ITEM(_args, 0);
@@ -260,7 +260,7 @@ PyObject* cell_invariants_wrapper(PyObject *_module, PyObject *_args)
     else if(PyFloat_Check(arg1)) tolerance = PyFloat_AS_DOUBLE(arg1);
     else
     {
-      LADA_PYERROR(TypeError, "Second argument to cell_invariants should a real number.");
+      PYLADA_PYERROR(TypeError, "Second argument to cell_invariants should a real number.");
       return NULL;
     }
   }
@@ -272,13 +272,13 @@ PyObject* space_group_wrapper(PyObject *_module, PyObject *_args)
   Py_ssize_t const N(PyTuple_Size(_args));
   if(N != 1 and N != 2)
   {
-    LADA_PYERROR(TypeError, "space_group expects one or two arguments only.");
+    PYLADA_PYERROR(TypeError, "space_group expects one or two arguments only.");
     return NULL;
   }
   PyObject * const arg0 = PyTuple_GET_ITEM(_args, 0);
   if(not check_structure(arg0)) 
   {
-    LADA_PYERROR(TypeError, "space_group expects a Structure as first argument.");
+    PYLADA_PYERROR(TypeError, "space_group expects a Structure as first argument.");
     return NULL;
   }
   Structure structure = Structure::acquire(arg0); 
@@ -290,7 +290,7 @@ PyObject* space_group_wrapper(PyObject *_module, PyObject *_args)
     else if(PyFloat_Check(arg1)) tolerance = PyFloat_AS_DOUBLE(arg1);
     else
     {
-      LADA_PYERROR(TypeError, "Second argument to cell_invariants should a real number.");
+      PYLADA_PYERROR(TypeError, "Second argument to cell_invariants should a real number.");
       return NULL;
     }
   }
@@ -314,22 +314,22 @@ PyObject* equivalent_wrapper(PyObject *_module, PyObject *_args, PyObject *_kwar
     return NULL;
   if(not check_structure(a))
   {
-    LADA_PYERROR(TypeError, "equivalent: First argument should be a structure.");
+    PYLADA_PYERROR(TypeError, "equivalent: First argument should be a structure.");
     return NULL;
   }
   if(not check_structure(b))
   {
-    LADA_PYERROR(TypeError, "equivalent: second argument should be a structure.");
+    PYLADA_PYERROR(TypeError, "equivalent: second argument should be a structure.");
     return NULL;
   }
   if(scale and not PyBool_Check(scale))
   {
-    LADA_PYERROR(TypeError, "equivalent: scale should be True or False.");
+    PYLADA_PYERROR(TypeError, "equivalent: scale should be True or False.");
     return NULL;
   }
   if(cartesian and not PyBool_Check(cartesian))
   {
-    LADA_PYERROR(TypeError, "equivalent: cartesian should be True or False.");
+    PYLADA_PYERROR(TypeError, "equivalent: cartesian should be True or False.");
     return NULL;
   }
   try
@@ -340,7 +340,7 @@ PyObject* equivalent_wrapper(PyObject *_module, PyObject *_args, PyObject *_kwar
                     tolerance ) ) Py_RETURN_TRUE;
     else if(not PyErr_Occurred()) Py_RETURN_FALSE;
   }
-  LADA_CATCH;
+  PYLADA_CATCH;
   return NULL;
 }
 
@@ -355,7 +355,7 @@ PyObject* transform_wrapper(PyObject *_module, PyObject *_args, PyObject *_kwarg
     return NULL;
   if(not check_structure(structure_))
   {
-    LADA_PYERROR(TypeError, "structure: First argument should be a structure.");
+    PYLADA_PYERROR(TypeError, "structure: First argument should be a structure.");
     return NULL;
   }
   Eigen::Matrix<types::t_real, 4, 3> transform;
@@ -366,7 +366,7 @@ PyObject* transform_wrapper(PyObject *_module, PyObject *_args, PyObject *_kwarg
  }
 
 //! \brief Wrapper to python for neighbor list creation.
-//! \see  LaDa::crystal::neighbors()
+//! \see  Pylada::crystal::neighbors()
 PyObject* pyneighbors(PyObject* _module, PyObject* _args, PyObject *_kwargs)
 {
   PyObject* structure = NULL; 
@@ -382,7 +382,7 @@ PyObject* pyneighbors(PyObject* _module, PyObject* _args, PyObject *_kwargs)
     return NULL;
   if(not check_structure(structure)) 
   {
-    LADA_PYERROR(TypeError, "neighbors: First argument should be a structure.");
+    PYLADA_PYERROR(TypeError, "neighbors: First argument should be a structure.");
     return NULL;
   }
   math::rVector3d center(0,0,0);
@@ -395,7 +395,7 @@ PyObject* pyneighbors(PyObject* _module, PyObject* _args, PyObject *_kwargs)
 }
 
 //! \brief Wrapper to python for coordination_shells list creation.
-//! \see  LaDa::crystal::coordination_shells()
+//! \see  Pylada::crystal::coordination_shells()
 PyObject* pycoordination_shells(PyObject* _module, PyObject* _args, PyObject *_kwargs)
 {
   PyObject* structure = NULL; 
@@ -413,7 +413,7 @@ PyObject* pycoordination_shells(PyObject* _module, PyObject* _args, PyObject *_k
     return NULL;
   if(not check_structure(structure)) 
   {
-    LADA_PYERROR(TypeError, "coordination_shells: First argument should be a structure.");
+    PYLADA_PYERROR(TypeError, "coordination_shells: First argument should be a structure.");
     return NULL;
   }
   math::rVector3d center(0,0,0);
@@ -424,12 +424,12 @@ PyObject* pycoordination_shells(PyObject* _module, PyObject* _args, PyObject *_k
   catch(...)
   {
     if(not PyErr_Occurred())
-      { LADA_PYERROR(InternalError, "Unknown c++ exception occurred.\n"); }
+      { PYLADA_PYERROR(InternalError, "Unknown c++ exception occurred.\n"); }
   }
   return NULL;
 }
 //! \brief Wrapper to python for split configuration creation.
-//! \see  LaDa::crystal::splitconfigs()
+//! \see  Pylada::crystal::splitconfigs()
 PyObject* pysplitconfigs(PyObject* _module, PyObject* _args, PyObject *_kwargs)
 {
   PyObject* _structure = NULL; 
@@ -447,17 +447,17 @@ PyObject* pysplitconfigs(PyObject* _module, PyObject* _args, PyObject *_kwargs)
     return NULL;
   if(not check_structure(_structure)) 
   {
-    LADA_PYERROR(TypeError, "splitconfigs: structure argument should be a structure.");
+    PYLADA_PYERROR(TypeError, "splitconfigs: structure argument should be a structure.");
     return NULL;
   }
   if(not check_atom(_atom)) 
   {
-    LADA_PYERROR(TypeError, "splitconfigs: center argument should be an atom.");
+    PYLADA_PYERROR(TypeError, "splitconfigs: center argument should be an atom.");
     return NULL;
   }
   if(_configurations and not PyList_Check(_configurations)) 
   {
-    LADA_PYERROR(TypeError, "splitconfigs: configurations argument should be an list.");
+    PYLADA_PYERROR(TypeError, "splitconfigs: configurations argument should be an list.");
     return NULL;
   }
   Structure structure = Structure::acquire(_structure);
@@ -471,13 +471,13 @@ PyObject* pysplitconfigs(PyObject* _module, PyObject* _args, PyObject *_kwargs)
   catch(...)
   {
     if(PyErr_Occurred() == NULL)
-      { LADA_PYERROR(InternalError, "splitconfigs: Unknown c++ exception occurred.\n"); }
+      { PYLADA_PYERROR(InternalError, "splitconfigs: Unknown c++ exception occurred.\n"); }
   }
   return NULL;
 }
 
 //! \brief Wrapper to python for mapping sites.
-//! \see  LaDa::crystal::map_sites()
+//! \see  Pylada::crystal::map_sites()
 PyObject* pymapsites(PyObject* _module, PyObject* _args, PyObject *_kwargs)
 {
   PyObject* _mapper = NULL; 
@@ -493,17 +493,17 @@ PyObject* pymapsites(PyObject* _module, PyObject* _args, PyObject *_kwargs)
     return NULL;
   if(not check_structure(_mapper)) 
   {
-    LADA_PYERROR(TypeError, "map_sites: mapper argument should be a structure.");
+    PYLADA_PYERROR(TypeError, "map_sites: mapper argument should be a structure.");
     return NULL;
   }
   if(not check_structure(_mappee)) 
   {
-    LADA_PYERROR(TypeError, "map_sites: mappee argument should be a structure.");
+    PYLADA_PYERROR(TypeError, "map_sites: mappee argument should be a structure.");
     return NULL;
   }
   if(_cmp != Py_None and PyCallable_Check(_cmp) == false)
   {
-    LADA_PYERROR(TypeError, "map_sites: cmp is expected to be None or a callable");
+    PYLADA_PYERROR(TypeError, "map_sites: cmp is expected to be None or a callable");
     return NULL;
   }
   Structure mapper = Structure::acquire(_mapper);
@@ -517,7 +517,7 @@ PyObject* pymapsites(PyObject* _module, PyObject* _args, PyObject *_kwargs)
   catch(...)
   {
     if(PyErr_Occurred() == NULL)
-    { LADA_PYERROR(InternalError, "map_sites: Unknown c++ exception occurred.\n"); }
+    { PYLADA_PYERROR(InternalError, "map_sites: Unknown c++ exception occurred.\n"); }
   }
   return NULL;
 }
@@ -776,4 +776,4 @@ static PyMethodDef methods_table[] = {
       ":returns: True if all sites in mappee where mapped to mapper.\n" },
     {NULL, NULL, 0, NULL}        /* Sentinel */
 }; // end of static method table.
-#undef LADA_CATCH
+#undef PYLADA_CATCH

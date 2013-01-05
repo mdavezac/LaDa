@@ -1,7 +1,7 @@
 Exceptions
 **********
 
-.. currentmodule:: lada.error
+.. currentmodule:: pylada.error
 
 .. autoexception :: root
 .. autoexception :: input

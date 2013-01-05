@@ -1,10 +1,10 @@
 .. _crystal_ug: 
-.. currentmodule:: lada.crystal
+.. currentmodule:: pylada.crystal
 
 Creating and Manipulating crystal structures
 ********************************************
 
-A good way to learn is to play with LaDa directly in the python interpreter.
+A good way to learn is to play with Pylada directly in the python interpreter.
 Best of all, use the enhanced shell `ipython`_. It comes with many goodies. For
 instance tab-completion. Or inline help. E.g., once you have typed up the first
 example below, try ``structure.[TAB]`` and see what it tells you. Then try
@@ -19,7 +19,7 @@ Initialization
 
 To start off, lets create the diamond crystal structure.
 
->>> from lada.crystal import Structure
+>>> from pylada.crystal import Structure
 >>> structure = Structure( [ [0, 0.5, 0.5],     \
 ...                          [0.5, 0, 0.5],     \
 ...                          [0.5, 0.5, 0] ] )
@@ -27,8 +27,8 @@ To start off, lets create the diamond crystal structure.
 >>> structure.add_atom(0.25, 0.25, 0.25, "C")
 
 The first line above imports the :class:`Structure` class from the
-:py:mod:`crystal <lada.crystal>` module.  This class is the basic type which describes
-crystal structures in LaDa.  The second and subsequent lines creates diamond.
+:py:mod:`crystal <pylada.crystal>` module.  This class is the basic type which describes
+crystal structures in Pylada.  The second and subsequent lines creates diamond.
 The unit-cell is initialized within the first parenthesis. It must be given as
 a *matrix*: the cell-vectors are columns (not rows as in many other physics
 code). The reason behind choice will soon be apparent when we start playing the
@@ -37,7 +37,7 @@ paper. At this point, we have a structure empty of any atoms. They can be added
 as done above, first inserting the x, y, and z cartesian coordinates and then
 the atomic occupation.
 
-.. note:: Cartesian or fractional coordinates? Ask the question no more. LaDa
+.. note:: Cartesian or fractional coordinates? Ask the question no more. Pylada
           *always* expects cartesian coordinates in real space. Period.
           However, keep reading to find an instance where the transformation is
           done. Just don't forget to transform back.
@@ -48,7 +48,7 @@ Technetium, one could add a total moment to the structure, specify an atomic
 site for Technetium substitutions, and markup another site with a spin
 variable, all in a single one liner.
 
->>> from lada.crystal import Structure
+>>> from pylada.crystal import Structure
 >>> structure = Structure( [ [0, 0.5, 0.5],                         \
 ...                          [0.5, 0, 0.5],                         \
 ...                          [0.5, 0.5, 0] ], scale=1.0, moment=5 ) \
@@ -60,8 +60,8 @@ single line.
 
 .. seealso::
    A number of predefined lattices can be found in
-   :py:mod:`~lada.crystal.bravais`, :py:mod:`~lada.crystal.binary`,
-   :py:mod:`~lada.crystal.A2BX4`, :py:mod:`~lada.crystal.ABX`. Other similar
+   :py:mod:`~pylada.crystal.bravais`, :py:mod:`~pylada.crystal.binary`,
+   :py:mod:`~pylada.crystal.A2BX4`, :py:mod:`~pylada.crystal.ABX`. Other similar
    modules are always welcomed.
 
 Manipulation
@@ -83,7 +83,7 @@ coordinates of all three cell vectors simultaneously. Note that the cell a
 `numpy`_ array. `Numpy`_ is python's numerical computation package. It does
 everything that BLAS or Lapack does, but is much easier to use. And since, when
 compiled correctly, it actually uses BLAS or similar library, it can be quite
-fast. Most, perhaps all, arrays of numbers in LaDa are `numpy`_ arrays. 
+fast. Most, perhaps all, arrays of numbers in Pylada are `numpy`_ arrays. 
 
 Atoms in the structure can be accessed in the structure as though it were a list:
 
@@ -166,7 +166,7 @@ vector-vector inner products.
 .. note:: Why use `dot`_? By default, ``vectorA * vectorB`` multiplies arrays
           element per element in `numpy`_. There does exist a class called
           Matrix which will change the behavior to actual matrix
-          mutliplication. But to avoid any surprises, LaDa uses the default.
+          mutliplication. But to avoid any surprises, Pylada uses the default.
           And hence makes use of `dot`_.
 
 
@@ -182,7 +182,7 @@ The units are given using the structure's scale attribute:
 
 The package `quantities`_ allows us to specify units explicitly. Note however
 that the scale is converted to angstroms. Units are arbitrary and an arbitrary
-choice was made to use angstroms throughout LaDa. `quantities`_ makes it
+choice was made to use angstroms throughout Pylada. `quantities`_ makes it
 possible to convert back and forth between other preferred unit systems.
 In other words, the unit-cell ``structure.scale * structure.cell`` is in
 angstrom once multiplied by the scale. And so are the atomic positions
@@ -197,7 +197,7 @@ Supercells and primitive unit cells
 Quite often, one needs to a supercell, i.e. a multiple, of a smaller unit cell.
 Doing this takes all of a single line. 
 
->>> from lada.crystal import Structure, supercell
+>>> from pylada.crystal import Structure, supercell
 >>> # First create unit cell.
 >>> structure = Structure( [ [0, 0.5, 0.5],                  \
 ...                          [0.5, 0, 0.5],                  \
@@ -232,7 +232,7 @@ It is just a bit more verbose.
 
 Once a supercell is obtained, it is possible to go back to the original primitive unit-cell. 
 
->>> from lada.crystal import primitive
+>>> from pylada.crystal import primitive
 >>> primitive(conventional, tolerance=1e-8)
 Structure( 0.5, 0.5, 0,\
            0, 0.5, 0.5,\
@@ -247,7 +247,7 @@ help to some degree. It defaults to 1e-8. There is also a method to check
 whether a structure is indeed primitive.
 
 
->>> from lada.crystal import primitive, is_primitive
+>>> from pylada.crystal import primitive, is_primitive
 >>> is_primitive(conventional)
 False
 >>> is_primitive(primitive(conventional))
@@ -259,7 +259,7 @@ respect to the group of periodic images it belongs to [HF]_.
 
 >>> from random import randint
 >>> from numpy import array, all, abs
->>> from lada.crystal import SmithTransform
+>>> from pylada.crystal import SmithTransform
 >>> # create smith transform.
 >>> st = SmithTransform(conventional)
 >>> # loop over random periodic images
@@ -315,7 +315,7 @@ array([ 1., -1.,  0.])
 
 A structure can easily be transform according to any affine transformation defined the same way:
 
->>> from lada.crystal import transform
+>>> from pylada.crystal import transform
 >>> transform(structure, sg[1])
 Structure( 0, 0.5, 0.5,\
            -0.5, 0, -0.5,\
@@ -335,7 +335,7 @@ Neighbors and Coordination Shells
 A list of first neighbors can be obtained for any point in the structure.
 Still using the diamond structure.
 
->>> from lada.crystal import neighbors
+>>> from pylada.crystal import neighbors
 >>> n = neighbors(structure, 5, [0.125,0.125, 0.125])
 >>> len(n)
 8
@@ -358,7 +358,7 @@ image. Additionally, a ``coordination_shells`` method exists which returns a
 list of lists of neighbour, where each inner list is a single coordination
 shell.
 
->>> from lada.crystal import coordination_shell
+>>> from pylada.crystal import coordination_shell
 >>> len( coordination_shell(structure, 5, [0.125, 0.125, 0.125])[0] )
 2
 >>> len( coordination_shell(structure, 5, [0.125, 0.125, 0.125])[1] )
@@ -393,7 +393,7 @@ MPI easy.
 Conclusion
 ----------
 
-LaDa makes it easy to manipulate crystal structures any way you fancy. Further
+Pylada makes it easy to manipulate crystal structures any way you fancy. Further
 methods exist beyond those described here. There is a method to create periodic
 divide and conquer boxes, very practical when dealing with truly large
 structures. There is a method to transform structures into lattice agnostic
@@ -418,7 +418,7 @@ The point here is to create an `generator`_ which will allow us to iterate over
 shells in an outer loop and atoms (within the shell) in an inner loop. For
 instance, if we wanted to alternate Si and Ge layers.
 
->>> from lada.crystal import shell_iterator
+>>> from pylada.crystal import shell_iterator
 >>> for i, shell in enumerate(shell_iterator(structure, center=[0,0,0], direction=[1, 0, 0])):
 >>>    for atom in shell:
 >>>      if i > 10: atom.type = 'Hg'
@@ -443,7 +443,7 @@ Now follows the code for the shell `generator`_.
 >>>       It allows to rapidly create core-shell nanowires.
 >>>   
 >>>       :Parameters:
->>>         structure : :class:`lada.crystal.Structure`
+>>>         structure : :class:`pylada.crystal.Structure`
 >>>           Structure or Lattice over which to iterate.
 >>>         center : 3d vector
 >>>           Growth direction of the nanowire.

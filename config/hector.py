@@ -25,9 +25,9 @@ def pbs_string(**kwargs):
          "#PBS -l walltime={walltime}\n"                                       \
          "#PBS -A {account}\n"                                                 \
          "#PBS -V \n\n"                                                        \
-         "export LADA_TMPDIR=/work/e05/e05/`whoami`/lada_tmp\n"                \
-         "if [ ! -e $LADA_TMPDIR ] ; then\n"                                   \
-         "  mkdir -p $LADA_TMPDIR\n"                                           \
+         "export PYLADA_TMPDIR=/work/e05/e05/`whoami`/pylada_tmp\n"                \
+         "if [ ! -e $PYLADA_TMPDIR ] ; then\n"                                   \
+         "  mkdir -p $PYLADA_TMPDIR\n"                                           \
          "fi\n"                                                                \
          "cd {directory}\n"                                                    \
          "{header}\n"                                                          \
@@ -54,9 +54,9 @@ def machine_dependent_call_modifier(formatter=None, comm=None, env=None):
       .. note:: 
       
          Also, the hostname were shortened to exclude cx1.hpc.imperial.ac.uk
-         domain name in :py:function:`~lada.modify_global_comm`. 
+         domain name in :py:function:`~pylada.modify_global_comm`. 
   """
-  from lada import default_comm
+  from pylada import default_comm
   if formatter is None: return
   if len(getattr(comm, 'machines', [])) == 0: placement = ""
   elif sum(comm.machines.itervalues()) == sum(default_comm.machines.itervalues()):
@@ -112,7 +112,7 @@ def crystal_program(self=None, structure=None, comm=None):
   
       If comm is None, then returns the path to the serial CRYSTAL_ program.
       Otherwise, if :py:attr:`dftcrystal.Functional.mpp
-      <lada.dftcrystal.electronic.Electronic.mpp>` is
+      <pylada.dftcrystal.electronic.Electronic.mpp>` is
       True, then returns the path to the MPP version. If that is False, then
       returns the path to the MPI version.
   """
@@ -129,4 +129,4 @@ def crystal_program(self=None, structure=None, comm=None):
 
 crystal_inplace = False
 
-global_tmpdir='$WORK/lada_tmp'
+global_tmpdir='$WORK/pylada_tmp'

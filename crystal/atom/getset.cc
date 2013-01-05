@@ -1,17 +1,17 @@
 //! Returns position as a numpy array. 
-PyObject* lada_atom_getpos(PyAtomObject *_self, void *closure);
+PyObject* pylada_atom_getpos(PyAtomObject *_self, void *closure);
 //! Sets position from a sequence of three numbers.
-int lada_atom_setpos(PyAtomObject *_self, PyObject *_value, void *_closure);
+int pylada_atom_setpos(PyAtomObject *_self, PyObject *_value, void *_closure);
 //! Returns type python object.
-PyObject* lada_atom_gettype(PyAtomObject *_self, void *closure);
+PyObject* pylada_atom_gettype(PyAtomObject *_self, void *closure);
 //! Sets type python object.
-int lada_atom_settype(PyAtomObject *_self, PyObject *_value, void *_closure);
+int pylada_atom_settype(PyAtomObject *_self, PyObject *_value, void *_closure);
 
 
 // Returns position as a numpy array. 
 // Numpy does not implement python's cyclic garbage, hence new wrapper need be
 // created each call.
-PyObject* lada_atom_getpos(PyAtomObject *_self, void *closure)
+PyObject* pylada_atom_getpos(PyAtomObject *_self, void *closure)
 {
   npy_intp dims[1] = {3};
   int const value = python::numpy::type<math::rVector3d::Scalar>::value;
@@ -22,25 +22,25 @@ PyObject* lada_atom_getpos(PyAtomObject *_self, void *closure)
   return (PyObject*)result;
 }
 // Sets position from a sequence of three numbers.
-int lada_atom_setpos(PyAtomObject *_self, PyObject *_value, void *_closure)
+int pylada_atom_setpos(PyAtomObject *_self, PyObject *_value, void *_closure)
 {
   if(_value == NULL)
   {
-    LADA_PYERROR(TypeError, "Cannot delete pos attribute.");
+    PYLADA_PYERROR(TypeError, "Cannot delete pos attribute.");
     return -1;
   }
   return python::numpy::convert_to_vector(_value, _self->pos) ? 0: -1;
 }
 // Returns type python object.
-PyObject* lada_atom_gettype(PyAtomObject *_self, void *closure)
+PyObject* pylada_atom_gettype(PyAtomObject *_self, void *closure)
   { Py_INCREF(_self->type); return _self->type; }
   
 // Sets type python object.
-int lada_atom_settype(PyAtomObject *_self, PyObject *_value, void *_closure)
+int pylada_atom_settype(PyAtomObject *_self, PyObject *_value, void *_closure)
 {
   if(_value == NULL)
   {
-    LADA_PYERROR(TypeError, "Cannot delete type. You can set it to None though.");
+    PYLADA_PYERROR(TypeError, "Cannot delete type. You can set it to None though.");
     return -1;
   }
   PyObject* dummy = _self->type;

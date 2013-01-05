@@ -11,11 +11,11 @@ def _getcomment(self=None, cmdl=None):
   try: from .. import fullname
   except ImportError:
     print >>stderr, "Could not import fullname with which to tag files in database.\n"\
-                    "Please add `fullname = 'my full name'` in ~/.lada.\n"
+                    "Please add `fullname = 'my full name'` in ~/.pylada.\n"
     return
   if len(fullname) == 0:
     print >>stderr, "Username with which to tag files in database is empty.\n"\
-                    "Please add `fullname = 'my full name'` in ~/.lada.\n"
+                    "Please add `fullname = 'my full name'` in ~/.pylada.\n"
     return
 
   if self == None: self = get_ipy()
@@ -47,9 +47,9 @@ def _get_push_parser():
            """\
                  This function will pull remote files and push them to the database. It will
               also push local files to the database.  To do so 'fullname' and
-              'pymongo_username' should be declared in your ~/.lada file. The first shoudl
+              'pymongo_username' should be declared in your ~/.pylada file. The first shoudl
               be your full name and will be attached within the database to files you have
-              pushed. The second is you NREL username. Your ~/.lada file should read
+              pushed. The second is you NREL username. Your ~/.pylada file should read
               something like:
           """)) + [ "", "fullname = \"John Doe\"", "pymongo_username = \"jdoe\"", "" ] \
                 + textwrap.wrap(textwrap.dedent(\
@@ -179,17 +179,17 @@ def push(self, cmdl):
   """ Pulls files from a remote directory. """
   from getpass import getpass
   from paramiko import SSHClient, AutoAddPolicy
-  from lada.ladabase import Manager
-  from lada.ladabase.extracted import generate_extracted
+  from pylada.ladabase import Manager
+  from pylada.ladabase.extracted import generate_extracted
   from hashlib import sha512
   try: from .. import fullname
   except ImportError:
     print "Could not import fullname with which to tag files in database.\n"\
-          "Please add `fullname = 'my full name'` in ~/.lada.\n"
+          "Please add `fullname = 'my full name'` in ~/.pylada.\n"
     return
   if len(fullname) == 0:
     print "Username with which to tag files in database is empty.\n"\
-          "Please add `fullname = 'my full name'` in ~/.lada.\n"
+          "Please add `fullname = 'my full name'` in ~/.pylada.\n"
     return
 
   if __name__ == "__main__":
@@ -254,7 +254,7 @@ def push(self, cmdl):
   manager = Manager()
   outcardb = manager.files
   if args.algo == "fere": 
-    from lada.ladabase.fere import check_fere_context, generate_fere_summary
+    from pylada.ladabase.fere import check_fere_context, generate_fere_summary
     found = False
     for extract, path in walk_calc_files(args, context(check_fere_context), iglob, walk):
       hash = sha512(extract.__outcar__().read()).hexdigest()

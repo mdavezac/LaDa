@@ -1,6 +1,6 @@
 def test_fcc():
-  from lada.crystal import bravais
-  from lada.enum import generate_bitstrings
+  from pylada.crystal import bravais
+  from pylada.enum import generate_bitstrings
   from fccsets import fccsets
 
   lattice = bravais.fcc()
@@ -14,8 +14,8 @@ def test_fcc():
     assert set(result) == fccsets[n]
 
 def test_ternary():
-  from lada.crystal import bravais
-  from lada.enum import generate_bitstrings
+  from pylada.crystal import bravais
+  from pylada.enum import generate_bitstrings
   from ternarysets import ternarysets
 
   lattice = bravais.fcc()
@@ -29,8 +29,8 @@ def test_ternary():
     assert set(result) == ternarysets[n]
 
 def test_diamond():
-  from lada.crystal import binary
-  from lada.enum import generate_bitstrings
+  from pylada.crystal import binary
+  from pylada.enum import generate_bitstrings
   from diamondsets import diamondsets
 
   lattice = binary.zinc_blende()
@@ -45,8 +45,8 @@ def test_diamond():
     assert set(result) == diamondsets[n]
 
 def test_zincblende():
-  from lada.crystal import binary
-  from lada.enum import generate_bitstrings
+  from pylada.crystal import binary
+  from pylada.enum import generate_bitstrings
   from zincblendesets import zincblendesets
 
   lattice = binary.zinc_blende()

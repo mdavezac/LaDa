@@ -1,21 +1,21 @@
 //! Function to deallocate a string atom.
-void lada_atom_dealloc(PyAtomObject *_self);
+void pylada_atom_dealloc(PyAtomObject *_self);
 //! Function to initialize a string atom.
-int lada_atom_init(PyAtomObject* _self, PyObject* _args, PyObject *_kwargs);
+int pylada_atom_init(PyAtomObject* _self, PyObject* _args, PyObject *_kwargs);
 //! Traverses to back-reference.
-int lada_atom_traverse(PyAtomObject *_self, visitproc visit, void *arg)
+int pylada_atom_traverse(PyAtomObject *_self, visitproc visit, void *arg)
   { Py_VISIT(_self->pydict); Py_VISIT(_self->type); return 0; }
 //! Clears back reference.
-int lada_atom_gcclear(PyAtomObject *self) { Py_CLEAR(self->pydict); Py_CLEAR(self->type); return 0; }
+int pylada_atom_gcclear(PyAtomObject *self) { Py_CLEAR(self->pydict); Py_CLEAR(self->type); return 0; }
 
 
 // Function to deallocate a string atom.
-void lada_atom_dealloc(PyAtomObject *_self)
+void pylada_atom_dealloc(PyAtomObject *_self)
 {
   if(_self->weakreflist != NULL)
     PyObject_ClearWeakRefs((PyObject *) _self);
  
-  lada_atom_gcclear(_self);
+  pylada_atom_gcclear(_self);
 
   // Calls c++ destructor explicitely.
   PyTypeObject *ob_type = _self->ob_type;
@@ -25,7 +25,7 @@ void lada_atom_dealloc(PyAtomObject *_self)
 }
 
 // Function to initialize a string atom.
-int lada_atom_init(PyAtomObject* _self, PyObject* _args, PyObject *_kwargs)
+int pylada_atom_init(PyAtomObject* _self, PyObject* _args, PyObject *_kwargs)
 {
   Py_ssize_t const N = PyTuple_Size(_args);
 
@@ -33,7 +33,7 @@ int lada_atom_init(PyAtomObject* _self, PyObject* _args, PyObject *_kwargs)
   {
     if(N < 3)
     {
-      LADA_PYERROR(TypeError, "Atom(...): Expect at least three arguments.");
+      PYLADA_PYERROR(TypeError, "Atom(...): Expect at least three arguments.");
       return -1;
     }
     for(Py_ssize_t i(0); i < 3; ++i)
@@ -43,7 +43,7 @@ int lada_atom_init(PyAtomObject* _self, PyObject* _args, PyObject *_kwargs)
       else if(PyFloat_Check(item) == 1)  _self->pos[i] = PyFloat_AS_DOUBLE(item);
       else
       {
-        LADA_PYERROR( TypeError,
+        PYLADA_PYERROR( TypeError,
                       "Atom(...): Expects the first three arguments to be the position. "
                       "Or, give everything as keywords" );
         return -1;
@@ -80,13 +80,13 @@ int lada_atom_init(PyAtomObject* _self, PyObject* _args, PyObject *_kwargs)
   // Sanity check first.
   if( N >= 3 and PyDict_GetItemString(_kwargs, "pos") != NULL)
   {
-    LADA_PYERROR(TypeError, "Atom(...): Cannot set position both from keyword and argument.");
+    PYLADA_PYERROR(TypeError, "Atom(...): Cannot set position both from keyword and argument.");
     return -1;
   }
   // Sanity check first.
   if( N >= 4 and PyDict_GetItemString(_kwargs, "type") != NULL)
   {
-    LADA_PYERROR(TypeError, "Atom(...): Cannot set type both from keyword and argument.");
+    PYLADA_PYERROR(TypeError, "Atom(...): Cannot set type both from keyword and argument.");
     return -1;
   }
 

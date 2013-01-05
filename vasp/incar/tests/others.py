@@ -1,6 +1,6 @@
 def test_choices():
   from pickle import loads, dumps
-  from lada.vasp.incar._params import Precision, PrecFock, IniWave
+  from pylada.vasp.incar._params import Precision, PrecFock, IniWave
 
   assert PrecFock(None).incar_string() is None
   for i in ['Low', 'Medium', 'Accurate', 'Fast', 'Normal']:
@@ -36,8 +36,8 @@ def test_choices():
 
 def test_ediff():
   from pickle import loads, dumps
-  from lada.crystal.cppwrappers import Structure, supercell
-  from lada.vasp.incar._params import Ediff, Ediffg
+  from pylada.crystal.cppwrappers import Structure, supercell
+  from pylada.vasp.incar._params import Ediff, Ediffg
 
   structure = Structure([[0,0.5,0.5],[0.5,0,0.5],[0.5,0.5,0]])\
                        .add_atom(0, 0, 0, 'Si')\
@@ -69,7 +69,7 @@ def test_ediff():
 def test_encut(Encut):
   from pickle import loads, dumps
   from collections import namedtuple
-  from lada.crystal.cppwrappers import Structure, supercell
+  from pylada.crystal.cppwrappers import Structure, supercell
   from quantities import eV, hartree
 
   Vasp = namedtuple('Vasp', ['species'])
@@ -99,7 +99,7 @@ if __name__ == "__main__":
   from sys import argv, path 
   from numpy import array
   if len(argv) > 0: path.extend(argv[1:])
-  from lada.vasp.incar._params import Encut, EncutGW
+  from pylada.vasp.incar._params import Encut, EncutGW
   
   test_choices()
   test_ediff()

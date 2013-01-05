@@ -1,7 +1,7 @@
 from numpy import dot, array
-from lada.mpi import world
-from lada.vff import Vff
-from lada.crystal import Structure, FreezeCell
+from pylada.mpi import world
+from pylada.vff import Vff
+from pylada.crystal import Structure, FreezeCell
 
 vff = Vff()
 vff.lattice.set_types = ("In", "Ga"), ("As",)

@@ -3,8 +3,8 @@ from numpy.linalg import norm, inv
 from matplotlib.pyplot import scatter, show
 from numpy import array
 from operator import itemgetter
-from lada.crystal.binary import zinc_blende
-from lada.crystal import dnc_iterator
+from pylada.crystal.binary import zinc_blende
+from pylada.crystal import dnc_iterator
 
 cell = array([[10.0, 0.5, 0.5], [0.0, 0.0, 0.5], [0.0, 0.5, 0.0]], dtype="float64")
 cell = array([[-13. ,   0. ,   0.5], [ 13. ,   0. ,   0.5], [  0. ,  19. ,   0. ]])

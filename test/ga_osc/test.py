@@ -3,11 +3,11 @@ def gajobs(path, inputpath = "input.py"):
   from copy import deepcopy
   import IPython.ipapi
 
-  from lada.ga.escan.elemental.functional import Darwin as Functional
-  from lada.ga.escan.elemental.evaluator  import Dipole as Evaluator
-  from lada.ga.escan.elemental            import LayeredConverter as Converter
-  from lada.jobs import JobFolder
-  from lada.escan import read_input
+  from pylada.ga.escan.elemental.functional import Darwin as Functional
+  from pylada.ga.escan.elemental.evaluator  import Dipole as Evaluator
+  from pylada.ga.escan.elemental            import LayeredConverter as Converter
+  from pylada.jobs import JobFolder
+  from pylada.escan import read_input
 
   # reads input file.
   input = read_input(inputpath)

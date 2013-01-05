@@ -3,7 +3,7 @@ class PoolProcess(JobFolderProcess):
   """ Executes folder in child processes.
   
       Much as its base class,
-      :py:class:`~lada.process.jobfolder.JobFolderProcess`, this process
+      :py:class:`~pylada.process.jobfolder.JobFolderProcess`, this process
       specialization is intended to run jobs in a jobfolder in parallel [*]_.
       However, it allows to customize the number of processors dedicated to
       each job, rather than use the same number of processors for each job. 
@@ -37,7 +37,7 @@ class PoolProcess(JobFolderProcess):
 
       .. note::
       
-         Upon failure, :py:exc:`~lada.process.Fail` is raised only
+         Upon failure, :py:exc:`~pylada.process.Fail` is raised only
          once all the folders have been executed, not when the failure is
          detected.
       
@@ -47,7 +47,7 @@ class PoolProcess(JobFolderProcess):
       .. [*] Apparently, this is a pretty good rule-of-thumb for VASP
         calculations.
       .. [*] More, specifically, each time
-         :py:meth:`~lada.process.jobfolder.JobFolderProcess.poll` is called. 
+         :py:meth:`~pylada.process.jobfolder.JobFolderProcess.poll` is called. 
   """
   def __init__( self, jobfolder, outdir, processalloc, maxtrials=1,
                 keepalive=False, **kwargs ):
@@ -58,25 +58,25 @@ class PoolProcess(JobFolderProcess):
           The name of the folders to launch are determined which
           :py:meth:`__init__` is acalled. If ``jobfolder`` changes, then one
           should call :py:meth:`update`.
-        :type jobfolder: :py:class:`~lada.jobfolder.jobfolder.JobFolder` 
+        :type jobfolder: :py:class:`~pylada.jobfolder.jobfolder.JobFolder` 
         :param str outdir: 
           Path where the python child process should be executed.
         :param processalloc:
           Function which determines how many processors each job requires.
           This is determined for each job when this instance is created. To
-          change :py:attr:`~lada.process.jobfolder.JobFolderProcess.jobfolder`,
+          change :py:attr:`~pylada.process.jobfolder.JobFolderProcess.jobfolder`,
           one should call :py:meth:`update`.
         :type processalloc:
-          (:py:class:`~lada.jobfolder.jobfolder.JobFolder`)->int
+          (:py:class:`~pylada.jobfolder.jobfolder.JobFolder`)->int
         :param bool keepalive:
            Whether to relinquish communicator once jobs are completed.  If
            True, the communicator is not relinquished. The jobfolder can be
            :py:meth:`updated <update>` and new jobs started. To finally
            relinquish the communicator,
-           :py:attr:`~lada.process.jobfolder.JobFolderProcess.keepalive`
+           :py:attr:`~pylada.process.jobfolder.JobFolderProcess.keepalive`
            should be set to False.  Both
-           :py:meth:`~lada.process.jobfolder.JobFolderProcess.kill` and
-           :py:meth:`~lada.process.jobfolder.JobFolderProcess.terminate` ignore
+           :py:meth:`~pylada.process.jobfolder.JobFolderProcess.kill` and
+           :py:meth:`~pylada.process.jobfolder.JobFolderProcess.terminate` ignore
            this attribute and relinquish the communicator. However, since both
            side effects, this may not be the best way to do so.
         :param int maxtrials:
@@ -94,7 +94,7 @@ class PoolProcess(JobFolderProcess):
     """ Determines number of processors to allocate to each job.
     
         This is a function which takes a
-        :py:class:`~lada.jobfolder.jobfolder.JobFolder` instance and returns an
+        :py:class:`~pylada.jobfolder.jobfolder.JobFolder` instance and returns an
         integer.
     """
     self._alloc = {}

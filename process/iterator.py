@@ -25,8 +25,8 @@ class IteratorProcess(Process):
 
       To do this, we use a generator_, i.e. an object which can be used in a
       loop. It should yield_ one of two kinds of objects: (i) an extractor.
-      such as :py:class:`lada.vasp.extract.Extract`, or an instance derived
-      from :py:class:`~lada.vasp.process.Process`. In the former case, the
+      such as :py:class:`pylada.vasp.extract.Extract`, or an instance derived
+      from :py:class:`~pylada.vasp.process.Process`. In the former case, the
       :py:class:`IteratorProcess` simply keeps looping. In the latter case, the
       yielded process object is started and control is relinquished to the
       owner of the :py:class:`IteratorProcess` instance. When the looping is
@@ -78,17 +78,17 @@ class IteratorProcess(Process):
           yield ExtractFinal(outdir)
 
       To implement it, we need an extraction class, such as
-      :py:class:`lada.crystal.extract.Extract`, capable of checking in a
+      :py:class:`pylada.crystal.extract.Extract`, capable of checking in a
       directory whether a successfull calculation already exists. If it does,
       the generator should yield the extraction object. If it doesn't, it
-      should yield some :py:class:`~lada.process.process.Process` instance
+      should yield some :py:class:`~pylada.process.process.Process` instance
       capable of starting the external program of interest. 
 
       The processes yielded by the input generator could be anything. It could
       be, for instance, another instance of :py:class:`IteratorProcess`, or
-      simply a bunch of :py:class:`~lada.process.program.ProgramProcess`, or
+      simply a bunch of :py:class:`~pylada.process.program.ProgramProcess`, or
       something more comples, as long as it presents the interface defined by
-      :py:class:`~lada.process.process.Process`.
+      :py:class:`~pylada.process.process.Process`.
 
       .. note::
 

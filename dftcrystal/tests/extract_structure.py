@@ -23,8 +23,8 @@ def test_relax0(path):
   from numpy import abs, array, all, dot
   from numpy.linalg import inv
   from quantities import e, hartree
-  from lada.dftcrystal import Extract
-  from lada.crystal import Structure
+  from pylada.dftcrystal import Extract
+  from pylada.crystal import Structure
 
   extract = Extract(join(path, 'relax0.out'))
   # check some extraction stuff first
@@ -115,8 +115,8 @@ def test_relaxbhor(path):
   from numpy import abs, array, all, dot
   from numpy.linalg import inv
   from quantities import e, hartree
-  from lada.dftcrystal import Extract
-  from lada.crystal import Structure
+  from pylada.dftcrystal import Extract
+  from pylada.crystal import Structure
 
   extract = Extract(join(path, 'relaxbhor.out'))
   # check some extraction stuff first
@@ -209,8 +209,8 @@ def test_relaxfrac(path):
   from numpy import abs, array, all, dot
   from numpy.linalg import inv
   from quantities import e, hartree
-  from lada.dftcrystal import Extract
-  from lada.crystal import Structure
+  from pylada.dftcrystal import Extract
+  from pylada.crystal import Structure
 
   extract = Extract(join(path, 'relaxfrac.out'))
   # check some extraction stuff first
@@ -302,8 +302,8 @@ def test_relaxfrac2(path):
   from numpy import abs, array, all, dot
   from numpy.linalg import inv
   from quantities import e, hartree
-  from lada.dftcrystal import Extract
-  from lada.crystal import Structure
+  from pylada.dftcrystal import Extract
+  from pylada.crystal import Structure
 
   extract = Extract(join(path, 'relaxfrac2.out'))
   # check some extraction stuff first

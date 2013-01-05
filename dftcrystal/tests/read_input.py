@@ -1,7 +1,7 @@
 def test_supercell(path):
   from os.path import join
   from numpy import all, abs, array, set_printoptions
-  from lada.dftcrystal import read, Supercell, Crystal, Slabcut, BreakSym,    \
+  from pylada.dftcrystal import read, Supercell, Crystal, Slabcut, BreakSym,    \
                               KeepSymm, DisplaceAtoms, InsertAtoms
   set_printoptions(precision=12)
   crystal, functional = read(join(path, 'supercell.d12'))

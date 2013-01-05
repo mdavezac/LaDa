@@ -23,10 +23,10 @@ class System():
         self.outdir = outdir
 
 def setup_one_system(cat, an, run_input, nlep_params, sys_params=None):
-    from lada.vasp import read_input
-    from lada.vasp.extract import Extract, ExtractGW
-    from lada.vasp.specie import U, nlep
-    from lada.vasp import Vasp
+    from pylada.vasp import read_input
+    from pylada.vasp.extract import Extract, ExtractGW
+    from pylada.vasp.specie import U, nlep
+    from pylada.vasp import Vasp
     import os
     from boost.mpi import world
     compound = "%s%s" % (cat, an)
@@ -54,7 +54,7 @@ def setup_one_system(cat, an, run_input, nlep_params, sys_params=None):
 
 class MultiSystem():
     def __init__(self, run_input, system_params = None):
-        from lada.vasp.nlep.postprocessing import load_run_input, find_best, load_test, prepare_analog_fit, get_analog_name
+        from pylada.vasp.nlep.postprocessing import load_run_input, find_best, load_test, prepare_analog_fit, get_analog_name
         from boost.mpi import world
         cations = run_input.cations
         anions = run_input.anions

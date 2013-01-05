@@ -7,7 +7,7 @@
 def test(Class):
   import gc
   from numpy import all, abs
-  from lada.crystal.cppwrappers import Atom
+  from pylada.crystal.cppwrappers import Atom
   from _atom_self import get_static_object, set_static_object, _atom
   
   # checks the static object is an Atom at start.
@@ -36,7 +36,7 @@ def test(Class):
          and len(c.__dict__) == 1 and getattr(c, 'm', 0) == 5
 
 if __name__ == "__main__": 
-  from lada.crystal.cppwrappers import Atom
+  from pylada.crystal.cppwrappers import Atom
   from sys import argv, path 
   if len(argv) > 0: path.extend(argv[1:])
   
@@ -67,9 +67,9 @@ if __name__ == "__main__":
   else: raise Exception()
 
   # tries to pass the wrong type object to the cpp wrapper.
-  from lada.error import TypeError as LaDaTypeError
+  from pylada.error import TypeError as PyladaTypeError
   class B(object): pass
   b = B()
   try: set_static_object(b)
-  except LaDaTypeError: pass
+  except PyladaTypeError: pass
   else: raise Exception()

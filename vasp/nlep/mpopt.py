@@ -429,7 +429,7 @@ def load_options():
     return (options, args)
 
 def load_run_input(): 
-  from lada.vasp import read_input
+  from pylada.vasp import read_input
   #  options, args = load_options()
   rin = "run_input.py"
   run_input = read_input("input_generic.py")
@@ -439,13 +439,13 @@ def load_run_input():
   
 def main(system_params=None):
   from boost.mpi import world, broadcast
-  from lada.vasp.extract import Extract, ExtractGW
-  from lada.vasp.specie import U, nlep
-  from lada.vasp import Vasp
+  from pylada.vasp.extract import Extract, ExtractGW
+  from pylada.vasp.specie import U, nlep
+  from pylada.vasp import Vasp
   import os
   from os import  path
   from nlep import Objective
-  from lada.vasp.nlep.postprocessing import find_best, load_test, prepare_analog_fit
+  from pylada.vasp.nlep.postprocessing import find_best, load_test, prepare_analog_fit
 
   print "mpi rank %d of %d" % (world.rank, world.size)
 

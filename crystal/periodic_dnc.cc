@@ -1,7 +1,7 @@
-#ifdef LADA_INDEX
-#  error LADA_INDEX already defined.
+#ifdef PYLADA_INDEX
+#  error PYLADA_INDEX already defined.
 #endif
-#define LADA_INDEX(a, b) (a(0) * b(1) + a(1)) * b(2) + a(2);
+#define PYLADA_INDEX(a, b) (a(0) * b(1) + a(1)) * b(2) + a(2);
 math::iVector3d guess_mesh_(Structure const &_structure, unsigned _nperbox)
 {
   math::rMatrix3d const cell(math::gruber(_structure->cell));
@@ -92,17 +92,17 @@ PyObject* dnc_boxes( const Structure &_structure,
         __ifrac(2) < 0 ? __ifrac(2) + _mesh(2): __ifrac(2)
       );
     // Computes index within cell of structure.
-    types::t_int const u = LADA_INDEX(ifrac, _mesh);
-#   ifdef LADA_DEBUG
+    types::t_int const u = PYLADA_INDEX(ifrac, _mesh);
+#   ifdef PYLADA_DEBUG
       for(size_t i(0); i < 3; ++i)
         if(ifrac(i) < 0 or ifrac(i) >= _mesh(i))
         {
-          LADA_PYERROR(InternalError, "Cell index out of range.");
+          PYLADA_PYERROR(InternalError, "Cell index out of range.");
           return NULL;
         }
       if(u < 0 or u >= Nboxes)
       {
-        LADA_PYERROR(InternalError, "Cell index out of range.");
+        PYLADA_PYERROR(InternalError, "Cell index out of range.");
         return NULL;
       }
 #   endif
@@ -125,7 +125,7 @@ PyObject* dnc_boxes( const Structure &_structure,
           if( i == 0 and j == 0 and k == 0 ) continue;
     
           // First checks if on edge of small box.
-#         ifndef LADA_WITH_EIGEN3
+#         ifndef PYLADA_WITH_EIGEN3
             rVector3d displaced = rfrac + sb_edges.cwise()*rVector3d(i,j,k);
 #         else
             rVector3d displaced =   rfrac
@@ -153,11 +153,11 @@ PyObject* dnc_boxes( const Structure &_structure,
               boxfrac(1) + strfrac(1) * _mesh(1),
               boxfrac(2) + strfrac(2) * _mesh(2)
             );
-          types::t_int const uu = LADA_INDEX(modboxfrac, _mesh);
-#         ifdef LADA_DEBUG
+          types::t_int const uu = PYLADA_INDEX(modboxfrac, _mesh);
+#         ifdef PYLADA_DEBUG
             if(uu < 0 or uu >= types::t_int(PyList_Size(container.borrowed())))
             {
-              LADA_PYERROR(InternalError, "Index out of range.");
+              PYLADA_PYERROR(InternalError, "Index out of range.");
               return NULL;
             }
 #         endif
@@ -196,9 +196,9 @@ PyObject* dnc_boxes( const Structure &_structure,
   }
   return container.release();
 }
-#undef LADA_INDEX
+#undef PYLADA_INDEX
 // \brief Wrapper to python for periodic boundary divide and conquer.
-// \see  LaDa::crystal::periodic_dnc()
+// \see  Pylada::crystal::periodic_dnc()
 PyObject* pyperiodic_dnc(PyObject* _module, PyObject* _args, PyObject *_kwargs)
 {
   PyObject* structure = NULL; 
@@ -217,13 +217,13 @@ PyObject* pyperiodic_dnc(PyObject* _module, PyObject* _args, PyObject *_kwargs)
     return NULL;
   if(_n != NULL and nperbox != 0)
   {
-    LADA_PYERROR(TypeError, "DnCBoxes: Cannot specify both n and nperbox.");
+    PYLADA_PYERROR(TypeError, "DnCBoxes: Cannot specify both n and nperbox.");
     return NULL;
   }
   else if(_n == NULL) nperbox = 20;
   if(not check_structure(structure)) 
   {
-    LADA_PYERROR(TypeError, "DnCBoxes: First argument should be a structure.");
+    PYLADA_PYERROR(TypeError, "DnCBoxes: First argument should be a structure.");
     return NULL;
   }
   Structure struc = Structure::acquire(structure);

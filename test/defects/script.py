@@ -66,10 +66,10 @@ def pointdefect_wave(path=None, inputpath=None, **kwargs):
   from os.path import dirname, normpath, relpath, join
   from IPython.ipapi import get as get_ipy
   from numpy import array, sum, abs
-  from lada.jobs import JobFolder
-  from lada.vasp import read_input
-  from lada.opt import Input
-  from lada.crystal import defects as ptd
+  from pylada.jobs import JobFolder
+  from pylada.vasp import read_input
+  from pylada.opt import Input
+  from pylada.crystal import defects as ptd
 
   # Loads job-folder and path as requested. 
   ip = get_ipy()
@@ -191,7 +191,7 @@ def create_superstructure(groundstate, input):
   from operator import itemgetter
   from numpy import dot
   from IPython.ipapi import get as get_ipy
-  from lada.crystal import fill_structure, vasp_ordered
+  from pylada.crystal import fill_structure, vasp_ordered
 
   # sanity checks,
   assert "structure" in groundstate.jobparams,\
@@ -246,7 +246,7 @@ def magnetic_groundstates():
       ground-state within the current job-dictionary.
   """
   from operator import itemgetter
-  from lada.jobs import MassExtract
+  from pylada.jobs import MassExtract
   collect = MassExtract(naked_end=False)
   # loops over untagged non-magnetic structural jobs.
   for nonmag in collect.children:
@@ -275,7 +275,7 @@ def deduce_moment(type, species):
 
 def oxnumber(species, structure, pos, type):
   """ Returns oxidation number, depending on environment. """
-  from lada.crystal.defects import coordination_number 
+  from pylada.crystal.defects import coordination_number 
   if type not in species: return 0
   if not hasattr(species[type], 'oxidation'): return 0
   result = species[type].oxidation
@@ -288,7 +288,7 @@ def oxnumber(species, structure, pos, type):
 def charged_states(species, material, Atype, Btype):
   """ List of charged states. """
   from re import compile
-  from lada.crystal.defects import charged_states
+  from pylada.crystal.defects import charged_states
   mat_regex = compile('([A-Z][a-z]?)2([A-Z][a-z]?)O4')
   found = mat_regex.match(material)
   A, B = found.group(1), found.group(2)
@@ -307,7 +307,7 @@ def charged_states(species, material, Atype, Btype):
 
 def vacancy_moment(species, structure, defect, atomtype, extrae):
   """ Creates/modifies moments surrounding a vacancy. """
-  from lada.crystal.defects import first_shell
+  from pylada.crystal.defects import first_shell
   if len(structure.magmom) != len(structure.atoms): structure.magmom.pop(defect.index)
   max_ox = oxnumber(species, structure, defect.pos, atomtype)
   extra_moment = int(abs(max_ox - extrae)+0.001)

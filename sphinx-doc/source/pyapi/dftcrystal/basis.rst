@@ -1,7 +1,7 @@
 Basis sets
 ----------
 
-.. currentmodule:: lada.dftcrystal.basis
+.. currentmodule:: pylada.dftcrystal.basis
 
 .. autoclass:: BasisSet
    :show-inheritance:

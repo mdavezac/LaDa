@@ -27,9 +27,9 @@ class KPoints(object):
     """ Returns iterable yielding (multiplicity, kpoints). 
     
         :Parameters:
-          input : `lada.crystal.Structure`
+          input : `pylada.crystal.Structure`
             The structure before vff relaxation (if any). 
-          output : `lada.crystal.Structure`
+          output : `pylada.crystal.Structure`
             The structure after vff relaxation. If no relaxation was performed,
             then should be the same structure as the input structure.
     """

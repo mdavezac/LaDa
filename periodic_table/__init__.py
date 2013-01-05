@@ -4,7 +4,7 @@
 
     .. python::
     
-      import lada.periodic_table
+      import pylada.periodic_table
       periodic_table.Au.atomic_weight
       periodic_table.Gold.atomic_weight
 

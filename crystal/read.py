@@ -8,7 +8,7 @@ def poscar(path="POSCAR", types=None):
        :param types: Species in the POSCAR.
        :type types: None or sequence of str
       
-      :return: `lada.crystal.Structure` instance.
+      :return: `pylada.crystal.Structure` instance.
   """ 
   import re
   from os.path import join, exists, isdir

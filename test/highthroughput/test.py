@@ -24,9 +24,9 @@ def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
   from re import compile
   from IPython.core.interactiveshell import InteractiveShell
   from copy import deepcopy
-  from lada.vasp import read_input
-  from lada.jobfolder import JobFolder
-  from lada import interactive
+  from pylada.vasp import read_input
+  from pylada.jobfolder import JobFolder
+  from pylada import interactive
 
   # reads input.
   input = read_input(inputpath)
@@ -113,9 +113,9 @@ def magnetic_wave(path=None, inputpath='input.py', **kwargs):
   from tempfile import NamedTemporaryFile
   from os.path import dirname, normpath, relpath, join
   from IPython.core.interactiveshell import InteractiveShell
-  from lada.jobfolder import JobFolder
-  from lada.vasp import read_input
-  from lada.opt import Input
+  from pylada.jobfolder import JobFolder
+  from pylada.vasp import read_input
+  from pylada.opt import Input
 
   # Loads job-folder and path as requested. 
   if interactive.jobfolder is None: 
@@ -212,7 +212,7 @@ def magnetic_wave(path=None, inputpath='input.py', **kwargs):
 
 def is_magnetic_system(structure, species):
   """ True if system is magnetic. """
-  from lada.crystal import specie_list
+  from pylada.crystal import specie_list
 
   for u in [u for name, u in species.items() if name in specie_list(structure)]:
     if not hasattr(u, "moment"): continue

@@ -1,5 +1,5 @@
-from lada.crystal.A2BX4 import b5
-from lada.enumeration import Enum
+from pylada.crystal.A2BX4 import b5
+from pylada.enumeration import Enum
 from spinel_check import checkme
 
 
@@ -12,7 +12,7 @@ lattice.find_space_group()
 
 # look at inverse only.
 def check_concentration(x, flavorbase, smith):
-  from lada.enumeration import as_numpy
+  from pylada.enumeration import as_numpy
 
   types = as_numpy(x, flavorbase) 
   result = 2*len(types[types == 1]) == len(types)

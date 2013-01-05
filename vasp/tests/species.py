@@ -1,6 +1,6 @@
 def test_U():
   """ Test U translation. """
-  from lada.vasp.specie import U
+  from pylada.vasp.specie import U
   a = U("liechtenstein", 's', -1e0, 1e0)
   assert a['type'] == 1 and a['l'] == 0 and abs(a['U'] + 1e0) < 1e-8 \
          and abs(a['J'] - 1e0) < 1e-8 and a['func'] == 'U'
@@ -25,9 +25,9 @@ def test_U():
 
 def test_nlep():
   """ Test nlep translation. """
-  from lada.vasp.specie import nlep
-  import lada
-  lada.vasp_has_nlep = True
+  from pylada.vasp.specie import nlep
+  import pylada
+  pylada.vasp_has_nlep = True
   a = nlep("liechtenstein", 's', -1e0)
   assert a['type'] == 1 and a['l'] == 0 and abs(a['U0'] + 1e0) < 1e-8 \
          and 'U1' not in a and a['func'] == 'nlep'
@@ -52,7 +52,7 @@ def test_nlep():
 
 def test_enlep():
   """ Test enlep translation. """
-  from lada.vasp.specie import nlep
+  from pylada.vasp.specie import nlep
   a = nlep("liechtenstein", 's', -1e0, -5e0)
   assert a['type'] == 1 and a['l'] == 0 and abs(a['U0'] + 1e0) < 1e-8 \
          and abs(a['U1'] + 5e0) < 1e-8 and a['func'] == 'enlep'
@@ -61,7 +61,7 @@ def test_specie(directory):
   from os.path import join
   from pickle import loads, dumps
   from quantities import eV
-  from lada.vasp.specie import Specie
+  from pylada.vasp.specie import Specie
 
   pseudos = [('Rh', 229.0, 9.), ('O', 400., 6.), ('Si', 245.345, 4.), ('Zn', 276.727, 12.)]
   for name, enmax, valence in pseudos:

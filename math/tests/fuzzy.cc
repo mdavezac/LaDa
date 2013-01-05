@@ -1,8 +1,8 @@
-#include "LaDaConfig.h"
+#include "PyladaConfig.h"
 
 #include<iostream>
 
-#define LADA_DOASSERT(a,b) \
+#define PYLADA_DOASSERT(a,b) \
         { \
           if((not (a)))\
           { \
@@ -13,37 +13,37 @@
 
 #include "../math.h"
 
-#if LADA_TEST_INCTYPE == 0
-#  define LADA_FIRST 5
-#  define LADA_SMALL 0
-#  define LADA_TOL   1
-#elif LADA_TEST_INCTYPE == 1
-#  define LADA_FIRST 5e0
-#  define LADA_SMALL   0.5 * types::tolerance
-#  define LADA_TOL   10 * types::tolerance
+#if PYLADA_TEST_INCTYPE == 0
+#  define PYLADA_FIRST 5
+#  define PYLADA_SMALL 0
+#  define PYLADA_TOL   1
+#elif PYLADA_TEST_INCTYPE == 1
+#  define PYLADA_FIRST 5e0
+#  define PYLADA_SMALL   0.5 * types::tolerance
+#  define PYLADA_TOL   10 * types::tolerance
 #endif
 
 using namespace std;
 int main()
 {
-  using namespace LaDa;
-  using namespace LaDa::math;
+  using namespace Pylada;
+  using namespace Pylada::math;
 
-  LADA_DOASSERT(eq(LADA_FIRST, LADA_FIRST+LADA_SMALL), "unexpected eq result.\n")
-  LADA_DOASSERT(not eq(LADA_FIRST, LADA_FIRST+1), "unexpected eq result.\n")
-  LADA_DOASSERT(not lt(LADA_FIRST, LADA_FIRST+LADA_SMALL), "unexpected lt result.\n")
-  LADA_DOASSERT(not lt(LADA_FIRST, LADA_FIRST+LADA_SMALL, LADA_TOL), "unexpected lt result.\n")
-  LADA_DOASSERT(lt(LADA_FIRST, LADA_FIRST+5), "unexpected lt result.\n")
-  LADA_DOASSERT(not gt(LADA_FIRST, LADA_FIRST-LADA_SMALL), "unexpected gt result.\n")
-  LADA_DOASSERT(not gt(LADA_FIRST, LADA_FIRST-LADA_SMALL, LADA_TOL), "unexpected gt result.\n")
-  LADA_DOASSERT(gt(LADA_FIRST+5, LADA_FIRST), "unexpected gt result.\n")
-  LADA_DOASSERT(is_identity(1 + LADA_SMALL), "unexpected unity.")
-  LADA_DOASSERT(not is_identity(LADA_FIRST), "unexpected unity.")
-  LADA_DOASSERT(is_null(LADA_SMALL), "unexpected null.")
-  LADA_DOASSERT(not is_null(LADA_FIRST), "unexpected null.")
-  LADA_DOASSERT(is_integer(LADA_FIRST + LADA_SMALL), "unexpected integer.")
-# if LADA_TEST_TYPE != 0
-    LADA_DOASSERT(not is_integer(LADA_FIRST + LADA_SMALL, LADA_TOL), "unexpected integer.")
+  PYLADA_DOASSERT(eq(PYLADA_FIRST, PYLADA_FIRST+PYLADA_SMALL), "unexpected eq result.\n")
+  PYLADA_DOASSERT(not eq(PYLADA_FIRST, PYLADA_FIRST+1), "unexpected eq result.\n")
+  PYLADA_DOASSERT(not lt(PYLADA_FIRST, PYLADA_FIRST+PYLADA_SMALL), "unexpected lt result.\n")
+  PYLADA_DOASSERT(not lt(PYLADA_FIRST, PYLADA_FIRST+PYLADA_SMALL, PYLADA_TOL), "unexpected lt result.\n")
+  PYLADA_DOASSERT(lt(PYLADA_FIRST, PYLADA_FIRST+5), "unexpected lt result.\n")
+  PYLADA_DOASSERT(not gt(PYLADA_FIRST, PYLADA_FIRST-PYLADA_SMALL), "unexpected gt result.\n")
+  PYLADA_DOASSERT(not gt(PYLADA_FIRST, PYLADA_FIRST-PYLADA_SMALL, PYLADA_TOL), "unexpected gt result.\n")
+  PYLADA_DOASSERT(gt(PYLADA_FIRST+5, PYLADA_FIRST), "unexpected gt result.\n")
+  PYLADA_DOASSERT(is_identity(1 + PYLADA_SMALL), "unexpected unity.")
+  PYLADA_DOASSERT(not is_identity(PYLADA_FIRST), "unexpected unity.")
+  PYLADA_DOASSERT(is_null(PYLADA_SMALL), "unexpected null.")
+  PYLADA_DOASSERT(not is_null(PYLADA_FIRST), "unexpected null.")
+  PYLADA_DOASSERT(is_integer(PYLADA_FIRST + PYLADA_SMALL), "unexpected integer.")
+# if PYLADA_TEST_TYPE != 0
+    PYLADA_DOASSERT(not is_integer(PYLADA_FIRST + PYLADA_SMALL, PYLADA_TOL), "unexpected integer.")
 # endif
   return 0;
 }

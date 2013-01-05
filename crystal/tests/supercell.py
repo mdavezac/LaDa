@@ -3,7 +3,7 @@ def test_supercell():
   """ Simple supercell test. """
   from numpy import identity, abs, all, dot
   from numpy.linalg import inv
-  from lada.crystal.cppwrappers import supercell, Structure, are_periodic_images as api
+  from pylada.crystal.cppwrappers import supercell, Structure, are_periodic_images as api
   from quantities import angstrom
   lattice = Structure( 0.0, 0.5, 0.5,
                        0.5, 0.0, 0.5,
@@ -48,8 +48,8 @@ def get_cell(n=5):
 def test_manysupercell():
   from numpy import dot
   from numpy.linalg import inv, det
-  from lada.crystal import supercell, binary
-  from lada.crystal.cppwrappers import are_periodic_images as api
+  from pylada.crystal import supercell, binary
+  from pylada.crystal.cppwrappers import are_periodic_images as api
   lattice = binary.zinc_blende()
   invlat = inv(lattice.cell)
   for i in xrange(100):

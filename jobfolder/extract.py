@@ -15,7 +15,7 @@ class AbstractMassExtract(object):
       executable folders `via` the mapping (``[]``) methods, e.g. a view of the
       folders. The attributes of the wrapped *somethings* of the current view
       are retrieved into a :py:class:`forwarding dict
-      <lada.jobfolder.forwardingdict.ForwardingDict`. 
+      <pylada.jobfolder.forwardingdict.ForwardingDict`. 
       
       The :py:meth:`__iter_alljobs__` method should be implemented within
       derived classes. It should yield for each executable folder a tuple

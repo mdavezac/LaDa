@@ -1,6 +1,6 @@
 def test():
-  from lada.tools.input import Tree
-  from lada.error import ValueError
+  from pylada.tools.input import Tree
+  from pylada.error import ValueError
 
   a = Tree()
   assert len(a) == 0

@@ -1,7 +1,7 @@
 Computational and Hamiltonian parameters
 ----------------------------------------
 
-.. currentmodule:: lada.dftcrystal.electronic
+.. currentmodule:: pylada.dftcrystal.electronic
 
 .. autoclass:: Electronic
    :show-inheritance:
@@ -15,9 +15,9 @@ Computational and Hamiltonian parameters
      
       Attribute block which holds parameters defining the Hamiltonian used in
       the calculation. It is an instance of
-      :py:class:`~lada.dftcrystal.hamiltonian.Dft`.
+      :py:class:`~pylada.dftcrystal.hamiltonian.Dft`.
 
-.. currentmodule:: lada.dftcrystal.hamiltonian
+.. currentmodule:: pylada.dftcrystal.hamiltonian
 
 .. autoclass:: Dft
    :show-inheritance:

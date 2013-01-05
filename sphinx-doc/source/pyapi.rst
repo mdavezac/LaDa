@@ -7,14 +7,14 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-    lada.crystal <pyapi/crystal>
+    pylada.crystal <pyapi/crystal>
 
-    lada.error <pyapi/error>
+    pylada.error <pyapi/error>
     
-    lada.jobfolder <pyapi/jobfolder>
+    pylada.jobfolder <pyapi/jobfolder>
 
-    lada.process <pyapi/process>
+    pylada.process <pyapi/process>
 
-    lada.vasp <pyapi/vasp>
+    pylada.vasp <pyapi/vasp>
 
-    lada.dftcrystal <pyapi/dftcrystal>
+    pylada.dftcrystal <pyapi/dftcrystal>

@@ -1,8 +1,8 @@
 from numpy import dot
-from lada.crystal import fill_structure, FreezeAtom
-from lada.vasp import read_input
-from lada.vasp.emass import reciprocal
-from lada.mpi import world
+from pylada.crystal import fill_structure, FreezeAtom
+from pylada.vasp import read_input
+from pylada.vasp.emass import reciprocal
+from pylada.mpi import world
 
 input = read_input("input.py")
 

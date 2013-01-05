@@ -1,6 +1,6 @@
 def test(path=None, dodate=True):
   from numpy import array, all, abs
-  from lada.vasp import Extract
+  from pylada.vasp import Extract
   from quantities import eV, J, kbar as kB, angstrom
 
   a = Extract(directory=path)

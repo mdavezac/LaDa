@@ -2,10 +2,10 @@ def test():
   from collections import namedtuple
   from pickle import loads, dumps
   from numpy import all, abs, array
-  from lada.crystal import Structure
-  from lada.vasp import Vasp
-  from lada.vasp.specie import U, nlep
-  import lada
+  from pylada.crystal import Structure
+  from pylada.vasp import Vasp
+  from pylada.vasp.specie import U, nlep
+  import pylada
 
   u = 0.25
   x, y = u, 0.25-u
@@ -27,7 +27,7 @@ def test():
   a = Vasp()
   Specie = namedtuple('Specie', ['U'])
   a.species = {'A': Specie([]), 'B': Specie([]), 'X': Specie([])}
-  lada.vasp_has_nlep  = False
+  pylada.vasp_has_nlep  = False
 
   o = a._input['ldau']
   d = {'LDAU': o.__class__}
@@ -61,7 +61,7 @@ def test():
   
 
   # now tries NLEP
-  lada.vasp_has_nlep = True
+  pylada.vasp_has_nlep = True
   a.species = {'A': Specie([U(2, 0, 0.5)]), 'B': Specie([U(2, 0, -0.5), nlep(2, 1, -1.0)]), 'X': Specie([])}
   a.ldau = False
   assert a.ldau == False

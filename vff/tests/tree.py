@@ -1,7 +1,7 @@
 def test_tree():
   from numpy import all, array, dot, sum, any
-  from lada.crystal import binary, supercell
-  from lada.vff import build_tree
+  from pylada.crystal import binary, supercell
+  from pylada.vff import build_tree
   a = binary.zinc_blende()
   a = supercell(binary.zinc_blende(), [[2, 0, 0], [0, 2, 0], [0, 0, 1]])
   b = build_tree(a, overlap=0.5)
@@ -19,8 +19,8 @@ def test_disorder(lim=8):
   from numpy import all, array, dot
   from numpy.random import random, randint
   from numpy.linalg import det
-  from lada.crystal import binary, supercell
-  from lada.vff import build_tree
+  from pylada.crystal import binary, supercell
+  from pylada.vff import build_tree
 
 
   lattice = binary.zinc_blende()

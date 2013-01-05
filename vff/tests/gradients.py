@@ -1,5 +1,5 @@
 def functional():
-  from lada.vff.vff import Vff
+  from pylada.vff.vff import Vff
   vff = Vff()
   vff["In", "As"] = 2.62332, 21.6739, -112.0, 150.0
   vff["Ga", "As"] = 2.44795, 32.1530, -105.0, 150.0
@@ -13,7 +13,7 @@ def functional():
 
 def test_gradients(epsilon = 1e-4):
   from numpy import abs, dot, array, sqrt
-  from lada.crystal.binary import zinc_blende
+  from pylada.crystal.binary import zinc_blende
 
   vff = functional()
 
@@ -56,7 +56,7 @@ def test_stress(epsilon = 1e-4):
   from numpy import abs, dot, array, identity
   from numpy.linalg import det
   from quantities import angstrom
-  from lada.crystal.binary import zinc_blende
+  from pylada.crystal.binary import zinc_blende
 
   vff = functional()
 
@@ -87,6 +87,7 @@ def test_stress(epsilon = 1e-4):
 
     stress = (xplus - xminus) / epsilon * 0.5                                  \
              * -1e0 / det(structure.cell*structure.scale)*angstrom**(-3)
+    stress = float(stress)
     assert abs(stress - out.stress[i, i]) < 1e2 * epsilon
 
 
@@ -119,6 +120,7 @@ def test_stress(epsilon = 1e-4):
 
       stress = (xplus - xminus) / epsilon * 0.5                                \
                * -1e0 / det(structure.cell*structure.scale)*angstrom**(-3)
+      stress = float(stress)
       assert abs(out.stress[i,j]-out.stress[j,i]) < 1e-8
       assert abs(stress - out.stress[i, j]) < 1e2 * epsilon
 

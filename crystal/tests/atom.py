@@ -92,7 +92,7 @@ def test_resize(Class):
 if __name__ == "__main__":
   from sys import argv, path 
   if len(argv) > 0: path.extend(argv[1:])
-  from lada.crystal.cppwrappers import Atom
+  from pylada.crystal.cppwrappers import Atom
   
   # tries to run test with normal class.
   test_init(Atom) 

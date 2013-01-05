@@ -1,7 +1,7 @@
 """ Launches scattered calculations.
 
  
-    This launch strategy will send one pbs/slurm job per lada job.
+    This launch strategy will send one pbs/slurm job per pylada job.
 
     >>> %launch scattered --walltime 24:00:00 
 """

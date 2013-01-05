@@ -33,7 +33,7 @@ class Escan(object):
       assert workdir is None, ValueError("Cannot use both workdir and inplace attributes.")
 
     self.vff = Vff() 
-    """ The `lada.vff.Vff` functional with which to relax a structure. """
+    """ The `pylada.vff.Vff` functional with which to relax a structure. """
     self.OUTCAR = "escan_out" 
     """ Escan output file. """
     self.ERRCAR = "escan_err"
@@ -272,7 +272,7 @@ class Escan(object):
     module = self.__class__.__module__ 
     classname = self.__class__.__name__ 
     header = "from numpy import array\n"\
-             "from lada.escan import soH, localH, nonlocalH\n"\
+             "from pylada.escan import soH, localH, nonlocalH\n"\
              "from {1} import {0}\n".format(classname, module)
     if hasattr(self.fft_mesh, '__call__'): 
       header += "from {0.__module__} import {0.__name__}\n".format(self.fft_mesh.__class__)

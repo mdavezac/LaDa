@@ -1,7 +1,7 @@
 Execution of a callable
 ***********************
 
-.. automodule:: lada.process.call
+.. automodule:: pylada.process.call
 .. moduleauthor:: Mayeul d'Avezac
 .. autoclass:: CallProcess
    :show-inheritance:

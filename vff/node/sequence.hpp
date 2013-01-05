@@ -1,4 +1,4 @@
-namespace LaDa
+namespace Pylada
 {
   namespace vff
   {
@@ -17,15 +17,15 @@ namespace LaDa
        //! Retrieves slice.
        static PyObject* subscript(NodeData *_self, PyObject *_index);
     }
-#   ifdef LADA_STARTTRY
-#     error LADA_STARTTRY already defined.
+#   ifdef PYLADA_STARTTRY
+#     error PYLADA_STARTTRY already defined.
 #   endif
-#   ifdef LADA_ENDTRY
-#     error LADA_ENDTRY already defined.
+#   ifdef PYLADA_ENDTRY
+#     error PYLADA_ENDTRY already defined.
 #   endif
-#   define LADA_STARTTRY try {
-#   define LADA_ENDTRY(error) } catch(std::exception &_e) { \
-       LADA_PYERROR_FORMAT( internal, \
+#   define PYLADA_STARTTRY try {
+#   define PYLADA_ENDTRY(error) } catch(std::exception &_e) { \
+       PYLADA_PYERROR_FORMAT( internal, \
                             "C++ thrown exception caught in " #error ":\n%.200s", \
                             _e.what() ); \
        return NULL; } 
@@ -43,10 +43,10 @@ namespace LaDa
         return NULL;
       if(not PyNodeData_Check(nodeB))
       {
-        LADA_PYERROR(TypeError, "First argument to link should be a Node.");
+        PYLADA_PYERROR(TypeError, "First argument to link should be a Node.");
         return NULL;
       }
-      LADA_STARTTRY
+      PYLADA_STARTTRY
         size_t const n = _self->bonds.size();
         math::rVector3d pos(0,0,0);
         if(_pos) 
@@ -54,19 +54,19 @@ namespace LaDa
         if(not PyNode_AddEdge(_self, (NodeData*)nodeB, pos)) return NULL;
         if(n != _self->bonds.size()) Py_RETURN_TRUE;
         Py_RETURN_FALSE;
-      LADA_ENDTRY(Node.link)
+      PYLADA_ENDTRY(Node.link)
     }
     // Removes and returns atom from set.
     PyObject* pop(NodeData *_self, PyObject* _index)
     {
-      LADA_STARTTRY
+      PYLADA_STARTTRY
         long index = PyInt_AsLong(_index);
         if(index == -1 and PyErr_Occurred()) return NULL;
         size_t const n = _self->bonds.size();
         if(index < 0) index += n;
         if(index < 0 or index >= n) 
         {
-          LADA_PYERROR(IndexError, "Index out-of-range in Node.pop.");
+          PYLADA_PYERROR(IndexError, "Index out-of-range in Node.pop.");
           return NULL;
         }
 
@@ -90,13 +90,13 @@ namespace LaDa
             }
           if(i_first == i_end)
           {
-            LADA_PYERROR(internal, "Could not find equivalent edge in other endpoint.");
+            PYLADA_PYERROR(internal, "Could not find equivalent edge in other endpoint.");
             return NULL;
           }
         }
 
         return edge_to_tuple(_self, py_edge);
-      LADA_ENDTRY(Node.pop)
+      PYLADA_ENDTRY(Node.pop)
     }
     // Clears occupation set.
     PyObject* clear(NodeData *_self)
@@ -120,7 +120,7 @@ namespace LaDa
           }
         if(i_first == i_end)
         {
-          LADA_PYERROR(internal, "Could not find equivalent edge in other endpoint.");
+          PYLADA_PYERROR(internal, "Could not find equivalent edge in other endpoint.");
           return NULL;
         }
       }
@@ -136,17 +136,17 @@ namespace LaDa
     // Retrieves item. No slice.
     PyObject* getitem(NodeData *_self, Py_ssize_t _index)
     {
-      LADA_STARTTRY
+      PYLADA_STARTTRY
         size_t const n = _self->bonds.size();
         if(_index < 0) _index += n;
         if(_index < 0 or _index >= n)
         {
-          LADA_PYERROR(IndexError, "Index out of range when getting node from structure.");
+          PYLADA_PYERROR(IndexError, "Index out of range when getting node from structure.");
           return NULL;
         }
         EdgeData* const py_edge = _self->bonds[_index];
         return edge_to_tuple(_self, py_edge);
-      LADA_ENDTRY(Node.__getitem__)
+      PYLADA_ENDTRY(Node.__getitem__)
     }
     // Retrieves slice and items.
     PyObject* subscript(NodeData *_self, PyObject *_index)
@@ -159,12 +159,12 @@ namespace LaDa
       }
       else if(not PySlice_Check(_index))
       {
-        LADA_PYERROR_FORMAT( TypeError,
+        PYLADA_PYERROR_FORMAT( TypeError,
                              "Structure indices must be integers or slices, not %.200s.\n",
                              _index->ob_type->tp_name );
         return NULL;
       }
-      LADA_STARTTRY
+      PYLADA_STARTTRY
         Py_ssize_t start, stop, step, slicelength;
         if (PySlice_GetIndicesEx((PySliceObject*)_index, _self->bonds.size(),
                                   &start, &stop, &step, &slicelength) < 0)
@@ -194,9 +194,9 @@ namespace LaDa
           }
         }
         return tuple.release();
-      LADA_ENDTRY(Node.__getitem__);
+      PYLADA_ENDTRY(Node.__getitem__);
     }
-#   undef LADA_STARTTRY
-#   undef LADA_ENDTRY
+#   undef PYLADA_STARTTRY
+#   undef PYLADA_ENDTRY
   }
 }

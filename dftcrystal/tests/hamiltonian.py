@@ -1,8 +1,8 @@
 def test():
   from collections import namedtuple
-  from lada.dftcrystal.hamiltonian import Dft
-  from lada.dftcrystal.input import print_input
-  from lada.dftcrystal.parse import parse
+  from pylada.dftcrystal.hamiltonian import Dft
+  from pylada.dftcrystal.input import print_input
+  from pylada.dftcrystal.parse import parse
   Crystal = namedtuple('Crystal', ['dft'])
   
   a = Dft()
@@ -174,8 +174,8 @@ def test():
 def test_grids():
   from numpy import array, all, abs
   from collections import namedtuple
-  from lada.dftcrystal.hamiltonian import Dft
-  from lada.dftcrystal.input import print_input
+  from pylada.dftcrystal.hamiltonian import Dft
+  from pylada.dftcrystal.input import print_input
   Crystal = namedtuple('Crystal', ['dft'])
   a = Dft()
   assert a.radial.intervals is None

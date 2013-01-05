@@ -23,15 +23,15 @@ configure_file (
  "${PROJECT_SOURCE_DIR}/python/__init__.in.py"
  "${PROJECT_BINARY_DIR}/python/__init__.py"
 )
-install(FILES ${PROJECT_BINARY_DIR}/python/__init__.py DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada)
-install(FILES ${PYLADA_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada)
+install(FILES ${PROJECT_BINARY_DIR}/python/__init__.py DESTINATION ${CMAKE_PYINSTALL_PREFIX}/pylada)
+install(FILES ${PYLADA_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/pylada)
 
 include_directories(${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDES})
 add_library (pypython SHARED module.cc)
 set_target_properties(pypython PROPERTIES OUTPUT_NAME cppwrappers)
 set_target_properties(pypython PROPERTIES PREFIX "")
-install(TARGETS pypython DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada)
-install(FILES ${LIBCRYSTAL_PYSOURCES} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada)
+install(TARGETS pypython DESTINATION ${CMAKE_PYINSTALL_PREFIX}/pylada)
+install(FILES ${LIBCRYSTAL_PYSOURCES} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/pylada)
 
 
 set(PYHELPER_HEADERS python.h types.h wrap_numpy.h numpy_types.h
@@ -43,7 +43,7 @@ set(PYHELPER_HEADERS python.h types.h wrap_numpy.h numpy_types.h
 set(PYHELPER_SOURCES object.cc quantity.cc)
 
 if(NOT noinstall_headers)
-  install(FILES ${PYHELPER_HEADERS} DESTINATION include/LaDa/python)
+  install(FILES ${PYHELPER_HEADERS} DESTINATION include/Pylada/python)
 endif(NOT noinstall_headers)
 
 if(compile_tests OR compile_debug_tests)

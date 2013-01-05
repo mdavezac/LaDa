@@ -162,7 +162,7 @@ def exec_input( script, global_dict=None, local_dict=None,
       global_dict[k] = globals()[k]
   return exec_input(script, global_dict, local_dict, paths, name)
 
-from lada import is_interactive
+from pylada import is_interactive
 if is_interactive:
   from .interactive import *
 

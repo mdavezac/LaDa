@@ -4,7 +4,7 @@ def test(Class, withposcar):
   from os.path import join, exists
   from shutil import rmtree
   from tempfile import mkdtemp
-  from lada.vasp.files import WAVECAR, CHGCAR, CONTCAR, POSCAR
+  from pylada.vasp.files import WAVECAR, CHGCAR, CONTCAR, POSCAR
   from restart_class import Extract, Vasp
 
   cwd = getcwd()
@@ -188,7 +188,7 @@ def test(Class, withposcar):
 if __name__ == "__main__":
   from sys import argv, path 
   from numpy import array
-  from lada.vasp.incar._params import Restart, PartialRestart
+  from pylada.vasp.incar._params import Restart, PartialRestart
   if len(argv) > 0: path.extend(argv[1:])
   
   test(PartialRestart, False)

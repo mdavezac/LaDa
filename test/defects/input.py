@@ -1,5 +1,5 @@
 """ Input script for the calculation of Point Defects. """
-from lada.crystal import A2BX4
+from pylada.crystal import A2BX4
 
 lattice = A2BX4.b5()
 """ Back-bone lattice. """

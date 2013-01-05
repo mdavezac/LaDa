@@ -1,4 +1,4 @@
-.. currentmodule:: lada
+.. currentmodule:: pylada
 .. _ipython_ug:
 
 IPython high-throughput interface
@@ -9,7 +9,7 @@ shell.  It can be used for both bash related affairs such as copying files
 around creating directories, and for actual python programming. In fact, the
 two can be combined to create a truly powerfull shell. 
 
-LaDa puts this tool to good use by providing a command-line approach to
+Pylada puts this tool to good use by providing a command-line approach to
 manipulate :ref:`job-folders <jobfolder_ug>`, launch actual calculations, and
 collect the result.  When used in conjunction with python plotting libraries,
 e.g. matplotlib_, it can provide rapid turnaround from conceptualization to
@@ -23,12 +23,12 @@ result analysis.
 
 .. warning:: 
 
-   If you have not set-up LaDa to run :ref:`multiple mpi programs in parallel
+   If you have not set-up Pylada to run :ref:`multiple mpi programs in parallel
    <install_mmpi_ug>` yet, please add the one liner::
 
      do_multiple_mpi_programs = False 
 
-   in your ~/.lada file. Don't forget to remove it when time comes to run LaDa
+   in your ~/.pylada file. Don't forget to remove it when time comes to run Pylada
    for real.
 
 .. _ipython_prep_ug:
@@ -36,7 +36,7 @@ result analysis.
 Prep
 ====
 
-LaDa's IPython interface revolves around :ref:`job-folders <jobfolder_ug>`. 
+Pylada's IPython interface revolves around :ref:`job-folders <jobfolder_ug>`. 
 In order to explore its features, we first need to create job-folders,
 preferably some which do not involve heavy calculations. Please copy the
 following to a file in the directory from which IPython_ is launched. In the
@@ -73,7 +73,7 @@ then a simple job-folder can be created from the ipython interface with:
 
    We need do ``import`` here because the functional is defined in the script
    itself. However, when using a functional defined somewhere else -- such as
-   any LaDa functional -- it is easier for debugging purposes to do:
+   any Pylada functional -- it is easier for debugging purposes to do:
 
    >>> run -i dummy.py
 
@@ -99,12 +99,12 @@ without arguments.
 
 The percent(%) sign indicates that these commands are ipython
 `magic-functions`_. The percent can be obviated using `%automagic`_. To get
-more information about what LaDa magic functions do, call them with "--help". 
+more information about what Pylada magic functions do, call them with "--help". 
 
 .. tip::
    
    The current job-folder and the current job-folder path are stored in
-   ``lada.interactive.jobfolder`` and ``lada.interactive.jobfolder_path``.
+   ``pylada.interactive.jobfolder`` and ``pylada.interactive.jobfolder_path``.
    In practice, accessing those directly is rarely needed.
 
 
@@ -229,11 +229,11 @@ any specific job-folder, then that job-folder is ignored.
    attributes. (Actually, the cake is lie. Experts hackers may want to
    check-out :py:attr:`JobParams.only_existing
    <jobfolder.manipulator.JobParams.only_existing>` and
-   :py:data:`lada.jobparams_only_existing`.)
+   :py:data:`pylada.jobparams_only_existing`.)
 
 Finally, it is possible to focus on a specific sub-set of jobfolders. By
 default the syntax is that of a unix-shell. However, the syntax can be switched
-to regular exppressions `via` the LaDa parameter :py:data:`lada.unix_re`. Only
+to regular exppressions `via` the Pylada parameter :py:data:`pylada.unix_re`. Only
 the former syntax is illustrated here:
 
 >>> jobparams['*/alloy'].structure.name
@@ -245,13 +245,13 @@ which corresponds to "\*/alloy". In that case, the object is returned as is,
 rather than wrapped in a dictionary. This behavior can be turned on and off
 using the parameters :py:data:`jobparams_naked_end` and
 :py:attr:`JobParams.naked_end
-<lada.jobfolder.manipulator.JobParams.naked_end>`. The unix shell-like syntax
+<pylada.jobfolder.manipulator.JobParams.naked_end>`. The unix shell-like syntax
 can be either absolute paths, when preceded with '/', or relative. In that last
 case, they are relative to the current position in the job-folder, as changed
 by :ref:`%goto <ipython_goto_ug>`. 
 
 In most cases (see below) the return from using ``jobparams.something`` is a
-:py:class:`kind of dictionary <lada.jobfolder.forwarding_dict.ForwardingDict>`.
+:py:class:`kind of dictionary <pylada.jobfolder.forwarding_dict.ForwardingDict>`.
 It can be iterated over like any other dictionary:
 
 >>> for key, value in jobparams['diamond/*'].structure.name.iteritems():
@@ -259,13 +259,13 @@ It can be iterated over like any other dictionary:
 /diamond/ hello
 /diamond/alloy/ hello
 
-.. currentmodule:: lada.jobfolder.manipulator
+.. currentmodule:: pylada.jobfolder.manipulator
 
 The other available iteration methods are :py:meth:`~JobParams.iterkeys`,
 :py:meth:`~JobParams.keys`, :py:meth:`~JobParams.itervalues`,
 :py:meth:`~JobParams.values`, :py:meth:`~JobParams.items`.
 
-.. currentmodule:: lada
+.. currentmodule:: pylada
 
 .. _ipython_launch_ug:
 
@@ -301,7 +301,7 @@ Once job-folders are ready, it takes all of one line to launch the calculations:
 This will create one pbs/slurm job per executable job-folder. A number of
 options are possible to select the number of processors, the account or queue,
 the walltime, etc. To examine them, do ``%launch scattered --help``. Most
-default values should be contained in :py:data:`lada.default_pbs`. The number
+default values should be contained in :py:data:`pylada.default_pbs`. The number
 of processors is by default equal to the even number closest to the number of
 atoms in the structure (apparently, this is a recommended VASP default). The
 number of processes can be given both as an integer, or as function which takes
@@ -317,7 +317,7 @@ job-folders are changed simultaneously.
 
 .. note::
 
-  For ``%launch scattered`` to work, it is first necessary to setup LaDa to
+  For ``%launch scattered`` to work, it is first necessary to setup Pylada to
   work with the :ref:`ressource manager <install_pbs_ug>` and with
   :ref:`MPI <install_mpi_ug>`.
 

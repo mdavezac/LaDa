@@ -10,7 +10,7 @@ class JobParams(AbstractMassExtract):
     """ Initializes job-parameters.
 
         :param jobfolder :
-            :py:class:`JobFolder <lada.jobs.jobfolder.JobDict>` instance for which
+            :py:class:`JobFolder <pylada.jobs.jobfolder.JobDict>` instance for which
             to get/set parameters. If None, will look for ipython's
             current_jobfolder.
         :param bool only_existing:
@@ -172,7 +172,7 @@ class JobParams(AbstractMassExtract):
         :param str name: 
           Name of item to modify.
         :param jobfolder:
-          :py:class:`JobFolder lada.jobs.jobfolder.JobDict` or
+          :py:class:`JobFolder pylada.jobs.jobfolder.JobDict` or
           :py:class:`JobParams` with which to set/modify item.
           In the latter case, it should point to a single entry in the
           job-folder. Eg no wildcards.

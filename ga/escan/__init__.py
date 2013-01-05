@@ -21,7 +21,7 @@ class CompareSuperCells(object):
     """ Initializes comparison operator. 
 
         :Parameters:
-          lattice : `lada.crystal.Lattice`
+          lattice : `pylada.crystal.Lattice`
             The backbone lattice.
           supercell : nump 3x3 array
             The supercell for which configurations are given.
@@ -29,7 +29,7 @@ class CompareSuperCells(object):
             If a callable then will check input for attribute *integer_has_code*.
             If attribute does not exist, will convert input using this
             converter and obtain integer hash_code and resulting instance. If
-            None, functor expects `lada.crystal.Structure` instances which it
+            None, functor expects `pylada.crystal.Structure` instances which it
             will compare.
     """
     from ...crystal import smith_normal_transform

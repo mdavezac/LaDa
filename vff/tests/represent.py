@@ -1,5 +1,5 @@
 def functional():
-  from lada.vff.vff import Vff
+  from pylada.vff.vff import Vff
   vff = Vff()
   vff["In", "As"] = 2.62332, 21.6739, -112.0, 150.0
   vff["Ga", "As"] = 2.44795, 32.1530, -105.0, 150.0
@@ -13,8 +13,8 @@ def functional():
 
 def test_rep_vff():
   from numpy import all, abs
-  from lada.vff.vff import Vff
-  from lada.vff import exec_input
+  from pylada.vff.vff import Vff
+  from pylada.vff import exec_input
 
   a = Vff()
   input = exec_input(repr(a))
@@ -29,7 +29,7 @@ def test_rep_vff():
 def test_pickle_vff():
   from pickle import loads, dumps
   from numpy import all, abs
-  from lada.vff.vff import Vff
+  from pylada.vff.vff import Vff
 
   a = Vff()
   b = loads(dumps(a)) 

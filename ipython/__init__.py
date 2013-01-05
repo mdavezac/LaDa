@@ -1,12 +1,12 @@
-""" IPython extension module for LaDa. """
+""" IPython extension module for Pylada. """
 
 __docformat__ = "restructuredtext en"
-__lada_is_loaded__ = False
-""" Whether the LaDa plugin has already been loaded or not. """
+__pylada_is_loaded__ = False
+""" Whether the Pylada plugin has already been loaded or not. """
 def load_ipython_extension(ip):
   """Load the extension in IPython."""
-  global __lada_is_loaded__
-  if not __lada_is_loaded__:
+  global __pylada_is_loaded__
+  if not __pylada_is_loaded__:
     from types import ModuleType
     from sys import modules
     from .savefolders import savefolders
@@ -18,17 +18,17 @@ def load_ipython_extension(ip):
     from .export import export, completer as export_completer
     from .manipfolders import copy_folder, copy_completer, delete_folder,      \
                               delete_completer
-    import lada
+    import pylada
     # loads interactive files
-    lada.__dict__.update( (k, v) for k, v in lada._config_files().iteritems() 
+    pylada.__dict__.update( (k, v) for k, v in pylada._config_files().iteritems() 
                           if k[0] != '_' ) 
     # now loads extension
-    __lada_is_loaded__ = True
-    lada.interactive = ModuleType('interactive')
-    lada.interactive.jobfolder = None
-    lada.interactive.jobfolder_path = None
-    lada.is_interactive = True
-    modules['lada.interactive'] = lada.interactive
+    __pylada_is_loaded__ = True
+    pylada.interactive = ModuleType('interactive')
+    pylada.interactive.jobfolder = None
+    pylada.interactive.jobfolder_path = None
+    pylada.is_interactive = True
+    modules['pylada.interactive'] = pylada.interactive
     ip.define_magic('savefolders', savefolders)
     ip.define_magic('explore', explore)
     ip.define_magic('goto', goto)
@@ -46,20 +46,20 @@ def load_ipython_extension(ip):
     ip.set_hook('complete_command', export_completer, str_key = '%export')
     ip.set_hook('complete_command', copy_completer, str_key = '%copyfolder')
     ip.set_hook('complete_command', delete_completer, str_key = '%deletefolder')
-    if lada.ipython_verbose_representation is not None:
-      lada.verbose_representation = lada.ipython_verbose_representation
-    if hasattr(lada, 'ipython_qstat'):
+    if pylada.ipython_verbose_representation is not None:
+      pylada.verbose_representation = pylada.ipython_verbose_representation
+    if hasattr(pylada, 'ipython_qstat'):
       ip.define_magic('qstat', qstat)
       ip.define_magic('qdel', qdel)
       def dummy(*args, **kwargs): return []
       ip.set_hook('complete_command', dummy, str_key = '%qdel')
       ip.set_hook('complete_command', dummy, str_key = '%qstat')
-    if getattr(lada, 'jmol_program', None) is not None:
-      from lada.ipython.jmol import jmol
+    if getattr(pylada, 'jmol_program', None) is not None:
+      from pylada.ipython.jmol import jmol
       ip.define_magic('jmol', jmol)
 
 def unload_ipython_extension(ip):
-  """ Unloads LaDa IPython extension. """
+  """ Unloads Pylada IPython extension. """
   ip.user_ns.pop('collect', None)
   ip.user_ns.pop('jobparams', None)
 
@@ -96,10 +96,10 @@ def save_n_explore(folder, path):
   from IPython.core.interactiveshell import InteractiveShell
   from ..ipython.explore import explore
   from ..ipython.savefolders import savefolders
-  import lada
+  import pylada
   
-  lada.interactive.jobfolder = folder.root
-  lada.interactive.jobfolder_path = path
+  pylada.interactive.jobfolder = folder.root
+  pylada.interactive.jobfolder_path = path
   shell = InteractiveShell.instance()
   savefolders(shell, path)
   explore(shell, '{0}  --file'.format(path))
@@ -119,7 +119,7 @@ def qdel(self, arg):
 
       >>> %qdel "anti-ferro"
   """
-  from lada import qdel_exe
+  from pylada import qdel_exe
   arg = arg.lstrip().rstrip()
   if '--help' in arg.split() or '-h' in arg.split():
    print qdel.__doc__
@@ -145,7 +145,7 @@ def qstat(self, arg):
   """ SList of user's jobs. 
 
       The actual print-out and functionality will depend on the user-specified
-      function :py:func:`lada.ipython_qstat`. However, in general %qstat should
+      function :py:func:`pylada.ipython_qstat`. However, in general %qstat should
       work as follows:
  
       >>> %qstat
@@ -160,7 +160,7 @@ def qstat(self, arg):
 
       .. _SList: http://ipython.org/ipython-doc/stable/api/generated/IPython.utils.text.html#slist
   """
-  from lada import ipython_qstat
+  from pylada import ipython_qstat
   arg = arg.rstrip().lstrip()
   if len(arg) != 0 and '--help' in arg.split() or '-h' in arg.split():
     print qstat.__doc__ + '\n' + ipython_qstat.__doc__

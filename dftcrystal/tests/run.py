@@ -1,8 +1,8 @@
 def test():
   from tempfile import mkdtemp
   from shutil import rmtree
-  from lada.dftcrystal import Crystal, Functional, Shell
-  from lada import default_comm
+  from pylada.dftcrystal import Crystal, Functional, Shell
+  from pylada import default_comm
 
   functional = Functional()
   functional.basis['Si'] = [

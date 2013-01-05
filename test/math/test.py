@@ -1,5 +1,5 @@
 from numpy import array
-from lada.math import check_extract, check_frompy_to_cpp_vec, check_frompy_to_cpp_mat,\
+from pylada.math import check_extract, check_frompy_to_cpp_vec, check_frompy_to_cpp_mat,\
                       check_topy_from_cpp_mat, check_topy_from_cpp_vec
 
 mat = array([[0,0.5,0.5],[0.5,0,0.5],[0.5,0.5,0]])

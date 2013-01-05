@@ -1,7 +1,7 @@
-#include "LaDaConfig.h"
+#include "PyladaConfig.h"
 
 #include <Python.h>
-#define PY_ARRAY_UNIQUE_SYMBOL lada_ce_ARRAY_API
+#define PY_ARRAY_UNIQUE_SYMBOL pylada_ce_ARRAY_API
 #include <numpy/arrayobject.h>
 
 #include <algorithm>
@@ -13,7 +13,7 @@
 
 #include "productilj.h"
 
-namespace LaDa
+namespace Pylada
 {
   namespace ce
   {
@@ -45,40 +45,40 @@ namespace LaDa
     {
       Py_ssize_t const N = PyTuple_Size(_args);
       if(N == 1) Py_RETURN_NONE;
-#     ifdef LADA_DEBUG
+#     ifdef PYLADA_DEBUG
         if(N == 0)
         {
-          LADA_PYERROR(TypeError, "sum_outer expects at least one arguments");
+          PYLADA_PYERROR(TypeError, "sum_outer expects at least one arguments");
           return NULL;
         }
         PyArrayObject *result = (PyArrayObject*)PyTuple_GET_ITEM(_args, 0);
         if(not PyArray_Check(result))
         {
-          LADA_PYERROR( TypeError, "sum_outer expects all its arguments to be "
+          PYLADA_PYERROR( TypeError, "sum_outer expects all its arguments to be "
                         "numpy arrays. The first one isn't.");
           return NULL;
         }
         if(not PyArray_ISCONTIGUOUS(result))
         {
-          LADA_PYERROR( TypeError, "sum_outer expects all its arguments to be "
+          PYLADA_PYERROR( TypeError, "sum_outer expects all its arguments to be "
                         "c-contiguous numpy arrays. The first one isn't.");
           return NULL;
         }
         if(not PyArray_ISWRITEABLE(result))
         {
-          LADA_PYERROR( TypeError, "sum_outer expects its first argument to be "
+          PYLADA_PYERROR( TypeError, "sum_outer expects its first argument to be "
                         "writeable.");
           return NULL;
         }
         if(not (PyArray_ISFLOAT(result) or PyArray_ISINTEGER(result)))
         {
-          LADA_PYERROR( TypeError, "sum_outer expects all its arguments to be "
+          PYLADA_PYERROR( TypeError, "sum_outer expects all its arguments to be "
                         "float or integer arrays." );
           return NULL;
         }
         if(PyArray_NDIM(result) != N-1)
         {
-          LADA_PYERROR( TypeError, "incorrect shape for first argument to "
+          PYLADA_PYERROR( TypeError, "incorrect shape for first argument to "
                         "outer_sum." );
           return NULL;
         }
@@ -88,25 +88,25 @@ namespace LaDa
           PyArrayObject* o = (PyArrayObject*) PyTuple_GET_ITEM(_args, i);
           if(not PyArray_Check(o))
           {
-            LADA_PYERROR( TypeError, "sum_outer expects all its arguments to be "
+            PYLADA_PYERROR( TypeError, "sum_outer expects all its arguments to be "
                           "numpy arrays.");
             return NULL;
           }
           if(not PyArray_ISCONTIGUOUS(result))
           {
-            LADA_PYERROR( TypeError, "sum_outer expects all its arguments to be "
+            PYLADA_PYERROR( TypeError, "sum_outer expects all its arguments to be "
                           "c-contiguous numpy arrays.");
             return NULL;
           }
           if(o->descr->type_num != type)
           {
-            LADA_PYERROR( TypeError, "sum_outer expects all its arguments to be "
+            PYLADA_PYERROR( TypeError, "sum_outer expects all its arguments to be "
                           "arrays of the same type (float, int..).");
             return NULL;
           }
           if(PyArray_DIM(result, i-1) != PyArray_DIM(o, 0))
           {
-            LADA_PYERROR( TypeError, "Dimensions of first argument and following "
+            PYLADA_PYERROR( TypeError, "Dimensions of first argument and following "
                           "vectors do not match in outer_sum." );
             return NULL;
           }
@@ -124,13 +124,13 @@ namespace LaDa
       PyArrayObject **vecs = new PyArrayObject*[ndim];
       if(not vecs)
       {
-         LADA_PYERROR(internal, "Could not allocate memory.");
+         PYLADA_PYERROR(internal, "Could not allocate memory.");
          return NULL;
       }
       Py_ssize_t *radices = new Py_ssize_t[ndim];
       if(not vecs)
       {
-         LADA_PYERROR(internal, "Could not allocate memory.");
+         PYLADA_PYERROR(internal, "Could not allocate memory.");
          delete[] vecs;
          return NULL;
       }
@@ -140,30 +140,30 @@ namespace LaDa
         vecs[i] = (PyArrayObject*) PyTuple_GET_ITEM(_args, i+1);
         radices[i] = PyArray_STRIDE(result, i) / tobyte;
       }
-#     ifdef LADA_IFTYPE
-#       error LADA_IFTYPE already defined
+#     ifdef PYLADA_IFTYPE
+#       error PYLADA_IFTYPE already defined
 #     endif
-#     define LADA_IFTYPE(TYPENUM, TYPE)                                        \
+#     define PYLADA_IFTYPE(TYPENUM, TYPE)                                        \
         case TYPENUM:                                                          \
            _outer_sum_impl<TYPE>(n, result, radices, vecs, vecs+ndim);         \
            break;
       switch(type)
       {
-        LADA_IFTYPE(NPY_FLOAT,      npy_float)
-        LADA_IFTYPE(NPY_DOUBLE,     npy_double)
-        LADA_IFTYPE(NPY_LONGDOUBLE, npy_longdouble)
-        LADA_IFTYPE(NPY_INT,        npy_int)
-        LADA_IFTYPE(NPY_UINT,       npy_uint)
-        LADA_IFTYPE(NPY_LONG,       npy_long)
-        LADA_IFTYPE(NPY_ULONG,      npy_ulong)
-        LADA_IFTYPE(NPY_LONGLONG,   npy_longlong)
-        LADA_IFTYPE(NPY_ULONGLONG,  npy_ulonglong)
-        LADA_IFTYPE(NPY_BYTE,       npy_byte)
-        LADA_IFTYPE(NPY_UBYTE,      npy_ubyte)
-        LADA_IFTYPE(NPY_SHORT,      npy_short)
-        LADA_IFTYPE(NPY_USHORT,     npy_ushort)
+        PYLADA_IFTYPE(NPY_FLOAT,      npy_float)
+        PYLADA_IFTYPE(NPY_DOUBLE,     npy_double)
+        PYLADA_IFTYPE(NPY_LONGDOUBLE, npy_longdouble)
+        PYLADA_IFTYPE(NPY_INT,        npy_int)
+        PYLADA_IFTYPE(NPY_UINT,       npy_uint)
+        PYLADA_IFTYPE(NPY_LONG,       npy_long)
+        PYLADA_IFTYPE(NPY_ULONG,      npy_ulong)
+        PYLADA_IFTYPE(NPY_LONGLONG,   npy_longlong)
+        PYLADA_IFTYPE(NPY_ULONGLONG,  npy_ulonglong)
+        PYLADA_IFTYPE(NPY_BYTE,       npy_byte)
+        PYLADA_IFTYPE(NPY_UBYTE,      npy_ubyte)
+        PYLADA_IFTYPE(NPY_SHORT,      npy_short)
+        PYLADA_IFTYPE(NPY_USHORT,     npy_ushort)
       }
-#     undef LADA_WITH_DATA_TYPE
+#     undef PYLADA_WITH_DATA_TYPE
       delete[] vecs;
       delete[] radices;
       Py_RETURN_NONE;
@@ -187,7 +187,7 @@ namespace LaDa
          "it does nothing.\n"
          ".. warning::\n\n"
          "   Don't use this if you do not understand the source code.\n"
-         "   Or at the very least, first try things out with LaDa compiled\n"
+         "   Or at the very least, first try things out with Pylada compiled\n"
          "   in debug mode. Otherwise, the input arrays are note checked\n"
          "   for correctness. If used incorrectly, expect segfaults.\n" },
         {NULL, NULL, 0, NULL}        /* Sentinel */
@@ -198,12 +198,12 @@ namespace LaDa
 PyMODINIT_FUNC initcppwrappers(void) 
 {
   char const doc[] =  "Wrapper around C++ cluster expansion methods.";
-  PyObject* module = Py_InitModule3("cppwrappers", LaDa::ce::methods_table, doc);
+  PyObject* module = Py_InitModule3("cppwrappers", Pylada::ce::methods_table, doc);
   if(not module) return;
   import_array(); // needed for NumPy 
 
-  if (PyType_Ready(LaDa::ce::productiljiterator_type()) < 0) return;
-  Py_INCREF(LaDa::ce::productiljiterator_type());
+  if (PyType_Ready(Pylada::ce::productiljiterator_type()) < 0) return;
+  Py_INCREF(Pylada::ce::productiljiterator_type());
 
-  PyModule_AddObject(module, "ProductILJ", (PyObject *)LaDa::ce::productiljiterator_type());
+  PyModule_AddObject(module, "ProductILJ", (PyObject *)Pylada::ce::productiljiterator_type());
 }

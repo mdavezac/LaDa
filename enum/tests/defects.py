@@ -1,7 +1,7 @@
 def test_iterator():
   """ Test defect iterator. """
   from numpy import ones, logical_not
-  from lada.enum.defects import Iterator
+  from pylada.enum.defects import Iterator
 
   size = 8
   mask = ones(size, dtype='bool')
@@ -44,8 +44,8 @@ def test_iterator():
   assert i == len(results) - 1
 
 def test_defects():
-  from lada.crystal.bravais import fcc
-  from lada.enum.defects import defects
+  from pylada.crystal.bravais import fcc
+  from pylada.enum.defects import defects
   lattice = fcc()
   lattice[0].type = 'Zr', 'Ti'
   lattice.add_atom(0.25, 0.25, 0.25, 'O', 'A')

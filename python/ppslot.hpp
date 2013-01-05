@@ -1,5 +1,5 @@
 # /* This code was taken from boost/preprocessor file and modified
-#    for LaDa. Is it redistributed with the original license below.  */
+#    for Pylada. Is it redistributed with the original license below.  */
 #
 # /* **************************************************************************
 #  *                                                                          *
@@ -35,22 +35,22 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE. */
 #
-# ifndef LADA_CRYSTAL_PPSLOT_HPP
-# define LADA_CRYSTAL_P_SLOT_HPP
+# ifndef PYLADA_CRYSTAL_PPSLOT_HPP
+# define PYLADA_CRYSTAL_P_SLOT_HPP
 #
 # include <boost/preprocessor/cat.hpp>
 # include <boost/preprocessor/slot/detail/def.hpp>
 #
 # /* BOOST_PP_ASSIGN_SLOT */
 #
-# define LADA_ASSIGN_SLOT(i) BOOST_PP_CAT(LADA_ASSIGN_SLOT_, i)
+# define PYLADA_ASSIGN_SLOT(i) BOOST_PP_CAT(PYLADA_ASSIGN_SLOT_, i)
 #
-# define LADA_ASSIGN_SLOT_crystal <python/ppslot_crystal.hpp>
-# define LADA_ASSIGN_SLOT_python  <python/ppslot_python.hpp>
-# define LADA_ASSIGN_SLOT_math    <python/ppslot_math.hpp>
+# define PYLADA_ASSIGN_SLOT_crystal <python/ppslot_crystal.hpp>
+# define PYLADA_ASSIGN_SLOT_python  <python/ppslot_python.hpp>
+# define PYLADA_ASSIGN_SLOT_math    <python/ppslot_math.hpp>
 #
 # /* BOOST_PP_SLOT */
 #
-# define LADA_SLOT(i) BOOST_PP_CAT(LADA_SLOT_, i)()
+# define PYLADA_SLOT(i) BOOST_PP_CAT(PYLADA_SLOT_, i)()
 #
 # endif

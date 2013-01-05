@@ -1,4 +1,4 @@
-if "jobs" in globals()["ladamodules"]:
+if "jobs" in globals()["pyladamodules"]:
   queues = "debug", "regular", "low", "premimum"
   """ List of slurm or pbs queues allowed for use. 
 

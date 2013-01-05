@@ -68,7 +68,7 @@ def crystal_program(self=None, structure=None, comm=None):
   
       If comm is None, then returns the path to the serial CRYSTAL_ program.
       Otherwise, if :py:attr:`dftcrystal.Functional.mpp
-      <lada.dftcrystal.electronic.Electronic.mpp>` is
+      <pylada.dftcrystal.electronic.Electronic.mpp>` is
       True, then returns the path to the MPP version. If that is False, then
       returns the path to the MPI version.
   """

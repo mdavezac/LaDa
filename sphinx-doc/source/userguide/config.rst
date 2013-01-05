@@ -1,40 +1,40 @@
-.. _lada-config:
+.. _pylada-config:
 
-Configuring LaDa
+Configuring Pylada
 ****************
 
 Environment Variables
 =====================
 
-.. envvar:: LADA_CONFIG_DIR
+.. envvar:: PYLADA_CONFIG_DIR
 
    Environment variable specifying the path(s) to the configuration directories.
 
-.. envvar:: LADA_DATA_DIRECTORY
+.. envvar:: PYLADA_DATA_DIRECTORY
 
    Environment variable specifying the path to the root of the data directories.
 
-.. envvar:: LADA_TMPDIR
+.. envvar:: PYLADA_TMPDIR
 
    Optional environment variable specifying the path to the root of temporary
-   directories LaDa might need to create.
+   directories Pylada might need to create.
 
 Configuration variables
 =======================
 
-Configuration variables exist in the :py:mod:`lada` module itself. However,
+Configuration variables exist in the :py:mod:`pylada` module itself. However,
 they can be added within separate files. Which files will depend upon the user.
 
-   - Files located in the config sub-directory where lada is installed
-   - Files located in one of the directories specified by :envvar:`LADA_CONFIG_DIR`
-   - In the user configuration file ~/.lada
+   - Files located in the config sub-directory where pylada is installed
+   - Files located in one of the directories specified by :envvar:`PYLADA_CONFIG_DIR`
+   - In the user configuration file ~/.pylada
 
 Each file is executed and whatever is declared within is placed directly at the
-root of the :py:mod:`lada` package. The files are read in that order. Within a
+root of the :py:mod:`pylada` package. The files are read in that order. Within a
 given directory, files are read alphabetically. Later files can override
 previous files.
 
-.. currentmodule:: lada
+.. currentmodule:: pylada
 
 General
 -------
@@ -56,7 +56,7 @@ General
      
      .. note::
 
-        Only taken into account at ipython start-up. It is ignored if LaDa is
+        Only taken into account at ipython start-up. It is ignored if Pylada is
         launched within python.
 
 .. _dftcrystal-config:
@@ -73,10 +73,10 @@ CRYSTAL
      set of files are copied back to the output directory. Note that some files
      (notably "crystal.out") are created in the output directory from start,
      and linked to the temporary directory. As such, these files will always be
-     there, even if a job is forcefully killed before LaDa has had a change to
-     copy things back. If :py:data:`~lada.crystal_inplace` is False, then the
+     there, even if a job is forcefully killed before Pylada has had a change to
+     copy things back. If :py:data:`~pylada.crystal_inplace` is False, then the
      files are placed in a temporary directory. This temporary directory is
-     itself located within :envvar:`LADA_TMPDIR` (if the environment variable
+     itself located within :envvar:`PYLADA_TMPDIR` (if the environment variable
      exists), or within `PBS_TMPDIR` (if that exists), or in the default
      temporary directory of the system. A special link `workdir` will be
      created within the output for the duration of the crystal run.
@@ -94,7 +94,7 @@ CRYSTAL
           
               If comm is None, then returns the path to the serial CRYSTAL_ program.
               Otherwise, if :py:attr:`dftcrystal.Functional.mpp
-              <lada.dftcrystal.electronic.Electronic.mpp>` is
+              <pylada.dftcrystal.electronic.Electronic.mpp>` is
               True, then returns the path to the MPP version. If that is False, then
               returns the path to the MPI version.
           """
@@ -115,7 +115,7 @@ CRYSTAL
      .. note::
 
         It is important that the path to the serial code be returned when
-        ``self`` is None, as it allows LaDa to perform the crystalline
+        ``self`` is None, as it allows Pylada to perform the crystalline
         transforms using CRYSTAL_ directly, and hence to interpret a crystal
         structure exactly as CRYSTAL_ would.
 
@@ -145,7 +145,7 @@ VASP
        a full path, or an executable within the environment's $PATH
        variable.
      - callable: The callable is invoked with a
-       :py:class:`~lada.vasp.functional.Vasp` instance as its first argument, 
+       :py:class:`~pylada.vasp.functional.Vasp` instance as its first argument, 
        the structure upon which the calculation is performed as its second, and
        the communicator as its last.  It should return a string, as described
        above. In other words, different vasp executables can be used depending
@@ -195,10 +195,10 @@ MPI
        mpirun_exe = "mpirun -n {n} {placement} {program}"
 
      The actual commandline is executed by :py:func:`execute_program
-     <lada.misc.execute_program>`. The latter executes via Popen_ a
+     <pylada.misc.execute_program>`. The latter executes via Popen_ a
      commandline obtained through the format_ method of a python string. The
      arguments to format are those mentioned above as well as anything passed
-     on to :py:func:`execute_program <lada.misc.execute_program>`.
+     on to :py:func:`execute_program <pylada.misc.execute_program>`.
 
      .. _Popen: http://docs.python.org/library/subprocess.html#subprocess.Popen
      .. _format: http://docs.python.org/library/stdtypes.html#str.format
@@ -210,14 +210,14 @@ MPI
 
   .. py:data:: do_multiple_mpi_programs
 
-     A boolean defining whether to attempt to figure out which machines lada
+     A boolean defining whether to attempt to figure out which machines pylada
      can run on. This is only necessary if you will run different mpi
      executable simultaneously in the same PBS job.
   
   .. py:data:: figure_out_machines
 
      A string which defines a python program to get the hostnames of the
-     machines LaDa can run on. This program must print to the standard output
+     machines Pylada can run on. This program must print to the standard output
      the names of the machines, one per line, and nothing else. Defaults to::
 
        figure_out_machines =  'from socket import gethostname\n'                      \
@@ -226,19 +226,19 @@ MPI
                               '  if i == world.rank: print gethostname(), i\n'        \
                               '  world.barrier()\n'                            
 
-  .. py:function:: modify_global_comm(lada.process.mpi.Communicator)->None
+  .. py:function:: modify_global_comm(pylada.process.mpi.Communicator)->None
 
-     Called after figuring the hostnames of the nodes LaDa should run on. It is
+     Called after figuring the hostnames of the nodes Pylada should run on. It is
      a callable tacking the global communicator as sole input. It should modify
-     the callable such that :py:data:`~lada.placement` can make sense of a
+     the callable such that :py:data:`~pylada.placement` can make sense of a
      communicator and issue the correct placement configuration to the mpirun
      program. By default, this function does nothing.
 
-  .. py:function:: placement(lada.process.mpi.Communicator)->str
+  .. py:function:: placement(pylada.process.mpi.Communicator)->str
 
-     Callable which takes an :py:class:`~lada.mpi.Communicator` and returns a
+     Callable which takes an :py:class:`~pylada.mpi.Communicator` and returns a
      string which tells the mpirun program which nodes to run on. The string is
-     substituted for "{placement}" in :py:data:`~lada.mpirun_exe`. In most
+     substituted for "{placement}" in :py:data:`~pylada.mpirun_exe`. In most
      cases (e.g. default), this means writing a machine file to disk and
      telling mpirun where it is with "-machinefile". 
 
@@ -248,7 +248,7 @@ Job-folder
   .. py:data:: jobparams_readonly
    
      Whether instances of
-     :py:class:`~lada.jobfolder.forwarding_dict.ForwardingDict` are read only
+     :py:class:`~pylada.jobfolder.forwarding_dict.ForwardingDict` are read only
      by default. In practice, objects which use forwarding dictionaries
      generally dictate whether it should read-only or not, depending on what
      these objects do. This parameter should presently not have any effect.
@@ -257,24 +257,24 @@ Job-folder
   .. py:data:: jobparams_naked_end
 
      Whether mass collectors and manipulators, such as
-     :py:class:`~lada.jobfolder.manipulator.JobParams` should return an object
+     :py:class:`~pylada.jobfolder.manipulator.JobParams` should return an object
      as is, rather than a
-     :py:class:`~lada.jobfolder.forwarding_dict.ForwardingDict`, when it is the
+     :py:class:`~pylada.jobfolder.forwarding_dict.ForwardingDict`, when it is the
      only item left. Practical when checking results in ipython, not so much
      when writing scripts.
 
   .. py:data:: jobparams_only_existing
     
      Whether, when setting parameters with
-     :py:class:`~lada.jobfolder.manipulator.JobParams`, new attributes should
+     :py:class:`~pylada.jobfolder.manipulator.JobParams`, new attributes should
      be created for those items which do not possess that attribute, or whether
-     :py:class:`~lada.jobfolder.manipulator.JobParams` should content itself
+     :py:class:`~pylada.jobfolder.manipulator.JobParams` should content itself
      with only modifying pre-existing attributes. Beware if set to True.
    
   .. py:data:: unix_re
 
       Whether mass collectors and manipulators, such as
-      :py:class:`~lada.jobfolder.manipulator.JobParams`, accept regex as
+      :py:class:`~pylada.jobfolder.manipulator.JobParams`, accept regex as
       indices, or whether to use bash-like substitutions. The former is more
       powerfull, and the latter much simpler.
 
@@ -333,7 +333,7 @@ Compuational ressources and job submission
 
      An ipython magic function which returns all jobs submitted by the user.
      Once provided, it will be automatically imported into the ipython session
-     by the lada extension, where is called ``qstat``.  This will change
+     by the pylada extension, where is called ``qstat``.  This will change
      somewhat from one supercomputer to the next, depending on the type of
      ressource manager it uses. Here is what the function looks like for
      slurm_::

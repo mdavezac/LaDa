@@ -27,9 +27,9 @@ def test_primitive():
   """ Tests whether primitivization works. """
   from numpy import abs, dot
   from numpy.linalg import inv
-  from lada.crystal.cppwrappers import supercell, Structure, are_periodic_images as api, \
+  from pylada.crystal.cppwrappers import supercell, Structure, are_periodic_images as api, \
                                        primitive, is_primitive
-  from lada.math import is_integer
+  from pylada.math import is_integer
 
   lattice = Structure( 0.0, 0.5, 0.5,
                        0.5, 0.0, 0.5,

@@ -133,13 +133,13 @@ PyObject* space_group(Structure const &_lattice, types::t_real _tolerance)
   // Checks that lattice has atoms.
   if(_lattice.size() == 0) 
   {
-    LADA_PYERROR(ValueError, "space_group: Input lattice is empty.");
+    PYLADA_PYERROR(ValueError, "space_group: Input lattice is empty.");
     return NULL;
   }
   // Checks that lattice is primitive.
   if(not is_primitive(_lattice, _tolerance)) 
   {
-    LADA_PYERROR(ValueError, "space_group: Input lattice is not primitive.");
+    PYLADA_PYERROR(ValueError, "space_group: Input lattice is not primitive.");
     return NULL;
   }
   
@@ -164,7 +164,7 @@ PyObject* space_group(Structure const &_lattice, types::t_real _tolerance)
   if(not pg) return NULL;
   if(PyList_Size(pg.borrowed()) == 0) 
   {
-    LADA_PYERROR(InternalError, "Point-group is unexpectedly empty.");
+    PYLADA_PYERROR(InternalError, "Point-group is unexpectedly empty.");
     return NULL;
   }
   python::Object result = PyList_New(0);

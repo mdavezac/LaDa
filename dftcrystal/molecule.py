@@ -218,7 +218,7 @@ class Molecule(ListBlock):
     
         Runs crystal to evaluate current structure.
 
-        :returns: a :py:class:`~lada.crystal.cppwrappers.Structure` instance.
+        :returns: a :py:class:`~pylada.crystal.cppwrappers.Structure` instance.
     """
     from copy import deepcopy
     from tempfile import mkdtemp

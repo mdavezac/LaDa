@@ -4,12 +4,12 @@ def test(executable):
   from os.path import join
   from shutil import rmtree
   from numpy import all, arange, abs, array
-  from lada.jobfolder.jobfolder import JobFolder
-  from lada.jobfolder.massextract import MassExtract
-  from lada.jobfolder import save
-  from lada.process.jobfolder import JobFolderProcess
-  from lada.process import Fail, AlreadyStarted, NotStarted
-  from lada import default_comm
+  from pylada.jobfolder.jobfolder import JobFolder
+  from pylada.jobfolder.massextract import MassExtract
+  from pylada.jobfolder import save
+  from pylada.process.jobfolder import JobFolderProcess
+  from pylada.process import Fail, AlreadyStarted, NotStarted
+  from pylada import default_comm
   from functional import Functional
 
   root = JobFolder()
@@ -98,9 +98,9 @@ def test_update(executable):
   """ Tests JobFolderProcess with update. """
   from tempfile import mkdtemp
   from shutil import rmtree
-  from lada.jobfolder.jobfolder import JobFolder
-  from lada.process.jobfolder import JobFolderProcess
-  from lada import default_comm
+  from pylada.jobfolder.jobfolder import JobFolder
+  from pylada.process.jobfolder import JobFolderProcess
+  from pylada import default_comm
   from functional import Functional
 
   root = JobFolder()
@@ -159,10 +159,10 @@ def test_update_with_fail(executable):
   """ Tests JobFolderProcess with update. """
   from tempfile import mkdtemp
   from shutil import rmtree
-  from lada.jobfolder.jobfolder import JobFolder
-  from lada.process.jobfolder import JobFolderProcess
-  from lada.process import Fail
-  from lada import default_comm
+  from pylada.jobfolder.jobfolder import JobFolder
+  from pylada.process.jobfolder import JobFolderProcess
+  from pylada.process import Fail
+  from pylada import default_comm
   from functional import Functional
 
   root = JobFolder()

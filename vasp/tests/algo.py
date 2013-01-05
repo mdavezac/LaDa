@@ -1,9 +1,9 @@
 def test():
   from pickle import loads, dumps
-  from lada.vasp import Vasp
-  import lada
+  from pylada.vasp import Vasp
+  import pylada
   
-  lada.is_vasp_4 = True
+  pylada.is_vasp_4 = True
   a = Vasp()
 
   # default.
@@ -38,7 +38,7 @@ def test():
   vasp5 = 'Subrot', 'chi', 'GW', 'GW0', 'scGW', 'scGW0', 'Conjugate', 'Eigenval', 'Exact', 'Nothing'
   dictionary = {'Algo': a._input['algo'].__class__}
   for isvasp4 in [True, False]:
-    lada.is_vasp_4 = isvasp4
+    pylada.is_vasp_4 = isvasp4
     for key, items in d.iteritems():
       for value in items:
         if key in vasp5 and isvasp4:

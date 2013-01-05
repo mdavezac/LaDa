@@ -1,4 +1,4 @@
-from lada.escan import fftmesh
+from pylada.escan import fftmesh
 # sets up input stuff
 vff = Vff()
 vff.lattice.set_types = ("Si", "Ge", "Hg"), ("Si","Ge","Hg")

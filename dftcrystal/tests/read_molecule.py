@@ -1,7 +1,7 @@
 def test():
   from numpy import abs, all
-  from lada.dftcrystal.parse import parse
-  from lada.dftcrystal import Molecule
+  from pylada.dftcrystal.parse import parse
+  from pylada.dftcrystal import Molecule
   string = '\nMOLECULE\n1\n2\n1 0.0 -2.91352558499E-15 12.3754696347\n'        \
            '1 0.0 -2.91352558499E-15 13.1454696347\nEND MOLECULE'
   tree = parse(string)['']

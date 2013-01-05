@@ -1,6 +1,6 @@
 def b5(u=0.25):
   """ Test b5 space-group and equivalents """
-  from lada.crystal.cppwrappers import Structure
+  from pylada.crystal.cppwrappers import Structure
 
   x, y = u, 0.25-u
   structure = Structure([[0,0.5,0.5],[0.5,0,0.5],[0.5,0.5,0]]) \
@@ -22,7 +22,7 @@ def b5(u=0.25):
 
 def indices(invcell, pos, n):
   from numpy import cast, dot, array
-  from lada.math import floor_int
+  from pylada.math import floor_int
   int_fractional = cast["int64"](floor_int(dot(invcell, pos)))
   int_fractional = array([u + (ni if u < 0 else (-ni if u >= ni else 0)) for u, ni in zip(int_fractional, n)])
   neg = int_fractional % n
@@ -31,8 +31,8 @@ def indices(invcell, pos, n):
 def check(structure):
   from numpy import multiply, cast, any
   from numpy.linalg import inv
-  from lada.crystal.cppwrappers import periodic_dnc
-  from lada.math import gruber
+  from pylada.crystal.cppwrappers import periodic_dnc
+  from pylada.math import gruber
 
   mesh, boxes = periodic_dnc(structure, nperbox=30, overlap=0.125, return_mesh = True)
   invcell = gruber(structure.cell)
@@ -57,7 +57,7 @@ def newstructure(i=10):
   from numpy import zeros
   from numpy.linalg import det
   from random import randint
-  from lada.crystal.cppwrappers import supercell
+  from pylada.crystal.cppwrappers import supercell
   
   lattice = b5()
   cell = zeros((3,3))
@@ -74,7 +74,7 @@ def mayavi(structure, N=10):
       Enjoy and play around.
   """
   from enthought.mayavi.mlab import points3d
-  from lada.crystal.cppwrappers import periodic_dnc
+  from pylada.crystal.cppwrappers import periodic_dnc
 
   mesh, boxes = periodic_dnc(structure, nperbox=30, overlap=0.25, return_mesh = True)
 
@@ -114,7 +114,7 @@ if __name__ == "__main__":
   from random import randint
   from numpy import zeros
   from numpy.linalg import det
-  from lada.crystal.cppwrappers import supercell
+  from pylada.crystal.cppwrappers import supercell
   
   lattice = b5()
   check(lattice)

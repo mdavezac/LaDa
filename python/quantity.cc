@@ -97,14 +97,14 @@ PyObject *fromPy_quantity(PyObject *_number, PyObject *_units)
 {
   if(not check_quantity(_units))
   {
-    LADA_PYERROR(TypeError, "Expected a quantities object.");
+    PYLADA_PYERROR(TypeError, "Expected a quantities object.");
     return NULL;
   }
   if(check_quantity(_number))
   {
     if(not PyQuantity_Convertible(_number, _units))
     {
-      LADA_PYERROR(TypeError, "Input quantities are not convertible.");
+      PYLADA_PYERROR(TypeError, "Input quantities are not convertible.");
       return NULL;
     }
     Py_INCREF(_number);
@@ -135,7 +135,7 @@ types::t_real get_quantity(PyObject *_in, std::string const &_units)
   {
     if(PyInt_Check(_in)) return types::t_real(PyInt_AS_LONG(_in));
     if(PyFloat_Check(_in)) return types::t_real(PyFloat_AS_DOUBLE(_in));
-    LADA_PYERROR(TypeError, "Expected quantity or number in input.");
+    PYLADA_PYERROR(TypeError, "Expected quantity or number in input.");
     return types::t_real(0);
   }
   // creates global/local dictionary in order to run code.
@@ -161,12 +161,12 @@ types::t_real get_quantity(PyObject *_number, PyObject *_units)
 {
   if(not check_quantity(_number))
   {
-    LADA_PYERROR(TypeError, "get_quantity: First argument should be a quantity.");
+    PYLADA_PYERROR(TypeError, "get_quantity: First argument should be a quantity.");
     return types::t_real(0);
   }
   if(not check_quantity(_units))
   {
-    LADA_PYERROR(TypeError, "get_quantity: Second argument should be a quantity.");
+    PYLADA_PYERROR(TypeError, "get_quantity: Second argument should be a quantity.");
     return types::t_real(0);
   }
   // creates global/local dictionary in order to run code.

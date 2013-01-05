@@ -3,8 +3,8 @@ def test(path):
   from tempfile import mkdtemp
   from os.path import join
   from quantities import eV
-  from lada.vasp import Vasp, read_incar
-  from lada.crystal import Structure
+  from pylada.vasp import Vasp, read_incar
+  from pylada.crystal import Structure
   structure = Structure([[0, 0.5, 0.5],[0.5, 0, 0.5], [0.5, 0.5, 0]], scale=5.43, name='has a name')\
                        .add_atom(0,0,0, "Si")\
                        .add_atom(0.25,0.25,0.25, "Si")

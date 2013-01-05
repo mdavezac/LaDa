@@ -63,7 +63,7 @@ def launch_single(self, event, jobfolder):
                     else "{0}-root".format(basename(path)) 
   pbsargs['directory'] = directory                                     
   pbsargs['header'] = ""
-  pbsargs['header'] += '\nexport LADA_JOBARRAY_NAME={0!r}\n'.format(name)
+  pbsargs['header'] += '\nexport PYLADA_JOBARRAY_NAME={0!r}\n'.format(name)
   pbsargs['scriptcommand'] = "{0} --nbprocs {n} --ppn {ppn} {1} "              \
                              .format(pyscript, path, **pbsargs)                      
   pbsscript = pbspaths(directory, name, 'script')

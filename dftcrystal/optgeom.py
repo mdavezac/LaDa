@@ -153,8 +153,8 @@ class OptGeom(ExclAttrBlock):
       It is disabled by default. When enabled, other sub-blocks within
       CRYSTAL_'s first input block are automatically disabled (e.g. ``freqcalc`` [*]_). 
       The full set of geometry optimization parameters can be accessed by the
-      user within the :py:attr:`~lada.dftcrystal.functional.Functional.optgeom`
-      attribute of an :py:class:`~lada.dftcrystal.functional.Functional`
+      user within the :py:attr:`~pylada.dftcrystal.functional.Functional.optgeom`
+      attribute of an :py:class:`~pylada.dftcrystal.functional.Functional`
       instance:
 
       >>> functional.optgeom.fulloptg = True
@@ -172,10 +172,10 @@ class OptGeom(ExclAttrBlock):
 
       .. [*]
       
-         Currently, :py:class:`~lada.dftcrystal.functional.Functional` only
-         contains the :py:attr:`~lada.dftcrystal.functional.Functional.optgeom`
+         Currently, :py:class:`~pylada.dftcrystal.functional.Functional` only
+         contains the :py:attr:`~pylada.dftcrystal.functional.Functional.optgeom`
          attribute. If implemented, other sub-blocks should derive from
-         :py:class:`~lada.dftcrystal.optgeom.ExclAttrBlock`.
+         :py:class:`~pylada.dftcrystal.optgeom.ExclAttrBlock`.
   """
   keyword = 'optgeom'
   """ CRYSTAL input keyword (class-attribute) """
@@ -294,7 +294,7 @@ class OptGeom(ExclAttrBlock):
 
         The electronic minimization steps can be printed to the same file as
         the geometry optimization step (e.g. the standard output). By default,
-        LaDa prefers to print to the same file, in contrast to CRYSTAL_'s
+        Pylada prefers to print to the same file, in contrast to CRYSTAL_'s
         default.
     """
     self.noxyz       = BoolKeyword()

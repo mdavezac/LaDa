@@ -2,7 +2,7 @@
 Process Module
 ==============
 
-.. automodule:: lada.process
+.. automodule:: pylada.process
 
   .. moduleauthor:: Mayeul d'Avezac
 

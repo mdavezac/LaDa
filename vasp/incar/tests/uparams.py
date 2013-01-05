@@ -1,9 +1,9 @@
 def test():
   from collections import namedtuple
   from pickle import loads, dumps
-  from lada.crystal.cppwrappers import Structure
-  from lada.vasp.incar._params import UParams
-  from lada.vasp.specie import U, nlep
+  from pylada.crystal.cppwrappers import Structure
+  from pylada.vasp.incar._params import UParams
+  from pylada.vasp.specie import U, nlep
 
   u = 0.25
   x, y = u, 0.25-u

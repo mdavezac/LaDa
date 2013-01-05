@@ -2,8 +2,8 @@
 from os.path import join
 from numpy import matrix, array
 from boost.mpi import world
-from lada.crystal import sort_layers, FreezeCell
-from lada.escan import bandgap, read_input
+from pylada.crystal import sort_layers, FreezeCell
+from pylada.escan import bandgap, read_input
 
 # reads input file.
 input = read_input("input.py")

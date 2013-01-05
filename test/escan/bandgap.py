@@ -1,7 +1,7 @@
 from os.path import join
 from numpy import matrix
-from lada.escan import BandGap, read_input
-from lada.crystal import FreezeCell
+from pylada.escan import BandGap, read_input
+from pylada.crystal import FreezeCell
 
 # reads input file.
 input = read_input("input.py")

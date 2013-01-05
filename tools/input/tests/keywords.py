@@ -1,5 +1,5 @@
 def test_boolkeyword():
-  from lada.tools.input import BoolKeyword
+  from pylada.tools.input import BoolKeyword
 
   class Dummy(BoolKeyword): 
     keyword = 'whatever'
@@ -21,7 +21,7 @@ def test_boolkeyword():
 
 def test_valuekeyword():
   from pickle import loads, dumps
-  from lada.tools.input import ValueKeyword
+  from pylada.tools.input import ValueKeyword
 
   a = ValueKeyword('whatever')
   d = {'ValueKeyword': ValueKeyword}
@@ -59,7 +59,7 @@ def test_valuekeyword():
 
 def test_typedkeyword():
   from pickle import loads, dumps
-  from lada.tools.input import TypedKeyword
+  from pylada.tools.input import TypedKeyword
 
   a = TypedKeyword('whatever', int)
   d = {'TypedKeyword': TypedKeyword}
@@ -169,7 +169,7 @@ def test_typedkeyword():
 
 def test_variablelistkeyword():
   from numpy import all, array, arange
-  from lada.tools.input import VariableListKeyword
+  from pylada.tools.input import VariableListKeyword
 
   a = VariableListKeyword(keyword='whatever', type=int)
   assert a.keyword == 'whatever'
@@ -197,7 +197,7 @@ def test_variablelistkeyword():
 
 def test_choicekeyword():
   from pickle import loads, dumps
-  from lada.tools.input import ChoiceKeyword
+  from pylada.tools.input import ChoiceKeyword
 
   a = ChoiceKeyword(['five', 5], keyword='whatever')
   d = {'ChoiceKeyword': ChoiceKeyword}
@@ -246,7 +246,7 @@ def test_quantitykeyword():
   from itertools import chain
   from numpy import all, abs, array
   from quantities import hartree, eV, kbar
-  from lada.tools.input import QuantityKeyword
+  from pylada.tools.input import QuantityKeyword
   import quantities
   import numpy
   d = locals().copy()

@@ -1,7 +1,7 @@
 def test():
   from collections import namedtuple
   from pickle import loads, dumps
-  from lada.vasp import Vasp
+  from pylada.vasp import Vasp
 
   Restart = namedtuple('Restart', ['success', 'lmaxmix'])
   a = Vasp()

@@ -17,13 +17,13 @@ class Properties(AttrBlock):
     self.rdfmwf = Rdfmwf()
     """ Whether to create binary wavefunction file. 
     
-        - If None, LaDa figures out which of  'crystal.f98' and 'crystal.f9'
+        - If None, Pylada figures out which of  'crystal.f98' and 'crystal.f9'
           file is the latest in input and output directories. Then figures out
           whether to include an RDFMWF tag or not.
-        - If True, LaDa looks only for a 'crystal.f98' in the input and/or
+        - If True, Pylada looks only for a 'crystal.f98' in the input and/or
           output directories, using the latest. If no file exists, then it is
           an error.
-        - If False, LaDa checks that 'crystal.f9' exists in the input and/or
+        - If False, Pylada checks that 'crystal.f9' exists in the input and/or
           output directories, using the latest. If no file exists, then it is
           an error.
 
@@ -40,16 +40,16 @@ class Properties(AttrBlock):
 
         Starting from the hamiltonian defined in input, performs a
         diagonalization on a new k-point mesh.
-        The input is similar to :py:attr:`~lada.functional.shrink`.
+        The input is similar to :py:attr:`~pylada.functional.shrink`.
         Additionaly, it is possible to specify printing options:
 
         >>> properties.newk.printing[66] = -5
 
         Following the same input scheme as
-        :py:attr:`~lada.functional.setprint`.
+        :py:attr:`~pylada.functional.setprint`.
 
         It is possible to set the k-point mesh directly, much as for
-        :py:attr:`~lada.functional.shrink`:
+        :py:attr:`~pylada.functional.shrink`:
 
         >>> properties.newk = 5, None
 
@@ -94,7 +94,7 @@ class Properties(AttrBlock):
     self.program = program
     """ CRYSTAL_'s properties program. 
 
-        If None, defaults to :py:data:`lada.properties_program`.
+        If None, defaults to :py:data:`pylada.properties_program`.
     """ 
     self.input = input
 
@@ -277,7 +277,7 @@ class Properties(AttrBlock):
         except: pass
 
     # creates a file in the directory, to say we are going to work here
-    with open(join(outdir, '.lada_is_running'), 'w') as file: pass
+    with open(join(outdir, '.pylada_is_running'), 'w') as file: pass
 
   def bringdown(self, workdir, outdir):
     """ Copies files back to output directory. 
@@ -306,8 +306,8 @@ class Properties(AttrBlock):
                   nocopyempty=True, symlink=False, nothrow="never" )
 
       # remove 'is running' file marker.
-      if exists('.lada_is_running'):
-        try: remove('.lada_is_running')
+      if exists('.pylada_is_running'):
+        try: remove('.pylada_is_running')
         except: pass
     
     if Extract(outdir).success:

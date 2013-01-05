@@ -1,5 +1,5 @@
 def functional():
-  from lada.vff.functional import Functional
+  from pylada.vff.functional import Functional
   vff = Functional()
   vff["In", "As"] = 2.62332, 21.6739, -112.0, 150.0
   vff["Ga", "As"] = 2.44795, 32.1530, -105.0, 150.0
@@ -16,9 +16,9 @@ def test_inas(epsilon = 1e-4, cartesian=False):
   from shutil import rmtree
   from os.path import exists
   from numpy import dot, sqrt, all, abs, identity
-  from lada.crystal.binary import zinc_blende
+  from pylada.crystal.binary import zinc_blende
   from quantities import angstrom
-  from lada.misc import Changedir
+  from pylada.misc import Changedir
 
   vff = functional()
   vff.cartesian=cartesian
@@ -104,7 +104,7 @@ def test_inas(epsilon = 1e-4, cartesian=False):
     if directory != '/tmp/test': rmtree(directory)
     
 def crystal():
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
 
   structure = Structure( 10.0, 0.5, 0.5, 
                          0.00, 0.0, 0.5,
@@ -134,7 +134,7 @@ def test_ingaas():
   from tempfile import mkdtemp
   from shutil import rmtree
   from os.path import exists
-  from lada.misc import Changedir
+  from pylada.misc import Changedir
 
   vff = functional()
 

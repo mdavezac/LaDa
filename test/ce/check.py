@@ -1,7 +1,7 @@
 #! /usr/bin/python
 def enum( _n, _lattice ):
   import numpy as np
-  from lada import enumeration
+  from pylada import enumeration
   from math import pow
 
   supercells = enumeration.find_all_cells(_lattice, _n)
@@ -71,7 +71,7 @@ def enum( _n, _lattice ):
 
 def list_all_structures( _n0, _n1 ):
 
-  from lada import crystal
+  from pylada import crystal
 
   lattice = crystal.Structure().lattice
 
@@ -88,7 +88,7 @@ def list_all_structures( _n0, _n1 ):
 def choose_structures( _howmany, _min = 2, _max = 9 ):
   import random
   import numpy as np
-  from lada import crystal, enumeration
+  from pylada import crystal, enumeration
 
   lattice, str_list = list_all_structures( _min, _max )
 
@@ -112,7 +112,7 @@ def choose_structures( _howmany, _min = 2, _max = 9 ):
     yield crystal.Structure(structure)
     
 def convert(_classes):
-  from lada import ce
+  from pylada import ce
 
   result = ce.ClusterClasses()
   for class_ in _classes:
@@ -128,10 +128,10 @@ def convert(_classes):
   return result
 
 def main():
-  from lada import ce
+  from pylada import ce
   import boost.mpi as mpi
   from numpy import array
-  from lada.crystal.bravais import fcc
+  from pylada.crystal.bravais import fcc
 
   functional = ce.Cubic()
   functional.set_mpi(mpi.world)

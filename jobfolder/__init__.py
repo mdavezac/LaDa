@@ -1,6 +1,6 @@
 """ Classes and functions pertaining to job-management. 
 
-    The  :py:mod:`lada.jobfolder` provides tools for high-throughput calculations.
+    The  :py:mod:`pylada.jobfolder` provides tools for high-throughput calculations.
     It is centered around an object - the job-folder - which organizes calculations
     within a tree of folders, much as one would manually organize calculations
     within a tree of directories. Each folder can be executable, e.g.  there is
@@ -37,7 +37,7 @@ def save(jobfolder, path='jobfolder.dict', overwrite=False, timeout=None):
           if True, then overwrites file.
 
       This method first acquire an exclusive lock on the file before writing
-      (see :py:meth:`lada.misc.open_exclusive`).  This way not two processes can
+      (see :py:meth:`pylada.misc.open_exclusive`).  This way not two processes can
       read/write to this file while using this function.
   """ 
   from os.path import exists

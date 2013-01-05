@@ -7,7 +7,7 @@ A fast primer
 the dreary file manipulation and grepping that working with scientific codes
 generally imply. It is initialized as follows:
 
->>> from lada.vasp import Vasp
+>>> from pylada.vasp import Vasp
 >>> vasp = Vasp()
 >>> vasp.add_specie = 'Si', '/path/to/directory/Si' 
 >>> vasp.add_specie = 'Ge', '/path/to/directory/Ge' 

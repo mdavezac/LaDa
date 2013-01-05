@@ -1,7 +1,7 @@
-if "ladabase" in globals()["ladamodules"]:
+if "pyladabase" in globals()["pyladamodules"]:
   local_push_dir = "/projects/nrel/cid/database_tmp"
   """ Local directory where database stuff is pushed. """
-if "jobs" in globals()["ladamodules"]:
+if "jobs" in globals()["pyladamodules"]:
   template_pbs = globals()["default_slurm"]
   """ Template pbs script to use. Depends on machine. """
   debug_queue = "queue", "inter"
@@ -29,5 +29,5 @@ if "jobs" in globals()["ladamodules"]:
   """ Command-line to launch external mpi programs. """
   cpus_per_node = 8
   """ Number of processes per node. """
-  lada_with_slurm = True
+  pylada_with_slurm = True
   """ If True use slurm as ressource manager, else use openpbs. """

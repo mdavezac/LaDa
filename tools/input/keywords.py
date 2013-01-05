@@ -17,7 +17,7 @@ class BaseKeyword(object):
 
         More precisely, input files  are generally groups of keyword-value
         pairs. The groups are dealt with by
-        :py:class:`~lada.tools.block.AttrBlock`.
+        :py:class:`~pylada.tools.block.AttrBlock`.
   """
   def __init__(self, keyword=None, raw=None):
     """ Creates a block. 
@@ -46,9 +46,9 @@ class BaseKeyword(object):
     
         This function returns a dictionary from which a text input file can be written.
         For instance, it could emit {'SIGMA': '0.6'}, which the
-        :py:class:`~lada.vasp.functional.Vasp` functional would then print to
+        :py:class:`~pylada.vasp.functional.Vasp` functional would then print to
         an INCAR file  as "SIGMA = 0.6", and the :py:class:`Crystal
-        <lada.dftcrystal.functional.Functional>` functional would render as
+        <pylada.dftcrystal.functional.Functional>` functional would render as
         "SIGMA\n0.6\n".
     """
     if getattr(self, 'keyword', None) is None: return None
@@ -83,7 +83,7 @@ class ValueKeyword(BaseKeyword):
       In practice, the value is printed by first transforming it to a string
       via str_ and putting it in upper case.
 
-      If given a string, LaDa will attempt to guess the type of the value,
+      If given a string, Pylada will attempt to guess the type of the value,
       depending on whether it is an ``int``, ``float``, ``str``, or a list of
       the same, in that order. A list is created if and only if the string is
       does not contian multiple lines. If the string contains more than one
@@ -219,7 +219,7 @@ class TypedKeyword(ValueKeyword):
         >>> functional.keyword = ['a', 5.3, 5]
         ValueError: ...
         >>> functional.keyword = [0, 2.0]
-        lada.error.ValueError: Expected a sequence of the following type: [int, float, int]
+        pylada.error.ValueError: Expected a sequence of the following type: [int, float, int]
 
       The last case failed because only two values are given. For a list of
       variable length (but only one type of lement), use::
@@ -266,7 +266,7 @@ class TypedKeyword(ValueKeyword):
 
         If None, then this keyword will not appear.
         Otherwise, it is cast to the type given when initializing this instance
-        of :py:class:`~lada.dftcrystal.input.TypedKeyword`
+        of :py:class:`~pylada.dftcrystal.input.TypedKeyword`
     """
     return self._value
   @value.setter
@@ -336,7 +336,7 @@ class VariableListKeyword(TypedKeyword):
 
         If None, then this keyword will not appear.
         Otherwise, it is cast to the type given when initializing this instance
-        of :py:class:`~lada.dftcrystal.input.TypedKeyword`
+        of :py:class:`~pylada.dftcrystal.input.TypedKeyword`
     """
     return self._value
   @value.setter
@@ -380,7 +380,7 @@ class BoolKeyword(ValueKeyword):
       This class uses the get/set mechanism to set whether the keyword should
       appear or not. It is meant to be used in conjunction with other linked keywords.
       Otherwise, it is simpler to use :py:meth:`self.add_keyword('something')
-      <lada.dftcrystal.input.AttrBlock.add_keyword>` directly.
+      <pylada.dftcrystal.input.AttrBlock.add_keyword>` directly.
   """
   def __init__(self, keyword=None, value=None):
     """ Initializes FullOptG keyword. """
@@ -499,7 +499,7 @@ class QuantityKeyword(ValueKeyword):
     shape = getattr(self, 'shape', ())
     if len(shape) > 2: 
       from ...error import NotImplementedError
-      raise NotImplementedError( 'LaDa does not know how to print n-d arrays ' \
+      raise NotImplementedError( 'Pylada does not know how to print n-d arrays ' \
                                  '(n>2) to CRYSTAL input.')
     if len(shape) == 0: return str(float(self.value))
     else:

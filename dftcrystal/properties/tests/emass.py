@@ -3,9 +3,9 @@ def test():
   from shutil import rmtree
   from os.path import join
   from numpy import mean, abs, sum
-  from lada.dftcrystal import Crystal, Functional, Shell
-  from lada.dftcrystal.properties.emass import effective_mass
-  from lada import default_comm
+  from pylada.dftcrystal import Crystal, Functional, Shell
+  from pylada.dftcrystal.properties.emass import effective_mass
+  from pylada import default_comm
 
   functional = Functional()
   functional.basis['Si'] = [

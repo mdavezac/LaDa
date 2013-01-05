@@ -1,4 +1,4 @@
-#include "LaDaConfig.h"
+#include "PyladaConfig.h"
 #include "FCMangle.h"
 
 #include <boost/math/special_functions/erf.hpp>

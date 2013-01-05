@@ -30,7 +30,7 @@ def get_mem(id):
 def mem_per_structure(N):
   import gc
   from os import system, getpid
-  from lada.crystal.cppwrappers import Structure
+  from pylada.crystal.cppwrappers import Structure
   id = getpid()
   gc.set_debug(gc.DEBUG_OBJECTS | gc.DEBUG_UNCOLLECTABLE)
   startmem = get_mem(id)
@@ -63,7 +63,7 @@ def test(Class, N, mem_per_structure):
   assert len(gc.garbage) == 0
 
 if __name__ == "__main__": 
-  from lada.crystal.cppwrappers import Structure
+  from pylada.crystal.cppwrappers import Structure
   from sys import argv, path 
   if len(argv) > 0: path.extend(argv[1:])
   

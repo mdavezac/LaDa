@@ -1,7 +1,7 @@
 """ Checks split-config routine. """
 def check_bcc():
   from numpy import abs
-  from lada.crystal.cppwrappers import Structure, splitconfigs, supercell
+  from pylada.crystal.cppwrappers import Structure, splitconfigs, supercell
   structure = Structure([[-0.5,0.5,0.5],[0.5,-0.5,0.5],[0.5,0.5,-0.5]])\
                        .add_atom(0,0,0,"Mo")
   configs = splitconfigs(structure, structure[0], 12)

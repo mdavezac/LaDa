@@ -1,19 +1,19 @@
-#ifndef LADA_VFF_NODE_DATA_H
-#define LADA_VFF_NODE_DATA_H
+#ifndef PYLADA_VFF_NODE_DATA_H
+#define PYLADA_VFF_NODE_DATA_H
 
-#include "LaDaConfig.h"
+#include "PyladaConfig.h"
 
 #include <vector>
 
 //! \def check_structure(object)
 //!      Returns true if an object is a node or subtype.
-#define PyNodeData_Check(object) PyObject_TypeCheck(object, LaDa::vff::node_type())
+#define PyNodeData_Check(object) PyObject_TypeCheck(object, Pylada::vff::node_type())
 //! \def PyNodeData_CheckExact(object)
 //!      Returns true if an object is a node.
-#define PyNodeData_CheckExact(object) object->ob_type == LaDa::vff::node_type()
+#define PyNodeData_CheckExact(object) object->ob_type == Pylada::vff::node_type()
       
 
-namespace LaDa 
+namespace Pylada 
 {
   namespace vff
   {
@@ -53,6 +53,6 @@ namespace LaDa
     }
   } // namespace vff
 
-} // namespace LaDa
+} // namespace Pylada
 
 #endif

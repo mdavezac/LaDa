@@ -4,17 +4,17 @@
 #ifndef _MODELS_EWALD_FUNCTIONAL_H_
 #define _MODELS_EWALD_FUNCTIONAL_H_
 
-#include "LaDaConfig.h"
+#include "PyladaConfig.h"
 
 #include <Python.h>
 
-namespace LaDa
+namespace Pylada
 {
   namespace pcm
   {
     //! Python C-interface to the fortran ewald function.
     PyObject* ewald(PyObject *_module, PyObject* _args, PyObject* _kwargs);
   } // namespace models.
-} // namespace LaDa
+} // namespace Pylada
 
 #endif // _VFF_FUNCTIONAL_H_

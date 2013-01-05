@@ -1,7 +1,7 @@
 """ Test some utilities from crystal extension module. """
 def test_periodic():
   """ Test periodic images. """
-  from lada.crystal.cppwrappers import are_periodic_images
+  from pylada.crystal.cppwrappers import are_periodic_images
   from numpy import array, dot
   from numpy.linalg import inv
   from random import randint, random
@@ -17,7 +17,7 @@ def test_periodic():
 
 def test_into_cell():
   """ Test that vector is folded to fractional coordinates >= 0 and < 1. """
-  from lada.crystal.cppwrappers import are_periodic_images, into_cell
+  from pylada.crystal.cppwrappers import are_periodic_images, into_cell
   from numpy import array, dot, all
   from numpy.linalg import inv
   from random import uniform
@@ -31,7 +31,7 @@ def test_into_cell():
   
 def test_zero_centered():
   """ Test that vector is folded to fractional coordinates >= -0.5 and < 0.5. """
-  from lada.crystal.cppwrappers import are_periodic_images, zero_centered
+  from pylada.crystal.cppwrappers import are_periodic_images, zero_centered
   from numpy import array, dot, all
   from numpy.linalg import inv
   from random import uniform
@@ -45,7 +45,7 @@ def test_zero_centered():
 
 def test_into_voronoi():
   """ Test that vector is folded into first Brillouin zone. """
-  from lada.crystal.cppwrappers import are_periodic_images, into_voronoi
+  from pylada.crystal.cppwrappers import are_periodic_images, into_voronoi
   from numpy import array, dot
   from numpy.linalg import inv
   from random import uniform

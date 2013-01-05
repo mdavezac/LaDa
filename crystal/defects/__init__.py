@@ -21,7 +21,7 @@ def symmetrically_inequivalent_sites(lattice, type):
         type in lattice.site.type, where type is the input parameter.
  
       :Parameters:
-          lattice : `lada.crystal.Lattice`
+          lattice : `pylada.crystal.Lattice`
             Lattice for which to find equivalent sites.
           type : str 
             Atomic specie for which to find inequivalent sites. 
@@ -83,7 +83,7 @@ def coordination_inequivalent_sites(lattice, type, tolerance=0.25):
         type in lattice.site.type, where type is the input parameter.
  
       :Parameters:
-          lattice : `lada.crystal.Lattice`
+          lattice : `pylada.crystal.Lattice`
             Lattice for which to find equivalent sites.
           type : str 
             Atomic specie for which to find inequivalent sites. 
@@ -226,9 +226,9 @@ def any_defect(structure, lattice, type, subs, tolerance=0.25):
       Loops over all equivalent point-defects.
 
       :Parameters:
-        structure : `lada.crystal.Structure`
+        structure : `pylada.crystal.Structure`
           structure on which to operate
-        lattice : `lada.crystal.Lattice`
+        lattice : `pylada.crystal.Lattice`
           back-bone lattice of the structure.
         type : str or None or sequence
           type of atoms for which to create substitution.
@@ -299,7 +299,7 @@ def charged_states(species, A, B):
         A.oxidation - B.oxidation, -B.oxidation, 0.
 
       :Parameters:
-        species : `lada.vasp.specie.Specie`
+        species : `pylada.vasp.specie.Specie`
           A dictionary containing the description of the atomic species.
         A : None, or str
           If None, indicates that the charge states of an interstial are
@@ -400,12 +400,12 @@ def explore_defect(defect, host, **kwargs):
   """ Diagnostic tool to determine defect from defect calculation and host. 
   
       :Parameters:
-        defect : `lada.vasp.ExtractDFT`
+        defect : `pylada.vasp.ExtractDFT`
           Extraction object for the vasp calculation of the defect structure.
           The defect structure should be a supercell of the host. Its unit cell
           must be an exact multiple of the host unit cell. Atoms may have moved
           around, however.
-        host : `lada.vasp.ExtractDFT`
+        host : `pylada.vasp.ExtractDFT`
           Extraction object for the vasp calculation of the host structure.
         kwargs 
           Passed on to `reindex_sites`.
@@ -424,8 +424,8 @@ def explore_defect(defect, host, **kwargs):
       :note: The results may be incorrect if the defects incur too much relaxation. 
   """
   from copy import deepcopy
-  from lada.crystal.defects import reindex_sites
-  from lada.crystal import structure_to_lattice
+  from pylada.crystal.defects import reindex_sites
+  from pylada.crystal import structure_to_lattice
   
   dstr = defect.structure.copy()
   hstr = host.structure
@@ -488,7 +488,7 @@ def potential_alignment(defect, host, maxdiff=None, first_shell=False, tolerance
   from numpy import abs, array, mean, any
   from quantities import eV
   from . import reindex_sites, first_shell as ffirst_shell
-  from lada.crystal import structure_to_lattice
+  from pylada.crystal import structure_to_lattice
 
   dstr = defect.structure
   hstr = host.structure
@@ -540,7 +540,7 @@ def third_order_charge_correction(structure, charge = None, n = 30, epsilon = 1.
   """ Returns energy of third order charge correction. 
   
       :Parameters: 
-        structure : `lada.crystal.Structure`
+        structure : `pylada.crystal.Structure`
           Defect supercell, with cartesian positions in angstrom.
         n 
           precision. Higher better.
@@ -578,7 +578,7 @@ def first_order_charge_correction(structure, charge=None, epsilon=1e0, cutoff=20
       defaults to Angstroems and elementary charges.
 
       :Parameters:
-        structure : `lada.crystal.Structure`
+        structure : `pylada.crystal.Structure`
           Defect supercell, with cartesian positions in angstrom.
         charge 
           Charge of the point-defect. Defaults to 1e0 elementary charge. If no
@@ -598,7 +598,7 @@ def first_order_charge_correction(structure, charge=None, epsilon=1e0, cutoff=20
     from warnings import warn
     warn(ImportWarning("Could not import Point-Charge Model package (pcm). \n"\
                        "Cannot compute first order charge correction.\n"\
-                       "Please compile LaDa with pcm enabled.\n"))
+                       "Please compile Pylada with pcm enabled.\n"))
     return 
 
   if charge is None: charge = 1
@@ -644,13 +644,13 @@ def magnetic_neighborhood(structure, defect, species):
        as such in `species`.
 
        :Parameters: 
-         structure : `lada.crystal.Structure`
+         structure : `pylada.crystal.Structure`
            The structure with the point-defect already incorporated.
-         defect : `lada.crystal.Atom`
+         defect : `pylada.crystal.Atom`
            The point defect, to which and *index* attribute is given denoting
            the index of the atom in the original supercell structure (without
            point-defect).
-         species : dict of `lada.vasp.species.Specie`
+         species : dict of `pylada.vasp.species.Specie`
            A dictionary defining the atomic species.
 
        :return: indices of the neighboring atoms in the point-defect `structure`.
@@ -740,12 +740,12 @@ def electron_counting(structure, defect, species, extrae):
       Performs a sanity check on integers to make sure things are correct.
 
       :Parameters:
-        structure : `lada.crystal.Structure`
+        structure : `pylada.crystal.Structure`
           Structure with point-defect already inserted.
-        defect : `lada.crystal.Atom`
+        defect : `pylada.crystal.Atom`
           Atom making up the point-defect.
           In addition, it should have an *index* attribute denoting the defect 
-        species : dict of `lada.vasp.species.Specie`
+        species : dict of `pylada.vasp.species.Specie`
           Dictionary containing details of the atomic species.
         extrae
           Number of extra electrons to add/remove.
@@ -799,12 +799,12 @@ def low_spin_states(structure, defect, species, extrae, do_integer=True, do_aver
       to None and the total magnetic moment to 0 (e.g. lets VASP figure it out).
       
       :Parameters:
-        structure : `lada.crystal.Structure`
+        structure : `pylada.crystal.Structure`
           Structure with point-defect already inserted.
-        defect : `lada.crystal.Atom`
+        defect : `pylada.crystal.Atom`
           Atom making up the point-defect.
           In addition, it should have an *index* attribute denoting the defect 
-        species : dict of `lada.vasp.species.Specie`
+        species : dict of `pylada.vasp.species.Specie`
           Dictionary containing details of the atomic species.
         extrae
           Number of extra electrons to add/remove.
@@ -850,12 +850,12 @@ def high_spin_states(structure, defect, species, extrae, do_integer=True, do_ave
       VASP figure it out).
 
       :Parameters:
-        structure : `lada.crystal.Structure`
+        structure : `pylada.crystal.Structure`
           Structure with point-defect already inserted.
-        defect : `lada.crystal.Atom`
+        defect : `pylada.crystal.Atom`
           Atom making up the point-defect.
           In addition, it should have an *index* attribute denoting the defect 
-        species : dict of `lada.vasp.species.Specie`
+        species : dict of `pylada.vasp.species.Specie`
           Dictionary containing details of the atomic species.
         extrae 
           Number of extra electrons to add/remove.

@@ -12,10 +12,10 @@ def test_addspins():
       Check failure modes.
   """ 
   from numpy import all
-  from lada.crystal import binary
-  from lada.ce import Cluster
-  from lada.ce.cluster import spin
-  from lada.error import ValueError
+  from pylada.crystal import binary
+  from pylada.ce import Cluster
+  from pylada.ce.cluster import spin
+  from pylada.error import ValueError
 
   lattice = binary.zinc_blende()
   lattice[0].type = ['Si', 'Ge']
@@ -55,9 +55,9 @@ def test_spins_are_sorted():
   from numpy.random import randint
   from random import choice
   from itertools import permutations
-  from lada.ce.cluster import spin
-  from lada.ce import Cluster
-  from lada.crystal import binary
+  from pylada.ce.cluster import spin
+  from pylada.ce import Cluster
+  from pylada.crystal import binary
   
   lattice = binary.zinc_blende()
   lattice[0].type = ['Si', 'Ge']
@@ -99,9 +99,9 @@ def test_spins_are_sorted():
 def test_cmp():
   """ Test Cluster._contains function """
   from numpy import all, any
-  from lada.crystal import binary
-  from lada.ce import Cluster
-  from lada.ce.cluster import spin
+  from pylada.crystal import binary
+  from pylada.ce import Cluster
+  from pylada.ce.cluster import spin
 
   lattice = binary.zinc_blende()
   lattice[0].type = ['Si', 'Ge']
@@ -129,8 +129,8 @@ def test_cmp():
   
 def test_occmap():
   from numpy import cos, sin, pi, abs, all
-  from lada.crystal import binary
-  from lada.ce import Cluster
+  from pylada.crystal import binary
+  from pylada.ce import Cluster
 
   lattice = binary.zinc_blende()
   for atom in lattice: atom.type = ['Si', 'Ge']
@@ -165,8 +165,8 @@ def test_onsite():
   """ 
   from numpy import dot, abs, all
   from random import choice
-  from lada.crystal import binary, supercell
-  from lada.ce import Cluster
+  from pylada.crystal import binary, supercell
+  from pylada.ce import Cluster
 
   lattice = binary.zinc_blende()
   for atom in lattice: atom.type = ['Si', 'Ge', 'C']
@@ -208,8 +208,8 @@ def test_onsite():
 def test_symmetrized():
   """ Tests that symmetrized clusters are determined correctly. """
   from numpy import all, any
-  from lada.ce import Cluster
-  from lada.crystal import binary, neighbors
+  from pylada.ce import Cluster
+  from pylada.crystal import binary, neighbors
 
   lattice = binary.zinc_blende()
   lattice[0].type = ['Si', 'Ge']
@@ -255,8 +255,8 @@ def test_random():
   from numpy import dot, all, abs
   from numpy.random import randint
   from random import choice
-  from lada.ce import Cluster
-  from lada.crystal import binary, supercell
+  from pylada.ce import Cluster
+  from pylada.crystal import binary, supercell
 
   lattice = binary.zinc_blende()
   lattice[0].type = ['Si', 'Ge']

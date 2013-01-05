@@ -1,13 +1,13 @@
-#include "LaDaConfig.h"
+#include "PyladaConfig.h"
 
 #include <Python.h>
 #include <structmember.h>
-#define PY_ARRAY_UNIQUE_SYMBOL lada_vff_ARRAY_API
+#define PY_ARRAY_UNIQUE_SYMBOL pylada_vff_ARRAY_API
 #define NO_IMPORT_ARRAY
 #include <numpy/arrayobject.h>
 
 
-#define LADA_NO_IMPORT
+#define PYLADA_NO_IMPORT
 #include <errors/exceptions.h>
 #include <crystal/crystal.h>
 
@@ -17,7 +17,7 @@
 
 #include "sequence.hpp"
 
-namespace LaDa
+namespace Pylada
 {
   namespace crystal
   {
@@ -88,7 +88,7 @@ namespace LaDa
     {
       if(_a == _b and math::is_null(_trans))
       {
-        LADA_PYERROR(ValueError, "Cannot add link from one atom to itself (same periodic image).");
+        PYLADA_PYERROR(ValueError, "Cannot add link from one atom to itself (same periodic image).");
         return false;
       }
       // check if edge already exists.
@@ -133,7 +133,7 @@ namespace LaDa
 
       if(not PyNodeData_Check(endpoint)) 
       {
-        LADA_PYERROR(TypeError, "add_edge expects a NodeData end-point.");
+        PYLADA_PYERROR(TypeError, "add_edge expects a NodeData end-point.");
         return NULL;
       }
       math::rVector3d translation(0,0,0);
@@ -146,20 +146,20 @@ namespace LaDa
     static PyObject* getindex(NodeData* _self, void *closure)
       { return PyInt_FromLong(_self->index); }
     static PyObject* getpos(NodeData* _self, void *closure)
-      { return crystal::lada_atom_getpos((crystal::PyAtomObject*)_self->center.borrowed(), closure); }
+      { return crystal::pylada_atom_getpos((crystal::PyAtomObject*)_self->center.borrowed(), closure); }
     static int setpos(NodeData* _self, PyObject* _value, void *closure)
-      { return crystal::lada_atom_setpos((crystal::PyAtomObject*)_self->center.borrowed(), _value, closure); }
+      { return crystal::pylada_atom_setpos((crystal::PyAtomObject*)_self->center.borrowed(), _value, closure); }
     static PyObject* gettype(NodeData* _self, void *closure)
-      { return crystal::lada_atom_gettype((crystal::PyAtomObject*)_self->center.borrowed(), closure); }
+      { return crystal::pylada_atom_gettype((crystal::PyAtomObject*)_self->center.borrowed(), closure); }
     static int settype(NodeData* _self, PyObject* _value, void *closure)
-      { return crystal::lada_atom_settype((crystal::PyAtomObject*)_self->center.borrowed(), _value, closure); }
+      { return crystal::pylada_atom_settype((crystal::PyAtomObject*)_self->center.borrowed(), _value, closure); }
     static PyObject* getcenter(NodeData* _self, void *closure)
       { return _self->center.new_ref(); }
     static PyObject* getgradient(NodeData* _self, void *closure)
     {
       if(not _self->gradient)
       {
-        LADA_PYERROR(AttributeError, "No gradient attribute.");
+        PYLADA_PYERROR(AttributeError, "No gradient attribute.");
         return NULL;
       }
       Py_INCREF(_self->gradient);
@@ -190,7 +190,7 @@ namespace LaDa
         return -1;
       if(not crystal::check_atom(pyatom))
       {
-        LADA_PYERROR(TypeError, "Node: First argument should be an atom.");
+        PYLADA_PYERROR(TypeError, "Node: First argument should be an atom.");
         return -1;
       }
       ((NodeData*)_self)->center = crystal::Atom::acquire(pyatom);
@@ -223,17 +223,17 @@ namespace LaDa
           (binaryfunc)NULL,                           /* sq_inplace_concat */
           (ssizeargfunc)NULL,                         /* sq_inplace_repeat */
       };
-#     ifdef LADA_DECLARE
-#       error LADA_DECLARE already defined.
+#     ifdef PYLADA_DECLARE
+#       error PYLADA_DECLARE already defined.
 #     endif
-#     define LADA_DECLARE(name, doc) \
+#     define PYLADA_DECLARE(name, doc) \
         { const_cast<char*>(#name), (getter) get ## name, \
           (setter) set ## name, const_cast<char*>(doc) }
       
       static PyGetSetDef getsetters[] = {
-          LADA_DECLARE(pos,  "Alias to wrapped atom's position."),
-          LADA_DECLARE(type, "Alias to wrapped atom's type."),
-          LADA_DECLARE(gradient, "Optional gradient vector.\n\n"
+          PYLADA_DECLARE(pos,  "Alias to wrapped atom's position."),
+          PYLADA_DECLARE(type, "Alias to wrapped atom's type."),
+          PYLADA_DECLARE(gradient, "Optional gradient vector.\n\n"
                                  "Should be first set to something.\n"
                                  "Works as a slot."),
           { const_cast<char*>("center"), (getter) getcenter, 
@@ -242,14 +242,14 @@ namespace LaDa
             NULL, const_cast<char*>("Index of the atom in the original structure.") },
           {NULL}  /* Sentinel */
       };
-#     undef LADA_DECLARE
-#     define LADA_DECLARE(name, func, args, doc) \
+#     undef PYLADA_DECLARE
+#     define PYLADA_DECLARE(name, func, args, doc) \
         {#name, (PyCFunction)func, METH_ ## args, doc} 
       static PyMethodDef methods[] = {
-          LADA_DECLARE( link,  link, KEYWORDS,
+          PYLADA_DECLARE( link,  link, KEYWORDS,
                         "Adds a bond between to nodes."),
-          LADA_DECLARE(clear,  clear, NOARGS, "Removes all bonds."),
-          LADA_DECLARE(sc_bond_iter, 
+          PYLADA_DECLARE(clear,  clear, NOARGS, "Removes all bonds."),
+          PYLADA_DECLARE(sc_bond_iter, 
                        bond_iterator_create<dcbonditerator_type>, 
                        NOARGS, 
                        "Iterates over bonds without double counting.\n\n"
@@ -265,15 +265,15 @@ namespace LaDa
                        "and then over the bonds for that center."
                        "The resulting ``bond_vector`` is the vector between the\n"
                        "atom (in the first loop) to the end-point of the bond."),
-          LADA_DECLARE( angle_iter, angle_iterator_create, NOARGS, 
+          PYLADA_DECLARE( angle_iter, angle_iterator_create, NOARGS, 
                         "Iterates over angles centered on this node." ),
           {NULL}  /* Sentinel */
       };
-#     undef LADA_DECLARE
+#     undef PYLADA_DECLARE
       static PyTypeObject dummy = {
           PyObject_HEAD_INIT(NULL)
           0,                                 /*ob_size*/
-          "lada.vff.cppwrappers.Node",   /*tp_name*/
+          "pylada.vff.cppwrappers.Node",   /*tp_name*/
           sizeof(NodeData),                  /*tp_basicsize*/
           0,                                 /*tp_itemsize*/
           (destructor)dealloc,               /*tp_dealloc*/
@@ -322,7 +322,7 @@ namespace LaDa
       static PyTypeObject type = {
           PyObject_HEAD_INIT(NULL)
           0,                                          /*ob_size*/
-          "lada.vff.cppwrappers.BondIterator",        /*tp_name*/
+          "pylada.vff.cppwrappers.BondIterator",        /*tp_name*/
           sizeof(BondIterator),                       /*tp_basicsize*/
           0,                                          /*tp_itemsize*/
           (destructor)bond_iterator_dealloc,          /*tp_dealloc*/
@@ -368,7 +368,7 @@ namespace LaDa
       static PyTypeObject type = {
           PyObject_HEAD_INIT(NULL)
           0,                                          /*ob_size*/
-          "lada.vff.cppwrappers.DcBondIterator",      /*tp_name*/
+          "pylada.vff.cppwrappers.DcBondIterator",      /*tp_name*/
           sizeof(BondIterator),                       /*tp_basicsize*/
           0,                                          /*tp_itemsize*/
           (destructor)bond_iterator_dealloc,          /*tp_dealloc*/
@@ -393,7 +393,7 @@ namespace LaDa
           "end of the bond, and ``v`` is  a vector in fractional\n"
           "coordinates from which the vector linking the two end\n"
           "points can be obtained:\n\n"
-          ">>> from lada.vff import build_tree\n"
+          ">>> from pylada.vff import build_tree\n"
           ">>> tree = build_tree(structure)\n"
           ">>> for node in tree: \n"
           ">>>   for center, v in node.sc_bond_iter(): \n"
@@ -417,7 +417,7 @@ namespace LaDa
       static PyTypeObject type = {
           PyObject_HEAD_INIT(NULL)
           0,                                          /*ob_size*/
-          "lada.vff.cppwrappers.AngleIterator",       /*tp_name*/
+          "pylada.vff.cppwrappers.AngleIterator",       /*tp_name*/
           sizeof(AngleIterator),                      /*tp_basicsize*/
           0,                                          /*tp_itemsize*/
           (destructor)angle_iterator_dealloc,         /*tp_dealloc*/
@@ -448,4 +448,4 @@ namespace LaDa
     }
 
   } // namespace vff
-} // namespace LaDa
+} // namespace Pylada

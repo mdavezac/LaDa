@@ -1,7 +1,7 @@
 
 def lattice():
   from numpy import matrix, array
-  from lada import crystal
+  from pylada import crystal
 
   lattice = crystal.Lattice()
 

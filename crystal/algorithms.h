@@ -1,4 +1,4 @@
-#if LADA_CRYSTAL_MODULE != 1
+#if PYLADA_CRYSTAL_MODULE != 1
   //! \brief Map atomic sites from mapper onto mappee.
   //! \param[in] _mapper : a lattice against which to map atomic sites.
   //! \param[inout] _mappee : a supercell for which sites will be mapped.
@@ -8,23 +8,23 @@
   //!          corresponds to the equivalent sites in the mapper structure.
   //! \return True if mapping is successful, False if all sites could not be mapped. 
   //!         Since in the case of defects, incomplete mappings may be what is wanted, 
-  LADA_INLINE bool map_sites( Structure const &_mapper,
+  PYLADA_INLINE bool map_sites( Structure const &_mapper,
                               Structure &_mappee,
                               python::Object _withocc = python::Object(),
                               types::t_real _tolerance = types::tolerance )
-    LADA_END(return (*(bool(*)( Structure const&,
+    PYLADA_END(return (*(bool(*)( Structure const&,
                                 Structure &, 
                                 python::Object, 
                                 types::t_real ))
-                     api_capsule[LADA_SLOT(crystal)])
+                     api_capsule[PYLADA_SLOT(crystal)])
                     (_mapper, _mappee, _withocc, _tolerance);)
 #else
-  api_capsule[LADA_SLOT(crystal)] = (void *)map_sites;
+  api_capsule[PYLADA_SLOT(crystal)] = (void *)map_sites;
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(crystal))
-#include LADA_ASSIGN_SLOT(crystal)
+#define BOOST_PP_VALUE BOOST_PP_INC(PYLADA_SLOT(crystal))
+#include PYLADA_ASSIGN_SLOT(crystal)
 
-#if LADA_CRYSTAL_MODULE != 1
+#if PYLADA_CRYSTAL_MODULE != 1
   //! \brief Returns true if two structures are equivalent. 
   //! \details Two structures are equivalent in a crystallographic sense,
   //!          e.g. without reference to cartesian coordinates or possible
@@ -43,52 +43,52 @@
   //!            types::t_real. It is in the same units as the structures scales, if
   //!            that is taken into account, otherwise, it is in the same
   //!            units as _a.scale.
-  LADA_INLINE bool equivalent( Structure const &_a, 
+  PYLADA_INLINE bool equivalent( Structure const &_a, 
                                Structure const &_b,
                                bool with_scale=true, 
                                bool with_cartesian=true,
                                types::t_real _tol = types::tolerance )
-    LADA_END(return (*(bool(*)( Structure const&, 
+    PYLADA_END(return (*(bool(*)( Structure const&, 
                                 Structure const &, 
                                 bool, 
                                 bool, 
                                 types::t_real ))
-                     api_capsule[LADA_SLOT(crystal)])
+                     api_capsule[PYLADA_SLOT(crystal)])
                     (_a, _b, with_scale, with_cartesian, _tol);)
 #else
-  api_capsule[LADA_SLOT(crystal)] = (void *)equivalent;
+  api_capsule[PYLADA_SLOT(crystal)] = (void *)equivalent;
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(crystal))
-#include LADA_ASSIGN_SLOT(crystal)
+#define BOOST_PP_VALUE BOOST_PP_INC(PYLADA_SLOT(crystal))
+#include PYLADA_ASSIGN_SLOT(crystal)
 
-#if LADA_CRYSTAL_MODULE != 1
+#if PYLADA_CRYSTAL_MODULE != 1
   //! Returns the primitive unit structure. 
-  LADA_INLINE Structure primitive( Structure const &_structure, 
+  PYLADA_INLINE Structure primitive( Structure const &_structure, 
                                    types::t_real _tolerance = -1e0 )
-      LADA_END(return (*(Structure(*)( Structure const&, 
+      PYLADA_END(return (*(Structure(*)( Structure const&, 
                                        types::t_real ))
-                       api_capsule[LADA_SLOT(crystal)])
+                       api_capsule[PYLADA_SLOT(crystal)])
                       (_structure, _tolerance);)
 #else
-  api_capsule[LADA_SLOT(crystal)] = (void *) primitive;
+  api_capsule[PYLADA_SLOT(crystal)] = (void *) primitive;
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(crystal))
-#include LADA_ASSIGN_SLOT(crystal)
+#define BOOST_PP_VALUE BOOST_PP_INC(PYLADA_SLOT(crystal))
+#include PYLADA_ASSIGN_SLOT(crystal)
 
-#if LADA_CRYSTAL_MODULE != 1
+#if PYLADA_CRYSTAL_MODULE != 1
   //! Returns True if the input is primitive.
-  LADA_INLINE bool is_primitive( Structure const &_structure, 
+  PYLADA_INLINE bool is_primitive( Structure const &_structure, 
                                  types::t_real _tolerance = -1e0 )
-    LADA_END(return (*(bool(*)(Structure const&, types::t_real))
-                     api_capsule[LADA_SLOT(crystal)])(_structure, _tolerance);)
+    PYLADA_END(return (*(bool(*)(Structure const&, types::t_real))
+                     api_capsule[PYLADA_SLOT(crystal)])(_structure, _tolerance);)
 #else
-  api_capsule[LADA_SLOT(crystal)] = (void *)is_primitive;
+  api_capsule[PYLADA_SLOT(crystal)] = (void *)is_primitive;
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(crystal))
-#include LADA_ASSIGN_SLOT(crystal)
+#define BOOST_PP_VALUE BOOST_PP_INC(PYLADA_SLOT(crystal))
+#include PYLADA_ASSIGN_SLOT(crystal)
 
 
-#if LADA_CRYSTAL_MODULE != 1
+#if PYLADA_CRYSTAL_MODULE != 1
   //! \brief Finds and stores point group operations.
   //! \details Rotations are determined from G-vector triplets with the same
   //!          norm as the unit-cell vectors.
@@ -101,17 +101,17 @@
   //!         The affine transform is applied as rotation * vector + translation.
   //!         `cell_invariants` always returns isometries (translation is zero).
   //! \see Taken from Enum code, PRB 77, 224115 (2008).
-  LADA_INLINE PyObject* cell_invariants( math::rMatrix3d const &_cell, 
+  PYLADA_INLINE PyObject* cell_invariants( math::rMatrix3d const &_cell, 
                                          types::t_real _tolerance = -1e0 )
-    LADA_END(return (*(PyObject*(*)(math::rMatrix3d const &, types::t_real))
-                     api_capsule[LADA_SLOT(crystal)])(_cell, _tolerance);)
+    PYLADA_END(return (*(PyObject*(*)(math::rMatrix3d const &, types::t_real))
+                     api_capsule[PYLADA_SLOT(crystal)])(_cell, _tolerance);)
 #else
-  api_capsule[LADA_SLOT(crystal)] = (void *)cell_invariants;
+  api_capsule[PYLADA_SLOT(crystal)] = (void *)cell_invariants;
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(crystal))
-#include LADA_ASSIGN_SLOT(crystal)
+#define BOOST_PP_VALUE BOOST_PP_INC(PYLADA_SLOT(crystal))
+#include PYLADA_ASSIGN_SLOT(crystal)
 
-#if LADA_CRYSTAL_MODULE != 1
+#if PYLADA_CRYSTAL_MODULE != 1
   //! \brief Finds and stores space group operations.
   //! \param[in] _structure The structure for which to find the space group.
   //! \param[in] _tol acceptable tolerance when determining symmetries.
@@ -122,18 +122,18 @@
   //!         The affine transform is applied as rotation * vector + translation.
   //! \warning Works for primitive lattices only.
   //! \see Taken from Enum code, PRB 77, 224115 (2008).
-  LADA_INLINE PyObject* space_group( Structure const &_lattice, 
+  PYLADA_INLINE PyObject* space_group( Structure const &_lattice, 
                                      types::t_real _tolerance = -1e0 )
-    LADA_END(return (*(PyObject*(*)(Structure const &, types::t_real))
-                     api_capsule[LADA_SLOT(crystal)])(_lattice, _tolerance);)
+    PYLADA_END(return (*(PyObject*(*)(Structure const &, types::t_real))
+                     api_capsule[PYLADA_SLOT(crystal)])(_lattice, _tolerance);)
 #else
-  api_capsule[LADA_SLOT(crystal)] = (void *)space_group;
+  api_capsule[PYLADA_SLOT(crystal)] = (void *)space_group;
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(crystal))
-#include LADA_ASSIGN_SLOT(crystal)
+#define BOOST_PP_VALUE BOOST_PP_INC(PYLADA_SLOT(crystal))
+#include PYLADA_ASSIGN_SLOT(crystal)
 
 
-#if LADA_CRYSTAL_MODULE != 1
+#if PYLADA_CRYSTAL_MODULE != 1
   //! \brief Creates list of first neigbors up to given input.
   //! \details Always return all nth neighbors. In other words, in fcc, if you
   //!          ask for 6 neighbor, actually 12 are returned. 
@@ -141,23 +141,23 @@
   //!          python) reference to an atom, a vector which goes from the
   //!          center to the relevant periodic image of that neighbor, and the
   //!          distance between the center and that neighbor.
-  LADA_INLINE PyObject* neighbors( Structure const &_structure,
+  PYLADA_INLINE PyObject* neighbors( Structure const &_structure,
                                    Py_ssize_t _nmax, 
                                    math::rVector3d const &_center,
                                    types::t_real _tolerance=types::tolerance )
-    LADA_END(return (*(PyObject*(*)( Structure const&, 
+    PYLADA_END(return (*(PyObject*(*)( Structure const&, 
                                      Py_ssize_t, 
                                      math::rVector3d const&, 
                                      types::t_real ))
-                     api_capsule[LADA_SLOT(crystal)])
+                     api_capsule[PYLADA_SLOT(crystal)])
                     (_structure, _nmax, _center, _tolerance);)
 #else
-  api_capsule[LADA_SLOT(crystal)] = (void *)neighbors;
+  api_capsule[PYLADA_SLOT(crystal)] = (void *)neighbors;
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(crystal))
-#include LADA_ASSIGN_SLOT(crystal)
+#define BOOST_PP_VALUE BOOST_PP_INC(PYLADA_SLOT(crystal))
+#include PYLADA_ASSIGN_SLOT(crystal)
 
-#if LADA_CRYSTAL_MODULE != 1
+#if PYLADA_CRYSTAL_MODULE != 1
   //! \brief Creates list of coordination shells up to given order.
   //! \returns A list of lists of tuples. The outer list is over coordination shells.
   //!          The inner list references the atoms in a shell.
@@ -169,26 +169,26 @@
   //! \param[in] _center : Center of the coordination shells.
   //! \param[in] _tolerance : criteria to judge when a shell ends.
   //! \param[in] _natoms : Total number of neighbors to consider. Defaults to fcc + some security.
-  LADA_INLINE PyObject* coordination_shells( crystal::Structure const &_structure,
+  PYLADA_INLINE PyObject* coordination_shells( crystal::Structure const &_structure,
                                              Py_ssize_t _nshells, 
                                              math::rVector3d const &_center,
                                              types::t_real _tolerance=types::tolerance,
                                              Py_ssize_t _natoms = 0 )
-    LADA_END(return (*(PyObject*(*)( crystal::Structure const &,
+    PYLADA_END(return (*(PyObject*(*)( crystal::Structure const &,
                                      Py_ssize_t,
                                      math::rVector3d const &, 
                                      types::t_real, 
                                      Py_ssize_t ))
-                     api_capsule[LADA_SLOT(crystal)])
+                     api_capsule[PYLADA_SLOT(crystal)])
                     (_structure, _nshells, _center, _tolerance, _natoms);)
 #else
-  api_capsule[LADA_SLOT(crystal)] = (void *)coordination_shells;
+  api_capsule[PYLADA_SLOT(crystal)] = (void *)coordination_shells;
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(crystal))
-#include LADA_ASSIGN_SLOT(crystal)
+#define BOOST_PP_VALUE BOOST_PP_INC(PYLADA_SLOT(crystal))
+#include PYLADA_ASSIGN_SLOT(crystal)
 
 
-#if LADA_CRYSTAL_MODULE != 1
+#if PYLADA_CRYSTAL_MODULE != 1
   //! \brief Creates a split-configuration for a given structure and atomic origin.
   //! \details Split-configurations are a symmetry-agnostic atom-centered
   //!          description of chemical environment. For details, see
@@ -212,34 +212,34 @@
   //!         to the atom's relevant periodic image, and a distance from the
   //!         center. [[[(atom, vector from center, distance from center),
   //!         ...], weight], ...]
-  LADA_INLINE bool splitconfigs( Structure const &_structure,
+  PYLADA_INLINE bool splitconfigs( Structure const &_structure,
                                  Atom const &_origin,
                                  Py_ssize_t _nmax,
                                  python::Object &_configurations,
                                  types::t_real _tolerance )
-   LADA_END(return (*(bool(*)( Structure const&, Atom const&, 
+   PYLADA_END(return (*(bool(*)( Structure const&, Atom const&, 
                                Py_ssize_t, python::Object &,
                                types::t_real))
-                    api_capsule[LADA_SLOT(crystal)])
+                    api_capsule[PYLADA_SLOT(crystal)])
                    (_structure, _origin, _nmax, _configurations, _tolerance);)
 #else
-  api_capsule[LADA_SLOT(crystal)] = (void *)splitconfigs;
+  api_capsule[PYLADA_SLOT(crystal)] = (void *)splitconfigs;
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(crystal))
-#include LADA_ASSIGN_SLOT(crystal)
+#define BOOST_PP_VALUE BOOST_PP_INC(PYLADA_SLOT(crystal))
+#include PYLADA_ASSIGN_SLOT(crystal)
 
-#if LADA_CRYSTAL_MODULE != 1
+#if PYLADA_CRYSTAL_MODULE != 1
   //! Creates divide and conquer box with periodic boundary condition.
-  LADA_INLINE PyObject* dnc_boxes( const Structure &_structure, 
+  PYLADA_INLINE PyObject* dnc_boxes( const Structure &_structure, 
                                    math::iVector3d const &_mesh, 
                                    types::t_real _overlap )
-  LADA_END(return (*(PyObject*(*)( Structure const&,
+  PYLADA_END(return (*(PyObject*(*)( Structure const&,
                                    math::iVector3d const&,
                                    types::t_real ))
-                   api_capsule[LADA_SLOT(crystal)])
+                   api_capsule[PYLADA_SLOT(crystal)])
                   (_structure, _mesh, _overlap);)
 #else
-  api_capsule[LADA_SLOT(crystal)] = (void *)dnc_boxes;
+  api_capsule[PYLADA_SLOT(crystal)] = (void *)dnc_boxes;
 #endif
-#define BOOST_PP_VALUE BOOST_PP_INC(LADA_SLOT(crystal))
-#include LADA_ASSIGN_SLOT(crystal)
+#define BOOST_PP_VALUE BOOST_PP_INC(PYLADA_SLOT(crystal))
+#include PYLADA_ASSIGN_SLOT(crystal)

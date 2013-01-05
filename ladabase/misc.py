@@ -1,12 +1,12 @@
 """ Miscellaeneous routinese for ladabase. """
 def get_username():
-  """ Returns username from $HOME/.lada file. """
-  import lada
+  """ Returns username from $HOME/.pylada file. """
+  import pylada
 
-  if not hasattr(lada, "username"):
+  if not hasattr(pylada, "username"):
     raise RuntimeError("Cannot push OUTCAR if nobody is to blame.\n"\
-                       "Please add 'username = \"your name\"' to $HOME/.lada.")
-  return lada.username
+                       "Please add 'username = \"your name\"' to $HOME/.pylada.")
+  return pylada.username
 
 def get_ladabase(): 
   """ Return connector to the database. """

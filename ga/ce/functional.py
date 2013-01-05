@@ -1,4 +1,4 @@
-""" GA as a functional, for use with ladajobs. """
+""" GA as a functional, for use with pyladajobs. """
 __docformat__ = "restructuredtext en"
 __all__ = ['Darwin']
 from ..functional import Darwin as StandardDarwin
@@ -9,7 +9,7 @@ class Darwin(StandardDarwin):
     """ Initializes a GA functional. 
          
         :Parameters:
-          evaluator : `lada.ga.escan.elemental.Bandgap`
+          evaluator : `pylada.ga.escan.elemental.Bandgap`
             Functional which uses vff and escan for evaluating physical properties.
         :Kwarg rate: 
           Offspring rate. Defaults to ``max(0.1, 1/popsize)``.

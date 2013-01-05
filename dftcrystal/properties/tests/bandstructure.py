@@ -4,9 +4,9 @@ def test():
   from os.path import join
   from numpy import all, array
   from quantities import hartree
-  from lada.dftcrystal import Crystal, Functional, Shell
-  from lada.dftcrystal.properties import Properties
-  from lada import default_comm
+  from pylada.dftcrystal import Crystal, Functional, Shell
+  from pylada.dftcrystal.properties import Properties
+  from pylada import default_comm
 
   functional = Functional()
   functional.basis['Si'] = [

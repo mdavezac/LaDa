@@ -1,7 +1,7 @@
 def test_checkkeywords():
   """ Checks that check keyword works. """
-  from lada.ce._single_site_factory import check_keywords
-  from lada.error import KeyError, ValueError, TypeError
+  from pylada.ce._single_site_factory import check_keywords
+  from pylada.error import KeyError, ValueError, TypeError
 
   check_keywords(True, False)
   check_keywords(False, True)
@@ -39,9 +39,9 @@ def test_checkkeywords():
 def test_pairs():
   """ Tests pair generation. """
   from numpy import all, sum
-  from lada.ce._single_site_factory import factory
-  from lada.crystal import bravais
-  from lada.error import ValueError
+  from pylada.ce._single_site_factory import factory
+  from pylada.crystal import bravais
+  from pylada.error import ValueError
 
   lattice = bravais.fcc()
   try: results = factory(lattice, B2=1)
@@ -78,8 +78,8 @@ def test_pairs():
 
 def test_3b():
   """ Tests triplet generation. """
-  from lada.ce._single_site_factory import factory
-  from lada.crystal import bravais
+  from pylada.ce._single_site_factory import factory
+  from pylada.crystal import bravais
 
   lattice = bravais.fcc()
   lattice[0].type = ['A', 'B']

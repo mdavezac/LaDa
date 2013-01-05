@@ -1,7 +1,7 @@
 def test():
   from collections import namedtuple
   from pickle import loads, dumps
-  from lada.vasp.incar._params import Npar
+  from pylada.vasp.incar._params import Npar
 
   Comm = namedtuple('Comm', ['n'])
 

@@ -1,4 +1,4 @@
-#include "LaDaConfig.h"
+#include "PyladaConfig.h"
 
 #include <boost/python/module.hpp>
 #include <boost/python/docstring_options.hpp>
@@ -16,13 +16,13 @@ BOOST_PYTHON_MODULE(_escan)
   namespace bp = boost::python;
   bp::docstring_options doc_options(true, false);
   bp::scope scope;
-  scope.attr("__doc__") = "This namespace is imported into lada.escan.\n";
+  scope.attr("__doc__") = "This namespace is imported into pylada.escan.\n";
   scope.attr("__docformat__") = "restructuredtext en";
 
-  // loads lada.math first
+  // loads pylada.math first
   namespace bp = boost::python;
-  bp::handle<> math( bp::borrowed(PyImport_ImportModule("lada.math")) );
+  bp::handle<> math( bp::borrowed(PyImport_ImportModule("pylada.math")) );
 
-  LaDa::python::expose_escan();
-  LaDa::python::expose_wfns();
+  Pylada::python::expose_escan();
+  Pylada::python::expose_wfns();
 }

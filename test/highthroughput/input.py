@@ -1,4 +1,4 @@
-from lada.crystal import A2BX4
+from pylada.crystal import A2BX4
 vasp = Relax()
 """ VASP functional """
 

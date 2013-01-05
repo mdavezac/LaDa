@@ -24,7 +24,7 @@ def  main():
   import copy
   from boost.mpi import world
   import numpy
-  from lada.ga import darwin as dd, bitstring, standard, ce
+  from pylada.ga import darwin as dd, bitstring, standard, ce
 
   class Darwin: pass
 

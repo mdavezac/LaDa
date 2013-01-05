@@ -65,14 +65,14 @@ def importPiStructure(file):
 def SFtoCE_Structure(structure):
     """ Converts EquivStructure.Structure to an atom.Structure
     """
-    import LaDa
+    import Pylada
     from EquivStructure import Structure
-    result = LaDa.Structure()
-    dummy = LaDa.rMatrix3d(); dummy.diag( LaDa.rVector3d( [0.5, 0.5, 0.5 ] ) )
-    result.cell = LaDa.make_rMatrix3d( structure.period ) * dummy
+    result = Pylada.Structure()
+    dummy = Pylada.rMatrix3d(); dummy.diag( Pylada.rVector3d( [0.5, 0.5, 0.5 ] ) )
+    result.cell = Pylada.make_rMatrix3d( structure.period ) * dummy
     
     for i in range( len( structure.entries ) ):
-      result.atoms.append( LaDa.Atom( [ 0.5 * structure.vectors[i][0],
+      result.atoms.append( Pylada.Atom( [ 0.5 * structure.vectors[i][0],
                                         0.5 * structure.vectors[i][1],
                                         0.5 * structure.vectors[i][2],
                                         structure.entries[i]*2-1 ] ) )

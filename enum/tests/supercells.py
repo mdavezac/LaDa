@@ -1,6 +1,6 @@
 def test_supercells():
-  from lada.crystal.bravais import fcc
-  from lada.enum import supercells
+  from pylada.crystal.bravais import fcc
+  from pylada.enum import supercells
 
   # First, a lattice without symmetry
   lattice = fcc()
@@ -18,8 +18,8 @@ def test_supercells():
     assert r, len(s)
   
 def test_hfgroups():
-  from lada.crystal.bravais import fcc
-  from lada.enum import hf_groups
+  from pylada.crystal.bravais import fcc
+  from pylada.enum import hf_groups
 
   # First, a lattice without symmetry
   lattice = fcc()

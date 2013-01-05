@@ -1,8 +1,8 @@
 def test_general():
   from numpy import all, abs, array
   from quantities import angstrom
-  from lada.dftcrystal.basis import Shell
-  from lada.error import TypeError
+  from pylada.dftcrystal.basis import Shell
+  from pylada.error import TypeError
   bohr = 0.5291772083*angstrom # crystal conversion factor
   invbohr = 1e0/bohr/bohr
   invangs = 1e0/angstrom/angstrom
@@ -176,8 +176,8 @@ END """
 
 def test_read_input():
   from numpy import array, all
-  from lada.dftcrystal import Functional
-  from lada.dftcrystal.parse import parse
+  from pylada.dftcrystal import Functional
+  from pylada.dftcrystal.parse import parse
   a = Functional()
   parsed = parse(input)['']['BASISSET']
   a.basis.read_input(parsed)
@@ -196,8 +196,8 @@ def test_read_input():
   assert all(abs(array(a.basis['H'][0].functions[2]) - [0.640121700, 0.813757330]) < 1e-8)
 
 def test_output_map():
-  from lada.dftcrystal import Functional, Crystal
-  from lada.dftcrystal.parse import parse
+  from pylada.dftcrystal import Functional, Crystal
+  from pylada.dftcrystal.parse import parse
 
   a = Functional()
   parsed = parse(input)['']

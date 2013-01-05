@@ -16,7 +16,7 @@ PyStructureObject* new_structure()
   if(not result) return NULL;
   result->weakreflist = NULL;
   result->scale = NULL;
-  new(&result->cell) LaDa::math::rMatrix3d(LaDa::math::rMatrix3d::Identity());
+  new(&result->cell) Pylada::math::rMatrix3d(Pylada::math::rMatrix3d::Identity());
   new(&result->atoms) std::vector<Atom>;
   result->pydict = PyDict_New();
   if(result->pydict == NULL) { Py_DECREF(result); return NULL; }
@@ -29,7 +29,7 @@ PyStructureObject* PyStructure_NewWithArgs(PyTypeObject* _type, PyObject *_args,
   if(not result) return NULL;
   result->weakreflist = NULL;
   result->scale = NULL;
-  new(&result->cell) LaDa::math::rMatrix3d(LaDa::math::rMatrix3d::Identity());
+  new(&result->cell) Pylada::math::rMatrix3d(Pylada::math::rMatrix3d::Identity());
   new(&result->atoms) std::vector<Atom>;
   result->pydict = PyDict_New();
   if(result->pydict == NULL) { Py_DECREF(result); return NULL; }
@@ -51,7 +51,7 @@ PyStructureObject *copy_structure(PyStructureObject* _self, PyObject *_memo)
   PyStructureObject* result = (PyStructureObject*)_self->ob_type->tp_alloc(_self->ob_type, 0);
   if(not result) return NULL;
   result->weakreflist = NULL;
-  new(&result->cell) LaDa::math::rMatrix3d(_self->cell);
+  new(&result->cell) Pylada::math::rMatrix3d(_self->cell);
   new(&result->atoms) std::vector<Atom>;
   result->pydict = NULL;
   Py_INCREF(_self->scale);
@@ -98,25 +98,25 @@ PyTypeObject* structure_type()
       (binaryfunc)NULL,                           /* sq_inplace_concat */
       (ssizeargfunc)NULL,                         /* sq_inplace_repeat */
   };
-#  ifdef LADA_DECLARE
-#    error LADA_DECLARE already defined.
+#  ifdef PYLADA_DECLARE
+#    error PYLADA_DECLARE already defined.
 #  endif
-#  define LADA_DECLARE(name, doc) \
+#  define PYLADA_DECLARE(name, doc) \
      { const_cast<char*>(#name), (getter) structure_get ## name, \
        (setter) structure_set ## name, const_cast<char*>(doc) }
    
    static PyGetSetDef getsetters[] = {
-       LADA_DECLARE(cell, "Cell matrix in cartesian coordinates.\n\n"
+       PYLADA_DECLARE(cell, "Cell matrix in cartesian coordinates.\n\n"
                           "Unlike most ab-initio codes, cell-vectors are "
                           "given in column vector format. " 
                           "The cell does not yet have units. "
                           "Units depend upon :class:`Structure.scale`. "
-                          "Across lada, it is expected that a cell time "
+                          "Across pylada, it is expected that a cell time "
                           "this scale are angstroms. Finally, the cell "
                           "is owned internally by the structure. It cannot be set to "
                           "reference an object (say a list or numpy array). "
                           "``structure.cell = some_list`` will copy the values of ``some_list``. "),
-       LADA_DECLARE(scale, "Scale factor of this structure.\n"
+       PYLADA_DECLARE(scale, "Scale factor of this structure.\n"
                            "Should be a number or unit given by "
                            "the python package `quantities "
                            "<http://packages.python.org/quantities/index.html>`_.\n"
@@ -126,30 +126,30 @@ PyTypeObject* structure_type()
          const_cast<char*>("Volume of the structure.\n\nIncludes scale.") },
        {NULL}  /* Sentinel */
    };
-#  undef LADA_DECLARE
-#  define LADA_DECLARE(name, object, doc) \
+#  undef PYLADA_DECLARE
+#  define PYLADA_DECLARE(name, object, doc) \
      { const_cast<char*>(#name), T_OBJECT_EX, \
        offsetof(PyStructureObject, object), 0, const_cast<char*>(doc) }
    static PyMemberDef members[] = {
-     LADA_DECLARE(__dict__, pydict, "Python attribute dictionary."),
-#    ifdef LADA_DEBUG
-       LADA_DECLARE(_weakreflist, weakreflist, "List of weak references."),
+     PYLADA_DECLARE(__dict__, pydict, "Python attribute dictionary."),
+#    ifdef PYLADA_DEBUG
+       PYLADA_DECLARE(_weakreflist, weakreflist, "List of weak references."),
 #    endif
      {NULL, 0, 0, 0, NULL}  /* Sentinel */
    };
-#  undef LADA_DECLARE
-#  define LADA_DECLARE(name, func, args, doc) \
+#  undef PYLADA_DECLARE
+#  define PYLADA_DECLARE(name, func, args, doc) \
      {#name, (PyCFunction)func, METH_ ## args, doc} 
    static PyMethodDef methods[] = {
-       LADA_DECLARE(copy, structure_copy, NOARGS, "Returns a deepcopy of the structure."),
-       LADA_DECLARE( to_dict, structure_to_dict, NOARGS, 
+       PYLADA_DECLARE(copy, structure_copy, NOARGS, "Returns a deepcopy of the structure."),
+       PYLADA_DECLARE( to_dict, structure_to_dict, NOARGS, 
                      "Returns a dictionary with shallow copies of items." ),
-       LADA_DECLARE(__copy__, structure_shallowcopy, NOARGS, "Shallow copy of an structure."),
-       LADA_DECLARE(__deepcopy__, copy_structure, O, "Deep copy of an structure."),
-       LADA_DECLARE(__getstate__, structure_getstate, NOARGS, "Implements pickle protocol."),
-       LADA_DECLARE(__setstate__, structure_setstate, O, "Implements pickle protocol."),
-       LADA_DECLARE(__reduce__,   structure_reduce, NOARGS, "Implements pickle protocol."),
-       LADA_DECLARE( add_atom,   structure_add_atom, KEYWORDS,
+       PYLADA_DECLARE(__copy__, structure_shallowcopy, NOARGS, "Shallow copy of an structure."),
+       PYLADA_DECLARE(__deepcopy__, copy_structure, O, "Deep copy of an structure."),
+       PYLADA_DECLARE(__getstate__, structure_getstate, NOARGS, "Implements pickle protocol."),
+       PYLADA_DECLARE(__setstate__, structure_setstate, O, "Implements pickle protocol."),
+       PYLADA_DECLARE(__reduce__,   structure_reduce, NOARGS, "Implements pickle protocol."),
+       PYLADA_DECLARE( add_atom,   structure_add_atom, KEYWORDS,
                      "Adds atom to structure.\n\n"
                      "The argument to this function is either another atom, "
                      "in which case a reference to that atom is appended to "
@@ -164,18 +164,18 @@ PyTypeObject* structure_type()
                      "Changing, say, that atom's type in one structure will also "
                      "change it in the other.\n\n"
                      ":returns: The structure itself, so that add_atom methods can be chained."),
-       LADA_DECLARE( insert, structure_insert, VARARGS, 
+       PYLADA_DECLARE( insert, structure_insert, VARARGS, 
                      "Inserts atom at given position.\n\n"
                      ":param index:\n    Position at which to insert the atom.\n"
                      ":param atom: \n    :class:`Atom` or subtype to insert." ),
-       LADA_DECLARE(pop, structure_pop, O, "Removes and returns atom at given position."),
-       LADA_DECLARE(clear, structure_clear, NOARGS, "Removes all atoms from structure."),
-       LADA_DECLARE( extend, structure_extend, O, 
+       PYLADA_DECLARE(pop, structure_pop, O, "Removes and returns atom at given position."),
+       PYLADA_DECLARE(clear, structure_clear, NOARGS, "Removes all atoms from structure."),
+       PYLADA_DECLARE( extend, structure_extend, O, 
                      "Appends list of atoms to structure.\n\n"
                      "The argument is any iterable objects containing only atoms, "
                      "e.g. another Structure." ),
-       LADA_DECLARE(append, structure_append, O, "Appends an Atom or subtype to the structure.\n"),
-       LADA_DECLARE( transform, structure_transform, O, 
+       PYLADA_DECLARE(append, structure_append, O, "Appends an Atom or subtype to the structure.\n"),
+       PYLADA_DECLARE( transform, structure_transform, O, 
                      "Transform a structure in-place.\n\n"
                      "Applies an affine transformation to a structure. "
                      "An affine transformation is a 4x3 matrix, where the upper 3 rows "
@@ -184,12 +184,12 @@ PyTypeObject* structure_type()
                      ":param matrix:\n"
                      "   Affine transformation defined as a 4x3 numpy array.\n\n"
                      ":returns: A new :class:`Structure` (or derived) instance." ),
-       LADA_DECLARE( __getitem__, structure_subscript, O|METH_COEXIST,
+       PYLADA_DECLARE( __getitem__, structure_subscript, O|METH_COEXIST,
                      "Retrieves atom or slice.\n\n"
                      ":param index:\n"
                      "    If an integer, returns a refence to that atom. "
                          "If a slice, returns a list with all atoms in that slice." ),
-       LADA_DECLARE( __setitem__, structure_setitemnormal, VARARGS|METH_COEXIST,
+       PYLADA_DECLARE( __setitem__, structure_setitemnormal, VARARGS|METH_COEXIST,
                      "Sets atom or atoms.\n\n"
                      ":param index:\n"
                      "    If an integers, sets that atom to the input value. "
@@ -202,12 +202,12 @@ PyTypeObject* structure_type()
                          "slice."),
        {NULL}  /* Sentinel */
    };
-#  undef LADA_DECLARE
+#  undef PYLADA_DECLARE
   
    static PyTypeObject dummy = {
        PyObject_HEAD_INIT(NULL)
        0,                                 /*ob_size*/
-       "lada.crystal.cppwrappers.Structure",   /*tp_name*/
+       "pylada.crystal.cppwrappers.Structure",   /*tp_name*/
        sizeof(PyStructureObject),             /*tp_basicsize*/
        0,                                 /*tp_itemsize*/
        (destructor)structure_dealloc,     /*tp_dealloc*/
@@ -275,7 +275,7 @@ PyTypeObject* structureiterator_type()
   static PyTypeObject type = {
       PyObject_HEAD_INIT(NULL)
       0,                                          /*ob_size*/
-      "lada.crystal.cppwrappers.StructureIter",   /*tp_name*/
+      "pylada.crystal.cppwrappers.StructureIter",   /*tp_name*/
       sizeof(StructureIterator),                  /*tp_basicsize*/
       0,                                          /*tp_itemsize*/
       (destructor)structureiterator_dealloc,      /*tp_dealloc*/

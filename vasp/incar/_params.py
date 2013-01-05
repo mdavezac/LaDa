@@ -191,8 +191,8 @@ class Algo(SpecialVaspParam):
         - scgw
         - scgw0
 
-      If :py:data:`is_vasp_4 <lada.is_vasp_4>` is an existing configuration
-      variable of :py:mod:`lada` the parameters marked as vasp 5 will fail.
+      If :py:data:`is_vasp_4 <pylada.is_vasp_4>` is an existing configuration
+      variable of :py:mod:`pylada` the parameters marked as vasp 5 will fail.
 
       .. warning:: The string None is not  allowed, as it would lead to
          confusion with the python object None. Please use "Nothing" instead.
@@ -209,7 +209,7 @@ class Algo(SpecialVaspParam):
   @value.setter
   def value(self, value):
     if value is None: self._value = None; return None
-    try: from lada import is_vasp_4
+    try: from pylada import is_vasp_4
     except: is_vasp_4 = False
     if not hasattr(value, 'lower'):
       raise TypeError("ALGO cannot be set with {0}.".format(value))
@@ -449,7 +449,7 @@ class NonScf(SpecialVaspParam):
   
       Accepts only True or False(default). This parameter works with
       :py:class:`Restart` to determine the value to give :py:attr:`icharg
-      <lada.vasp.incar.Incar.icharg>`
+      <pylada.vasp.incar.Incar.icharg>`
   """
   def __init__(self, value):  super(NonScf, self).__init__(value)
   @property
@@ -936,8 +936,8 @@ class Lsorbit(Boolean):
   """ Run calculation with spin-orbit coupling. 
 
       Accepts None, True, or False.
-      If True, then sets :py:attr:`~lada.vasp.incar.Incar.nonscf` to True and
-      :py:attr:`~lada.vasp.incar.Incar.ispin` to 2.
+      If True, then sets :py:attr:`~pylada.vasp.incar.Incar.nonscf` to True and
+      :py:attr:`~pylada.vasp.incar.Incar.ispin` to 2.
   """ 
   def __init__(self, value=None):
     super(Lsorbit, self).__init__('LSORBIT', value)

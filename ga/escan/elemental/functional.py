@@ -1,4 +1,4 @@
-""" GA as a functional, for use with ladajobs. """
+""" GA as a functional, for use with pyladajobs. """
 __docformat__ = "restructuredtext en"
 from ...functional import Darwin as DarwinBase
 
@@ -11,7 +11,7 @@ class Darwin(DarwinBase):
     """ Initializes a GA functional. 
          
         :Parameters:
-          evaluator : `lada.ga.escan.elemental.Bandgap`
+          evaluator : `pylada.ga.escan.elemental.Bandgap`
             Functional which uses vff and escan for evaluating physical properties.
         :Kwarg nmax: 
           Maximum size of bitstrings. Defaults to 20.

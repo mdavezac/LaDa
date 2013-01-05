@@ -13,7 +13,7 @@ class SmallCells(object):
     from operator import itemgetter
     from numpy import pi, sqrt
     from numpy.linalg import norm
-    from lada.physics import a0
+    from pylada.physics import a0
     from quantities import angstrom
 
     para = structure.scale*2.0*sqrt(functional.cutoff)/pi/a0.rescale(angstrom).magnitude
@@ -50,7 +50,7 @@ class Nanowire(object):
     from operator import itemgetter
     from numpy import pi, sqrt
     from numpy.linalg import norm
-    from lada.physics import a0
+    from pylada.physics import a0
     from quantities import angstrom
 
     para = structure.scale*2.0*sqrt(functional.cutoff)/pi/a0.rescale(angstrom).magnitude

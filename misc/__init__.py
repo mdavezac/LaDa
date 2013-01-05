@@ -118,9 +118,9 @@ def copyfile(src, dest=None, nothrow=None, symlink=False, aslink=False, nocopyem
 
 class Input(ModuleType):
   """ Fake class which will be updated with the local dictionary. """
-  def __init__(self, name = "lada_input"): 
+  def __init__(self, name = "pylada_input"): 
     """ Initializes input module. """
-    super(Input, self).__init__(name, "Input module for lada scripts.")
+    super(Input, self).__init__(name, "Input module for pylada scripts.")
   def __getattr__(self, name):
     raise AttributeError( "All out of cheese!\n"
                           "Required input parameter '{0}' not found in {1}." \
@@ -197,8 +197,8 @@ def load(data, *args, **kwargs):
     directory = globals()["data_directory"]
     if hasattr(directory, "__iter__"): directories.extend(directory)
     else: directories.append(directory)
-  if "LADA_DATA_DIRECTORY" in environ:
-    directories.extend(environ["LADA_DATA_DIRECTORY"].split(":"))
+  if "PYLADA_DATA_DIRECTORY" in environ:
+    directories.extend(environ["PYLADA_DATA_DIRECTORY"].split(":"))
 
   # then looks for data file.
   if data.rfind(".py") == -1: data += ".py"
@@ -309,12 +309,12 @@ def latest_file(*args):
 def mkdtemp(suffix='', prefix='', dir=None):
     """ Creates and returns temporary directory. 
         
-	Makes it easier to get all LaDa tmp directories in the same place,
+	Makes it easier to get all Pylada tmp directories in the same place,
 	while retaining a certain amount of flexibility when on a
 	supercomputer.  It first checks for a PBS_TMPDIR ernvironment variable.
-	If that does not exist, then it checks for a LADA_TMPDIR environment
+	If that does not exist, then it checks for a PYLADA_TMPDIR environment
 	variable. If that does not exist, it checks wether
-	:py:data:`~lada.global_tmpdir` is not None. If that does not exist,
+	:py:data:`~pylada.global_tmpdir` is not None. If that does not exist,
         then it uses the directory provided in the input. 
 
 	Once ``dir`` has been determined, it calls python's mkdtemp.
@@ -328,7 +328,7 @@ def mkdtemp(suffix='', prefix='', dir=None):
     from datetime import datetime
     from .. import global_tmpdir
     rootdir = environ.get( 'PBS_TMPDIR',
-                           environ.get('LADA_TMPDIR', global_tmpdir) )
+                           environ.get('PYLADA_TMPDIR', global_tmpdir) )
     if rootdir is None: rootdir = dir
     rootdir = RelativePath(rootdir).path
     if len(prefix) == 0: prefix = str(datetime.today())

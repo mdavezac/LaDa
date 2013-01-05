@@ -1,7 +1,7 @@
 def test():
   from numpy import all, abs, dot, identity
-  from lada.dftcrystal import Crystal, External
-  from lada.crystal import which_site
+  from pylada.dftcrystal import Crystal, External
+  from pylada.crystal import which_site
 
   orig = Crystal(227, 5.43).add_atom(0.125, 0.125, 0.125, 'Si')
   b = External(copy=orig.eval())
@@ -30,9 +30,9 @@ def test_readwrite():
   """ Test that writing to and reading from file yield same result. """
   from tempfile import mkdtemp
   from shutil import rmtree
-  from lada.dftcrystal import External, Supercell, InsertAtoms
-  from lada.crystal import read, write
-  from lada.misc import Changedir
+  from pylada.dftcrystal import External, Supercell, InsertAtoms
+  from pylada.crystal import read, write
+  from pylada.misc import Changedir
 
   structure = External( 2.97938, 0, 0,
                         0, 6.56068, 0,

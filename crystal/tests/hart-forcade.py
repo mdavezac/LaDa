@@ -2,7 +2,7 @@
 def test1():
   from random import randint
   from numpy import all, abs, dot, array
-  from lada.crystal.cppwrappers import HFTransform
+  from pylada.crystal.cppwrappers import HFTransform
   
   unitcell = array([[0,0.5,0.5],[0.5,0,0.5],[0.5,0.5,0]])
   supercell = array([[1,0,0],[0,1,0],[0,0,1]])
@@ -20,7 +20,7 @@ def test1():
 def test2():
   from random import randint
   from numpy import all, abs, dot, array
-  from lada.crystal.cppwrappers import HFTransform, Structure, supercell
+  from pylada.crystal.cppwrappers import HFTransform, Structure, supercell
   
   unitcell = array([[0,0.5,0.5],[0.5,0,0.5],[0.5,0.5,0]])
   lattice = Structure(unitcell).add_atom(0,0,0, "Si")
@@ -53,7 +53,7 @@ def test2():
   assert len(all_indices) == len(supercell)
 
 def b5(u=0.25):
-  from lada.crystal.cppwrappers import Structure
+  from pylada.crystal.cppwrappers import Structure
   x, y = u, 0.25-u
   structure = Structure([[0,0.5,0.5],[0.5,0,0.5],[0.5,0.5,0]]) \
                        .add_atom(5.000000e-01, 5.000000e-01, 5.000000e-01, "A") \
@@ -74,7 +74,7 @@ def b5(u=0.25):
 def test3(u):
   from random import randint
   from numpy import all, abs, dot, array, concatenate
-  from lada.crystal.cppwrappers import HFTransform, supercell
+  from pylada.crystal.cppwrappers import HFTransform, supercell
   
   lattice = b5(u)
   supercell = supercell(lattice, dot(lattice.cell, [[2,2,0],[0,2,2],[4,0,4]]))

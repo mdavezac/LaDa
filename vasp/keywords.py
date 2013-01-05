@@ -182,12 +182,12 @@ class ExtraElectron(TypedKeyword):
       >>> vasp.extraelectron =  1  # charge -1 (1 extra electron)
       >>> vasp.extraelectron = -1  # charge +1 (1 extra hole)
 
-      Disables :py:attr:`lada.vasp.functional.Functional.nelect` if set to
+      Disables :py:attr:`pylada.vasp.functional.Functional.nelect` if set to
       something other than None.
 
       .. seealso:: nelect_, NELECT_
       .. _NELECT: http://cms.mpi.univie.ac.at/wiki/index.php/NELECT
-      .. _nelect: :py:attr:`~lada.vasp.functional.Vasp.nelect`
+      .. _nelect: :py:attr:`~pylada.vasp.functional.Vasp.nelect`
   """
   type = float
   """ Type of this input. """
@@ -220,12 +220,12 @@ class ExtraElectron(TypedKeyword):
 class NElect(TypedKeyword):
   """ Sets the absolute number of electrons.
       
-      Disables :py:attr:`lada.vasp.functional.Functional.extraelectron` if set to
+      Disables :py:attr:`pylada.vasp.functional.Functional.extraelectron` if set to
       something other than None.
 
       .. seealso:: extraelectron_, NELECT_
       .. _NELECT: http://cms.mpi.univie.ac.at/wiki/index.php/NELECT
-      .. _extraelectron: :py:attr:`~lada.vasp.functional.Vasp.extraelectron`
+      .. _extraelectron: :py:attr:`~pylada.vasp.functional.Vasp.extraelectron`
   """
   type = float
   """ Type of this input. """
@@ -258,8 +258,8 @@ class Algo(ValueKeyword):
         - scgw
         - scgw0
 
-      If :py:data:`is_vasp_4 <lada.is_vasp_4>` is an existing configuration
-      variable of :py:mod:`lada` the parameters marked as vasp 5 will fail.
+      If :py:data:`is_vasp_4 <pylada.is_vasp_4>` is an existing configuration
+      variable of :py:mod:`pylada` the parameters marked as vasp 5 will fail.
 
       .. warning:: The string None is not  allowed, as it would lead to
          confusion with the python object None. Please use "Nothing" instead.
@@ -278,7 +278,7 @@ class Algo(ValueKeyword):
   @value.setter
   def value(self, value):
     if value is None: self._value = None; return None
-    try: from lada import is_vasp_4
+    try: from pylada import is_vasp_4
     except: is_vasp_4 = False
     if not hasattr(value, 'lower'):
       raise TypeError("ALGO cannot be set with {0}.".format(value))
@@ -321,7 +321,7 @@ class Ediff(TypedKeyword):
 
       .. seealso:: EDIFF_, ediff_per_atom_
       .. _EDIFF: http://cms.mpi.univie.ac.at/wiki/index.php/EDIFFG
-      .. _ediff_per_atom: :py:attr:`~lada.vasp.functional.Vasp.ediff_per_atom`
+      .. _ediff_per_atom: :py:attr:`~pylada.vasp.functional.Vasp.ediff_per_atom`
   """
   type = float
   """ Type of the value """
@@ -351,7 +351,7 @@ class EdiffPerAtom(TypedKeyword):
 
       .. _EDIFF: http://cms.mpi.univie.ac.at/wiki/index.php/EDIFFG
 
-      .. _ediff: :py:attr:`~lada.vasp.functional.Vasp.ediff`
+      .. _ediff: :py:attr:`~pylada.vasp.functional.Vasp.ediff`
   """
   type = float
   """ Type of the value """
@@ -380,7 +380,7 @@ class Ediffg(TypedKeyword):
 
       .. seealso:: EDIFFG_, ediffg_per_atom_
       .. _EDIFFG: http://cms.mpi.univie.ac.at/vasp/guide/node105.html
-      .. _ediffg_per_atom: :py:attr:`~lada.vasp.functional.Vasp.ediffg_per_atom`
+      .. _ediffg_per_atom: :py:attr:`~pylada.vasp.functional.Vasp.ediffg_per_atom`
   """
   type = float
   """ Type of the value """
@@ -411,7 +411,7 @@ class EdiffgPerAtom(TypedKeyword):
 
       .. seealso:: EDIFFG_, ediff_
       .. _EDIFFG: http://cms.mpi.univie.ac.at/wiki/index.php/EDIFFG
-      .. _ediffg: :py:attr:`~lada.vasp.functional.Vasp.ediffg`
+      .. _ediffg: :py:attr:`~pylada.vasp.functional.Vasp.ediffg`
   """
   type = float
   """ Type of the value """
@@ -486,10 +486,10 @@ class EncutGW(Encut):
 class ICharg(AliasKeyword):
   """ Charge from which to start. 
 
-      It is best to keep this attribute set to -1, in which case, LaDa takes
+      It is best to keep this attribute set to -1, in which case, Pylada takes
       care of copying the relevant files.
 
-        - -1: (Default) Automatically determined by LaDA. Depends on the value
+        - -1: (Default) Automatically determined by Pylada. Depends on the value
               of restart_ and the existence of the relevant files. Also takes
               care of non-scf bit.
   
@@ -524,10 +524,10 @@ class ICharg(AliasKeyword):
 
       .. _ICHARG: http://cms.mpi.univie.ac.at/wiki/index.php/ICHARG
 
-      .. _nonscf: :py:attr:`~lada.vasp.functional.Functional.nonscf`
-      .. _restart: :py:attr:`~lada.vasp.functional.Functional.restart`
-      .. _istruc: :py:attr:`~lada.vasp.functional.Functional.istruc`
-      .. _istart: :py:attr:`~lada.vasp.functional.Functional.istart`
+      .. _nonscf: :py:attr:`~pylada.vasp.functional.Functional.nonscf`
+      .. _restart: :py:attr:`~pylada.vasp.functional.Functional.restart`
+      .. _istruc: :py:attr:`~pylada.vasp.functional.Functional.istruc`
+      .. _istart: :py:attr:`~pylada.vasp.functional.Functional.istart`
   """ 
   keyword = 'icharg'
   """ VASP keyword """
@@ -546,7 +546,7 @@ class ICharg(AliasKeyword):
         Makes sure that the input value is allowed, and that the nonscf_
         attribute is set properly.
 
-      .. _nonscf: :py:attr:`~lada.vasp.functional.Functional.nonscf`
+      .. _nonscf: :py:attr:`~pylada.vasp.functional.Functional.nonscf`
     """
     super(ICharg, self).__set__(instance, value)
     if self._value is None: return
@@ -602,10 +602,10 @@ class ICharg(AliasKeyword):
 class IStart(AliasKeyword):
   """ Starting wavefunctions.
 
-      It is best to keep this attribute set to -1, in which case, LaDa takes
+      It is best to keep this attribute set to -1, in which case, Pylada takes
       care of copying the relevant files.
 
-        - -1: Automatically determined by LaDA. Depends on the value of restart_
+        - -1: Automatically determined by Pylada. Depends on the value of restart_
               and the existence of the relevant files.
   
         - 0: Start from scratch.
@@ -622,9 +622,9 @@ class IStart(AliasKeyword):
 
       .. seealso:: ISTART_, icharg_, istruc_, restart_
       .. _ISTART: http://cms.mpi.univie.ac.at/wiki/index.php/ISTART
-      .. _restart: :py:attr:`~lada.vasp.functional.Functional.restart`
-      .. _icharg: :py:attr:`~lada.vasp.functional.Functional.icharg`
-      .. _istruc: :py:attr:`~lada.vasp.functional.Functional.istruc`
+      .. _restart: :py:attr:`~pylada.vasp.functional.Functional.restart`
+      .. _icharg: :py:attr:`~pylada.vasp.functional.Functional.icharg`
+      .. _istruc: :py:attr:`~pylada.vasp.functional.Functional.istruc`
   """ 
   keyword = 'istart'
   """ VASP keyword """
@@ -680,7 +680,7 @@ class IStruc(AliasKeyword):
 
         - auto: 
         
-          LaDa determines automatically what to use. The structure can be read
+          Pylada determines automatically what to use. The structure can be read
           from the following files, in order of priority:
 
             - CONTCAR of the current
@@ -774,7 +774,7 @@ class LDAU(BoolKeyword):
 
       .. note:: NLEP_ requires VASP to be patched for it. Furthermore, it
          requires vasp_has_nlep_ to set to True (False by default) in your
-         lada configuration file.
+         pylada configuration file.
 
       .. seealso:: LDAU_, LDAUTYPE_, LDAUL_, LDAUJ_
 
@@ -1008,7 +1008,7 @@ class LSorbit(BoolKeyword):
   """ Run calculation with spin-orbit coupling. 
 
       Accepts None, True, or False.
-      If True, then sets :py:attr:`~lada.vasp.incar.Incar.nonscf` to True.
+      If True, then sets :py:attr:`~pylada.vasp.incar.Incar.nonscf` to True.
       When printing INCAR stuff, checks for valid prior calculation. And sets
       lmaxmix to value of prior calculation.
   """ 

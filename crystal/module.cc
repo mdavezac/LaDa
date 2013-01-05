@@ -1,4 +1,4 @@
-#include "LaDaConfig.h"
+#include "PyladaConfig.h"
 
 #include <Python.h>
 #include <numpy/arrayobject.h>
@@ -18,10 +18,10 @@
 #ifndef PyMODINIT_FUNC	/* declarations for DLL import/export */
 # define PyMODINIT_FUNC void
 #endif
-#define LADA_CRYSTAL_MODULE 0
+#define PYLADA_CRYSTAL_MODULE 0
 #include "crystal.h"
 
-namespace LaDa
+namespace Pylada
 {
   namespace crystal
   {
@@ -49,15 +49,15 @@ namespace LaDa
 
 PyMODINIT_FUNC initcppwrappers(void) 
 {
-  using namespace LaDa::crystal;
-  static void *api_capsule[LADA_SLOT(crystal)];
+  using namespace Pylada::crystal;
+  static void *api_capsule[PYLADA_SLOT(crystal)];
   PyObject *c_api_object;
 
   char const doc[] =  "Wrapper around C++ atom/structure class and affiliates.";
   PyObject* module = Py_InitModule3("cppwrappers", methods_table, doc);
   if(not module) return;
-  if(not LaDa::python::import()) return;
-  if(not LaDa::math::import()) return;
+  if(not Pylada::python::import()) return;
+  if(not Pylada::math::import()) return;
   import_array();
 
   /* Initialize the C API pointer array */
@@ -65,10 +65,10 @@ PyMODINIT_FUNC initcppwrappers(void)
 # include "crystal.h"
 
   /* Create a Capsule containing the API pointer array's address */
-# ifdef LADA_PYTHONTWOSIX
+# ifdef PYLADA_PYTHONTWOSIX
     c_api_object = PyCObject_FromVoidPtr((void *)api_capsule, NULL);
 # else
-    static const char name[] = "lada.crystal.cppwrappers._C_API";
+    static const char name[] = "pylada.crystal.cppwrappers._C_API";
     c_api_object = PyCapsule_New((void *)api_capsule, name, NULL);
 # endif
   if (c_api_object != NULL) PyModule_AddObject(module, "_C_API", c_api_object);

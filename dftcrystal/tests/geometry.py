@@ -1,6 +1,6 @@
 def test_crystal():
   from numpy import array
-  from lada.dftcrystal.crystal import Crystal
+  from pylada.dftcrystal.crystal import Crystal
   structure = Crystal(136, 4.63909875, 2.97938395, \
                       ifhr=0, \
                       shift=0)\
@@ -16,8 +16,8 @@ def test_crystal():
 
 def test_supercell():
   from numpy import array, all, abs
-  from lada.dftcrystal import Supercell, Crystal
-  from lada.error import ValueError
+  from pylada.dftcrystal import Supercell, Crystal
+  from pylada.error import ValueError
   structure = Crystal(136, 4.63909875, 2.97938395, \
                       ifhr=0, \
                       shift=0)\
@@ -55,7 +55,7 @@ def test_elastic():
   """ Test elastic keyword. """
   from pickle import loads, dumps
   from numpy import array, all, abs, identity, dot
-  from lada.dftcrystal import Crystal, Elastic
+  from pylada.dftcrystal import Crystal, Elastic
 
   epsilon = array([[0, 0, 0], [0, 0, 0], [0, 0, 0.1]])
   crystal = Crystal(227, 5.43).add_atom(0.125, 0.125, 0.125, 'Si')

@@ -1,5 +1,5 @@
 """ Database related parameters. """
-if "ladabase" in globals()["ladamodules"]:
+if "pyladabase" in globals()["pyladamodules"]:
   OUTCARS_prefix     = 'OUTCARs'
   """ Name of the collection of OUTCAR files. """
   vasp_database_name = 'cid'
@@ -14,7 +14,7 @@ if "ladabase" in globals()["ladamodules"]:
   """ Port to which to connect on host. """
   local_push_dir = "/tmp/database_tmp"
   """ Directory where files are pushed, before being pulled to redrock. """
-  ladabase_doconnect = False
+  pyladabase_doconnect = False
   """ Whether to connect to database when starting ipython. """
   add_push_magic_function = False
   """ Whether to the %push magic function to the IPython interface. 

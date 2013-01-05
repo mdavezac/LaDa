@@ -1,20 +1,20 @@
-#include "LaDaConfig.h"
+#include "PyladaConfig.h"
 
 #include <Python.h>
 #include <structmember.h>
-#define PY_ARRAY_UNIQUE_SYMBOL lada_vff_ARRAY_API
+#define PY_ARRAY_UNIQUE_SYMBOL pylada_vff_ARRAY_API
 #define NO_IMPORT_ARRAY
 #include <numpy/arrayobject.h>
 
 
-#define LADA_NO_IMPORT
+#define PYLADA_NO_IMPORT
 #include <errors/exceptions.h>
 #include <crystal/crystal.h>
 
 #include "../node/pybase.h"
 #include "pybase.h"
 
-namespace LaDa
+namespace Pylada
 {
   namespace vff
   {
@@ -108,7 +108,7 @@ namespace LaDa
       static PyTypeObject dummy = {
           PyObject_HEAD_INIT(NULL)
           0,                                 /*ob_size*/
-          "lada.vff.cppwrappers.Edge",       /*tp_name*/
+          "pylada.vff.cppwrappers.Edge",       /*tp_name*/
           sizeof(EdgeData),                  /*tp_basicsize*/
           0,                                 /*tp_itemsize*/
           (destructor)dealloc,               /*tp_dealloc*/
@@ -150,4 +150,4 @@ namespace LaDa
     }
 
   } // namespace vff
-} // namespace LaDa
+} // namespace Pylada

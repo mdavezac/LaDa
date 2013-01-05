@@ -13,12 +13,12 @@ def poscar(structure, file='POSCAR', vasp5=None, substitute=None):
       :type file: str, stream, or None.
       :param bool vasp5:
           If true, include species in poscar, vasp-5 style.  Otherwise, looks
-          for :py:data:`is_vasp_4 <lada.is_vasp_4>` global config variable. 
+          for :py:data:`is_vasp_4 <pylada.is_vasp_4>` global config variable. 
           Defaults to False, in which case, does not print specie types.
       :param substitute:
           If present, will substitute the atom type in the structure. Can be
           incomplete. Only works with vasp5 = True (or :py:data:`is_vasp_4
-          <lada.is_vasp_4>` = True).
+          <pylada.is_vasp_4>` = True).
       :type substitute:
           dict or None
   
@@ -46,8 +46,8 @@ def poscar(structure, file='POSCAR', vasp5=None, substitute=None):
   from . import specieset
 
   if vasp5 is None:
-    import lada 
-    vasp5 = not getattr(lada, 'is_vasp_4', True)
+    import pylada 
+    vasp5 = not getattr(pylada, 'is_vasp_4', True)
 
   string = "{0}\n{1}\n".format(getattr(structure, 'name', ''),
                                float(structure.scale.rescale(angstrom)))
@@ -131,7 +131,7 @@ def crystal( structure, file='fort.34',
       :param spacegroup:
           The structure's space group as a sequence of 4x3 matrices. If this is
           None (default), then checks for ''spacegroup'' attributes. If that
-          does not exist, uses :py:function:`~lada.crystal.space_group`.
+          does not exist, uses :py:function:`~pylada.crystal.space_group`.
   """
   from StringIO import StringIO
   from numpy import zeros

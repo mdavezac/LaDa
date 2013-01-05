@@ -163,7 +163,7 @@ class Slabcut(Slabinfo):
     return '{0.__class__.__name__}([{0.hkl[0]},  {0.hkl[1]}, {0.hkl[2]}], '    \
            '{0.isup}, {0.nl})'.format(self)
 Slab = Slabcut
-""" Alias for :py:class`~lada.dftcrystal.geometry.Slabcut`. """
+""" Alias for :py:class`~pylada.dftcrystal.geometry.Slabcut`. """
 
 class DisplaceAtoms(BaseKeyword):
   """ Displaces atoms.
@@ -171,7 +171,7 @@ class DisplaceAtoms(BaseKeyword):
       This keywords applies a displacement to a set of atoms, identified by
       their labels:
 
-      >>> from lada.dftcrystal import DisplaceAtoms
+      >>> from pylada.dftcrystal import DisplaceAtoms
       >>> disp = DisplaceAtoms()                                               \\
       ...                     .add_atom(0, 0.01, 0.002, 1)                     \\
       ...                     .add_atom(0, -0.01, 0.05, 5)

@@ -22,7 +22,7 @@ def cut_and_splice(s1, s2, roll=True):
   from random import choice, random
   from numpy import dot, abs
   from numpy.linalg import det
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
 
   # swap structures randomly.
   if choice([True, False]): s1, s2 = s2, s1

@@ -300,11 +300,11 @@ def iter_emass( functional, structure=None, outdir=None, workdir=None,
           or  computed within this function. As such, ``functional`` can be one
           of two types.
 
-          - :py:class:`~lada.dftcrystal.functional.Functional` object: a
+          - :py:class:`~pylada.dftcrystal.functional.Functional` object: a
              self-consistent calculation is first performed. The ``structure``
              argument cannot be None.
           - extraction object: e.g. as returned by a call to a
-            :py:class:`~lada.dftcrystal.functional.Functional` object. It
+            :py:class:`~pylada.dftcrystal.functional.Functional` object. It
             should point to the self-consistent calculation on which the
             effective mass calculations will be based. The ``structure``
             argument is ignored.
@@ -415,12 +415,12 @@ def iter_emass( functional, structure=None, outdir=None, workdir=None,
 iter_emass.Extract = Extract
 """ Extractor class for effective mass. """
 EMass = makeclass( 'EMass', Properties, iter_emass, None,
-                    module='lada.dftcrystal.properties.emass',
+                    module='pylada.dftcrystal.properties.emass',
                     doc='Functional form of the '                              \
-                        ':py:class:`lada.dftcrystal.properties.emass'          \
+                        ':py:class:`pylada.dftcrystal.properties.emass'          \
                         '.iter_emass` method.' )
 
 # Function call to effective mass. No iterations. returns when calculations are
 # done or fail.
 effective_mass = makefunc( 'effective_mass', iter_emass,
-                           'lada.dftcrystal.properties.emass' )
+                           'pylada.dftcrystal.properties.emass' )

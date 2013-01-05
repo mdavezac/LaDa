@@ -7,7 +7,7 @@ from os import fork, getcwd, chmod, remove
 from stat import S_IRGRP, S_IWGRP, S_IRUSR, S_IWUSR
 from os.path import relpath, dirname
 from shutil import move
-from lada.ladabase.ipython import _walk_files, _get_local_push_parser
+from pylada.ladabase.ipython import _walk_files, _get_local_push_parser
 import tarfile 
 
 # first fork to orphan the process created in the second.

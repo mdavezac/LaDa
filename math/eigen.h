@@ -1,5 +1,5 @@
-#if LADA_MATH_MODULE != 1
-namespace LaDa
+#if PYLADA_MATH_MODULE != 1
+namespace Pylada
 {
   namespace math
   {
@@ -26,7 +26,7 @@ namespace LaDa
     typedef Eigen::AngleAxis<types::t_real> AngleAxis;
     //! \typedef type of the translation objects.
     typedef Eigen::Translation<types::t_real, 3> Translation;
-#   ifndef LADA_WITH_EIGEN3 
+#   ifndef PYLADA_WITH_EIGEN3 
       //! \typedef type of the affine transformations.
       typedef Eigen::Transform<types::t_real, 3> Affine3d;
 #   else
@@ -34,15 +34,15 @@ namespace LaDa
       typedef Eigen::Transform<types::t_real, 3, Eigen::Isometry> Affine3d;
 #   endif
   } // namespace math
-} // namespace LaDa
+} // namespace Pylada
 
 
 namespace Eigen
 {
   //! Real type.
-  typedef LaDa::types::t_real t_real;
+  typedef Pylada::types::t_real t_real;
   //! Integer type.
-  typedef LaDa::types::t_int t_int;
+  typedef Pylada::types::t_int t_int;
 
   //! Cross product of real vectors.
   inline Matrix<t_real, 3, 1> operator^(Matrix<t_real, 3, 1> const &_a, Matrix<t_real, 3, 1> const &_b)
@@ -56,7 +56,7 @@ namespace Eigen
   inline Matrix<t_real, 3, 3> operator!(Matrix<t_real, 3, 3> const &_mat)
     { return _mat.inverse(); }
 
-# ifndef LADA_WITH_EIGEN3 
+# ifndef PYLADA_WITH_EIGEN3 
     //! Transpose operation of real matrix.
     inline Transpose< Matrix<t_real, 3, 3> > operator~(Matrix<t_real, 3, 3> const &_mat)
       { return _mat.transpose(); }

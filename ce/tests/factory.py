@@ -1,6 +1,6 @@
 def test_J0():
-  from lada.ce import cluster_factory
-  from lada.crystal import binary
+  from pylada.ce import cluster_factory
+  from pylada.crystal import binary
 
   lattice = binary.zinc_blende()
   lattice[0].type = ['Si', 'Ge']
@@ -12,8 +12,8 @@ def test_J0():
 
 def test_J1():
   from numpy import all
-  from lada.ce import cluster_factory
-  from lada.crystal import binary
+  from pylada.ce import cluster_factory
+  from pylada.crystal import binary
 
   # test multi-lattice with different occupations. 
   lattice = binary.zinc_blende()
@@ -38,8 +38,8 @@ def test_J1():
 
 def test_B2():
   from numpy import all
-  from lada.ce import cluster_factory
-  from lada.crystal import binary
+  from pylada.ce import cluster_factory
+  from pylada.crystal import binary
 
   # test multi-lattice with different occupations. 
   lattice = binary.zinc_blende()
@@ -74,8 +74,8 @@ def test_B2():
 
 def test_B3():
   from numpy import all
-  from lada.ce import cluster_factory
-  from lada.crystal import binary
+  from pylada.ce import cluster_factory
+  from pylada.crystal import binary
 
   def topos(s):
     return lattice[s[1]].pos + s[0]

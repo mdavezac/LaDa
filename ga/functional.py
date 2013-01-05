@@ -1,4 +1,4 @@
-""" GA as a functional, for use with ladajobs. """
+""" GA as a functional, for use with pyladajobs. """
 __docformat__ = "restructuredtext en"
 __all__ = ['Darwin', 'maximize', 'minimize']
 from abc import ABCMeta, abstractmethod
@@ -23,7 +23,7 @@ class Functional(object):
     """ Fills jobdictionary item for computing individual.
     
         :param job: 
-          :py:class:`~lada.jobfolder.jobfolder.JobFolder` instance which should be
+          :py:class:`~pylada.jobfolder.jobfolder.JobFolder` instance which should be
           filled with the right parameters for computing the intermediate
           fitness of an individual.
         :param indiv:
@@ -282,9 +282,9 @@ class Functional(object):
         appropriate. 
 
         By default, it creates a
-        :py:class:`~lada.process.jobfolder.JobFolderProcess`. It might be a
+        :py:class:`~pylada.process.jobfolder.JobFolderProcess`. It might be a
         good idea to use something more specific, such as a
-        :py:class:`~lada.process.pool.PoolProcess` instantiated with the
+        :py:class:`~pylada.process.pool.PoolProcess` instantiated with the
         correct ressource allocation function.
 
         The process is not saved when self is pickled. It is created anew each

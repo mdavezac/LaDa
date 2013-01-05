@@ -2,7 +2,7 @@
 
     This sub-module provides an abstraction between resources which
     purports to launch external programs, say a
-    :py:class:`~lada.vasp.functional.Vasp` instance, and the actual
+    :py:class:`~pylada.vasp.functional.Vasp` instance, and the actual
     program. There are two main issues the module attempts to resolve: 
 
       - an interface which hides the details of launching mpi jobs on one
@@ -38,7 +38,7 @@
     The first two lines initialize and start a process of some kind, which
     could be as simple as lauching an external :py:class:`program
     <program.ProgramProcess>` or as complicated as lauching different jobs
-    from a :py:class:`~lada.jobfolder.jobfolder.JobFolder` instance in
+    from a :py:class:`~pylada.jobfolder.jobfolder.JobFolder` instance in
     :py:class:`parallel <jobfolder.JobFolderProcess>`. The rest of the
     snippet checks whether the process is finished. If it finished
     correctly, then :py:meth:`~process.Process.poll` (rather, the overloaded

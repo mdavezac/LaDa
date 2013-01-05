@@ -3,9 +3,9 @@ from os.path import join, exists
 from shutil import rmtree
 import numpy as np
 
-from lada.vasp import Extract
-from lada.vasp import Vasp
-from lada.vasp.nlep.nlep_defaults import nlep_element_defaults
+from pylada.vasp import Extract
+from pylada.vasp import Vasp
+from pylada.vasp.nlep.nlep_defaults import nlep_element_defaults
 
 
 class SystemParams:
@@ -18,7 +18,7 @@ class SystemParams:
         self.scale_pressure = None  # this leaves it to global default in input_generic.py or run_input.py; otherwise set it to sys-specific value
 
         self.atom_idx = [0,1]
-        """total hack that maps how lada happens to enumerate the atoms to how the
+        """total hack that maps how pylada happens to enumerate the atoms to how the
         dft fitting data orders the atoms. TODO. a solution, rsises to "workaround",
         is to have functions to probe for and establish the connection"""
         # eg probe how python dict will order the species, then possibly
@@ -29,7 +29,7 @@ class SystemParams:
 #if first == '<anion>':
 #    atom_idx = [1,0]
 #    print "anion <anion> is first by python"
-# This doesn't work.  e.g. AsAl comes out, but LaDa gives AlAs.  Seems alphabetic for 3-5 systems, so I
+# This doesn't work.  e.g. AsAl comes out, but Pylada gives AlAs.  Seems alphabetic for 3-5 systems, so I
 # will just make that happen:
         if anion < cation:
             self.atom_idx = [1,0]
@@ -194,16 +194,16 @@ class SystemParams:
         #9      22.0443      22.0585      -7.8777      -7.8942      -3.2856       0.8612       0.0000
 
 
-        #dft_in = Extract(directory="/home/pagraf/projects/lada/nlep/data/GW-26-35/")
-        #dft_in = Extract(directory="/scratch/pagraf/projects/lada/nlep/data/")
+        #dft_in = Extract(directory="/home/pagraf/projects/pylada/nlep/data/GW-26-35/")
+        #dft_in = Extract(directory="/scratch/pagraf/projects/pylada/nlep/data/")
         """ Object which extracts DFT output """
         #dft_in.OUTCAR = "<cation><anion>_OUTCAR_pbe" # is "OUTCAR" by default
         #dft_in.CONTCAR = "<cation><anion>_POSCAR"    # is "CONTCAR" by default
 
         self.dft_in = Extract("%s/%s%s_OUTCAR_pbe" % (outcar_data_dir, cation, anion))
 
-        #gw_in = ExtractGW(directory="/home/pagraf/projects/lada/nlep/data/GW-26-35")
-        #gw_in = ExtractGW(directory="/scratch/pagraf/projects/lada/nlep/data/")
+        #gw_in = ExtractGW(directory="/home/pagraf/projects/pylada/nlep/data/GW-26-35")
+        #gw_in = ExtractGW(directory="/scratch/pagraf/projects/pylada/nlep/data/")
         """ Object which extracts GW output """
         #gw_in.OUTCAR = "<cation><anion>_OUTCAR_gw"  # is "OUTCAR" by default
         #gw_in.CONTCAR = "<cation><anion>_POSCAR"    # is "CONTCAR" by default

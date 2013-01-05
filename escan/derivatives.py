@@ -221,7 +221,7 @@ def reciprocal( escan, structure, outdir = None, comm = None, direction=(0,0,1),
           The structure for wich to compute effective masses.
         outdir : str
           Directory where to save results of calculation.
-        comm : `lada.mpi.Communicator` or None
+        comm : `pylada.mpi.Communicator` or None
           MPI communicator containing processes with which to perform
           calculation.
         direction : 3-tuple or list of 3-tuple

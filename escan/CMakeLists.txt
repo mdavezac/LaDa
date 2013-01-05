@@ -31,5 +31,5 @@ mark_as_advanced(PYTHON_MODULE_pyescan_BUILD_SHARED)
 set_target_properties(pyescan PROPERTIES PREFIX "_")
 set_target_properties(pyescan PROPERTIES OUTPUT_NAME escan)
 
-install(TARGETS pyescan DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/escan)
-install(FILES ${PYESCAN_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/escan)
+install(TARGETS pyescan DESTINATION ${CMAKE_PYINSTALL_PREFIX}/pylada/escan)
+install(FILES ${PYESCAN_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/pylada/escan)

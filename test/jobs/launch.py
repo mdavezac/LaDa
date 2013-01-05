@@ -1,12 +1,12 @@
 """ Tests launching jobs through magic function. """
-from lada.opt import AbstractExtractBase
-from lada.opt.decorators import broadcast_result
+from pylada.opt import AbstractExtractBase
+from pylada.opt.decorators import broadcast_result
 
 def functional(outdir=None, comm=None, **kwargs):
   """ Dummy functional. """
   from os import getcwd
   from os.path import join
-  from lada.opt import Changedir
+  from pylada.opt import Changedir
   if outdir is None: outdir = getcwd()
   comm.barrier()
   with Changedir(outdir, comm) as cwd:
@@ -29,7 +29,7 @@ functional.Extract = Extract
 def create_jobs(n=3):
   """ Returns dictionary with fake jobs. """
   from launch import functional
-  from lada.jobs import JobFolder
+  from pylada.jobs import JobFolder
 
   root = JobFolder()
   for i in xrange(n):

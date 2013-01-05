@@ -7,7 +7,7 @@ class Record(object):
   def __init__(self, path=None):
     """ Initializes an on-disk object. """
     from .opt import RelativeDirectory
-    if path is None: path = ".lada_record"
+    if path is None: path = ".pylada_record"
     self.__dict__['path'] = RelativeDirectory(path).path
     """ Path to on-disk file. """
 

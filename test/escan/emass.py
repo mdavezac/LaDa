@@ -1,8 +1,8 @@
 from math import fabs as abs
 from numpy import array
-from lada.crystal import fill_structure
-from lada.escan import read_input
-from lada.escan.emass import Functional
+from pylada.crystal import fill_structure
+from pylada.escan import read_input
+from pylada.escan.emass import Functional
 
 input = read_input("input.py", namespace = {"Escan": Functional})
 

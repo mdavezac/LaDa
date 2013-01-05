@@ -32,7 +32,7 @@ def create_structure_dir(structure, prefix=None):
 
 def choose_structures( howmany, filename="database", prefix=None ):
   from random import randint
-  from lada import crystal, enumeration
+  from pylada import crystal, enumeration
   import database
 
   N = 0

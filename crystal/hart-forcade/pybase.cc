@@ -26,40 +26,40 @@ PyHFTObject *copy_hftransform(PyHFTObject* _self, PyObject *_memo)
 {
   PyHFTObject* result = (PyHFTObject*)_self->ob_type->tp_alloc(_self->ob_type, 0);
   if(not result) return NULL;
-  new(&result->transform) LaDa::math::rMatrix3d(_self->transform);
-  new(&result->quotient) LaDa::math::iVector3d(_self->quotient);
+  new(&result->transform) Pylada::math::rMatrix3d(_self->transform);
+  new(&result->quotient) Pylada::math::iVector3d(_self->quotient);
   return result;
 }
 // Returns pointer to hftransform type.
 PyTypeObject* hftransform_type()
 {
-# ifdef LADA_DECLARE
-#   error LADA_DECLARE already defined.
+# ifdef PYLADA_DECLARE
+#   error PYLADA_DECLARE already defined.
 # endif
-# define LADA_DECLARE(name, doc) \
+# define PYLADA_DECLARE(name, doc) \
     {const_cast<char*>(#name), (getter) hftransform_get ## name, NULL, const_cast<char*>(doc)}
   
   static PyGetSetDef getsetters[] = {
-      LADA_DECLARE(transform, "Transformation matrix to go from position to hf index."),
-      LADA_DECLARE(quotient, "Periodicity quotient."),
-      LADA_DECLARE(size, "Number of unitcells in the supercell."),
+      PYLADA_DECLARE(transform, "Transformation matrix to go from position to hf index."),
+      PYLADA_DECLARE(quotient, "Periodicity quotient."),
+      PYLADA_DECLARE(size, "Number of unitcells in the supercell."),
       {NULL}  /* Sentinel */
   };
-# undef LADA_DECLARE
-# define LADA_DECLARE(name, func, args, doc) \
+# undef PYLADA_DECLARE
+# define PYLADA_DECLARE(name, func, args, doc) \
     {#name, (PyCFunction)func, METH_ ## args, doc} 
   static PyMethodDef methods[] = {
-      LADA_DECLARE(copy, hftransform_copy, NOARGS, "Returns a deepcopy of the hftransform."),
-      LADA_DECLARE(__copy__, hftransform_shallowcopy, NOARGS, "Shallow copy of an hftransform."),
-      LADA_DECLARE(__deepcopy__, copy_hftransform, O, "Deep copy of an hftransform."),
-      LADA_DECLARE(__getstate__, hftransform_getstate, NOARGS, "Implements pickle protocol."),
-      LADA_DECLARE(__setstate__, hftransform_setstate, O, "Implements pickle protocol."),
-      LADA_DECLARE(__reduce__,   hftransform_reduce, NOARGS, "Implements pickle protocol."),
-      LADA_DECLARE( indices,   hftransform_indices, O,
+      PYLADA_DECLARE(copy, hftransform_copy, NOARGS, "Returns a deepcopy of the hftransform."),
+      PYLADA_DECLARE(__copy__, hftransform_shallowcopy, NOARGS, "Shallow copy of an hftransform."),
+      PYLADA_DECLARE(__deepcopy__, copy_hftransform, O, "Deep copy of an hftransform."),
+      PYLADA_DECLARE(__getstate__, hftransform_getstate, NOARGS, "Implements pickle protocol."),
+      PYLADA_DECLARE(__setstate__, hftransform_setstate, O, "Implements pickle protocol."),
+      PYLADA_DECLARE(__reduce__,   hftransform_reduce, NOARGS, "Implements pickle protocol."),
+      PYLADA_DECLARE( indices,   hftransform_indices, O,
                     "indices of input atomic position in cyclic Z-group.\n\n"
                     ":param vec: A 3d-vector in the sublattice of interest.\n"
                     ":returns: The 3-d indices in the cyclic group.\n" ),
-      LADA_DECLARE( flatten_indices,   hftransform_flatten_indices, VARARGS | METH_KEYWORDS,
+      PYLADA_DECLARE( flatten_indices,   hftransform_flatten_indices, VARARGS | METH_KEYWORDS,
                     "Flattens cyclic Z-group indices.\n\n"
                     ":param int i: \n"
                     "  First index into cyclic Z-group.\n"
@@ -70,7 +70,7 @@ PyTypeObject* hftransform_type()
                     ":param int site: \n"
                     "  Optional site index for multilattices.\n"
                     ":returns: An integer which can serve as an index into a 1d array.\n"), 
-      LADA_DECLARE( index,   hftransform_flat_index, VARARGS | METH_KEYWORDS,
+      PYLADA_DECLARE( index,   hftransform_flat_index, VARARGS | METH_KEYWORDS,
                     "Flat index into cyclic Z-group.\n\n"
                     ":param pos: (3d-vector)\n"
                     "    Atomic position with respect to the sublattice of\n"
@@ -82,12 +82,12 @@ PyTypeObject* hftransform_type()
                     "   indices need to take this into account.\n" ),
       {NULL}  /* Sentinel */
   };
-# undef LADA_DECLARE
+# undef PYLADA_DECLARE
  
   static PyTypeObject dummy = {
       PyObject_HEAD_INIT(NULL)
       0,                                 /*ob_size*/
-      "lada.crystal.cppwrappers.HFTransform",   /*tp_name*/
+      "pylada.crystal.cppwrappers.HFTransform",   /*tp_name*/
       sizeof(PyHFTObject),             /*tp_basicsize*/
       0,                                 /*tp_itemsize*/
       0,                                 /*tp_dealloc*/

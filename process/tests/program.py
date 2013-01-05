@@ -3,10 +3,10 @@ def test(executable):
   from tempfile import mkdtemp
   from os.path import join 
   from shutil import rmtree
-  from lada.process.program import ProgramProcess
-  from lada.process import Fail, NotStarted
-  from lada.misc import Changedir
-  from lada import default_comm as comm
+  from pylada.process.program import ProgramProcess
+  from pylada.process import Fail, NotStarted
+  from pylada.misc import Changedir
+  from pylada import default_comm as comm
   from functional import ExtractSingle as Extract
   dir = mkdtemp()
   try: 

@@ -14,10 +14,10 @@ def create_jobs(path, inputpath="input.py", **kwargs):
   """
   from IPython.ipapi import get as get_ipy
 
-  from lada.jobs import JobFolder
-  from lada.ga.escan.nanowires import read_input
-  from lada.ga.escan.nanowires.converter import Converter
-  from lada.ga.escan.nanowires.functional import Darwin
+  from pylada.jobs import JobFolder
+  from pylada.ga.escan.nanowires import read_input
+  from pylada.ga.escan.nanowires.converter import Converter
+  from pylada.ga.escan.nanowires.functional import Darwin
 
   input = read_input(inputpath)
 

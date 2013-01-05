@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# LaDa documentation build configuration file, created by
+# Pylada documentation build configuration file, created by
 # sphinx-quickstart on Wed Feb 15 22:50:05 2012.
 #
 # This file is execfile()d with the current directory set to its containing dir.
@@ -40,7 +40,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'LaDa'
+project = u'Pylada'
 copyright = u'2012, Mayeul d\'Avezac'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -164,7 +164,7 @@ html_show_sourcelink = True
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'LaDadoc'
+htmlhelp_basename = 'Pyladadoc'
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -178,7 +178,7 @@ htmlhelp_basename = 'LaDadoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'LaDa.tex', u'LaDa Documentation',
+  ('index', 'Pylada.tex', u'Pylada Documentation',
    u'Mayeul d\'Avezac', 'manual'),
 ]
 
@@ -211,7 +211,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'lada', u'LaDa Documentation',
+    ('index', 'pylada', u'Pylada Documentation',
      [u'Mayeul d\'Avezac'], 1)
 ]
 

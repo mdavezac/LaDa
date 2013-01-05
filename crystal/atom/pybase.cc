@@ -15,7 +15,7 @@ PyAtomObject* new_atom()
   result->weakreflist = NULL;
   result->type = Py_None;
   Py_INCREF(Py_None);
-  new(&result->pos) LaDa::math::rVector3d(0,0,0);
+  new(&result->pos) Pylada::math::rVector3d(0,0,0);
   result->pydict = PyDict_New();
   if(result->pydict == NULL) { Py_DECREF(result); return NULL; }
   return result;
@@ -28,7 +28,7 @@ PyAtomObject* PyAtom_NewWithArgs(PyTypeObject* _type, PyObject *_args, PyObject 
   result->weakreflist = NULL;
   result->type = Py_None;
   Py_INCREF(Py_None);
-  new(&result->pos) LaDa::math::rVector3d(0,0,0);
+  new(&result->pos) Pylada::math::rVector3d(0,0,0);
   result->pydict = PyDict_New();
   if(result->pydict == NULL) { Py_DECREF(result); return NULL; }
   return result;
@@ -48,7 +48,7 @@ PyAtomObject *copy_atom(PyAtomObject* _self, PyObject *_memo)
   PyAtomObject* result = (PyAtomObject*)_self->ob_type->tp_alloc(_self->ob_type, 0);
   if(not result) return NULL;
   result->weakreflist = NULL;
-  new(&result->pos) LaDa::math::rVector3d(_self->pos);
+  new(&result->pos) Pylada::math::rVector3d(_self->pos);
   result->pydict = NULL;
   result->type = NULL;
   PyObject* copymod = PyImport_ImportModule("copy");
@@ -76,65 +76,65 @@ PyAtomObject *copy_atom(PyAtomObject* _self, PyObject *_memo)
 // Returns pointer to atom type.
 PyTypeObject* atom_type()
 {
-# ifdef LADA_DECLARE
-#   error LADA_DECLARE already defined.
+# ifdef PYLADA_DECLARE
+#   error PYLADA_DECLARE already defined.
 # endif
-# define LADA_DECLARE(name, doc) \
-    { const_cast<char*>(#name), (getter) lada_atom_get ## name, \
-      (setter) lada_atom_set ## name, const_cast<char*>(doc) }
+# define PYLADA_DECLARE(name, doc) \
+    { const_cast<char*>(#name), (getter) pylada_atom_get ## name, \
+      (setter) pylada_atom_set ## name, const_cast<char*>(doc) }
   
   static PyGetSetDef getsetters[] = {
-      LADA_DECLARE(pos,  "Position in cartesian coordinates.\n\n"
+      PYLADA_DECLARE(pos,  "Position in cartesian coordinates.\n\n"
                          "The position does not yet have units. "
-                         "Units depend upon `lada.crystal.Structure.scale`.\n"
+                         "Units depend upon `pylada.crystal.Structure.scale`.\n"
                          "Finally, the position is owned internally by the "
                          "atom. It cannot be set to reference an object\n"
                          "(say a list or numpy array). ``atom.pos = "
                          "some_list`` will copy the values of"
                          "``some_list``.\n"),
-      LADA_DECLARE(type, "Occupation of this atomic site.\n\n"
+      PYLADA_DECLARE(type, "Occupation of this atomic site.\n\n"
                          "Can be any object whatsoever."),
       {NULL}  /* Sentinel */
   };
-# undef LADA_DECLARE
-# define LADA_DECLARE(name, object, doc) \
+# undef PYLADA_DECLARE
+# define PYLADA_DECLARE(name, object, doc) \
     { const_cast<char*>(#name), T_OBJECT_EX, \
-      offsetof(LaDa::crystal::PyAtomObject, object), 0, const_cast<char*>(doc) }
+      offsetof(Pylada::crystal::PyAtomObject, object), 0, const_cast<char*>(doc) }
   static PyMemberDef members[] = {
-    LADA_DECLARE(__dict__, pydict, "Python attribute dictionary."),
-#   ifdef LADA_DEBUG
-      LADA_DECLARE(_weakreflist, weakreflist, "List of weak references."),
+    PYLADA_DECLARE(__dict__, pydict, "Python attribute dictionary."),
+#   ifdef PYLADA_DEBUG
+      PYLADA_DECLARE(_weakreflist, weakreflist, "List of weak references."),
 #   endif
     {NULL, 0, 0, 0, NULL}  /* Sentinel */
   };
-# undef LADA_DECLARE
-# define LADA_DECLARE(name, func, args, doc) \
+# undef PYLADA_DECLARE
+# define PYLADA_DECLARE(name, func, args, doc) \
     {#name, (PyCFunction)func, METH_ ## args, doc} 
   static PyMethodDef methods[] = {
-      LADA_DECLARE(copy, lada_atom_copy, NOARGS, "Returns a deepcopy of the atom."),
-      LADA_DECLARE( to_dict, lada_atom_to_dict, NOARGS, 
+      PYLADA_DECLARE(copy, pylada_atom_copy, NOARGS, "Returns a deepcopy of the atom."),
+      PYLADA_DECLARE( to_dict, pylada_atom_to_dict, NOARGS, 
                     "Returns a dictionary with shallow copies of items." ),
-      LADA_DECLARE(__copy__, lada_atom_shallowcopy, NOARGS, "Shallow copy of an atom."),
-      LADA_DECLARE(__deepcopy__, *(PyObject*(*)(PyAtomObject*, PyObject*)) copy_atom, O, "Deep copy of an atom."),
-      LADA_DECLARE(__getstate__, lada_atom_getstate, NOARGS, "Implements pickle protocol."),
-      LADA_DECLARE(__setstate__, lada_atom_setstate, O, "Implements pickle protocol."),
-      LADA_DECLARE(__reduce__,   lada_atom_reduce, NOARGS, "Implements pickle protocol."),
+      PYLADA_DECLARE(__copy__, pylada_atom_shallowcopy, NOARGS, "Shallow copy of an atom."),
+      PYLADA_DECLARE(__deepcopy__, *(PyObject*(*)(PyAtomObject*, PyObject*)) copy_atom, O, "Deep copy of an atom."),
+      PYLADA_DECLARE(__getstate__, pylada_atom_getstate, NOARGS, "Implements pickle protocol."),
+      PYLADA_DECLARE(__setstate__, pylada_atom_setstate, O, "Implements pickle protocol."),
+      PYLADA_DECLARE(__reduce__,   pylada_atom_reduce, NOARGS, "Implements pickle protocol."),
       {NULL}  /* Sentinel */
   };
-# undef LADA_DECLARE
+# undef PYLADA_DECLARE
  
   static PyTypeObject dummy = {
       PyObject_HEAD_INIT(NULL)
       0,                                 /*ob_size*/
-      "lada.crystal.cppwrappers.Atom",   /*tp_name*/
+      "pylada.crystal.cppwrappers.Atom",   /*tp_name*/
       sizeof(PyAtomObject),   /*tp_basicsize*/
       0,                                 /*tp_itemsize*/
-      (destructor)lada_atom_dealloc,     /*tp_dealloc*/
+      (destructor)pylada_atom_dealloc,     /*tp_dealloc*/
       0,                                 /*tp_print*/
       0,                                 /*tp_getattr*/
       0,                                 /*tp_setattr*/
       0,                                 /*tp_compare*/
-      (reprfunc)lada_atom_repr,          /*tp_repr*/
+      (reprfunc)pylada_atom_repr,          /*tp_repr*/
       0,                                 /*tp_as_number*/
       0,                                 /*tp_as_sequence*/
       0,                                 /*tp_as_mapping*/
@@ -163,15 +163,15 @@ PyTypeObject* atom_type()
         "  atom = Atom(0.25, 0, 0.5, 'Si', moment=0.5)\n\n"
         "The ``moment`` keyword will create a corresponding ``atom.moment`` keyword "
         "with a value of 0.5. There are strictly no limits on what kind of type to "
-        "include as attributes. However, in order to work well with the rest of LaDa, "
+        "include as attributes. However, in order to work well with the rest of Pylada, "
         "it is best if extra attributes are pickle-able.\n\n"
         ".. note:: the position is always owned by the object. "
         "Two atoms will not own the same position object. "
         "The position given on input is *copied*, *not* referenced. "
         "All other attributes behave like other python attributes: "
         "they are refence if complex objects and copies if a basic python type.",
-      (traverseproc)lada_atom_traverse,  /* tp_traverse */
-      (inquiry)lada_atom_gcclear,        /* tp_clear */
+      (traverseproc)pylada_atom_traverse,  /* tp_traverse */
+      (inquiry)pylada_atom_gcclear,        /* tp_clear */
       0,		                     /* tp_richcompare */
       offsetof(PyAtomObject, weakreflist),   /* tp_weaklistoffset */
       0,		                     /* tp_iter */
@@ -184,7 +184,7 @@ PyTypeObject* atom_type()
       0,                                 /* tp_descr_get */
       0,                                 /* tp_descr_set */
       offsetof(PyAtomObject, pydict),        /* tp_dictoffset */
-      (initproc)lada_atom_init,          /* tp_init */
+      (initproc)pylada_atom_init,          /* tp_init */
       0,                                 /* tp_alloc */
       (newfunc)PyAtom_NewWithArgs,                /* tp_new */
   };

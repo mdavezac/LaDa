@@ -1,17 +1,17 @@
-#ifndef LADA_VFF_EDGE_DATA_H
-#define LADA_VFF_EDGE_DATA_H
+#ifndef PYLADA_VFF_EDGE_DATA_H
+#define PYLADA_VFF_EDGE_DATA_H
 
-#include "LaDaConfig.h"
+#include "PyladaConfig.h"
 
 //! \def check_structure(object)
 //!      Returns true if an object is an edge or subtype.
-#define PyEdgeData_Check(object) PyObject_TypeCheck(object, LaDa::vff::edge_type())
+#define PyEdgeData_Check(object) PyObject_TypeCheck(object, Pylada::vff::edge_type())
 //! \def PyNodeData_CheckExact(object)
 //!      Returns true if an object is a edge.
-#define PyEdgeData_CheckExact(object) object->ob_type == LaDa::vff::edge_type()
+#define PyEdgeData_CheckExact(object) object->ob_type == Pylada::vff::edge_type()
       
 
-namespace LaDa 
+namespace Pylada 
 {
   namespace vff
   {
@@ -46,7 +46,7 @@ namespace LaDa
 
   } // namespace vff
 
-} // namespace LaDa
+} // namespace Pylada
 
 #endif
 

@@ -3,27 +3,27 @@
 CRYSTAL's approach to crystal structures
 ========================================
 
-.. currentmodule:: lada.dftcrystal
+.. currentmodule:: pylada.dftcrystal
 
 CRYSTAL_ proposes a functional_ approach to crystals, as opposed to the
-imperative_ style used by LaDa. In practice, this means that CRYSTAL_ declares
+imperative_ style used by Pylada. In practice, this means that CRYSTAL_ declares
 a chain of functions which acts upon an initial data and transform it. The
 initial data is generally a space-group with a set of atomic sites. The
 functions can be affine transformations on these sites, additions and removals
 of sites, transformation upon the space-group, strain relaxation, or others.
 
 In practice, both approaches can "do the same thing", and indeed both CRYSTAL_
-and LaDa provide similar functionalities, e.g. creating a supercell from  a
+and Pylada provide similar functionalities, e.g. creating a supercell from  a
 unit-cell. However, there are clear benefits from allowing users to keep
 working the CRYSTAL_ way when using with CRYSTAL_. 
 
-LaDa currently provides three classes which allow to work with
+Pylada currently provides three classes which allow to work with
 :py:class:`molecules <molecule.Molecule>` defined from a spacegroup and
 atomic-site occupations, :py:class:`3d-periodic crystalline structures
 <crystal.Crystal>` defined from a space-group, lattice parameters, and the
 occupation of Wyckoff positions, and finally, :py:class:`structures
-<external.External>` defined the LaDa way, where symmetries must explicitely
-provided to CRYSTAL_ (as in provided by user or determined by LaDa and then fed
+<external.External>` defined the Pylada way, where symmetries must explicitely
+provided to CRYSTAL_ (as in provided by user or determined by Pylada and then fed
 to CRYSTAL_).
 
 Since it is at present the main use cases, only the last two are described
@@ -36,14 +36,14 @@ Defining structures starting from the initial lattice
 -----------------------------------------------------
 
 
-.. currentmodule:: lada.dftcrystal.crystal
+.. currentmodule:: pylada.dftcrystal.crystal
 
 This is the main use case scenario. The structures are defined much as in
 CRYSTAL_. The following creates the diamond unit cell.
 
 .. code-block:: python
 
-   from lada.dftcrystal import Crystal
+   from pylada.dftcrystal import Crystal
    crystal = Crystal(227, 3.57)
    crystal.add_atom(0.125, 0.125, 0.125, 'C')
 
@@ -93,14 +93,14 @@ A number of operations are implemented in a more pythonic manner. These
 can be added to the chain of functions by calling :py:meth:`append` with
 an operation instance as a the only argument.
 
->>> from lada.dftcrystal import Slabcut
+>>> from pylada.dftcrystal import Slabcut
 >>> crystal.append( Slabcut(hkl=(1, 0, 0), isup=1, nl=3) )
 
-:py:class:`~lada.dftcrystal.input.Slabcut` is an operation to create a
+:py:class:`~pylada.dftcrystal.input.Slabcut` is an operation to create a
 thin-film from a 3d bulk material. 
 
 Finally, the whole  "data+functions" object can be evaluated with
 :py:meth:`eval`. This will return a
-:py:class:`~lada.crystal.cppwrappers.Structure` instance which can be
-used with other LaDa functionalities. Internally, :py:meth:`eval` makes a
+:py:class:`~pylada.crystal.cppwrappers.Structure` instance which can be
+used with other Pylada functionalities. Internally, :py:meth:`eval` makes a
 call to CRYSTAL_ and greps the output to construct the output structure.

@@ -1,8 +1,8 @@
 import numpy
 from math import sqrt
 import random
-from lada import crystal, ce
-from lada.mpi import world
+from pylada import crystal, ce
+from pylada.mpi import world
 
 
 lattice = crystal.bravais.fcc(); lattice.sites[0].type = "A", "B"

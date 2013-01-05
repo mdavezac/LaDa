@@ -8,8 +8,8 @@ def get_cell(n=5):
 
 def test_translations():
   from numpy import abs, all
-  from lada.crystal import binary, supercell, HFTransform
-  from lada.enum import Transforms
+  from pylada.crystal import binary, supercell, HFTransform
+  from pylada.enum import Transforms
 
   lattice = binary.zinc_blende()
   lattice[0].type = ['Si', 'Ge']
@@ -40,7 +40,7 @@ def test_translations():
 def test_firstisid():
   """ Assumption is made in Transforms.transformations """
   from numpy import abs, all, identity
-  from lada.crystal import binary, supercell, space_group
+  from pylada.crystal import binary, supercell, space_group
 
   lattice = binary.zinc_blende()
   lattice[0].type = ['Si', 'Ge']
@@ -58,9 +58,9 @@ def test_firstisid():
 def test_rotations():
   from numpy import all, dot, zeros
   from numpy.linalg import inv
-  from lada.crystal import binary, supercell, HFTransform, space_group,        \
+  from pylada.crystal import binary, supercell, HFTransform, space_group,        \
                            which_site
-  from lada.enum import Transforms
+  from pylada.enum import Transforms
 
   lattice = binary.zinc_blende()
   lattice[0].type = ['Si', 'Ge']
@@ -104,9 +104,9 @@ def test_rotations():
 def test_multilattice():
   from numpy import all, dot, zeros
   from numpy.linalg import inv
-  from lada.crystal import binary, supercell, HFTransform, space_group,        \
+  from pylada.crystal import binary, supercell, HFTransform, space_group,        \
                            which_site
-  from lada.enum import Transforms
+  from pylada.enum import Transforms
 
   lattice = binary.zinc_blende()
   lattice[0].type = ['Si', 'Ge']
@@ -150,8 +150,8 @@ def test_multilattice():
 def test_lattice():
   """ Tests lattice enhancements. """
   from numpy import all
-  from lada.crystal import binary, A2BX4
-  from lada.enum import Transforms
+  from pylada.crystal import binary, A2BX4
+  from pylada.enum import Transforms
 
   lattice = binary.zinc_blende()
   lattice[0].type = ['Si', 'Ge']
@@ -222,8 +222,8 @@ def test_toarray():
   """ Tests label exchange """
   from random import choice
   from numpy import all, zeros
-  from lada.crystal import binary, supercell, HFTransform
-  from lada.enum import Transforms
+  from pylada.crystal import binary, supercell, HFTransform
+  from pylada.enum import Transforms
 
   lattice = binary.zinc_blende()
   lattice[0].type = ['Si', 'Ge']
@@ -245,8 +245,8 @@ def test_toarray():
 
 def test_labelexchange():
   """ Tests label exchange """
-  from lada.crystal import binary, supercell, HFTransform
-  from lada.enum import Transforms
+  from pylada.crystal import binary, supercell, HFTransform
+  from pylada.enum import Transforms
 
   lattice = binary.zinc_blende()
   lattice[0].type = ['Si', 'Ge']

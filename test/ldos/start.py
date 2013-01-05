@@ -38,11 +38,11 @@ def create_start(path, nall = 3, nrand = 5, nmax=100, density=10e0, input='input
   from itertools import chain
   from IPython.ipapi import get as get_ipy
   from numpy.linalg import norm, inv
-  from lada.enumeration import Enum
-  from lada.crystal.binary import zinc_blende
-  from lada.jobs import JobFolder
-  from lada.escan import read_input, exec_input, ReducedKDensity
-  from lada.crystal.gruber import Reduction
+  from pylada.enumeration import Enum
+  from pylada.crystal.binary import zinc_blende
+  from pylada.jobs import JobFolder
+  from pylada.escan import read_input, exec_input, ReducedKDensity
+  from pylada.crystal.gruber import Reduction
 
   input = read_input(input)
   kescan = exec_input(repr(input.escan).replace('Escan', 'KEscan')).functional

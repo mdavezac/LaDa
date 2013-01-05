@@ -1,5 +1,5 @@
 def functional():
-  from lada.vff.vff import Vff
+  from pylada.vff.vff import Vff
   vff = Vff()
   vff["In", "As"] = 2.62332, 21.6739, -112.0, 150.0
   vff["Ga", "As"] = 2.44795, 32.1530, -105.0, 150.0
@@ -12,7 +12,7 @@ def functional():
   return vff
 
 def crystal():
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
 
   structure = Structure( 10.0, 0.5, 0.5, 
                          0.00, 0.0, 0.5,
@@ -42,7 +42,7 @@ def crystal():
 def test_relaxall(cartesian):
   """ Tests gradients as implemented in the functional. """
   from numpy import abs
-  from lada.vff.functional import Functional
+  from pylada.vff.functional import Functional
 
   vff = functional()
   vff.cartesian = cartesian

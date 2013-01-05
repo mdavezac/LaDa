@@ -6,8 +6,8 @@ def test():
   from os import makedirs
   from os.path import exists, join
   from IPython.core.interactiveshell import InteractiveShell
-  from lada.jobfolder import JobFolder
-  import lada
+  from pylada.jobfolder import JobFolder
+  import pylada
   from dummy import functional
   import __builtin__ 
   __builtin__.raw_input = raw_input
@@ -27,7 +27,7 @@ def test():
   try: 
     self.user_ns['jobfolder'] = root
     self.magic("explore jobfolder")
-    jobfolder = lada.interactive.jobfolder
+    jobfolder = pylada.interactive.jobfolder
     assert 'this/0' in jobfolder and 'this/1' in jobfolder and 'that/2' in jobfolder and 'that/1'
     assert '0' in jobfolder['this'] and '1' in jobfolder['this']
     assert '1' in jobfolder['that'] and '2' in jobfolder['that']
@@ -42,15 +42,15 @@ def test():
     assert not hasattr(jobfolder['this/1'], 'value')
     assert getattr(jobfolder['that/1'], 'value', False)
     assert getattr(jobfolder['that/2'], 'value', False)
-    assert lada.interactive.jobfolder_path is None
+    assert pylada.interactive.jobfolder_path is None
     assert 'jobparams' in self.user_ns
     assert jobfolder is self.user_ns['jobparams'].jobfolder
 
     self.magic("savefolders {0}/dict".format(directory))
-    lada.interactive.jobfolder = None
-    lada.interactive.jobfolder_path = None
+    pylada.interactive.jobfolder = None
+    pylada.interactive.jobfolder_path = None
     self.magic("explore {0}/dict".format(directory))
-    jobfolder = lada.interactive.jobfolder
+    jobfolder = pylada.interactive.jobfolder
     assert 'this/0' in jobfolder and 'this/1' in jobfolder and 'that/2' in jobfolder and 'that/1'
     assert '0' in jobfolder['this'] and '1' in jobfolder['this']
     assert '1' in jobfolder['that'] and '2' in jobfolder['that']
@@ -65,7 +65,7 @@ def test():
     assert not hasattr(jobfolder['this/1'], 'value')
     assert getattr(jobfolder['that/1'], 'value', False)
     assert getattr(jobfolder['that/2'], 'value', False)
-    assert lada.interactive.jobfolder_path is not None
+    assert pylada.interactive.jobfolder_path is not None
     assert 'jobparams' in self.user_ns
     assert jobfolder is self.user_ns['jobparams'].jobfolder
     assert jobfolder is self.user_ns['collect'].jobfolder

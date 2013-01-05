@@ -13,7 +13,7 @@
     5
     >>> result = 8
     >>> record --load result
-    Reloaded result(=5) from record .lada_record.
+    Reloaded result(=5) from record .pylada_record.
     >>> result
     5
 
@@ -28,11 +28,11 @@ def record(self, cmdl):
   """ Records variables to file. """
   from argparse import ArgumentParser
   from types import ModuleType
-  from lada.record import Record
+  from pylada.record import Record
   
   parser = ArgumentParser( prog="%record",
                            description="Allows to rapidly store and reload information to disk.")
-  parser.add_argument( '--file', dest="filename", default=".lada_record", type=str, 
+  parser.add_argument( '--file', dest="filename", default=".pylada_record", type=str, 
                        help="Name of file where variables are recorded." )
   parser.add_argument( 'vars', metavar='VAR', type=str, nargs='*',
                        help='Name of the variable(s) to record or remove.' )
@@ -141,7 +141,7 @@ def record(self, cmdl):
          
 def completer(self, event): 
   """ Completer for %record magic function. """ 
-  from lada.opt import RelativeDirectory
+  from pylada.opt import RelativeDirectory
   from pickle import load
   from os.path import isdir, exists
 
@@ -174,7 +174,7 @@ def completer(self, event):
   elif len(options.intersection(set(data))) == 0:
     result.extend(['--list', '--view', '--load', '--remove', '--namespace', '--update'])
   if len(set(['--load', '--remove', '--view']).intersection(set(data))) != 0:
-    path = '.lada_record'
+    path = '.pylada_record'
     known = [u for u in data]
     if '--file' in data: 
       index = data.index('--file')

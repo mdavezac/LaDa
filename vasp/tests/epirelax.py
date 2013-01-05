@@ -38,10 +38,10 @@ def epitaxial(vasp, structure, outdir=None, direction=[0,0,1], epiconv = 1e-4,
       maximum accuracy.
 
       :param vasp: 
-        :py:class:`Vasp <lada.vasp.Vasp>` functional with wich to perform the
+        :py:class:`Vasp <pylada.vasp.Vasp>` functional with wich to perform the
         relaxation.
       :param structure:
-        :py:class:`Structure <lada.crystal.Structure>` for which to perform the
+        :py:class:`Structure <pylada.crystal.Structure>` for which to perform the
         relaxation.
       :param str outdir: 
         Directory where to perform calculations. If None, defaults to current

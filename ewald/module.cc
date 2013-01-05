@@ -1,7 +1,7 @@
-#include "LaDaConfig.h"
+#include "PyladaConfig.h"
 
 #include <Python.h>
-#define PY_ARRAY_UNIQUE_SYMBOL lada_ewald_ARRAY_API
+#define PY_ARRAY_UNIQUE_SYMBOL pylada_ewald_ARRAY_API
 #include <numpy/arrayobject.h>
 
 #include <algorithm>
@@ -14,7 +14,7 @@
 
 #include "ewald.h"
 
-namespace LaDa
+namespace Pylada
 {
   namespace pcm
   {
@@ -32,8 +32,8 @@ PyMODINIT_FUNC initcppwrappers(void)
   import_array(); // needed for NumPy 
 
   char const doc[] =  "Wrapper around C++/fortan point-ion models methods.";
-  PyObject* module = Py_InitModule3("cppwrappers", LaDa::pcm::methods_table, doc);
+  PyObject* module = Py_InitModule3("cppwrappers", Pylada::pcm::methods_table, doc);
   if(not module) return;
   import_array();
-  if(not LaDa::python::import()) return;
+  if(not Pylada::python::import()) return;
 }

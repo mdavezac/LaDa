@@ -4,7 +4,7 @@ __all__ = ['rock_salt', 'zinc_blende', 'wurtzite']
 
 def rock_salt():
   """ rock_salt lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 1, 0, 0,\
                     0, 1, 0,\
                     0, 0, 1,\
@@ -14,7 +14,7 @@ def rock_salt():
 
 def zinc_blende():
   """ zinc_blende lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 0, 0.5, 0.5,\
                     0.5, 0, 0.5,\
                     0.5, 0.5, 0,\
@@ -24,7 +24,7 @@ def zinc_blende():
 
 def wurtzite():
   """ wurtzite lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 0.5, 0.5, 0,\
                     -0.866025, 0.866025, 0,\
                     0, 0, 1,\

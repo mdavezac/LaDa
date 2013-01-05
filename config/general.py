@@ -1,4 +1,4 @@
-""" Sets general lada parameters. """
+""" Sets general pylada parameters. """
 jobparams_readonly = False
 """ Whether items can be modified in parallel using attribute syntax. """
 jobparams_naked_end = True
@@ -15,15 +15,15 @@ ipython_verbose_representation = False
 global_root = '/'
 """ Root of relative paths. 
 
-    This can be set an environment variable, say "$LADA" to make it easier to
+    This can be set an environment variable, say "$PYLADA" to make it easier to
     transfer job-dictionaries from one computer to another. All file paths in
-    LaDa are then given with respect to this one. As long as the structure of
-    the disk is the same relative to this path, all LaDa paths will point to
+    Pylada are then given with respect to this one. As long as the structure of
+    the disk is the same relative to this path, all Pylada paths will point to
     equivalent objects.
 """
 global_tmpdir = None
-""" Global temporary directory for LaDa.
+""" Global temporary directory for Pylada.
 
     If None, defaults to system tmp dir. However, two environment variable take
-    precedence: PBS_TMPDIR and LADA_TMPDIR.
+    precedence: PBS_TMPDIR and PYLADA_TMPDIR.
 """

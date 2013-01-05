@@ -11,18 +11,18 @@ def spin(position=None, sublattice=0):
 
 class Cluster(object):
   def __init__(self, lattice, spins=None):
-    from lada.crystal import Structure, space_group
-    from lada.error import ValueError
+    from pylada.crystal import Structure, space_group
+    from pylada.error import ValueError
 
     super(Cluster, self).__init__()
     if not isinstance(lattice, Structure): 
       raise ValueError( "Lattice should be an instance of "                    \
-                        "lada.crystal.Structure.")
+                        "pylada.crystal.Structure.")
     self.lattice = lattice
     """ Lattice back-bone on which this cluster exists. 
 
         Should be an instance of
-        :py:class:`~lada.crystal.cppwrappers.Structure` or derived.
+        :py:class:`~pylada.crystal.cppwrappers.Structure` or derived.
     """
     self.spins = spins
     """ Holds array of spins. """
@@ -40,8 +40,8 @@ class Cluster(object):
     
   def _spin(self, position):
     """ Returns formatted spin. """
-    from lada.crystal import which_site
-    from lada.error import ValueError
+    from pylada.crystal import which_site
+    from pylada.error import ValueError
 
     # find sublattice
     sublattice = which_site(position, self.lattice)
@@ -202,14 +202,14 @@ class Cluster(object):
 
 def fhmap(lattice, supercell):
   """ Creates a map from Forkade-Hart indices to atom indices """
-  from lada.error import ValueError
-  from lada.crystal import HFTransform
+  from pylada.error import ValueError
+  from pylada.crystal import HFTransform
   transform = HFTransform(lattice, supercell)
   results = {}
   for i, atom in enumerate(supercell):
     if not hasattr(atom, 'site') and len(lattice) > 0: 
       raise ValueError( 'Atoms in supercell were not mapped to lattice. '      \
-                        'Please use lada.crystal.map_sites.' )
+                        'Please use pylada.crystal.map_sites.' )
     site = getattr(atom, 'site', 0)
     try: index = transform.index(atom.pos - lattice[site].pos, site)
     except ValueError:

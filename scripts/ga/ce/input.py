@@ -1,6 +1,6 @@
 """ Input script to CE-dos GA. """
 # vff parameters
-from lada.crystal.binary import zinc_blende
+from pylada.crystal.binary import zinc_blende
 lattice = zinc_blende()
 for site in lattice.sites: site.type = "Si", "Ge"
 

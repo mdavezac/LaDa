@@ -67,7 +67,7 @@ class Objective(object):
     from os.path import exists
     from shutil import rmtree
     from boost.mpi import world
-    from lada.crystal import Structure
+    from pylada.crystal import Structure
 
     self.gw = gw
     self.dft = dft
@@ -112,7 +112,7 @@ class Objective(object):
 
   def syscall_vasp(self, this_outdir):
     import os
-    from lada.vasp import Extract
+    from pylada.vasp import Extract
     cwd = os.getcwd()
     os.chdir(this_outdir)
 #    print "NOW calling vasp from:   ", os.getcwd()
@@ -128,9 +128,9 @@ class Objective(object):
     from os.path import join
     from boost.mpi import world
     from numpy import array
-    from lada.opt.changedir import Changedir
-    from lada.vasp import files
-    from lada.vasp.extract import Extract
+    from pylada.opt.changedir import Changedir
+    from pylada.vasp import files
+    from pylada.vasp.extract import Extract
     # transfers parameters to vasp object
     self.x = args
     # performs calculation in new directory

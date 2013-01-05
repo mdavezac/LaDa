@@ -17,7 +17,7 @@ def complete_crystal(line):
       This function adds the .d12 file if it not already there, as well as the
       input structure if it is in "external" format.
   """
-  from lada import is_interactive
+  from pylada import is_interactive
   if not is_interactive: return
   ip = get_ipython() # should be defined in interactive mode.
   if 'collect' not in ip.user_ns:
@@ -77,7 +77,7 @@ def crystal_change_spinedit(line):
   
       Goes to last (successful) step and checks the spin on the structure.
       It then sets edits the
-      :py:attr:`~lada.dftcrystal.functional.scf.atomspin` tag to reproduce the
+      :py:attr:`~pylada.dftcrystal.functional.scf.atomspin` tag to reproduce the
       computed spin density configuration. 
 
       The option '--print' will only print the changes without effecting them.

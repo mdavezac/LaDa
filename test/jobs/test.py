@@ -4,7 +4,7 @@ from os import getcwd
 from os.path import join
 from optparse import OptionParser
 from boost.mpi import world, broadcast
-from lada import jobs
+from pylada import jobs
 from functional import Functional
 
 # Reads program options.

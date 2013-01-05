@@ -5,9 +5,9 @@ def processalloc(job):
 
 def test_failures(d):
   """ Tests whether scheduling jobs works on known failure cases. """
-  from lada.jobfolder.jobfolder import JobFolder
-  from lada.process.pool import PoolProcess
-  from lada import default_comm
+  from pylada.jobfolder.jobfolder import JobFolder
+  from pylada.process.pool import PoolProcess
+  from pylada import default_comm
   from functional import Functional
   root = JobFolder()
   for n in xrange(8):
@@ -29,9 +29,9 @@ def test_failures(d):
 
 def test_getjobs(nprocs=8, njobs=20):
   """ Test scheduling. """
-  from lada.jobfolder.jobfolder import JobFolder
-  from lada.process.pool import PoolProcess
-  from lada import default_comm
+  from pylada.jobfolder.jobfolder import JobFolder
+  from pylada.process.pool import PoolProcess
+  from pylada import default_comm
   from functional import Functional
 
   root = JobFolder()
@@ -61,12 +61,12 @@ def test(executable):
   from os.path import join
   from shutil import rmtree
   from numpy import all, arange, abs, array
-  from lada.jobfolder.jobfolder import JobFolder
-  from lada.jobfolder.massextract import MassExtract
-  from lada.jobfolder import save
-  from lada.process.pool import PoolProcess
-  from lada.process import Fail, NotStarted
-  from lada import default_comm
+  from pylada.jobfolder.jobfolder import JobFolder
+  from pylada.jobfolder.massextract import MassExtract
+  from pylada.jobfolder import save
+  from pylada.process.pool import PoolProcess
+  from pylada.process import Fail, NotStarted
+  from pylada import default_comm
   from functional import Functional
 
   root = JobFolder()
@@ -148,10 +148,10 @@ def test(executable):
 def test_large():
   """ Test speed of job-scheduling for largers, more numerous jobs. """
   from random import random
-  from lada.jobfolder.jobfolder import JobFolder
-  from lada.process.pool import PoolProcess
-  from lada.process.dummy import DummyFunctional
-  from lada import default_comm
+  from pylada.jobfolder.jobfolder import JobFolder
+  from pylada.process.pool import PoolProcess
+  from pylada.process.dummy import DummyFunctional
+  from pylada import default_comm
   root = JobFolder()
   for n in xrange(100):
     job = root / "a{0}".format(n)
@@ -186,10 +186,10 @@ def test_update(executable):
   from tempfile import mkdtemp
   from os.path import join
   from shutil import rmtree
-  from lada.jobfolder.jobfolder import JobFolder
-  from lada.jobfolder import save
-  from lada.process.pool import PoolProcess
-  from lada import default_comm
+  from pylada.jobfolder.jobfolder import JobFolder
+  from pylada.jobfolder import save
+  from pylada.process.pool import PoolProcess
+  from pylada import default_comm
   from functional import Functional
 
   root = JobFolder()
@@ -229,11 +229,11 @@ def test_update_with_fail(executable):
   from tempfile import mkdtemp
   from os.path import join
   from shutil import rmtree
-  from lada.jobfolder.jobfolder import JobFolder
-  from lada.jobfolder import save
-  from lada.process.pool import PoolProcess
-  from lada.process import Fail
-  from lada import default_comm
+  from pylada.jobfolder.jobfolder import JobFolder
+  from pylada.jobfolder import save
+  from pylada.process.pool import PoolProcess
+  from pylada.process import Fail
+  from pylada import default_comm
   from functional import Functional
 
   root = JobFolder()

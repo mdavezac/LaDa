@@ -1,6 +1,6 @@
 def test():
   """ Test MPI Communicator. """
-  from lada.process.mpi import Communicator, MPISizeError
+  from pylada.process.mpi import Communicator, MPISizeError
 
   root = Communicator(n=32)
   for i in xrange(4): root.machines["node0{0}".format(i)] = 8

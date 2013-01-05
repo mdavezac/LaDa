@@ -265,8 +265,8 @@ def check_fere_context(path):
       This context returns None if this is not a FERE calculation. If it is a
       FERE calculation, it returns a valid extraction object.
   """
-  from lada.vasp import Extract
-  from lada.ladabase.mu_data import enthalpy
+  from pylada.vasp import Extract
+  from pylada.ladabase.mu_data import enthalpy
 
   extract = Extract(path)
   if not extract.success: yield None              # checks if successfull OUTCAR.

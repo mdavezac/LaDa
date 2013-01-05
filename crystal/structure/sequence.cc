@@ -21,15 +21,15 @@ int structure_ass_subscript(PyStructureObject *_self, PyObject* _index, PyObject
 //! Sets slices and items. Normal(not special) method.
 PyObject* structure_setitemnormal(PyStructureObject *_self, PyObject* _tuple);
 
-#ifdef LADA_STARTTRY
-#  error LADA_STARTTRY already defined.
+#ifdef PYLADA_STARTTRY
+#  error PYLADA_STARTTRY already defined.
 #endif
-#ifdef LADA_ENDTRY
-#  error LADA_ENDTRY already defined.
+#ifdef PYLADA_ENDTRY
+#  error PYLADA_ENDTRY already defined.
 #endif
-#define LADA_STARTTRY try {
-#define LADA_ENDTRY(error) } catch(std::exception &_e) { \
-    LADA_PYERROR_FORMAT( internal, \
+#define PYLADA_STARTTRY try {
+#define PYLADA_ENDTRY(error) } catch(std::exception &_e) { \
+    PYLADA_PYERROR_FORMAT( internal, \
                          "C++ thrown exception caught in " #error ":\n%.200s", \
                          _e.what() ); \
     return NULL; } 
@@ -37,22 +37,22 @@ PyObject* structure_setitemnormal(PyStructureObject *_self, PyObject* _tuple);
 // Adds atom to structure.
 PyObject* structure_append(PyStructureObject* _self, PyObject* _atom)
 {
-  LADA_STARTTRY
+  PYLADA_STARTTRY
     if(not Atom::check(_atom))
     {
-      LADA_PYERROR_FORMAT( TypeError, 
+      PYLADA_PYERROR_FORMAT( TypeError, 
                            "Only Atom can be appended to structure, not %.200s.",
                            _atom->ob_type->tp_name );
       return NULL;
     }
     _self->atoms.push_back(Atom::acquire_(_atom)); 
     Py_RETURN_NONE;
-  LADA_ENDTRY(Structure.append)
+  PYLADA_ENDTRY(Structure.append)
 }
 //! Extends atoms with other list of atoms.
 PyObject* structure_extend(PyStructureObject* _self, PyObject* _b)
 {
-  LADA_STARTTRY
+  PYLADA_STARTTRY
     if(check_structure(_b))
       std::copy( ((PyStructureObject*)_b)->atoms.begin(), ((PyStructureObject*)_b)->atoms.end(),
                  std::back_inserter(_self->atoms) );
@@ -63,7 +63,7 @@ PyObject* structure_extend(PyStructureObject* _self, PyObject* _b)
       {
         if(not Atom::check(item.borrowed()))
         {
-          LADA_PYERROR_FORMAT( TypeError, 
+          PYLADA_PYERROR_FORMAT( TypeError, 
                                "Only Atom and subtypes can be assigned to structures, not %200s.",
                                item.borrowed()->ob_type->tp_name );
           return NULL;
@@ -72,30 +72,30 @@ PyObject* structure_extend(PyStructureObject* _self, PyObject* _b)
       }
     else 
     {
-      LADA_PYERROR_FORMAT( TypeError, 
+      PYLADA_PYERROR_FORMAT( TypeError, 
                            "Cannot append instance of %.200s to Structure",
                            _b->ob_type->tp_name );
       return NULL;
     }
     Py_RETURN_NONE;
-  LADA_ENDTRY(Structure.extend)
+  PYLADA_ENDTRY(Structure.extend)
 }  
 // Removes and returns atom from set.
 PyObject* structure_pop(PyStructureObject *_self, PyObject* _index)
 {
-  LADA_STARTTRY
+  PYLADA_STARTTRY
     long index = PyInt_AsLong(_index);
     if(index == -1 and PyErr_Occurred()) return NULL;
     if(index < 0) index += _self->atoms.size();
     if(index < 0 or index >= long(_self->atoms.size()) ) 
     {
-      LADA_PYERROR(IndexError, "Index out-of-range in Structure.pop.");
+      PYLADA_PYERROR(IndexError, "Index out-of-range in Structure.pop.");
       return NULL;
     }
     Atom result = _self->atoms[index];
     _self->atoms.erase(_self->atoms.begin()+index);
     return result.release();
-  LADA_ENDTRY(Structure.pop)
+  PYLADA_ENDTRY(Structure.pop)
 }
 // Insert atom at given position
 PyObject* structure_insert(PyStructureObject* _self, PyObject* _tuple)
@@ -103,10 +103,10 @@ PyObject* structure_insert(PyStructureObject* _self, PyObject* _tuple)
   Py_ssize_t index;
   PyObject *atom;
   if (!PyArg_ParseTuple(_tuple, "nO:insert", &index, &atom)) return NULL;
-  LADA_STARTTRY
+  PYLADA_STARTTRY
     if(not Atom::check(atom))
     {
-      LADA_PYERROR_FORMAT( TypeError, 
+      PYLADA_PYERROR_FORMAT( TypeError, 
                            "Can only Atom and subtype in Structure, not %.200s",
                            atom->ob_type->tp_name );
       return NULL;
@@ -114,26 +114,26 @@ PyObject* structure_insert(PyStructureObject* _self, PyObject* _tuple)
     if(index < 0) index += _self->atoms.size();
     if(index < 0 or index > long(_self->atoms.size()) ) 
     {
-      LADA_PYERROR(IndexError, "Index out-of-range in Structure.pop.");
+      PYLADA_PYERROR(IndexError, "Index out-of-range in Structure.pop.");
       return NULL;
     }
     if(index == long(_self->atoms.size())) _self->atoms.push_back(Atom::acquire_(atom));
     else _self->atoms.insert(_self->atoms.begin()+index, Atom::acquire_(atom));
     Py_RETURN_NONE;
-  LADA_ENDTRY(Structure.insert)
+  PYLADA_ENDTRY(Structure.insert)
 }
 // Retrieves item. No slice.
 PyObject* structure_getitem(PyStructureObject *_self, Py_ssize_t _index)
 {
-  LADA_STARTTRY
+  PYLADA_STARTTRY
     if(_index < 0) _index += _self->atoms.size();
     if(_index < 0 or _index >= long(_self->atoms.size()))
     {
-      LADA_PYERROR(IndexError, "Index out of range when getting atom from structure.");
+      PYLADA_PYERROR(IndexError, "Index out of range when getting atom from structure.");
       return NULL;
     }
     return _self->atoms[_index].new_ref(); 
-  LADA_ENDTRY(Structure.__getitem__)
+  PYLADA_ENDTRY(Structure.__getitem__)
 }
 // Retrieves slice and items.
 PyObject* structure_subscript(PyStructureObject *_self, PyObject *_index)
@@ -146,12 +146,12 @@ PyObject* structure_subscript(PyStructureObject *_self, PyObject *_index)
   }
   else if(not PySlice_Check(_index))
   {
-    LADA_PYERROR_FORMAT( TypeError,
+    PYLADA_PYERROR_FORMAT( TypeError,
                          "Structure indices must be integers or slices, not %.200s.\n",
                          _index->ob_type->tp_name );
     return NULL;
   }
-  LADA_STARTTRY
+  PYLADA_STARTTRY
     Py_ssize_t start, stop, step, slicelength;
     if (PySlice_GetIndicesEx((PySliceObject*)_index, _self->atoms.size(),
                               &start, &stop, &step, &slicelength) < 0)
@@ -173,7 +173,7 @@ PyObject* structure_subscript(PyStructureObject *_self, PyObject *_index)
         PyTuple_SET_ITEM(tuple.borrowed(), i, i_first->new_ref());
     }
     return tuple.release();
-  LADA_ENDTRY(Structure.__getitem__);
+  PYLADA_ENDTRY(Structure.__getitem__);
 }
 //! Sets/deletes item. No slice.
 int structure_setitem(PyStructureObject *_self, Py_ssize_t _index, PyObject *_replace)
@@ -183,7 +183,7 @@ int structure_setitem(PyStructureObject *_self, Py_ssize_t _index, PyObject *_re
     if(_index < 0) _index += _self->atoms.size();
     if(_index < 0 or _index >= long(_self->atoms.size()))
     {
-      LADA_PYERROR(IndexError, "Index out of range when setting atom in structure.");
+      PYLADA_PYERROR(IndexError, "Index out of range when setting atom in structure.");
       return -1;
     }
     // deleting.
@@ -195,7 +195,7 @@ int structure_setitem(PyStructureObject *_self, Py_ssize_t _index, PyObject *_re
     else if(Atom::check(_replace)) _self->atoms[_index].Object::reset(_replace);
     else 
     {
-      LADA_PYERROR_FORMAT( TypeError, 
+      PYLADA_PYERROR_FORMAT( TypeError, 
                            "Can only Atom and subtype in Structure, not %.200s",
                            _replace->ob_type->tp_name );
       return -1;
@@ -204,7 +204,7 @@ int structure_setitem(PyStructureObject *_self, Py_ssize_t _index, PyObject *_re
   } 
   catch(std::exception &_e) 
   { 
-     LADA_PYERROR_FORMAT( internal, 
+     PYLADA_PYERROR_FORMAT( internal, 
                           "C++ thrown exception caught in Structure.__setitem__ : %200s.",
                           _e.what() );
      return -1;
@@ -248,7 +248,7 @@ int structure_ass_subscript(PyStructureObject *_self, PyObject* _index, PyObject
     {
       if(long(((PyStructureObject*)_value)->atoms.size()) != slicelength)
       {
-        LADA_PYERROR(ValueError, "size of right-hand side of assignement is incorrect.");
+        PYLADA_PYERROR(ValueError, "size of right-hand side of assignement is incorrect.");
         return -1;
       }
       std::vector<Atom>::iterator i_first = _self->atoms.begin() + start;
@@ -266,7 +266,7 @@ int structure_ass_subscript(PyStructureObject *_self, PyObject* _index, PyObject
       {
         if(not Atom::check(item.borrowed()))
         {
-          LADA_PYERROR_FORMAT( TypeError,
+          PYLADA_PYERROR_FORMAT( TypeError,
                                "Only Atom and subtype can be assigned to structure, not %.200s.",
                                item.borrowed()->ob_type->tp_name );
         }
@@ -277,19 +277,19 @@ int structure_ass_subscript(PyStructureObject *_self, PyObject* _index, PyObject
       }
       if(i < slicelength)
       {
-        LADA_PYERROR(IndexError, "Right-hand side too small in Structure assignment.");
+        PYLADA_PYERROR(IndexError, "Right-hand side too small in Structure assignment.");
         return -1;
       }
       else if(PyObject* item = PyIter_Next(iterator.borrowed()))
       {
         Py_DECREF(item);
-        LADA_PYERROR(IndexError, "Left-hand side too large in Structure assignment.");
+        PYLADA_PYERROR(IndexError, "Left-hand side too large in Structure assignment.");
         return -1;
       }
     }
     else
     {
-      LADA_PYERROR_FORMAT( TypeError, 
+      PYLADA_PYERROR_FORMAT( TypeError, 
                            "Can only assign Atoms or subtypes to Structure, not %.200s.",
                            _value->ob_type->tp_name );
       return -1;
@@ -297,7 +297,7 @@ int structure_ass_subscript(PyStructureObject *_self, PyObject* _index, PyObject
   }
   catch(std::exception &_e) 
   { 
-     LADA_PYERROR_FORMAT( internal,
+     PYLADA_PYERROR_FORMAT( internal,
                           "C++ thrown exception caught in Structure.__setitem__: %.200s",
                           _e.what() );
      return -1;
@@ -312,5 +312,5 @@ PyObject* structure_setitemnormal(PyStructureObject *_self, PyObject* _tuple)
   if(structure_ass_subscript(_self, index, value) < 0) return NULL;
   Py_RETURN_NONE;
 }
-#   undef LADA_STARTTRY
-#   undef LADA_ENDTRY
+#   undef PYLADA_STARTTRY
+#   undef PYLADA_ENDTRY

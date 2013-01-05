@@ -1,9 +1,9 @@
 def test(path):
   from shutil import rmtree
   from tempfile import mkdtemp
-  from lada.crystal import Structure
-  from lada.vasp import Vasp
-  from lada import default_comm
+  from pylada.crystal import Structure
+  from pylada.vasp import Vasp
+  from pylada import default_comm
 
   structure = Structure([[0, 0.5, 0.5],[0.5, 0, 0.5], [0.5, 0.5, 0]], scale=5.43, name='has a name')\
                        .add_atom(0,0,0, "Si")\
@@ -18,14 +18,15 @@ def test(path):
   vasp.sigma      = 0.01
   vasp.relaxation = "volume"
   vasp.add_specie = "Si", "{0}/pseudos/Si".format(path)
-  directory = mkdtemp()
+  directory = '/tmp/test' # mkdtemp()
   try: 
     result = vasp(structure, outdir=directory, comm=default_comm)
     assert result.success
   finally: 
-    rmtree(directory)
+    # rmtree(directory)
     pass
 
 if __name__ == "__main__":
   from sys import argv
-  test(argv[1])
+  from os.path import dirname
+  test(dirname(argv[0]))

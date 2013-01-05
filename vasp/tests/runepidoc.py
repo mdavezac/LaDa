@@ -1,10 +1,10 @@
 def test(path):
   from shutil import rmtree
   from tempfile import mkdtemp
-  from lada.crystal import Structure
-  from lada.vasp import Vasp
+  from pylada.crystal import Structure
+  from pylada.vasp import Vasp
   from epirelax import epitaxial
-  from lada import default_comm
+  from pylada import default_comm
 
   structure = Structure([[0, 0.5, 0.5],[0.5, 0, 0.5], [0.5, 0.5, 0]], scale=5.55, name='has a name')\
                        .add_atom(0,0,0, "Si")\

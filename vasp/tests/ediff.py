@@ -1,7 +1,7 @@
 def test_ediff():
   from pickle import loads, dumps
-  from lada.vasp import Vasp
-  from lada.crystal import Structure
+  from pylada.vasp import Vasp
+  from pylada.crystal import Structure
   a = Vasp()
 
   u = 0.25
@@ -72,8 +72,8 @@ def test_ediff():
 
 def test_ediffg():
   from pickle import loads, dumps
-  from lada.vasp import Vasp
-  from lada.crystal import Structure
+  from pylada.vasp import Vasp
+  from pylada.crystal import Structure
   a = Vasp()
 
   u = 0.25

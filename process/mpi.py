@@ -1,4 +1,4 @@
-from lada.error import IOError, ValueError
+from pylada.error import IOError, ValueError
 class NodeFileExists(IOError):
   """ Thrown when nodefile already exists. """
   pass
@@ -10,7 +10,7 @@ class Communicator(dict):
   __slots__ = ['_nodefile', 'machines', 'parent', '__weakref__']
   """ Mostly to limit the possibility of circular references. """
   def __init__(self, *args, **kwargs):
-    from lada import default_comm
+    from pylada import default_comm
     keywords = default_comm.copy()
     keywords['n'] = 0
     keywords.update(kwargs)
@@ -26,7 +26,7 @@ class Communicator(dict):
     self.parent = None
     """ Reference to parent communicator from which machines are acquired. 
     
-        If None, then this should be :py:data:`lada.default_comm`, eg the very
+        If None, then this should be :py:data:`pylada.default_comm`, eg the very
         first communicator setup at the start of the application.
     """
 
@@ -37,7 +37,7 @@ class Communicator(dict):
         lent to the returned communicator. They should be given back when
         cleanup is called on the result.
     """
-    from lada import do_multiple_mpi_programs
+    from pylada import do_multiple_mpi_programs
     from weakref import ref
     try: 
       if nprocs == 'all': nprocs = self['n']
@@ -48,7 +48,7 @@ class Communicator(dict):
     if nprocs <= 0: raise MPISizeError(nprocs)
     if do_multiple_mpi_programs == False and nprocs != self['n']:
       raise MPISizeError( 'No mpi placement is allowed '                       \
-                          'by current LaDa configuration')
+                          'by current Pylada configuration')
     result = self.__class__()
     result.machines = {}
     result.parent = ref(self)
@@ -75,7 +75,7 @@ class Communicator(dict):
 
         List of machines is also splitted. 
     """ 
-    from lada.error import ValueError
+    from pylada.error import ValueError
     if self._nodefile is not None:
       raise NodeFileExists("Comm already used in other process.")
     if n < 1: raise ValueError("Cannot split communicator in less than two. ")
@@ -129,7 +129,7 @@ class Communicator(dict):
       raise NodeFileExists("Please call cleanup first.")
     if self['n'] == 0: raise MPISizeError("No processes in this communicator.")
 
-    with NamedTemporaryFile(dir=RelativePath(dir).path, delete=False, prefix='lada_comm') as file:
+    with NamedTemporaryFile(dir=RelativePath(dir).path, delete=False, prefix='pylada_comm') as file:
       for machine, slots in self.machines.iteritems():
         if slots == 0: continue
         file.write('{0} slots={1}\n'.format(machine, slots))
@@ -190,7 +190,7 @@ def create_global_comm(nprocs, dir=None):
                  figure_out_machines as script, launch_program as launch
   from ..misc import Changedir
   from ..error import ConfigError
-  import lada
+  import pylada
   
   if not do_multiple_mpi_programs: return
   if nprocs <= 0: raise MPISizeError(nprocs)
@@ -215,13 +215,13 @@ def create_global_comm(nprocs, dir=None):
       except: pass
   # we use that to deduce the number of machines and processes per machine.
   processes = [ line.group(1) for line                                         \
-                in finditer('LADA MACHINE HOSTNAME:\s*(\S*)', stdout) ]
+                in finditer('PYLADA MACHINE HOSTNAME:\s*(\S*)', stdout) ]
   # sanity check.
   if nprocs != len(processes):
     envstring = ''
     for key, value in environ.iteritems():
       envstring += '  {0} = {1!r}\n'.format(key, value)
-    raise ConfigError( 'LaDa could not determine host machines.\n'             \
+    raise ConfigError( 'Pylada could not determine host machines.\n'             \
                        'Standard output reads as follows:\n{0}\n'              \
                        'Standard error reads as follows:\n{1}\n'               \
                        'environment variables were set as follows:\n{2}\n'     \
@@ -229,11 +229,11 @@ def create_global_comm(nprocs, dir=None):
                        .format(stdout, stderr, envstring, script) )
   # now set up the default communicator.
   machines = set(processes)
-  lada.default_comm = Communicator(lada.default_comm)
-  lada.default_comm['n'] = nprocs
-  lada.default_comm.machines = {}
+  pylada.default_comm = Communicator(pylada.default_comm)
+  pylada.default_comm['n'] = nprocs
+  pylada.default_comm.machines = {}
   for machine in machines:
-    lada.default_comm.machines[machine] = processes.count(machine)
+    pylada.default_comm.machines[machine] = processes.count(machine)
                         
   # called when we need to change the machine names on some supercomputers.
-  modify_global_comm(lada.default_comm)
+  modify_global_comm(pylada.default_comm)

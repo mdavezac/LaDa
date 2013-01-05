@@ -1,7 +1,7 @@
 def test():
   from collections import namedtuple
-  from lada.dftcrystal.optgeom import OptGeom
-  from lada.dftcrystal.input import print_input
+  from pylada.dftcrystal.optgeom import OptGeom
+  from pylada.dftcrystal.input import print_input
   Crystal = namedtuple('Crystal', ['optgeom'])
 
   a = OptGeom()
@@ -88,7 +88,7 @@ def test():
  
 
 def test_breaksym():
-  from lada.dftcrystal import Crystal, Functional, Shell, DisplaceAtoms, read
+  from pylada.dftcrystal import Crystal, Functional, Shell, DisplaceAtoms, read
 
   functional = Functional()
   functional.basis['Si'] = [

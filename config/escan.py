@@ -1,15 +1,15 @@
 """ Sets escan parameters. """
-if "escan" in globals()["ladamodules"]:
+if "escan" in globals()["pyladamodules"]:
   genpot_library = "libgenpot.so"
   """ Default genpot library. 
 
-      The value for the default can be overriden by ~/.lada in the code below.
+      The value for the default can be overriden by ~/.pylada in the code below.
   """
 
   escan_library = "libpescan.so"
   """ Default escan library. 
 
-      The value for the default can be overriden by ~/.lada in the code below.
+      The value for the default can be overriden by ~/.pylada in the code below.
   """
   launch_escan_as_library = True
   """ Wether to launch escan/genpot as library or program. """

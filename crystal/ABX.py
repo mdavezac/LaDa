@@ -3,7 +3,7 @@ __docformat__ = "restructuredtext en"
 
 def s13():
   """ s13 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 14.462, 7.231, -2.12564,\
                     0, 2.785, 0,\
                     0, 0, 9.23657,\
@@ -29,7 +29,7 @@ def s13():
 
 def s25():
   """ s25 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 2.0905, 4.181, 0,\
                     2.0905, 0, 4.181,\
                     7.0345, 0, 0,\
@@ -43,7 +43,7 @@ def s25():
 
 def s20():
   """ s20 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 4.25, -2.125, 0,\
                     0, 3.68061, 0,\
                     0, 0, 15.165,\
@@ -63,7 +63,7 @@ def s20():
 
 def s21():
   """ s21 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 4.263, 0, 0,\
                     0, 4.263, 0,\
                     0, 0, 6.179,\
@@ -77,7 +77,7 @@ def s21():
 
 def s1():
   """ s1 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 0, 3.1, 3.1,\
                     3.1, 0, 3.1,\
                     3.1, 3.1, 0,\
@@ -88,7 +88,7 @@ def s1():
 
 def s34():
   """ s34 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 6.505, 0, -3.03547,\
                     0, 6.3833, 0,\
                     0, 0, 5.79401,\
@@ -108,7 +108,7 @@ def s34():
 
 def s6():
   """ s6 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 7.78, 0, 0,\
                     0, 4.56, 0,\
                     0, 0, 8.49,\
@@ -128,7 +128,7 @@ def s6():
 
 def s24():
   """ s24 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 2.1225, 4.245, 0,\
                     2.1225, 0, 4.245,\
                     8.153, 0, 0,\
@@ -142,7 +142,7 @@ def s24():
 
 def s29():
   """ s29 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 4.308, 0, 0,\
                     0, 13.912, 0,\
                     0, 0, 7.431,\
@@ -174,7 +174,7 @@ def s29():
 
 def s11():
   """ s11 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 9.32, 0, 4.66,\
                     0, 9.32, 4.66,\
                     0, 0, 2.73,\
@@ -194,7 +194,7 @@ def s11():
 
 def s41():
   """ s41 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 5.81, 0, 0,\
                     0, 5.96, 0,\
                     0, 0, 11.71,\
@@ -226,7 +226,7 @@ def s41():
 
 def s8():
   """ s8 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 3.65, 0, 0,\
                     0, 3.65, 0,\
                     0, 0, 6.8636,\
@@ -240,7 +240,7 @@ def s8():
 
 def s17():
   """ s17 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 4.244, -2.122, 0,\
                     0, 3.67541, 0,\
                     0, 0, 4.563,\
@@ -251,7 +251,7 @@ def s17():
 
 def s27():
   """ s27 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 2.3005, 4.601, 0,\
                     3.6855, 0, 7.371,\
                     3.9405, 0, 0,\
@@ -265,7 +265,7 @@ def s27():
 
 def s26():
   """ s26 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 6.997, 0, 3.4985,\
                     0, 10.83, 5.415,\
                     0, 0, 3.1435,\
@@ -291,7 +291,7 @@ def s26():
 
 def s30():
   """ s30 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 3.75, 0, 0,\
                     0, 7.95, 0,\
                     0, 0, 3.3,\
@@ -305,7 +305,7 @@ def s30():
 
 def s9():
   """ s9 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 8.994, 4.497, -4.50041,\
                     0, 4.478, 0,\
                     0, 0, 5.62145,\
@@ -325,7 +325,7 @@ def s9():
 
 def s19():
   """ s19 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 4.212, -2.106, 0,\
                     0, 3.6477, 0,\
                     0, 0, 6.803,\
@@ -339,7 +339,7 @@ def s19():
 
 def s4():
   """ s4 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 7.204, -3.602, 0,\
                     0, 6.23885, 0,\
                     0, 0, 4.27,\
@@ -356,7 +356,7 @@ def s4():
 
 def s35():
   """ s35 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 3.917, 0, 0,\
                     0, 3.917, 0,\
                     0, 0, 5.431,\
@@ -370,7 +370,7 @@ def s35():
 
 def s40():
   """ s40 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 4.942, 0, 0,\
                     0, 3.776, 0,\
                     0, 0, 7.172,\
@@ -390,7 +390,7 @@ def s40():
 
 def s32():
   """ s32 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 5.1673, 0, -0.884148,\
                     0, 5.1466, 0,\
                     0, 0, 5.17248,\
@@ -410,7 +410,7 @@ def s32():
 
 def s14():
   """ s14 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 8.471, 0, 0,\
                     0, 3.676, 0,\
                     0, 0, 5.537,\
@@ -430,7 +430,7 @@ def s14():
 
 def s22():
   """ s22 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 5.882, 0, -2.46819,\
                     0, 5.753, 0,\
                     0, 0, 6.92,\
@@ -450,7 +450,7 @@ def s22():
 
 def s7():
   """ s7 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 7.804, 0, 0,\
                     0, 9.209, 0,\
                     0, 0, 4.578,\
@@ -470,7 +470,7 @@ def s7():
 
 def s33():
   """ s33 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 5.9341, 0, 0,\
                     0, 5.9341, 0,\
                     0, 0, 5.9341,\
@@ -490,7 +490,7 @@ def s33():
 
 def s10():
   """ s10 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 3.3195, 0, 6.639,\
                     4.0595, 0, 0,\
                     0, 6.596, 0,\
@@ -504,7 +504,7 @@ def s10():
 
 def s5():
   """ s5 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 3.722, -1.861, 0,\
                     0, 3.22335, 0,\
                     0, 0, 7.232,\
@@ -518,7 +518,7 @@ def s5():
 
 def s3():
   """ s3 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 4.086, 0, 0,\
                     0, 4.086, 0,\
                     0, 0, 6.884,\
@@ -532,7 +532,7 @@ def s3():
 
 def s16():
   """ s16 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 4.54, 0, -3.32245,\
                     0, 4.76, 0,\
                     0, 0, 4.76262,\
@@ -552,7 +552,7 @@ def s16():
 
 def s37():
   """ s37 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 5.6824, 0, 0,\
                     0, 5.6824, 0,\
                     0, 0, 5.6824,\
@@ -572,7 +572,7 @@ def s37():
 
 def s39():
   """ s39 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 1.731, 3.462, 0,\
                     6.165, 0, 12.33,\
                     2.4105, 0, 0,\
@@ -586,7 +586,7 @@ def s39():
 
 def s23():
   """ s23 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 6.363, 0, 0,\
                     0, 6.363, 0,\
                     0, 0, 6.363,\
@@ -606,7 +606,7 @@ def s23():
 
 def s28():
   """ s28 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 7.342, -3.671, 0,\
                     0, 6.35836, 0,\
                     0, 0, 7.218,\
@@ -632,7 +632,7 @@ def s28():
 
 def s12():
   """ s12 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 8.514, 0, 4.257,\
                     0, 8.514, 4.257,\
                     0, 0, 1.9045,\
@@ -652,7 +652,7 @@ def s12():
 
 def s2():
   """ s2 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 4.175, -2.0875, 0,\
                     0, 3.61566, 0,\
                     0, 0, 7,\
@@ -666,7 +666,7 @@ def s2():
 
 def s31():
   """ s31 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 4.54, -2.27, 2.27,\
                     0, 3.93176, 1.31059,\
                     0, 0, 10.8967,\
@@ -680,7 +680,7 @@ def s31():
 
 def s38():
   """ s38 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 7.31, -3.655, 0,\
                     0, 6.33065, 0,\
                     0, 0, 4.04,\
@@ -697,7 +697,7 @@ def s38():
 
 def s36():
   """ s36 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 2.081, -1.0405, 0,\
                     0, 1.8022, 0,\
                     0, 0, 9.234,\
@@ -711,7 +711,7 @@ def s36():
 
 def s18():
   """ s18 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 9.296, -4.648, 0,\
                     0, 8.05057, 0,\
                     0, 0, 7.346,\
@@ -743,7 +743,7 @@ def s18():
 
 def s15():
   """ s15 lattice """
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
   return Structure( 9.639, 0, 0,\
                     0, 13.674, 0,\
                     0, 0, 5.432,\

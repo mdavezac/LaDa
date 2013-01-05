@@ -1,4 +1,4 @@
-#if LADA_PYTHON_MODULE != 1
+#if PYLADA_PYTHON_MODULE != 1
   //! \brief Thin wrapper around a python refence.
   //! \details In general, steals a reference which it decref's on destruction, unless it
   //!          is null. The destructor is not virtual, hence it is safer to

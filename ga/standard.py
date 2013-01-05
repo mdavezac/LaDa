@@ -178,7 +178,7 @@ def bleeder_evaluation(self, evaluator, pools, comm):
           An object capable of evaluating individuals.
         pools
           The number of pools of processes to create.
-        comm  : None or lada.mpi.communicator
+        comm  : None or pylada.mpi.communicator
           Communication object. 
   """
   from ..jobs import JobFolder, Bleeder
@@ -222,7 +222,7 @@ def mpi_population_evaluation(self, evaluator, pools, comm = None):
       :Param pools:
         Number of pools of processors across which to split evaluations.
       :Param comm: 
-        group lada.mpi.communicator.
+        group pylada.mpi.communicator.
 
       Only individuals without a ``fitness`` attribute are evaluated. 
   """

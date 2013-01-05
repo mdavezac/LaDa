@@ -1,5 +1,5 @@
-from lada.crystal.binary import zinc_blende
-from lada.mpi import world
+from pylada.crystal.binary import zinc_blende
+from pylada.mpi import world
 
 lattice = zinc_blende()
 lattice.scale = 5.45

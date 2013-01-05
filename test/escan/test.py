@@ -5,9 +5,9 @@ from math import ceil, sqrt
 from numpy import dot, array, matrix
 from numpy.linalg import norm
 from boost.mpi import world
-from lada.vff import Vff
-from lada.crystal import Structure, Lattice, fill_structure
-from lada.escan import read_input
+from pylada.vff import Vff
+from pylada.crystal import Structure, Lattice, fill_structure
+from pylada.escan import read_input
 
 input = read_input("input.py")
 

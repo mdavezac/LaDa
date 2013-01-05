@@ -1,8 +1,8 @@
-#include "LaDaConfig.h"
+#include "PyladaConfig.h"
 
 #include <Python.h>
 #include <structmember.h>
-#define PY_ARRAY_UNIQUE_SYMBOL lada_enum_ARRAY_API
+#define PY_ARRAY_UNIQUE_SYMBOL pylada_enum_ARRAY_API
 #define NO_IMPORT_ARRAY
 #include <numpy/arrayobject.h>
 
@@ -10,13 +10,13 @@
 #include <algorithm>
 
 
-#define LADA_NO_IMPORT
+#define PYLADA_NO_IMPORT
 #include <python/python.h>
 #include <errors/exceptions.h>
 
 #include "ndimiterator.h"
 
-namespace LaDa
+namespace Pylada
 {
   namespace enumeration
   {
@@ -74,18 +74,18 @@ namespace LaDa
     {
       if(_args == NULL)
       {
-        LADA_PYERROR(TypeError, "NDimIterator expects at least one argument.");
+        PYLADA_PYERROR(TypeError, "NDimIterator expects at least one argument.");
         return -1;
       }
       Py_ssize_t const N = PyTuple_Size(_args);
       if(N == 0)
       {
-        LADA_PYERROR(TypeError, "NDimIterator expects at least one argument.");
+        PYLADA_PYERROR(TypeError, "NDimIterator expects at least one argument.");
         return -1;
       }
       if(_kwargs != NULL and PyDict_Size(_kwargs))
       {
-        LADA_PYERROR(TypeError, "NDimIterator does not expect keyword arguments.");
+        PYLADA_PYERROR(TypeError, "NDimIterator does not expect keyword arguments.");
         return -1;
       }
       _self->ends.clear();
@@ -97,12 +97,12 @@ namespace LaDa
         else if(PyInt_Check(item)) _self->ends.push_back( PyInt_AS_LONG(item));
         else
         {
-          LADA_PYERROR(TypeError, "Unknown type in NDimIterator.");
+          PYLADA_PYERROR(TypeError, "Unknown type in NDimIterator.");
           return -1;
         }
         if(_self->ends.back() <= 0)
         {
-          LADA_PYERROR(ValueError, "NDimIterator does not expect negative or null arguments.");
+          PYLADA_PYERROR(ValueError, "NDimIterator does not expect negative or null arguments.");
           return -1;
         }
       } 
@@ -120,23 +120,23 @@ namespace LaDa
       _self->yielded = (PyArrayObject*)
           PyArray_SimpleNewFromData(1, d, t_type::value, &_self->counter[0]);
       if(not _self->yielded) return -1;
-#     ifdef LADA_MACRO
-#       error LADA_MACRO already defined
+#     ifdef PYLADA_MACRO
+#       error PYLADA_MACRO already defined
 #     endif
 #     ifdef NPY_ARRAY_WRITEABLE
-#       define LADA_MACRO NPY_ARRAY_WRITEABLE
+#       define PYLADA_MACRO NPY_ARRAY_WRITEABLE
 #     else
-#       define LADA_MACRO NPY_WRITEABLE
+#       define PYLADA_MACRO NPY_WRITEABLE
 #     endif
-      if(_self->yielded->flags & LADA_MACRO) _self->yielded->flags -= LADA_MACRO;
-#     undef LADA_MACRO
+      if(_self->yielded->flags & PYLADA_MACRO) _self->yielded->flags -= PYLADA_MACRO;
+#     undef PYLADA_MACRO
 #     ifdef NPY_ARRAY_C_CONTIGUOUS
-#       define LADA_MACRO NPY_ARRAY_C_CONTIGUOUS;
+#       define PYLADA_MACRO NPY_ARRAY_C_CONTIGUOUS;
 #     else 
-#       define LADA_MACRO NPY_C_CONTIGUOUS
+#       define PYLADA_MACRO NPY_C_CONTIGUOUS
 #     endif
-      if(not (_self->yielded->flags & LADA_MACRO)) _self->yielded->flags += LADA_MACRO;
-#     undef LADA_MACRO
+      if(not (_self->yielded->flags & PYLADA_MACRO)) _self->yielded->flags += PYLADA_MACRO;
+#     undef PYLADA_MACRO
       _self->yielded->base = (PyObject*)_self;
       Py_INCREF(_self);
       return 0;
@@ -156,10 +156,10 @@ namespace LaDa
 
     static PyObject* next(NDimIterator* _self)
     {
-#     ifdef LADA_DEBUG
+#     ifdef PYLADA_DEBUG
         if(_self->ends.size() != _self->counter.size())
         {
-          LADA_PYERROR(internal, "Counter and Ends have different size.");
+          PYLADA_PYERROR(internal, "Counter and Ends have different size.");
           return NULL;
         }
 #     endif
@@ -171,15 +171,15 @@ namespace LaDa
         else
         {
           ++(*i_first);
-#         ifdef LADA_DEBUG
+#         ifdef PYLADA_DEBUG
             if(_self->yielded == NULL)
             {
-              LADA_PYERROR(internal, "Yielded was not initialized.");
+              PYLADA_PYERROR(internal, "Yielded was not initialized.");
               return NULL;
             }
             if(_self->yielded->data != (char*)&_self->counter[0])
             {
-              LADA_PYERROR(internal, "Yielded does not reference counter.");
+              PYLADA_PYERROR(internal, "Yielded does not reference counter.");
               return NULL;
             }
 #         endif
@@ -200,7 +200,7 @@ namespace LaDa
       static PyTypeObject dummy = {
           PyObject_HEAD_INIT(NULL)
           0,                                 /*ob_size*/
-          "lada.enum.cppwrappers.NDimIterator",   /*tp_name*/
+          "pylada.enum.cppwrappers.NDimIterator",   /*tp_name*/
           sizeof(NDimIterator),              /*tp_basicsize*/
           0,                                 /*tp_itemsize*/
           (destructor)ndimiterator_dealloc,  /*tp_dealloc*/
@@ -277,4 +277,4 @@ namespace LaDa
     }
 
   } // namespace Crystal
-} // namespace LaDa
+} // namespace Pylada

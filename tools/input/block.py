@@ -37,7 +37,7 @@ class AttrBlock(BaseKeyword):
     """ passes through the input keywords in :py:attr:`_input`. 
     
         If the input value is derived from
-        :py:class:`~lada.tools.keyword.BaseKeyword`, then it is added to
+        :py:class:`~pylada.tools.keyword.BaseKeyword`, then it is added to
         :py:attr:`_input`. Otherwise, super is called.
     """
     if isinstance(value, BaseKeyword): 

@@ -44,13 +44,13 @@ int structure_init(PyStructureObject* _self, PyObject* _args, PyObject *_kwargs)
 
   if(N != 0 and N != 1 and N != 9 and N != 3)
   {
-    LADA_PYERROR(TypeError, "Unexpected argument: arguments should represent the cell "
+    PYLADA_PYERROR(TypeError, "Unexpected argument: arguments should represent the cell "
                             "and be given as a matrix, or as a series of 9 numbers." );
     return -1;
   }
   if(N != 0 and _kwargs != NULL and PyDict_GetItemString(_kwargs, "cell") != NULL)
   {
-    LADA_PYERROR(TypeError, "Cell given as both argument and keyword.");
+    PYLADA_PYERROR(TypeError, "Cell given as both argument and keyword.");
     return -1;
   }
   if(N == 1)

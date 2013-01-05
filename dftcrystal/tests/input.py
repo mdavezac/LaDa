@@ -117,9 +117,9 @@ END
 """
 def test():
   """ Tests functional prints and reads itself """
-  from lada.dftcrystal.functional import Functional
-  from lada.dftcrystal import Crystal
-  from lada.dftcrystal.parse import parse
+  from pylada.dftcrystal.functional import Functional
+  from pylada.dftcrystal import Crystal
+  from pylada.dftcrystal.parse import parse
   parsed = parse(string)
   structure = Crystal()
   structure.read_input(parsed['rutile']['CRYSTAL'])
@@ -139,7 +139,7 @@ def test():
 def test_setprint():
   from pickle import loads, dumps
   from numpy import array, all
-  from lada.dftcrystal.input import SetPrint
+  from pylada.dftcrystal.input import SetPrint
   a = SetPrint()
   assert a.output_map() is None
   assert len(eval(repr(a), {'SetPrint': SetPrint}).options) == 0

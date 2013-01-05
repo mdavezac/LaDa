@@ -10,14 +10,14 @@
 def test(nbprocs, ppn, executable):
   from os import getcwd
   print 'IN DIRECTORY', getcwd()
-  from lada.process.mpi import create_global_comm
-  from lada.process.iterator import IteratorProcess
+  from pylada.process.mpi import create_global_comm
+  from pylada.process.iterator import IteratorProcess
   from functional import Functional
-  import lada
+  import pylada
 
   print 'CREATING GLOBAL COMM'
-  lada.default_comm['ppn'] = ppn
-  lada.default_comm['n'] = nbprocs
+  pylada.default_comm['ppn'] = ppn
+  pylada.default_comm['n'] = nbprocs
   create_global_comm(nbprocs)
 
   print 'CREATING FUNCTIONALS AND PROCESSES'
@@ -29,11 +29,11 @@ def test(nbprocs, ppn, executable):
   short1 = IteratorProcess(sfunc, outdir='short1') 
   
   print 'CREATING COMMUNICATORS'
-  long_comm = lada.default_comm.lend(3*(nbprocs//4))
+  long_comm = pylada.default_comm.lend(3*(nbprocs//4))
   assert len(long_comm.machines) == 2
-  short_comm0 = lada.default_comm.lend(lada.default_comm['n']//2)
+  short_comm0 = pylada.default_comm.lend(pylada.default_comm['n']//2)
   assert len(short_comm0.machines) == 1
-  short_comm1 = lada.default_comm.lend('all')
+  short_comm1 = pylada.default_comm.lend('all')
   assert len(short_comm1.machines) == 1
 
   print 'STARTING LONG PROCESS'
@@ -66,10 +66,10 @@ if __name__ == '__main__':
   # ppn should be the number of processors per node
   # the job should be allocated with 2*ppn processors
   ppn = 32
-  # path is the path to the LaDa source code
-  path = '~/usr/src/LaDa/master/'
+  # path is the path to the Pylada source code
+  path = '~/usr/src/Pylada/master/'
 
-  from lada.misc import RelativePath
+  from pylada.misc import RelativePath
   from os import chdir
   chdir('/home/e05/e05/mdavezac/bull') # crappy Cray
   path = RelativePath(path).path

@@ -1,4 +1,4 @@
-#include "LaDaConfig.h"
+#include "PyladaConfig.h"
 #include "FCMangle.h"
 
 #include <iostream>
@@ -12,7 +12,7 @@
 
 #include "escan.hpp"
 
-#ifdef LADA_DO_ESCAN
+#ifdef PYLADA_DO_ESCAN
 //! \cond
 extern "C"
 {
@@ -57,7 +57,7 @@ void just_call_genpot(boost::mpi::communicator const &_c)
   }
 #endif 
 
-namespace LaDa
+namespace Pylada
 {
   namespace python
   {
@@ -72,4 +72,4 @@ namespace LaDa
                "Calls genpot, accepts a boost.mpi.communicator." );
     }
   } // namespace python
-} // namespace LaDa
+} // namespace Pylada

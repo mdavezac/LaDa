@@ -196,7 +196,7 @@ bool equivalent( Structure const &_a, Structure const &_b,
 {
   if(with_cartesian)
   {
-    LADA_PYERROR(NotImplementedError, "Equivalence in different cartesian coordinates not implemented.");
+    PYLADA_PYERROR(NotImplementedError, "Equivalence in different cartesian coordinates not implemented.");
     return false;
   }
   return with_cartesian ? equivalent_crystals(_a, _b, with_scale, _tol):

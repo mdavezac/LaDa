@@ -139,7 +139,7 @@ class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
           actually called OUTCAR.
     """
     from os.path import exists, isdir, basename, dirname
-    from lada.misc import RelativePath
+    from pylada.misc import RelativePath
        
     self.STDOUT = 'vff.out'
     """ Name of file to grep. """

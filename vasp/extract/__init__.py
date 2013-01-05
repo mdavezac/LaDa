@@ -47,7 +47,7 @@ class MassExtract(AbstractMassExtract):
 
       Usage is simply:
 
-      >>> from lada.vasp import MassExtract
+      >>> from pylada.vasp import MassExtract
       >>> a = MassExtract('path') # or nothing if path is current directory.
       >>> a.success
       {

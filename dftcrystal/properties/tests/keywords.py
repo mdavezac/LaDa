@@ -4,8 +4,8 @@ def test_rdfmwf():
   from tempfile import mkdtemp
   from os.path import join, exists
   from os import remove
-  from lada.dftcrystal.properties import Properties
-  from lada.error import IOError
+  from pylada.dftcrystal.properties import Properties
+  from pylada.error import IOError
 
   Extract = namedtuple('Extract', ['directory'])
   try: 
@@ -100,7 +100,7 @@ def test_rdfmwf():
     except: pass
 
 def test_nosymada():
-  from lada.dftcrystal.properties import Properties
+  from pylada.dftcrystal.properties import Properties
   a = Properties()
   assert a.nosymada is None
   assert len(a.output_map()) == 0
@@ -110,9 +110,9 @@ def test_nosymada():
 def test_newk():
   from pickle import loads, dumps
   from numpy import array, all
-  from lada.dftcrystal.properties import Properties
-  from lada.dftcrystal.properties.keywords import NewK
-  from lada.dftcrystal.input import SetPrint
+  from pylada.dftcrystal.properties import Properties
+  from pylada.dftcrystal.properties.keywords import NewK
+  from pylada.dftcrystal.input import SetPrint
   a = Properties()
   assert len(a.output_map()) == 0
   a.newk.mp = 5
@@ -146,8 +146,8 @@ def test_band():
   from collections import namedtuple
   from random import randint
   from numpy import all, abs, array
-  from lada.dftcrystal.properties import Properties
-  from lada.dftcrystal.properties.keywords import Band
+  from pylada.dftcrystal.properties import Properties
+  from pylada.dftcrystal.properties.keywords import Band
 
   Shell = namedtuple('Shell', ['charge'])
   Functional = namedtuple('Functional', ['basis'])

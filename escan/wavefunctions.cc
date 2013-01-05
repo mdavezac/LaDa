@@ -1,4 +1,4 @@
-#include "LaDaConfig.h"
+#include "PyladaConfig.h"
 #include "FCMangle.h"
 
 #include <unistd.h>
@@ -18,7 +18,7 @@
 
 #include "wavefunctions.hpp"
 
-#ifdef LADA_DO_ESCAN
+#ifdef PYLADA_DO_ESCAN
 # include <boost/mpi/communicator.hpp>
 
   extern "C"
@@ -39,7 +39,7 @@
     void FC_GLOBAL_(escan_wfns_cleanup, ESCAN_WFNS_CLEANUP)();
   }
 
-  namespace LaDa
+  namespace Pylada
   {
     namespace python
     {
@@ -359,9 +359,9 @@
 
 
     } // namespace python
-  } // namespace LaDa
+  } // namespace Pylada
 #else 
-  namespace LaDa
+  namespace Pylada
   {
     namespace python
     {

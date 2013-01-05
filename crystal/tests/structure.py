@@ -70,7 +70,7 @@ def test_init(Class):
 def test_initerror(Class, AtomClass):
   """ Checks initialization throws appropriately. """
   from numpy import identity
-  from lada.error import TypeError
+  from pylada.error import TypeError
 
   try: a = Class(identity(4)*2.5, scale=5.45)
   except TypeError: pass
@@ -264,7 +264,7 @@ def test_iterator(Class, AtomClass):
 
 
 if __name__ == "__main__":
-  from lada.crystal.cppwrappers import Structure, Atom
+  from pylada.crystal.cppwrappers import Structure, Atom
   from sys import argv, path 
   if len(argv) > 0: path.extend(argv[1:])
   

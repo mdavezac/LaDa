@@ -1,4 +1,4 @@
-#if LADA_MATH_MODULE != 1
+#if PYLADA_MATH_MODULE != 1
   //! \brief True if invariant by this transform. Ignores translation.
   inline bool is_invariant(Affine3d const&_a, rMatrix3d const &_m)
     { return is_integer(_m.inverse() * _a.linear() * _m); }

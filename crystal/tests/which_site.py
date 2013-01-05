@@ -3,7 +3,7 @@ def test_b5(u):
   """ Test b5 space-group and equivalents """
   from numpy import dot
   from numpy.random import randint
-  from lada.crystal import Structure, which_site
+  from pylada.crystal import Structure, which_site
 
   x, y = u, 0.25-u
   lattice = Structure([[0,0.5,0.5],[0.5,0,0.5],[0.5,0.5,0]]) \

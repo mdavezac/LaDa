@@ -2,9 +2,9 @@ def test():
   import gc
   from numpy import all, abs, ones
   from sys import getrefcount
-  from lada.crystal.binary import zinc_blende
-  from lada.error import ValueError, AttributeError
-  from lada.vff import Node
+  from pylada.crystal.binary import zinc_blende
+  from pylada.error import ValueError, AttributeError
+  from pylada.vff import Node
 
   structure = zinc_blende()
   assert getrefcount(structure[0]) == 2 # structure, getrefcount arg.

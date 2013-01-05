@@ -1,10 +1,10 @@
 # davezac@hopper08:~/SiGe/old/jwluo/SiGe_SL_001/Si6Ge4_on_Ge/vff
 from numpy import array
 from quantities import angstrom
-from lada.escan import read_input, bandgap
-from lada.crystal import sort_layers
-from lada.crystal.binary import zinc_blende
-from lada.physics import a0
+from pylada.escan import read_input, bandgap
+from pylada.crystal import sort_layers
+from pylada.crystal.binary import zinc_blende
+from pylada.physics import a0
 
 input = read_input("input.py")
 cell = [[2.5,0,0],[0.5,0.5,0.5],[0,-0.5,0.5]]

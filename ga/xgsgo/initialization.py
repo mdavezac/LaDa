@@ -13,7 +13,7 @@ def random_cell(angle_range=None, cubic=False, **kwargs):
       :param bool cubic: 
            Whether the cell should be cubic or not.
       :param kwargs:
-           Passed on to :py:func:`~lada.math.gruber`
+           Passed on to :py:func:`~pylada.math.gruber`
 
       :returns: A random crystal cell.
   """
@@ -146,7 +146,7 @@ def populate_anion_cation(structure, species, anions):
       sublattice.
   
       :param structure:
-        :py:class:`~lada.crystal.Structure` to modify. All atomic types are
+        :py:class:`~pylada.crystal.Structure` to modify. All atomic types are
         replaced.
       :param dict species: 
         Dictionary where keys correspond to atomic species, and values to the
@@ -226,7 +226,7 @@ def taboo( structure, max_atoms=-1, min_distance=1.3, \
       otherwise returns False
       
       :param structure:
-          :py:class:`~lada.crystal.Structure` to check.
+          :py:class:`~pylada.crystal.Structure` to check.
       :param int max_atoms: 
           Maximal allowed number of atoms
       :param float min_distance: 

@@ -1,8 +1,8 @@
-lada.vasp.extract.base
+pylada.vasp.extract.base
 **********************
 
-.. automodule:: lada.vasp.extract.base
-.. autoclass:: lada.vasp.extract.base.ExtractBase
+.. automodule:: pylada.vasp.extract.base
+.. autoclass:: pylada.vasp.extract.base.ExtractBase
    :show-inheritance:
    :members:
    :inherited-members:

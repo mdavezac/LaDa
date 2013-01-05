@@ -2,7 +2,7 @@
 
 def showme(self, event):
   """ Edits job parameters, view files. """
-  from lada import interactive
+  from pylada import interactive
   # gets dictionary, path.
   if interactive.jobfolder is None:
     print "No current job-folder."
@@ -32,7 +32,7 @@ def showme_functional(self):
   from types import FunctionType
   from tempfile import NamedTemporaryFile
   from os import remove, stat
-  from lada import interactive
+  from pylada import interactive
   from ..misc import read_input
   if interactive.jobfolder.functional is None:
     print "No current functional."
@@ -72,7 +72,7 @@ def showme_param(self, arg):
   from tempfile import NamedTemporaryFile
   from os import remove, stat
   from re import search, M, sub
-  from lada import interactive
+  from pylada import interactive
   from ..misc import read_input, import_dictionary, import_header_string
 
   if arg not in interactive.jobfolder.params: 
@@ -123,7 +123,7 @@ def showme_params(self):
   from tempfile import NamedTemporaryFile
   from os import remove, stat
   from re import search, M
-  from lada import interactive
+  from pylada import interactive
   from ..misc import read_input, import_dictionary, import_header_string
 
   try: # try/finally section will removed namedtemporaryfile.
@@ -203,7 +203,7 @@ def completer(self, event):
   """ Completer for showme. """
   from os.path import exists, join
   from glob import glob
-  from lada import interactive
+  from pylada import interactive
   if interactive.jobfolder is None: return ['']
   if not interactive.jobfolder.is_executable: return ['']
   result = ['functional', 'params'] + interactive.jobfolder.params.keys()

@@ -1,10 +1,10 @@
-#ifndef LADA_ENUM_MANIPULATIONS_H
-#define LADA_ENUM_MANIPULATIONS_H
-#include "LaDaConfig.h"
+#ifndef PYLADA_ENUM_MANIPULATIONS_H
+#define PYLADA_ENUM_MANIPULATIONS_H
+#include "PyladaConfig.h"
 
 #include <Python.h>
 #include <structmember.h>
-#define PY_ARRAY_UNIQUE_SYMBOL lada_enum_ARRAY_API
+#define PY_ARRAY_UNIQUE_SYMBOL pylada_enum_ARRAY_API
 #define NO_IMPORT_ARRAY
 #include <numpy/arrayobject.h>
 
@@ -12,13 +12,13 @@
 
 //! \def PyManipulations_Check(object)
 //!      Returns true if an object is a struture or subtype.
-#define PyManipulations_Check(object) PyObject_TypeCheck(object, LaDa::crystal::structure_type())
+#define PyManipulations_Check(object) PyObject_TypeCheck(object, Pylada::crystal::structure_type())
 //! \def PyManipulations_CheckExact(object)
 //!      Returns true if an object is a structure.
-#define PyManipulations_CheckExact(object) object->ob_type == LaDa::crystal::structure_type()
+#define PyManipulations_CheckExact(object) object->ob_type == Pylada::crystal::structure_type()
       
 
-namespace LaDa
+namespace Pylada
 {
   namespace enumeration
   {

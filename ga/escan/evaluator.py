@@ -12,16 +12,16 @@ class Bandgap(object):
     """ Initializes the bandgap object. 
 
         :Parameters: 
-          converter : `lada.ga.escan.elemental.Converter`
+          converter : `pylada.ga.escan.elemental.Converter`
             is a functor which converts between a bitstring and a
-            `lada.crystal.Structure`, and vice versa.
+            `pylada.crystal.Structure`, and vice versa.
           functional 
             some escan functional or meta-functional.
           outdir : str or None
             Directory where to perform calculations. Defaults to None. 
           references
 	          Reference energies for band-gap calculations. See
-            `lada.escan.bandgap`. Defaults to None.
+            `pylada.escan.bandgap`. Defaults to None.
           keep_only_last : boolean
 	          If true, only the last calculation is kept. Limits the space
             required for ESCAN optimizations.
@@ -74,12 +74,12 @@ class Bandgap(object):
     """ Computes bandgap of an individual. 
     
         :kwarg indiv: Individual to compute. Will be converted to a
-          `lada.crystal.Structure` using `converter`.
+          `pylada.crystal.Structure` using `converter`.
         :kwarg outdir: Output directory. 
         :kwarg comm: `mpi.Communicator`.
         :kwarg kwarg: converter, escan, references, outdir  can be overwridden
             on call. This will not affect calls further down the line. Other
-            arguments are passed on to the lada.escan.bandgap` function on call.
+            arguments are passed on to the pylada.escan.bandgap` function on call.
 
         :return: an extractor to the bandgap. 
 

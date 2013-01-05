@@ -64,7 +64,7 @@ def launch_single(self, event, jobfolder):
   pbsargs['header'] = ""
   for i, line in enumerate(lines):
     pbsargs['header'] += 'JOB[{0}]={1!r}\n'.format(i+1, line)
-  pbsargs['header'] += '\nexport LADA_JOBARRAY_NAME=${{JOB[{0}]}}\n'           \
+  pbsargs['header'] += '\nexport PYLADA_JOBARRAY_NAME=${{JOB[{0}]}}\n'           \
                        .format(qsub_array_exe[1])
   pbsargs['scriptcommand'] = "{0} --nbprocs {n} --ppn {ppn} {1} "              \
                              .format(pyscript, path, **pbsargs)                      

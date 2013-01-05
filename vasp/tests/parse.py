@@ -1,6 +1,6 @@
 def test():
-  from lada.vasp import parse_incar
-  from lada.error import ValueError
+  from pylada.vasp import parse_incar
+  from pylada.error import ValueError
 
   string = """ALGO = Fast\n"""\
            """ENCUT = 294.414\n"""\

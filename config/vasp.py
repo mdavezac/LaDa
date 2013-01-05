@@ -1,5 +1,5 @@
-""" VASP parameters for lada. """
-if "vasp" in globals()["ladamodules"]:
+""" VASP parameters for pylada. """
+if "vasp" in globals()["pyladamodules"]:
   vasp_program = "vasp"
   """ Path of vasp binary executable (if launching as external program). """
   vasp_has_nlep = False

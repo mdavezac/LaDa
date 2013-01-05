@@ -7,9 +7,9 @@ Exctracting from a single calculation
 -------------------------------------
 
 
-Launching a calculation is not everything. One wants the results. LaDa makes it
+Launching a calculation is not everything. One wants the results. Pylada makes it
 easy to interface with those results directly in the python language. Every
-functional in LaDa returns an extraction object capable of grepping the
+functional in Pylada returns an extraction object capable of grepping the
 relevant output.
 
 >>> result = vasp(structure)
@@ -46,19 +46,19 @@ makes sense):
 >>> result = vasp(structure, outdir='mycalc', ispin=2) 
  
 In the example above, VASP_ is actually launched the first time. However, on the
-second pass, an OUTCAR is found. If it is a successful run, then LaDa will
+second pass, an OUTCAR is found. If it is a successful run, then Pylada will
 *not* overwrite it. It does not matter whether the structure has changed, or
-whether the VASP_ parameters are different. LaDa will *never* overwrite a
+whether the VASP_ parameters are different. Pylada will *never* overwrite a
 successful run. Not unless specifically requested to. The returned extraction
 object corresponds to the OUTCAR. Hence, on the second pass, it is the results
 of the first call which are returned. Unless, of course, a successful
-calculation already existed there prior to the first run, in which case LaDa
+calculation already existed there prior to the first run, in which case Pylada
 would *never ever* have been so crass as to overwrite it.
 
 
 The second method is to create an extraction object directly:
 
->>> from lada.vasp import Extract
+>>> from pylada.vasp import Extract
 >>> result = Extract('/path/to/directory')
 
 In the above, it is expected that the OUTCAR is called OUTCAR. The path can
@@ -67,11 +67,11 @@ also be made to a file with a name other than OUTCAR.
 .. note::
 
    An extraction object can be created for any OUTCAR, whether obtained *via*
-   LaDa or not. Some information that LaDa automatically appends to an OUTCAR
+   Pylada or not. Some information that Pylada automatically appends to an OUTCAR
    may not be obtainable, however.
 
-To find out what LaDa can extract, do ``result.[TAB]`` in the ipython_
-environment. Or checkout :py:class:`~lada.vasp.extract.Extract`.
+To find out what Pylada can extract, do ``result.[TAB]`` in the ipython_
+environment. Or checkout :py:class:`~pylada.vasp.extract.Extract`.
 
 If you know how to use `regular expressions`_, creating a property like those above
 is generally fairly simple. Edit the file "vasp/extract/base.py", reinstall,
@@ -82,7 +82,7 @@ and you're golden. And send your snippet back this way.
 Extracting results from *many* calculations, and plotting stuff
 ---------------------------------------------------------------
 
-LaDa arranges all calculations within directories, with a single VASP
+Pylada arranges all calculations within directories, with a single VASP
 calculation per sub-directory. It can be expedient to extract simultaneously
 all the results contained within a directory and its subdirectories. One
 approach is to use :ref:`jobfolders <jobfolder_ug>` and the :ref:`ipython
@@ -92,7 +92,7 @@ conjunction with plotting software such as matplotlib_, it makes it really easy
 to synthesize and understand the results from a set of calculations.
 It all comes down to a few simple lines:
 
->>> from lada.vasp import MassExtract
+>>> from pylada.vasp import MassExtract
 >>> a = MassExtract('some/path')
 >>> a.total_energies
 {
@@ -102,7 +102,7 @@ It all comes down to a few simple lines:
 
 "this/path" and "that/path" are directories in "some/path" where OUTCAR files
 exist.  The return is a
-:py:class:`~lada.jobfolder.forwarding_dict.ForwardingDict` instance. It is
+:py:class:`~pylada.jobfolder.forwarding_dict.ForwardingDict` instance. It is
 possible to string together attributes to get to those of interest:
 
 >>> a.structure.scale
@@ -120,7 +120,7 @@ related stuff, or run the ipython notebook app):
 >>> plot x, y
 
 
-:py:class:`~lada.vasp.extract.MassExtract` behaves exactly like the
+:py:class:`~pylada.vasp.extract.MassExtract` behaves exactly like the
 :ref:`collect <ipython_collect_ug>` object.
 
 .. _regular expressions: http://docs.python.org/library/re.html

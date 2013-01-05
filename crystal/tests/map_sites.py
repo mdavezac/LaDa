@@ -4,7 +4,7 @@ def test_b5(u):
   from random import randint, random
   from numpy import array
   from numpy.linalg import det
-  from lada.crystal.cppwrappers import Structure, map_sites, supercell
+  from pylada.crystal.cppwrappers import Structure, map_sites, supercell
 
   x, y = u, 0.25-u
   lattice = Structure([[0,0.5,0.5],[0.5,0,0.5],[0.5,0.5,0]]) \

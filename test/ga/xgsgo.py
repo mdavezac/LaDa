@@ -2,9 +2,9 @@ def create(input='input.py'):
   """ Load ga into ipython. """
   from os.path import exists
   from pickle import dump
-  from lada.vasp import read_input
-  from lada.ga.xgsgo.functional import Functional
-  from lada.jobfolder import JobFolder
+  from pylada.vasp import read_input
+  from pylada.ga.xgsgo.functional import Functional
+  from pylada.jobfolder import JobFolder
 
   input = read_input(input)
 

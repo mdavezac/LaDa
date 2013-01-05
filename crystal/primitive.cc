@@ -4,7 +4,7 @@ Structure primitive(Structure const &_structure, types::t_real _tolerance)
   if( _tolerance < 0e0 ) _tolerance = types::tolerance;
   if( _structure.size() == 0 )
   {
-    LADA_PYERROR(ValueError, "Empty structure.");
+    PYLADA_PYERROR(ValueError, "Empty structure.");
     return Structure();
   }
 
@@ -12,7 +12,7 @@ Structure primitive(Structure const &_structure, types::t_real _tolerance)
   Structure result(_structure.copy());
   if(not result)
   {
-    LADA_PYERROR(ValueError, "primitive: Input lattice is not deep-copyable.");
+    PYLADA_PYERROR(ValueError, "primitive: Input lattice is not deep-copyable.");
     return Structure();
   }
   math::rMatrix3d const cell = math::gruber(result.cell());
@@ -98,10 +98,10 @@ Structure primitive(Structure const &_structure, types::t_real _tolerance)
         {
           trial.col(2) = *i_second;
           trial.col(1) = *i_third;
-#         ifdef LADA_DEBUG
+#         ifdef PYLADA_DEBUG
             if(trial.determinant() < types::tolerance)
             {
-              LADA_PYERROR(internal, "Negative volume.");
+              PYLADA_PYERROR(internal, "Negative volume.");
               return Structure();
             }
 #         endif
@@ -118,7 +118,7 @@ Structure primitive(Structure const &_structure, types::t_real _tolerance)
   // Found the new cell with smallest volume (e.g. primivite)
   if(math::eq(_structure.volume(), new_cell.determinant()))
   {
-    LADA_PYERROR(internal, "Found translation but no primitive cell.");
+    PYLADA_PYERROR(internal, "Found translation but no primitive cell.");
     return Structure();
   }
 
@@ -141,12 +141,12 @@ Structure primitive(Structure const &_structure, types::t_real _tolerance)
   }
   if(_structure.size() % result.size() != 0)
   {
-    LADA_PYERROR(internal, "Nb of atoms in output not multiple of input.");
+    PYLADA_PYERROR(internal, "Nb of atoms in output not multiple of input.");
     return Structure();
   }
   if(math::neq(types::t_real(_structure.size()/result.size()), _structure.volume()/result.volume()))
   {
-    LADA_PYERROR(internal, "Size and volumes do not match.");
+    PYLADA_PYERROR(internal, "Size and volumes do not match.");
     return Structure();
   }
 
@@ -160,7 +160,7 @@ bool is_primitive(Structure const &_structure, types::t_real _tolerance)
   if( _tolerance < 0e0 ) _tolerance = types::tolerance;
   if( _structure.size() == 0 )
   { 
-    LADA_PYERROR(ValueError, "Empty structure.");
+    PYLADA_PYERROR(ValueError, "Empty structure.");
     BOOST_THROW_EXCEPTION(error::internal() << error::string("empty structure"));
   }
 

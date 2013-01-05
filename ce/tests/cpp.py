@@ -1,6 +1,6 @@
 def test_outersum():
   from numpy import array, outer, all, abs, zeros
-  from lada.ce.cppwrappers import outer_sum
+  from pylada.ce.cppwrappers import outer_sum
  
   for type in ['int8', 'int16', 'float', 'float64']:
     tensor = array([0], dtype=type)
@@ -51,8 +51,8 @@ def test_outersum():
   assert all(abs(result - tensor) < 1e-8) # should do nothing
 
 def test_product():
-  from lada.ce.cppwrappers import ProductILJ
-  from lada.crystal import Structure
+  from pylada.ce.cppwrappers import ProductILJ
+  from pylada.crystal import Structure
   a = [u for u in ProductILJ(xrange(3), 1)]
   assert len(a) == 3
   assert a[0] == (0,)

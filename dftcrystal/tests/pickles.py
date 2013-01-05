@@ -1,7 +1,7 @@
 from pickle import loads, dumps
 def test_molecule():
   from numpy import all, abs, array
-  from lada.dftcrystal.molecule import Molecule
+  from pylada.dftcrystal.molecule import Molecule
 
   l = ['Ge', 'Si']
   a = Molecule()
@@ -19,7 +19,7 @@ def test_molecule():
   assert all(array(c) == l)
 
 def test_hamiltonian():
-  from lada.dftcrystal.hamiltonian import Dft
+  from pylada.dftcrystal.hamiltonian import Dft
 
   a = Dft()
   b = loads(dumps(a))
@@ -30,7 +30,7 @@ def test_hamiltonian():
   assert repr(a) == repr(loads(dumps(a)))
 
 def test_electronic():
-  from lada.dftcrystal.electronic import Electronic
+  from pylada.dftcrystal.electronic import Electronic
 
   a = Electronic()
   assert repr(a) == repr(loads(dumps(a)))
@@ -42,8 +42,8 @@ def test_electronic():
   assert repr(a) == repr(loads(dumps(a)))
 
 def test_optgeom():
-  from lada.dftcrystal.optgeom import OptGeom
-  from lada.dftcrystal.input import AttrBlock
+  from pylada.dftcrystal.optgeom import OptGeom
+  from pylada.dftcrystal.input import AttrBlock
   a = OptGeom()
   assert repr(a) == repr(loads(dumps(a)))
   a.maxcycle = 50
@@ -57,7 +57,7 @@ def test_optgeom():
   assert repr(c) == repr(loads(dumps(c)))
 
 def test_basis():
-  from lada.dftcrystal.basis import BasisSet, Shell
+  from pylada.dftcrystal.basis import BasisSet, Shell
 
   a = BasisSet()
   assert repr(a) == repr(loads(dumps(a)))
@@ -71,8 +71,8 @@ def test_basis():
   assert repr(BasisSet()) != repr(loads(dumps(a)))
 
 def test_functional():
-  from lada.dftcrystal import Functional, Shell
-  from lada.dftcrystal.input import print_input
+  from pylada.dftcrystal import Functional, Shell
+  from pylada.dftcrystal.input import print_input
   
   a = Functional()
   assert repr(a) == repr(loads(dumps(a)))

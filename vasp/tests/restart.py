@@ -6,9 +6,9 @@ def test_istart():
   from os.path import join, exists
   from shutil import rmtree
   from tempfile import mkdtemp
-  from lada.vasp.files import WAVECAR
-  from lada.vasp import Vasp
-  from lada.misc import Changedir
+  from pylada.vasp.files import WAVECAR
+  from pylada.vasp import Vasp
+  from pylada.misc import Changedir
 
   Extract = namedtuple("Extract", ['directory', 'success'])
   a = Vasp()
@@ -80,10 +80,10 @@ def test_icharg():
   from os.path import join, exists
   from shutil import rmtree
   from tempfile import mkdtemp
-  from lada.vasp.files import WAVECAR, CHGCAR
-  from lada.vasp import Vasp
-  from lada.misc import Changedir
-  from lada.error import ValueError
+  from pylada.vasp.files import WAVECAR, CHGCAR
+  from pylada.vasp import Vasp
+  from pylada.misc import Changedir
+  from pylada.error import ValueError
 
   Extract = namedtuple("Extract", ['directory', 'success'])
   a = Vasp()
@@ -193,10 +193,10 @@ def test_istruc():
   from os.path import join, exists
   from shutil import rmtree
   from tempfile import mkdtemp
-  from lada.vasp.files import POSCAR, CONTCAR
-  from lada.vasp import Vasp
-  from lada.crystal import Structure, read, specieset, write
-  from lada.error import ValueError
+  from pylada.vasp.files import POSCAR, CONTCAR
+  from pylada.vasp import Vasp
+  from pylada.crystal import Structure, read, specieset, write
+  from pylada.error import ValueError
 
   structure = Structure([[0, 0.5, 0.5],[0.5, 0, 0.5], [0.5, 0.5, 0]], scale=5.43, name='has a name')\
                        .add_atom(0,0,0, "Si")\

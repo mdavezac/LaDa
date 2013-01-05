@@ -2,7 +2,7 @@
 JobFolder Module
 ================
 
-.. automodule:: lada.jobfolder
+.. automodule:: pylada.jobfolder
    
    .. moduleauthor:: Mayeul d'Avezac
 

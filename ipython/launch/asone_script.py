@@ -5,10 +5,10 @@ def main():
   from os import getcwd
   from os.path import exists
   from argparse import ArgumentParser
-  from lada import jobfolder
-  from lada.process.mpi import create_global_comm
-  from lada.process.jobfolder import JobFolderProcess
-  import lada
+  from pylada import jobfolder
+  from pylada.process.mpi import create_global_comm
+  from pylada.process.jobfolder import JobFolderProcess
+  import pylada
 
   # below would go additional imports.
 
@@ -17,9 +17,9 @@ def main():
   parser.add_argument( "--ppath", dest="ppath", default=None, \
                        help="Directory to add to python path",
                        metavar="Directory" )
-  parser.add_argument('--nbprocs', dest="nbprocs", default=lada.default_comm['n'], type=int,\
+  parser.add_argument('--nbprocs', dest="nbprocs", default=pylada.default_comm['n'], type=int,\
                       help="Number of processors with which to launch job.")
-  parser.add_argument('--ppn', dest="ppn", default=lada.default_comm['ppn'], type=int,\
+  parser.add_argument('--ppn', dest="ppn", default=pylada.default_comm['ppn'], type=int,\
                       help="Number of processors with which to launch job.")
   parser.add_argument('--timeout', dest="timeout", default=300, type=int,\
                       help="Time to wait for job-dictionary to becom available "
@@ -38,15 +38,15 @@ def main():
     return
 
   # Set up mpi processes.
-  lada.default_comm['ppn'] = options.ppn
-  lada.default_comm['n'] = options.nbprocs
+  pylada.default_comm['ppn'] = options.ppn
+  pylada.default_comm['n'] = options.nbprocs
   create_global_comm(options.nbprocs)
 
   timeout = None if options.timeout <= 0 else options.timeout
   
   jobfolder = jobfolder.load(options.pickle, timeout=timeout)
   process = JobFolderProcess(jobfolder, outdir=getcwd(), nbpools=options.pools)
-  process.start(lada.default_comm)
+  process.start(pylada.default_comm)
   process.wait(60)
 
 if __name__ == "__main__": main()

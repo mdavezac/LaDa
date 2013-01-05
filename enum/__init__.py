@@ -7,7 +7,7 @@ def supercells(lattice, sizerange):
   
       :params lattice: 
          Back-bone lattice
-      :type lattice: py:attr:`~lada.crystal.Structure`
+      :type lattice: py:attr:`~pylada.crystal.Structure`
       :param sizerange: 
          List of sizes for which to perform calculations, in number of
          unit-cells per supercell.
@@ -68,7 +68,7 @@ def hf_groups(lattice, sizerange):
   
       :params lattice: 
          Back-bone lattice
-      :type lattice: py:attr:`~lada.crystal.Structure`
+      :type lattice: py:attr:`~pylada.crystal.Structure`
       :param sizerange: 
          List of sizes for which to perform calculations, in number of
          unit-cells per supercell.

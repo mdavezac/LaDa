@@ -1,4 +1,4 @@
-#include "LaDaConfig.h"
+#include "PyladaConfig.h"
 
 
 #include <iostream>
@@ -9,7 +9,7 @@
 
 #include <math/smith_normal_form.h>
 
-#define LADA_DOASSERT(a,b) \
+#define PYLADA_DOASSERT(a,b) \
         { \
           if((not (a)))\
           { \
@@ -21,47 +21,47 @@
 #include "../space_group.h"
 #include "../equivalent_structures.h"
 
-using namespace LaDa;
-using namespace LaDa::crystal;
-using namespace LaDa::math;
-typedef Structure< LADA_TYPE > t_Str;
-#define LADA_RAND(s) types::t_real(rand()%s)/types::t_real(s)
-#if LADA_INCREMENT == 0
-#  define LADA_INIT "Si"
-#  define LADA_DOASSERT_TYPE0 LADA_DOASSERT(c[0]->type == "Si", "Wrong first type.\n"); 
-#  define LADA_DOASSERT_TYPE1 LADA_DOASSERT(c[1]->type == "Ge", "Wrong first type.\n"); 
-#elif LADA_INCREMENT == 1
-#  define LADA_INIT "Si", "Ge"
-#  define LADA_DOASSERT_TYPE0 \
-     LADA_DOASSERT(c[0]->type.size() == 1, "Wrong number of types.\n");\
-     LADA_DOASSERT(c[0]->type[0] == "Si", "Wrong first type.\n");
-#  define LADA_DOASSERT_TYPE1 \
-     LADA_DOASSERT(c[1]->type.size() == 2, "Wrong number of types.\n");\
-     LADA_DOASSERT(c[1]->type[0] == "Ge", "Wrong first type.\n");\
-     LADA_DOASSERT(c[1]->type[1] == "Si", "Wrong first type.\n");
-#elif LADA_INCREMENT == 2
-#  define LADA_INIT "Si", "Ge"
-#  define LADA_DOASSERT_TYPE0 \
-    { LADA_TYPE cmp; cmp.insert("Si"); \
-      LADA_DOASSERT(c[0]->type.size() == 1, "Wrong number of types.\n");\
-      LADA_DOASSERT(c[0]->type == cmp, "Wrong first type.\n"); }
-#  define LADA_DOASSERT_TYPE1 \
-    { LADA_TYPE cmp; cmp.insert("Si"); cmp.insert("Ge");                \
-      LADA_DOASSERT(c[1]->type.size() == 2, "Wrong number of types.\n");\
-      LADA_DOASSERT(c[1]->type == cmp, "Wrong first type.\n"); }
+using namespace Pylada;
+using namespace Pylada::crystal;
+using namespace Pylada::math;
+typedef Structure< PYLADA_TYPE > t_Str;
+#define PYLADA_RAND(s) types::t_real(rand()%s)/types::t_real(s)
+#if PYLADA_INCREMENT == 0
+#  define PYLADA_INIT "Si"
+#  define PYLADA_DOASSERT_TYPE0 PYLADA_DOASSERT(c[0]->type == "Si", "Wrong first type.\n"); 
+#  define PYLADA_DOASSERT_TYPE1 PYLADA_DOASSERT(c[1]->type == "Ge", "Wrong first type.\n"); 
+#elif PYLADA_INCREMENT == 1
+#  define PYLADA_INIT "Si", "Ge"
+#  define PYLADA_DOASSERT_TYPE0 \
+     PYLADA_DOASSERT(c[0]->type.size() == 1, "Wrong number of types.\n");\
+     PYLADA_DOASSERT(c[0]->type[0] == "Si", "Wrong first type.\n");
+#  define PYLADA_DOASSERT_TYPE1 \
+     PYLADA_DOASSERT(c[1]->type.size() == 2, "Wrong number of types.\n");\
+     PYLADA_DOASSERT(c[1]->type[0] == "Ge", "Wrong first type.\n");\
+     PYLADA_DOASSERT(c[1]->type[1] == "Si", "Wrong first type.\n");
+#elif PYLADA_INCREMENT == 2
+#  define PYLADA_INIT "Si", "Ge"
+#  define PYLADA_DOASSERT_TYPE0 \
+    { PYLADA_TYPE cmp; cmp.insert("Si"); \
+      PYLADA_DOASSERT(c[0]->type.size() == 1, "Wrong number of types.\n");\
+      PYLADA_DOASSERT(c[0]->type == cmp, "Wrong first type.\n"); }
+#  define PYLADA_DOASSERT_TYPE1 \
+    { PYLADA_TYPE cmp; cmp.insert("Si"); cmp.insert("Ge");                \
+      PYLADA_DOASSERT(c[1]->type.size() == 2, "Wrong number of types.\n");\
+      PYLADA_DOASSERT(c[1]->type == cmp, "Wrong first type.\n"); }
 #endif
 
 void scale(t_Str const &_A, t_Str const &_B)
 {
   t_Str B = _B.copy();
-  LADA_DOASSERT(equivalent(_A, B, true, 1e-5), "A is not equivalent to B.\n");
+  PYLADA_DOASSERT(equivalent(_A, B, true, 1e-5), "A is not equivalent to B.\n");
   B.scale() = 3.0;
-  LADA_DOASSERT(not equivalent(_A, B, true, 1e-5), "A is equivalent to B.\n");
-  LADA_DOASSERT(equivalent(_A, B, false, 1e-5), "A is not equivalent to B.\n");
+  PYLADA_DOASSERT(not equivalent(_A, B, true, 1e-5), "A is equivalent to B.\n");
+  PYLADA_DOASSERT(equivalent(_A, B, false, 1e-5), "A is not equivalent to B.\n");
   B.cell() *= 0.5;
   foreach(t_Str::reference b, B) b->pos *= 0.5;
-  LADA_DOASSERT(not equivalent(_A, B, true, 1e-5), "A is equivalent to B.\n");
-  LADA_DOASSERT(equivalent(_A, B, false, 1e-5), "A is not equivalent to B.\n");
+  PYLADA_DOASSERT(not equivalent(_A, B, true, 1e-5), "A is equivalent to B.\n");
+  PYLADA_DOASSERT(equivalent(_A, B, false, 1e-5), "A is not equivalent to B.\n");
 }
 void motif(t_Str const &_A, t_Str const &_B)
 {
@@ -93,8 +93,8 @@ void basis(t_Str const &_A, t_Str const &_B)
   B = _B.transform(affine);
   motif(_A, B);
 
-  affine =   math::AngleAxis(LADA_RAND(100)*2.0*math::pi, math::rVector3d::UnitX())
-           * math::Translation(LADA_RAND(100)-0.5, LADA_RAND(100)-0.5, LADA_RAND(100)-0.5);
+  affine =   math::AngleAxis(PYLADA_RAND(100)*2.0*math::pi, math::rVector3d::UnitX())
+           * math::Translation(PYLADA_RAND(100)-0.5, PYLADA_RAND(100)-0.5, PYLADA_RAND(100)-0.5);
   B = _B.transform(affine);
   motif(_A, B);
 }
@@ -122,7 +122,7 @@ void decoration(t_Str const &_A, t_Str const &_B, t_Str const _latt)
       if(not is_integer(_latt.cell().inverse() * vec))
       {
         std::cout << ~(_latt.cell().inverse() * vec) << "\n";
-        LADA_DOASSERT(false, "Not on lattice.\n" )
+        PYLADA_DOASSERT(false, "Not on lattice.\n" )
       }
       B[ indices[linear_smith_index(st, _A[*i_ind]->site, vec)] ] = _A[*i_ind];
     }
@@ -157,7 +157,7 @@ int main()
             (0.5,0,0.5)
             (0.5,0.5,0);
   A.add_atom(0,0,0, "Si")
-            (0.25,0.25,0.25, LADA_INIT);
+            (0.25,0.25,0.25, PYLADA_INIT);
   basis(A, A);
 
   clear(A[0]->type); push_back(A[0]->type, "Si");
@@ -178,8 +178,8 @@ int main()
   {
     t_Str::iterator i_atom = A.begin();
     t_Str::iterator const i_end = A.end();
-    types::t_real const x = LADA_RAND(100) * 0.5;
-    for(; i_atom != i_end; ++i_atom) set(i_atom->type(), LADA_RAND(100) > x ? "Si": "Ge");
+    types::t_real const x = PYLADA_RAND(100) * 0.5;
+    for(; i_atom != i_end; ++i_atom) set(i_atom->type(), PYLADA_RAND(100) > x ? "Si": "Ge");
     decoration(A, A, latt);
   }
  
@@ -196,8 +196,8 @@ int main()
     A = supercell(latt, latt.cell() * cell);
     t_Str::iterator i_atom = A.begin();
     t_Str::iterator const i_end = A.end();
-    types::t_real const x = LADA_RAND(100) * 0.5;
-    for(; i_atom != i_end; ++i_atom) set(i_atom->type(), LADA_RAND(100) > x ? "Si": "Ge");
+    types::t_real const x = PYLADA_RAND(100) * 0.5;
+    for(; i_atom != i_end; ++i_atom) set(i_atom->type(), PYLADA_RAND(100) > x ? "Si": "Ge");
     decoration(A, A, latt);
   }
 

@@ -1,6 +1,6 @@
 def test_single_counting():
-  from lada.crystal import binary, supercell
-  from lada.vff import build_tree
+  from pylada.crystal import binary, supercell
+  from pylada.vff import build_tree
   a = binary.zinc_blende()
   a = supercell(binary.zinc_blende(), [[4, 0, 0], [0, 2, 0], [0, 0, 1]])
   b = build_tree(a, overlap=0.5)
@@ -14,8 +14,8 @@ def test_single_counting():
   assert n == 2 * len(a)
 
 def test_angle():
-  from lada.crystal import binary, supercell
-  from lada.vff import build_tree
+  from pylada.crystal import binary, supercell
+  from pylada.vff import build_tree
 
   a = binary.zinc_blende()
   a = supercell(binary.zinc_blende(), [[4, 0, 0], [0, 2, 0], [0, 0, 1]])

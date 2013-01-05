@@ -1,5 +1,5 @@
 def functional():
-  from lada.vff.vff import Vff
+  from pylada.vff.vff import Vff
   vff = Vff()
   vff["In", "As"] = 2.62332, 21.6739, -112.0, 150.0
   vff["Ga", "As"] = 2.44795, 32.1530, -105.0, 150.0
@@ -13,7 +13,7 @@ def functional():
 
 def test_inas():
   from numpy import identity, abs, all, dot, array
-  from lada.crystal.binary import zinc_blende
+  from pylada.crystal.binary import zinc_blende
   from quantities import eV, angstrom
 
   vff = functional()
@@ -48,7 +48,7 @@ def test_inas():
 def test_ingaas():
   from numpy import abs, all, dot, array
   from quantities import eV, angstrom
-  from lada.crystal import Structure
+  from pylada.crystal import Structure
 
   vff = functional()
 

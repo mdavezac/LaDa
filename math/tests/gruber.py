@@ -1,8 +1,8 @@
 def test_gruber():
   from numpy import dot
   from numpy.linalg import inv
-  from lada.math import gruber, is_integer
-  from lada.error import internal, input
+  from pylada.math import gruber, is_integer
+  from pylada.error import internal, input
   
   cell = [[0, 0.5, 0.5], [0.5, 0, 0.5], [0.5, 0.5, 0]]
   lim = 5

@@ -1,5 +1,5 @@
-#if LADA_MATH_MODULE != 1
-  namespace LaDa
+#if PYLADA_MATH_MODULE != 1
+  namespace Pylada
   {
     namespace error
     {

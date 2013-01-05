@@ -5,7 +5,7 @@ def test():
   from os import makedirs
   from os.path import exists, join
   from copy import deepcopy
-  from lada.jobfolder import JobFolder, JobParams
+  from pylada.jobfolder import JobFolder, JobParams
   from dummy import functional
 
   # create jodictionary to explore

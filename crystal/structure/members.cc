@@ -160,12 +160,12 @@ PyObject* structure_setstate(PyStructureObject* _self, PyObject *_tuple)
 {
   if(not PyTuple_Check(_tuple))
   {
-    LADA_PYERROR(TypeError, "Expected state to be a tuple.");
+    PYLADA_PYERROR(TypeError, "Expected state to be a tuple.");
     return NULL;
   }
   if(PyTuple_Size(_tuple) != 3)
   {
-    LADA_PYERROR(TypeError, "Expected state to be a 4-tuple.");
+    PYLADA_PYERROR(TypeError, "Expected state to be a 4-tuple.");
     return NULL;
   }
   // first cell and scale.
@@ -196,12 +196,12 @@ PyObject* structure_add_atom(PyStructureObject* _self, PyObject* _args, PyObject
     {
       if(_kwargs != NULL)
       {
-        LADA_PYERROR(TypeError, "Cannot insert an atom and motify in-place.");
+        PYLADA_PYERROR(TypeError, "Cannot insert an atom and motify in-place.");
         return NULL;
       }
       if(not wrapper)
       {
-        LADA_PYERROR(internal, "Should never find an empty atom. Internal bug.");
+        PYLADA_PYERROR(internal, "Should never find an empty atom. Internal bug.");
         return NULL;
       }
       _self->atoms.push_back(Atom::acquire_((PyObject*)wrapper));

@@ -1,7 +1,7 @@
 def test_chemod():
   from pickle import loads, dumps
   from numpy import all, array, abs
-  from lada.dftcrystal import Crystal, Functional, Shell
+  from pylada.dftcrystal import Crystal, Functional, Shell
   functional = Functional()
   functional.basis['Si'] = [
       Shell('s', a0=[16120.0, 0.001959],

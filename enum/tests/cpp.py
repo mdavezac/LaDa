@@ -1,6 +1,6 @@
 def test_isinteger():
   from numpy import array
-  from lada.enum.cppwrappers import is_integer
+  from pylada.enum.cppwrappers import is_integer
   assert not is_integer(array([0.5, 0.5]))
   assert not is_integer(array([1.0, 0.5]))
   assert not is_integer(array(0.1))
@@ -11,8 +11,8 @@ def test_isinteger():
 def test_ndimiterator():
   from numpy import all 
   from itertools import product
-  from lada.enum.cppwrappers import NDimIterator
-  from lada.error import TypeError, ValueError
+  from pylada.enum.cppwrappers import NDimIterator
+  from pylada.error import TypeError, ValueError
 
   i = 0
   for u in NDimIterator(3,3,4): i += 1; continue
@@ -56,7 +56,7 @@ def test_ndimiterator():
   else: raise Exception()
 
 def test_lexcompare():
-  from lada.enum.cppwrappers import _lexcompare, NDimIterator
+  from pylada.enum.cppwrappers import _lexcompare, NDimIterator
   r = [u.copy() for u in NDimIterator(3, 4, 5)]
   for i in xrange(len(r)):
     assert _lexcompare(r[i], r[i]) == 0
@@ -64,7 +64,7 @@ def test_lexcompare():
     assert all(_lexcompare(r[i], r[j]) == 1 for j in xrange(1, i))
 
 def test_fciterator():
-  from lada.enum.cppwrappers import FCIterator
+  from pylada.enum.cppwrappers import FCIterator
   result = [False, False, False, True, True], \
            [False, False, True, False, True], \
            [False, True, False, False, True], \
@@ -89,8 +89,8 @@ def test_manipulations():
   """ Test manipulation iterator. """
   from numpy import array, arange, all
   from itertools import permutations
-  from lada.enum.cppwrappers import Manipulations
-  from lada.error import TypeError
+  from pylada.enum.cppwrappers import Manipulations
+  from pylada.error import TypeError
 
   x = arange(5, dtype='int16')
   perms = array([u for u in permutations(x)])

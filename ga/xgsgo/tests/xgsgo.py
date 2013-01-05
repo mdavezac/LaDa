@@ -2,7 +2,7 @@ def test_random_cell():
   """ Tests whether scheduling jobs works on known failure cases. """
   from random import seed
   from numpy import abs, all, identity, array
-  from lada.ga.xgsgo import random_cell
+  from pylada.ga.xgsgo import random_cell
 
   assert all(abs(random_cell(cubic=True)-identity(3, dtype='float64'))<1e-8) 
   seed(1)
@@ -13,8 +13,8 @@ def test_random_cell():
 def test_random_structure():
   from random import seed
   from numpy import abs, all, identity, array
-  from lada.ga.xgsgo import random_structure, populate_anion_cation, populate
-  from lada.crystal import Structure
+  from pylada.ga.xgsgo import random_structure, populate_anion_cation, populate
+  from pylada.crystal import Structure
 
   result = Structure( -0.707491, -0.202686, -0.132679,\
                        0, 0.181784, 1.27104,\

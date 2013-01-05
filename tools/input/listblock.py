@@ -5,7 +5,7 @@ class ListBlock(BaseKeyword, list):
   
       This type of group input can contain subitems arranged in a list (rather
       than accessible as attributes, as in
-      :py:class:`lada.tools.input.block.AttrBlock`)
+      :py:class:`pylada.tools.input.block.AttrBlock`)
   """
   __ui_name__ = 'structure'
   """ Name used in user-friendly representation. """

@@ -1,9 +1,9 @@
 Functional class and attributes
 *******************************
-.. module:: lada.dftcrystal.functional
+.. module:: pylada.dftcrystal.functional
    :synopsis: Core wrapper for CRYSTAL. 
 
-.. currentmodule:: lada.dftcrystal.functional
+.. currentmodule:: pylada.dftcrystal.functional
 
 .. autoclass:: Functional
    :show-inheritance:
@@ -30,7 +30,7 @@ Functional class and attributes
      This version performs a blocking call to the CRYSTAL_ program. It works as
      follows:
 
-     >>> from lada.dftcrystal import Crystal, Functional
+     >>> from pylada.dftcrystal import Crystal, Functional
      >>> # create an object
      >>> functional = Functional()
      >>> # initialize it 
@@ -47,7 +47,7 @@ Functional class and attributes
       is a generator which yields two types of objects:
         
         - :py:attr:`Extract` instances refering to finished CRYSTAL_ calculations
-        - :py:mod:`Processes <lada.process>` which allow the user to call the
+        - :py:mod:`Processes <pylada.process>` which allow the user to call the
           CRYSTAL_ code at leisure
      
       The last object yielded should be an extraction object refering to the
@@ -73,7 +73,7 @@ Functional class and attributes
 
       Geometry relaxation parameters.
 
-      This is an instance of :py:class:`~lada.dftcrystal.optgeom.OptGeom`. Once
+      This is an instance of :py:class:`~pylada.dftcrystal.optgeom.OptGeom`. Once
       enabled with 
 
       >>> functional.optgeom.enable = True
@@ -86,14 +86,14 @@ Functional class and attributes
 
       .. seealso:: 
 
-         :py:class:`~lada.dftcrystal.optgeom.OptGeom`,
-         :py:class:`~lada.dftcrystal.relax.Relax`
+         :py:class:`~pylada.dftcrystal.optgeom.OptGeom`,
+         :py:class:`~pylada.dftcrystal.relax.Relax`
 
    .. attribute:: basis
 
    .. attribute:: dft 
 
-      It is an instance of :py:class:`~lada.dftcrystal.hamiltonian.Dft`.
+      It is an instance of :py:class:`~pylada.dftcrystal.hamiltonian.Dft`.
       Parameters from CRYSTAL_'s sub-block can be set here, for instance as:
 
       >>> functional.dft.b3lyp = True
