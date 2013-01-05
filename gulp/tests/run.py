@@ -4,9 +4,9 @@ def test():
   from os.path import exists
   from shutil import rmtree
   from quantities import eV
-  from lada.gulp import Functional
-  from lada.crystal import Structure
-  from lada.tools import create_directory
+  from pylada.gulp import Functional
+  from pylada.crystal import Structure
+  from pylada.tools import create_directory
 
   functional = Functional()
   functional.qeq = True

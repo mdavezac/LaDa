@@ -1,6 +1,6 @@
 def test_optikeywords():
-  from lada.tools.input.block import AttrBlock
-  from lada.gulp.keywords import OptiKeyword
+  from pylada.tools.input.block import AttrBlock
+  from pylada.gulp.keywords import OptiKeyword
   
   # fake class to try out opti keywords
   class A(AttrBlock):
@@ -24,7 +24,7 @@ def test_optikeywords():
   assert a._input['conv'].output_map(gulp=a) is None
 
 def test_twobody():
-  from lada.gulp.keywords import TwoBody
+  from pylada.gulp.keywords import TwoBody
 
   a = TwoBody()
   a.keyword = 'morse'

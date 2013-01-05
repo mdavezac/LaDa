@@ -3,7 +3,7 @@ def test_noopti_anatase(path):
   from os.path import join
   from numpy import array, abs, all
   from quantities import angstrom
-  from lada.gulp import Extract
+  from pylada.gulp import Extract
 
   extract = Extract(join(path, 'noopti.gout'))
   assert not extract.optimize
@@ -32,7 +32,7 @@ def test_opti_anatase(path):
   from os.path import join
   from numpy import array, abs, all
   from quantities import angstrom, e, eV
-  from lada.gulp import Extract
+  from pylada.gulp import Extract
 
   extract = Extract(join(path, 'opti.gout'))
   assert extract.optimize
@@ -71,7 +71,7 @@ def test_surface(path):
   from os.path import join
   from numpy import array, abs, all
   from quantities import angstrom
-  from lada.gulp import Extract
+  from pylada.gulp import Extract
 
   extract = Extract(join(path, 'surface.gout'))
   assert extract.optimize
@@ -142,7 +142,7 @@ def test_optinosym(path):
   from os.path import join
   from numpy import array, abs, all
   from quantities import angstrom
-  from lada.gulp import Extract
+  from pylada.gulp import Extract
 
   extract = Extract(join(path, 'opti_nosym.gout'))
   assert all( abs( extract.cell 

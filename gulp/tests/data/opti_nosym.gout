@@ -21,7 +21,7 @@ O core   O core     0.042117 1.1861 3.70366 0.0 0.0 25.0
 O core   Ti core     1.0279493 3.640737 1.88265 0.0 0.0 25.0
 #################### END INPUT FILE ####################
 #################### FUNCTIONAL ####################
-from lada.gulp.functional import Functional
+from pylada.gulp.functional import Functional
 
 functional = Functional()
 functional.conp                        = True

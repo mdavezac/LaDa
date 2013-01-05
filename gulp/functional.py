@@ -20,7 +20,7 @@ class Functional(AttrBlock):
     self.program = program
     """ Path to crystal program.
 
-        If this attribute is None, then :py:data:`~lada.gulp_program` is used.
+        If this attribute is None, then :py:data:`~pylada.gulp_program` is used.
     """ 
     self.opti = Optimize()
     """ If True, then performs structural optimization. """
@@ -86,7 +86,7 @@ class Functional(AttrBlock):
   def bringup(self, structure, outdir, workdir=None, **kwargs):
     """ Prepares files for gulp. """
     from os.path import join
-    from ..tools import create_directory, prep_symlink, add_ladarunning_marker,\
+    from ..tools import create_directory, prep_symlink, add_pyladarunning_marker,\
                         add_section_to_file
   
     create_directory(outdir)
@@ -102,15 +102,15 @@ class Functional(AttrBlock):
     prep_symlink(outdir, workdir, 'gulp.err')
     prep_symlink(outdir, workdir)
 
-    add_ladarunning_marker(outdir)
+    add_pyladarunning_marker(outdir)
 
   def bringdown(self, structure, workdir, outdir):
     """ Cleansup after functional. """
     from os.path import join, exists
-    from ..tools import remove_ladarunning_marker, add_section_to_file,        \
+    from ..tools import remove_pyladarunning_marker, add_section_to_file,        \
                         remove_workdir_link
 
-    remove_ladarunning_marker(outdir)
+    remove_pyladarunning_marker(outdir)
 
     if exists(join(outdir, 'gulp.err')): 
       with open(join(outdir, 'gulp.err'), 'r') as file: string = file.read()

@@ -1,7 +1,7 @@
 def test_input():
   from numpy import array, all, abs
-  from lada.error import ValueError
-  from lada.gulp import Functional
+  from pylada.error import ValueError
+  from pylada.gulp import Functional
 
   functional = Functional()
   functional.morse['Ti', 'O']  = [1.0279493, 3.640737, 1.88265, 0, 25]
@@ -30,7 +30,7 @@ def test_input():
 def test_repr():
   """ Test representability. """
   from numpy import all, array, abs
-  from lada.gulp import Functional
+  from pylada.gulp import Functional
   
   functional = Functional()
   b = {}; exec(repr(functional)) in b; b = b['functional']
@@ -89,9 +89,9 @@ def test_filesetup():
   from tempfile import mkdtemp
   from os.path import exists, join, samefile, lexists
   from shutil import rmtree
-  from lada.gulp import Functional
-  from lada.crystal import Structure
-  from lada.tools import create_directory, get_section_from_file
+  from pylada.gulp import Functional
+  from pylada.crystal import Structure
+  from pylada.tools import create_directory, get_section_from_file
 
   functional = Functional()
   functional.morse.enabled     = True
@@ -153,10 +153,10 @@ def test_filesetup():
     assert exists(join(workdir, 'gulp.in'))
     assert not samefile(join(workdir, 'gulp.in'), join(directory, 'gulp.in'))
     assert lexists(join(workdir, 'gulp.err'))
-    assert exists(join(directory, '.lada_is_running'))
+    assert exists(join(directory, '.pylada_is_running'))
 
     program.onfinish()
-    assert not exists(join(directory, '.lada_is_running'))
+    assert not exists(join(directory, '.pylada_is_running'))
     assert exists(workdir)
     assert exists(join(directory, 'workdir'))
     assert samefile(join(workdir, 'gulp.out'), join(directory, 'gulp.out'))
