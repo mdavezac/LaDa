@@ -1,4 +1,10 @@
 """ Miscellaneous ressources to create functionals. """
+__docformat__ = "restructuredtext en"
+__all__ = [ 'stateless', 'assign_attributes', 'check_success',
+            'check_success_generator', 'make_cached', 'uncache', 'SuperCall',
+            'create_directory', 'prep_symlink', 'add_ladarunning_marker',
+            'remove_ladarunning_marker', 'remove_workdir_link',
+            'add_section_to_file', 'get_section_from_file', 'OnFinish' ]
 def stateless(function):
   """ Decorator to make a function stateless.
   
@@ -134,3 +140,123 @@ class SuperCall(object):
     class_ = deepcopy(self.__dict__['_class'])
     object_= deepcopy(self.__dict__['_object'])
     return self.__class__(class_, object_)
+
+
+def create_directory(directory):
+  """ If directory does not exist, creates it. """
+  from os import makedirs
+  from os.path import exists
+  if not exists(directory): makedirs(directory)
+
+def prep_symlink(outdir, workdir, filename=None):
+  """ Creates a symlink between outdir and workdir.
+
+      If outdir and workdir are the same directory, then bails out.
+      Both directories should exist prior to call.
+      If filename is None, then creates a symlink to workdir in outdir called
+      ``workdir``. Otherwise, creates a symlink in workdir called filename.
+      If a link ``filename`` already exists, deletes it first.
+  """
+  from os import remove, symlink
+  from os.path import samefile, lexists, abspath, join
+  from ..misc import Changedir
+  if samefile(outdir, workdir): return
+  if filename is None:
+    with Changedir(workdir) as cwd: 
+      if lexists('workdir'):
+        try: remove('workdir')
+        except OSError: pass
+      try: symlink(abspath(workdir), abspath(join(outdir, 'workdir')))
+      except OSError: pass
+    return
+
+  with Changedir(workdir) as cwd: 
+    if lexists(filename):
+      try: remove(filename)
+      except OSError: pass
+    try: symlink( abspath(join(outdir, filename)),
+                  abspath(join(workdir, filename)) )
+    except OSError: pass
+
+def remove_workdir_link(outdir):
+  """ Removes link from output to working directory. """
+  from os.path import exists, join
+  from os import remove
+  path = join(outdir, 'workdir')
+  if exists(path): 
+    try: remove(path)
+    except OSError: pass
+
+def add_ladarunning_marker(outdir): 
+  """ Creates a marker file in output directory. """
+  from os.path import join
+  file = open(join(outdir, '.lada_is_running'), 'w')
+  file.close()
+def remove_ladarunning_marker(outdir): 
+  """ Creates a marker file in output directory. """
+  from os.path import exists, join
+  from os import remove
+  path = join(outdir, '.lada_is_running')
+  if exists(path): 
+    try: remove(path)
+    except OSError: pass
+
+def add_section_to_file(outdir, filename, marker, string, append=True):
+  """ Appends a string to an output file. 
+
+      The string will be added with some simple marking. 
+
+        | #################### MARKER ####################
+        | string
+        | #################### END MARKER ####################
+
+      The output directory should exist on call. The string is stripped first.
+      If the resulting string is empty, it is not added to the file.
+  """
+  from os.path import join
+
+  string = string.rstrip().lstrip()
+  if len(string) == 0: return
+  header = ''.join(['#']*20)
+  with open(join(outdir, filename), 'a' if append else 'w') as file:
+    file.write('{0} {1} {0}\n'.format(header, marker.upper()))
+    file.write(string)
+    file.write('\n{0} END {1} {0}\n'.format(header, marker.upper()))
+
+def get_section_from_file(stream, marker):
+  """ Returns the content of a section. 
+      
+      A section in a file is defined as:
+
+        | #################### MARKER ####################
+        | string
+        | #################### END MARKER ####################
+
+      This function returns string.
+  """
+  header = ''.join(['#']*20)
+  startmarker = '{0} {1} {0}\n'.format(header, marker.upper())
+  endmarker = '{0} END {1} {0}\n'.format(header, marker.upper())
+  found = False
+  for line in stream:
+    if line == startmarker: found = True; break
+  if not found: return ""
+  result = ""
+  for line in stream: 
+    if line == endmarker: break
+    result += line
+  return result
+
+class OnFinish(object):
+  """ Called when a run finishes. 
+     
+      Makes sure bringdown is called at the end of a call to a functional.
+      This object should be used as input to a
+      :py:class:`~lada.process.program.ProgramProcess` instance's onfinish
+      option.
+  """
+  def __init__(self, this, *args):
+    self.this = this
+    self.args = args
+  def __call__(self, *args, **kwargs):
+    self.this.bringdown(*self.args)

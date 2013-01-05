@@ -1,0 +1,326 @@
+#################### INPUT FILE ####################
+conp opti qeq 
+vectors
+4.58576700         0.00000000         0.00000000        
+0.00000000         4.58576700         0.00000000        
+0.00000000         0.00000000         2.95796800        
+spacegroup
+1
+cartesian  
+Ti   core         0.00000000         0.00000000         0.00000000 
+Ti   core         2.29288350         2.29288350         1.47898400 
+O    core         1.40394632         1.40394632         0.00000000 
+O    core        -1.40394632        -1.40394632         0.00000000 
+O    core        -0.88893718         0.88893718         1.47898400 
+O    core         0.88893718        -0.88893718         1.47898400
+
+
+morse
+Ti core   Ti core     0.005671392 1.5543 4.18784 0.0 0.0 25.0
+O core   O core     0.042117 1.1861 3.70366 0.0 0.0 25.0
+O core   Ti core     1.0279493 3.640737 1.88265 0.0 0.0 25.0
+#################### END INPUT FILE ####################
+#################### FUNCTIONAL ####################
+from lada.gulp.functional import Functional
+
+functional = Functional()
+functional.conp                        = True
+functional.morse.enabled               = True
+functional.morse['O|core', 'O|core']   = 0.042117, 1.1861, 3.70366, 0, 0, 25
+functional.morse['O|core', 'Ti|core']  = 1.0279493, 3.640737, 1.88265, 0, 0, 25
+functional.morse['Ti|core', 'Ti|core'] = 0.005671392, 1.5543, 4.18784, 0, 0, 25
+functional.opti                        = True
+functional.qeq                         = True
+#################### END FUNCTIONAL ####################
+********************************************************************************
+*                       GENERAL UTILITY LATTICE PROGRAM                        *
+*                                 Julian Gale                                  *
+*                      Nanochemistry Research Institute                        *
+*                           Department of Chemistry                            *
+*                    Curtin University, Western Australia                      *
+********************************************************************************
+* Version = 4.0.3 * Last modified =  20th April 2012                           *
+********************************************************************************
+*  optimise     - perform optimisation run                                     *
+*  conp         - constant pressure calculation                                *
+*  QEq          - electronegativity equalisation (Rappe and Goddard III method)*
+********************************************************************************
+
+  Job Started  at 17:44.38  3rd January    2013                               
+
+  Number of CPUs =     1
+
+  Host name      = nhpc15                                  
+
+
+  Total number of configurations input =   1
+
+********************************************************************************
+*  Input for Configuration =   1                                               *
+********************************************************************************
+
+  Formula = Ti2O4                                                       
+
+  Number of irreducible atoms/shells =       6
+
+
+  Total number atoms/shells =       6
+
+  Dimensionality = 3               :  Bulk   
+
+
+
+  Cartesian lattice vectors (Angstroms) :
+
+        4.585767    0.000000    0.000000
+        0.000000    4.585767    0.000000
+        0.000000    0.000000    2.957968
+
+  Cell parameters (Angstroms/Degrees):
+
+  a =       4.5858    alpha =  90.0000
+  b =       4.5858    beta  =  90.0000
+  c =       2.9580    gamma =  90.0000
+
+  Initial cell volume =          62.203875 Angs**3
+
+  Temperature of configuration =  0.000     K 
+
+  Pressure of configuration =         0.000 GPa 
+
+  Fractional coordinates of asymmetric unit :
+
+--------------------------------------------------------------------------------
+   No.  Atomic       x           y          z         Charge      Occupancy
+        Label      (Frac)      (Frac)     (Frac)        (e)         (Frac)  
+--------------------------------------------------------------------------------
+      1 Ti    c    0.000000    0.000000    0.000000     0.00000    1.000000    
+      2 Ti    c    0.500000 *  0.500000 *  0.500000 *   0.00000    1.000000    
+      3 O     c    0.306153 *  0.306153 *  0.000000 *   0.00000    1.000000    
+      4 O     c    0.693847 *  0.693847 *  0.000000 *   0.00000    1.000000    
+      5 O     c    0.806153 *  0.193847 *  0.500000 *   0.00000    1.000000    
+      6 O     c    0.193847 *  0.806153 *  0.500000 *   0.00000    1.000000    
+--------------------------------------------------------------------------------
+
+
+
+********************************************************************************
+*  General input information                                                   *
+********************************************************************************
+
+  Species output for all configurations : 
+
+--------------------------------------------------------------------------------
+  Species    Type    Atomic    Atomic    Charge       Radii (Angs)     Library
+                     Number     Mass       (e)     Cova   Ionic  VDW   Symbol
+--------------------------------------------------------------------------------
+    Ti       Core       22      47.88   0.000000   1.470  0.000  2.190          
+    O        Core        8      16.00   0.000000   0.730  0.000  1.360          
+--------------------------------------------------------------------------------
+
+
+  Lattice summation method               =    Ewald          (3-D)
+                                         =    Parry          (2-D)
+                                         =    Saunders et al (1-D)
+  Accuracy factor for lattice sums       =   12.000
+
+
+  Time limit = Infinity
+
+  Maximum range for interatomic potentials =    100000.000000 Angstroms
+
+  General interatomic potentials :
+
+--------------------------------------------------------------------------------
+Atom  Types   Potential         A         B         C         D     Cutoffs(Ang)
+  1     2                                                            Min    Max 
+--------------------------------------------------------------------------------
+Ti   c Ti   c Morse         0.567E-02  1.55      4.19      0.00     0.000 25.000
+O    c O    c Morse         0.421E-01  1.19      3.70      0.00     0.000 25.000
+O    c Ti   c Morse          1.03      3.64      1.88      0.00     0.000 25.000
+--------------------------------------------------------------------------------
+
+********************************************************************************
+*  Output for configuration   1                                                *
+********************************************************************************
+
+
+
+  Final charges from QEq :
+
+  No hydrogens present - no iteration needed
+
+--------------------------------------------------------------------------------
+    Atom no.            Atomic No.             Charge
+--------------------------------------------------------------------------------
+         1                  22                 1.1508499
+         2                  22                 1.1508499
+         3                   8                -0.5754250
+         4                   8                -0.5754250
+         5                   8                -0.5754250
+         6                   8                -0.5754250
+--------------------------------------------------------------------------------
+  Electronegativity =        -3.805495 eV
+  Self energy       =         5.671071 eV
+--------------------------------------------------------------------------------
+
+  Components of energy : 
+
+--------------------------------------------------------------------------------
+  Interatomic potentials     =         -10.38397237 eV
+  Monopole - monopole (real) =          -6.91139407 eV
+  Monopole - monopole (recip)=         -16.50741678 eV
+  Monopole - monopole (total)=         -23.41881085 eV
+  Self energy (EEM/QEq/SM)   =           5.67107148 eV
+  QEq Coulomb correction     =          11.68161747 eV
+--------------------------------------------------------------------------------
+  Total lattice energy       =         -16.45009428 eV
+--------------------------------------------------------------------------------
+  Total lattice energy       =           -1587.1826 kJ/(mole unit cells)
+--------------------------------------------------------------------------------
+
+
+  Number of variables =       21
+
+  Maximum number of calculations  =          1000
+  Maximum Hessian update interval =            10
+  Maximum step size               =   1.000000000
+  Maximum parameter tolerance     =   0.000010000
+  Maximum function  tolerance     =   0.000010000
+  Maximum gradient  tolerance     =   0.001000000
+  Maximum gradient  component     =   0.010000000
+
+  Symmetry not applied to optimisation
+
+  Cell parameters to be optimised using strains
+
+  Newton-Raphson optimiser to be used
+
+  BFGS hessian update to be used
+
+  Start of bulk optimisation :
+
+  Cycle:      0 Energy:       -16.450102  Gnorm:      0.340428  CPU:    0.330
+  ** Hessian calculated **
+  Cycle:      1 Energy:       -16.494496  Gnorm:      0.026550  CPU:    0.803
+  Cycle:      2 Energy:       -16.495064  Gnorm:      0.004937  CPU:    1.179
+  Cycle:      3 Energy:       -16.495079  Gnorm:      0.000079  CPU:    1.557
+
+
+  **** Optimisation achieved ****
+
+
+  Final energy =     -16.49507888 eV
+  Final Gnorm  =       0.00000145
+
+  Components of energy : 
+
+--------------------------------------------------------------------------------
+  Interatomic potentials     =         -10.42305994 eV
+  Monopole - monopole (real) =          -6.88029048 eV
+  Monopole - monopole (recip)=         -16.53270596 eV
+  Monopole - monopole (total)=         -23.41299644 eV
+  Self energy (EEM/QEq/SM)   =           5.69390837 eV
+  QEq Coulomb correction     =          11.64706913 eV
+--------------------------------------------------------------------------------
+  Total lattice energy       =         -16.49507888 eV
+--------------------------------------------------------------------------------
+  Total lattice energy       =           -1591.5230 kJ/(mole unit cells)
+--------------------------------------------------------------------------------
+
+  Final fractional coordinates of atoms :
+
+--------------------------------------------------------------------------------
+   No.  Atomic        x           y           z         Radius      Charge
+        Label       (Frac)      (Frac)     (Frac)       (Angs) 
+--------------------------------------------------------------------------------
+     1  Ti    c     0.000000    0.000000    0.000000    0.000000    1.151969
+     2  Ti    c     0.500000    0.500000    0.500000    0.000000    1.151969
+     3  O     c     0.301572    0.301572    0.000000    0.000000   -0.575984
+     4  O     c     0.698428    0.698428    0.000000    0.000000   -0.575984
+     5  O     c     0.801572    0.198428    0.500000    0.000000   -0.575984
+     6  O     c     0.198428    0.801572    0.500000    0.000000   -0.575984
+--------------------------------------------------------------------------------
+
+  Final Cartesian lattice vectors (Angstroms) :
+
+        4.585767    0.000000   -0.000000
+        0.000000    4.585767    0.000000
+       -0.000000    0.000000    2.957967
+
+
+  Final cell parameters and derivatives :
+
+--------------------------------------------------------------------------------
+       a            4.585767 Angstrom     dE/de1(xx)    -0.000014 eV/strain
+       b            4.585767 Angstrom     dE/de2(yy)    -0.000014 eV/strain
+       c            2.957967 Angstrom     dE/de3(zz)    -0.000022 eV/strain
+       alpha       90.000000 Degrees      dE/de4(yz)     0.000000 eV/strain
+       beta        90.000000 Degrees      dE/de5(xz)     0.000000 eV/strain
+       gamma       90.000000 Degrees      dE/de6(xy)     0.000000 eV/strain
+--------------------------------------------------------------------------------
+
+  Primitive cell volume =            62.203858 Angs**3
+
+  Density of cell =      4.264879 g/cm**3
+
+  Non-primitive cell volume =            62.203858 Angs**3
+
+
+  Final internal derivatives :
+
+--------------------------------------------------------------------------------
+   No.  Atomic          a             b             c           Radius
+        Label          (eV)          (eV)          (eV)        (eV/Angs)
+--------------------------------------------------------------------------------
+      1 Ti    c       0.000000      0.000000      0.000000      0.000000
+      2 Ti    c      -0.000001      0.000001      0.000000      0.000000
+      3 O     c       0.000003      0.000003      0.000000      0.000000
+      4 O     c      -0.000003     -0.000003     -0.000000      0.000000
+      5 O     c       0.000003     -0.000003     -0.000000      0.000000
+      6 O     c      -0.000003      0.000003     -0.000000      0.000000
+--------------------------------------------------------------------------------
+  Maximum abs         0.000003      0.000003      0.000000      0.000000
+--------------------------------------------------------------------------------
+
+
+  Time to end of optimisation =       1.9347 seconds
+
+
+
+  Final charges from QEq :
+
+  No hydrogens present - no iteration needed
+
+--------------------------------------------------------------------------------
+    Atom no.            Atomic No.             Charge
+--------------------------------------------------------------------------------
+         1                  22                 1.1519687
+         2                  22                 1.1519687
+         3                   8                -0.5759844
+         4                   8                -0.5759844
+         5                   8                -0.5759843
+         6                   8                -0.5759843
+--------------------------------------------------------------------------------
+  Electronegativity =        -3.813799 eV
+  Self energy       =         5.693908 eV
+--------------------------------------------------------------------------------
+
+  Peak dynamic memory used =       0.52 MB 
+
+
+  Timing analysis for GULP :
+
+--------------------------------------------------------------------------------
+  Task / Subroutine                                          Time (Seconds)
+--------------------------------------------------------------------------------
+  Calculation of reciprocal space energy and derivatives          0.0040
+  Calculation of real space energy and derivatives                0.8739
+  Electronegativity equalisation                                  1.1038
+--------------------------------------------------------------------------------
+  Total CPU time                                                  1.9837
+--------------------------------------------------------------------------------
+
+
+  Job Finished at 17:44.40  3rd January    2013                               
+

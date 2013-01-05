@@ -30,4 +30,6 @@ if(NOT compile_debug_tests)
            ${CMAKE_CURRENT_BINARY_DIR})
   add_test(crystal_which_site python ${CMAKE_CURRENT_SOURCE_DIR}/which_site.py)
 
+  add_test(crystal_gulp python ${CMAKE_CURRENT_SOURCE_DIR}/write_gulp.py)
+
 endif(NOT compile_debug_tests)

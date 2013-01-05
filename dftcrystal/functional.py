@@ -359,7 +359,7 @@ class Functional(object):
     
   
   @stateless
-  @assign_attributes(ignore=['overwrite', 'comm', 'workdir'])
+  @assign_attributes(ignore=['overwrite', 'comm', 'workdir', 'test'])
   def iter(self, structure, outdir=None, workdir=None, comm=None,
            overwrite=False, test=False, **kwargs):
     """ Performs a CRYSTAL calculation 
@@ -395,7 +395,7 @@ class Functional(object):
         :note: This functor is stateless as long as self and structure can be
                deepcopied correctly.  
 
-        :raise RuntimeError: when computations do not complete.
+        :raise ExternalRunFailed: when computations do not complete.
         :raise IOError: when outdir exists but is not a directory.
     """ 
     from os import getcwd
@@ -442,6 +442,7 @@ class Functional(object):
 
   def __call__( self, structure, outdir=None, workdir=None, comm=None,         \
                 overwrite=False, test=False, **kwargs):
+    from ..error import ExternalRunFailed
     for program in self.iter( structure, outdir=outdir, workdir=workdir,
                               comm=comm, overwrite=overwrite, test=test, 
                               **kwargs ):
@@ -454,7 +455,7 @@ class Functional(object):
       program.wait()
     # Last yield should be an extraction object.
     if not program.success:
-      raise RuntimeError("CRYSTAL failed to execute correctly.")
+      raise ExternalRunFailed("CRYSTAL failed to execute correctly.")
     return program
   __call__.__doc__ = iter.__doc__
  
