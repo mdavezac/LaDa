@@ -9,7 +9,7 @@ Contents:
 
    Compiling and installing <userguide/compile>
 
-   Configuration <userguide/configuration>
+   Seting up Pylada <userguide/configuration>
 
    Creating and Manipulating crystal structures <userguide/crystal>
 
@@ -20,5 +20,3 @@ Contents:
    Organized high-thoughput calculations: job-folders <userguide/jobfolders>
 
    IPython high-throughput interface <userguide/ipython>
-
-   Configuring Pylada <userguide/config.rst>

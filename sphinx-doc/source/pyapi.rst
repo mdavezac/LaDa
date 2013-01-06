@@ -7,6 +7,8 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+    Configuration variables <pyapi/configuration>
+
     pylada.crystal <pyapi/crystal>
 
     pylada.error <pyapi/error>

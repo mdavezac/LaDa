@@ -1,12 +1,12 @@
 .. _configuration_ug:
 
-Configuration
-*************
+Setting up Pylada
+*****************
 
 Pylada accepts a range of configuration files:
 
  1. Files located in the ''config'' sub-directory where Pylada is installed
- 2. Files located in one of the directories specified by PYLADA_CONFIG_DIR
+ 2. Files located in one of the directories specified by :envvar:`PYLADA_CONFIG_DIR`
  3. In the user configuration file ''~/.pylada''
 
 Each file is executed and whatever is declared within is placed directly at
