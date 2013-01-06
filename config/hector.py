@@ -25,9 +25,9 @@ def pbs_string(**kwargs):
          "#PBS -l walltime={walltime}\n"                                       \
          "#PBS -A {account}\n"                                                 \
          "#PBS -V \n\n"                                                        \
-         "export PYLADA_TMPDIR=/work/e05/e05/`whoami`/pylada_tmp\n"                \
-         "if [ ! -e $PYLADA_TMPDIR ] ; then\n"                                   \
-         "  mkdir -p $PYLADA_TMPDIR\n"                                           \
+         "export PYLADA_TMPDIR=/work/e05/e05/`whoami`/pylada_tmp\n"            \
+         "if [ ! -e $PYLADA_TMPDIR ] ; then\n"                                 \
+         "  mkdir -p $PYLADA_TMPDIR\n"                                         \
          "fi\n"                                                                \
          "cd {directory}\n"                                                    \
          "{header}\n"                                                          \
@@ -44,17 +44,10 @@ do_multiple_mpi_program = True
 accounts = ['e05-power-nic', 'e05-qmdev-nic']
 
 def machine_dependent_call_modifier(formatter=None, comm=None, env=None):
-  """ Placement modifications for MPI processes. 
-  
-      Nodefile is re-written with one hostname per line and per processor
-      (rather than  per host, e05-qmdev-nicwith 'slots=n' arguments indicating the number of
-      procs per node). Finally, the environment variable ``PBS_NODEFILE`` is
-      modified to point to the new nodefile. 
-
-      .. note:: 
-      
-         Also, the hostname were shortened to exclude cx1.hpc.imperial.ac.uk
-         domain name in :py:function:`~pylada.modify_global_comm`. 
+  """ Placement modifications for aprun MPI processes. 
+     
+      aprun expects the machines (not cores) to be given on the commandline as
+      a list of "-Ln" with n the machine number.
   """
   from pylada import default_comm
   if formatter is None: return
@@ -67,10 +60,9 @@ def machine_dependent_call_modifier(formatter=None, comm=None, env=None):
   formatter['placement'] = placement
 
 def modify_global_comm(comm):
-  """ Modifies global communicator to work on cx1. 
+  """ Modifies global communicator to work on cray.
 
-      Somehow, intel's mpi does not like fully qualified domain-names, eg
-      cx1.hp.imperial.ac.uk. Communicator is modified *in-place*.
+      Replaces hostnames with the host number. 
   """ 
   for key, value in comm.machines.items():
     del comm.machines[key]

@@ -1,7 +1,8 @@
-.. _vasp_config_ug: 
+
+.. _vasp_config_ug:
 
 Configuring Pylada for VASP
-=========================
+===========================
 
 Pylada calls VASP_ as an external program: all it needs is to know how to call it.
 The path to the program can be configured in your ~/.pylada file by simply adding
@@ -29,8 +30,8 @@ being set and will preferentially write the POSCAR_ in a vasp-5 format.
 
 It is possible to run VASP_ in parallel. However, Pylada has to be set up
 correctly for running parallel code. Although it needs be done only once, it
-can be somewhat painful on some computers or supercomputers. Please see
-:ref:`ug_config_mpi`.
+can be somewhat painful on some computers or supercomputers. Please see how
+to set up :ref:`MPI calculations <configuration_single_mpi_ug>` first.
 
 The last configuration variable is :py:data:`~pylada.verbose_representation`. It
 controls whether or not the representation/print-out of the functional should

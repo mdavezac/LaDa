@@ -7,7 +7,9 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-   Compiling, installing, and setup <userguide/installation>
+   Compiling and installing <userguide/compile>
+
+   Configuration <userguide/configuration>
 
    Creating and Manipulating crystal structures <userguide/crystal>
 

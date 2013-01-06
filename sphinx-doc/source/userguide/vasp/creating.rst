@@ -54,7 +54,7 @@ ipython_ command line, or go :py:class:`~pylada.vasp.functional.Vasp`.
 
 
 Adding parameters Pylada does not know about
-------------------------------------------
+--------------------------------------------
 
 A large number of parameters control VASP_. Pylada only knows about the most
 common. However, it is fairly easy to add parameters which are not there yet.

@@ -1,5 +1,5 @@
 pylada.vasp.extract.mixin
-***********************
+*************************
 .. automodule:: pylada.vasp.extract.mixin
 .. autoclass:: pylada.vasp.extract.mixin.IOMixin
    :show-inheritance:

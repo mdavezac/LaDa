@@ -38,10 +38,7 @@ Structure and Geometry Analysis
 Iterators
 ~~~~~~~~~
 
-.. currentmodule:: pylada.crystal
-.. autofunction:: shell_iterator
-.. autofunction:: equivalence_iterator
-.. autofunction:: layer_iterator
+.. automodule:: pylada.crystal.iterator
 
 
 Reading and Writing

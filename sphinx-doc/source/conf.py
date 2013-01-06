@@ -226,4 +226,8 @@ rst_epilog = """
 .. _INCAR: http://cms.mpi.univie.ac.at/wiki/index.php/INCAR
 .. _CRYSTAL: http://www.crystal.unito.it/
 .. _properties: http://www.crystal.unito.it/
+.. _github: https://github.com/pylada/pylada
+.. _python: http://www.python.org
+.. _numpy: http://www.numpy.org
+.. _cmake: http://www.cmake.org/  
 """

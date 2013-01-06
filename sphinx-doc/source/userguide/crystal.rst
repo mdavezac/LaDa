@@ -5,10 +5,10 @@ Creating and Manipulating crystal structures
 ********************************************
 
 A good way to learn is to play with Pylada directly in the python interpreter.
-Best of all, use the enhanced shell `ipython`_. It comes with many goodies. For
+Best of all, use the enhanced shell ipython_. It comes with many goodies. For
 instance tab-completion. Or inline help. E.g., once you have typed up the first
 example below, try ``structure.[TAB]`` and see what it tells you. Then try
-``structure?`` to print the description (`docstring`_) of structure. If setup
+``structure?`` to print the description (docstring_) of structure. If setup
 right, you can even use it like an ordinary bash shell on `pythonic steroids`_.
 
 Playing with the crystal structure
@@ -80,10 +80,10 @@ The cell can be accessed as follows:
 The first line in the code above accesses the x coordinate of the second cell
 vector and changes it to 0.6. The second line of code modifies the y
 coordinates of all three cell vectors simultaneously. Note that the cell a
-`numpy`_ array. `Numpy`_ is python's numerical computation package. It does
+numpy_ array. Numpy_ is python's numerical computation package. It does
 everything that BLAS or Lapack does, but is much easier to use. And since, when
 compiled correctly, it actually uses BLAS or similar library, it can be quite
-fast. Most, perhaps all, arrays of numbers in Pylada are `numpy`_ arrays. 
+fast. Most, perhaps all, arrays of numbers in Pylada are numpy_ arrays. 
 
 Atoms in the structure can be accessed in the structure as though it were a list:
 
@@ -100,7 +100,7 @@ negative integers. It is possible to loop over it as well:
 [0.25 0.25 0.25]
 
 The above loops over all atoms and prints the position of each. Note that the
-position is also a `numpy`_ array. Finally, the structure can be sliced:
+position is also a numpy_ array. Finally, the structure can be sliced:
 
 >>> structure.add_atom(0.5, 0.5, 0.5, 'Pu')
 >>> for atom in structure[1:]: print atom.type
@@ -137,7 +137,7 @@ Or even itself
 Atom(0, 0, 0, 'C', spin='d0')
 
 Though how that would be useful is not clear. The position, however, is
-*always* a `numpy`_ array. Try otherwise, and you will get an error. Note above
+*always* a numpy_ array. Try otherwise, and you will get an error. Note above
 that we set the type using ``atom0`` and then print it out using
 ``structure[0]``. ``atom0`` is a variable created earlier. It references the
 structure's first atom. You can use one or the other. Both refer to the same
@@ -159,15 +159,15 @@ some math:
 >>> frac = dot(inverse_cell, structure[0].pos)
 
 The snippet above computes the fractional coordinates of the first atomic
-position. `inv`_ is a `numpy`_ method to invert 2d-arrays. `dot`_ provides
+position. inv_ is a numpy_ method to invert 2d-arrays. dot_ provides
 matrix-matrix multiplication and matrix-vector multiplications, and
 vector-vector inner products.
 
-.. note:: Why use `dot`_? By default, ``vectorA * vectorB`` multiplies arrays
-          element per element in `numpy`_. There does exist a class called
+.. note:: Why use dot_? By default, ``vectorA * vectorB`` multiplies arrays
+          element per element in numpy_. There does exist a class called
           Matrix which will change the behavior to actual matrix
           mutliplication. But to avoid any surprises, Pylada uses the default.
-          And hence makes use of `dot`_.
+          And hence makes use of dot_.
 
 
 Specifiying units
@@ -180,9 +180,9 @@ The units are given using the structure's scale attribute:
 >>> print structure.scale
 5
 
-The package `quantities`_ allows us to specify units explicitly. Note however
+The package quantities_ allows us to specify units explicitly. Note however
 that the scale is converted to angstroms. Units are arbitrary and an arbitrary
-choice was made to use angstroms throughout Pylada. `quantities`_ makes it
+choice was made to use angstroms throughout Pylada. quantities_ makes it
 possible to convert back and forth between other preferred unit systems.
 In other words, the unit-cell ``structure.scale * structure.cell`` is in
 angstrom once multiplied by the scale. And so are the atomic positions
@@ -223,7 +223,7 @@ Structure( 1, 0, 0,\
 
 The above creates the conventional cell from the diamond unit cell. Note that
 the new cell is given in cartesian coordinates (and in the units of the original
-unit structure). Using `dot`_ and `inv`_, one could of course specify the
+unit structure). Using dot_ and inv_, one could of course specify the
 conventional cell in fractional coordinates:
 
 >>> conventional = supercell( dot([[-1, 1, 1], [1, -1, 1], [1, 1, -1]], inv(structure.cell)), structure)
@@ -294,7 +294,7 @@ Space-group operations
 
 The space group operations of a structure can also easily be obtained. This is
 the operations, not the name of the space group. The return is a list of 4x3
-`numpy`_ arrays where the upper 3x3 block is a rotation and the lowest row is a
+numpy_ arrays where the upper 3x3 block is a rotation and the lowest row is a
 translation. The translation should be applied *after* the rotation. Going back
 to the original diamond structure:
 
@@ -378,15 +378,15 @@ And do to read it out.
 >>> with open('text', 'r') as file: structure = eval(file.read())
 
 Note that structures and atoms are printed out as strings which can be executed
-to retrieve the actual python object (i.e. it is `representation`_). The only
+to retrieve the actual python object (i.e. it is representation_). The only
 caveat is that the attributes you have added to the structure must also be
 representable.
 
-Structures and atoms can be pickled. `pickle`_ is a python module for data
+Structures and atoms can be pickled. pickle_ is a python module for data
 retention. It transforms objects into a stream of characters which can be saved
 to disk, sent as MPI messages, or whatever suits your fancy, and then
 reinterpreted to become the same python objects all over again.
-As far as MPI is concerned, however, the best bet is to use `boost.mpi`_. This
+As far as MPI is concerned, however, the best bet is to use boost.mpi_. This
 is a great python wrapper around the original MPI specifications. It truly makes
 MPI easy.
 
@@ -414,7 +414,7 @@ at any possible arrangement of core-shells. This particular piece of code was
 used to optimize light absorption at the band edges of Si/Ge core-shell
 nanowires [ZALZ]_. 
 
-The point here is to create an `generator`_ which will allow us to iterate over
+The point here is to create an generator_ which will allow us to iterate over
 shells in an outer loop and atoms (within the shell) in an inner loop. For
 instance, if we wanted to alternate Si and Ge layers.
 
@@ -431,11 +431,11 @@ given growth direction and a given center (the center can be on an atom, on a
 bond, or somewhere else). The nanowire consists of 10 alternating layers of Si
 and Ge, capped by a fake atom (in this case Hg). It is constructed using two
 nested loops. The outer loop runs over shells, and the inner loop over atoms in
-a shell. The `enumerate`_ method is a python primitive which counts the number
+a shell. The enumerate_ method is a python primitive which counts the number
 of iterations in a loop. It conveniently keeps track of which shell we are in,
 so that we can alternate Si and Ge.
 
-Now follows the code for the shell `generator`_.
+Now follows the code for the shell generator_.
 
 >>> def shell_iterator(structure, center, direction, thickness=0.05):
 >>>   """ Iterates over cylindrical shells of atoms.
@@ -482,7 +482,7 @@ As you can see, about a third of the code is comments.
 >>>   direction = array(direction)/norm(array(direction))
 >>>   if len(structure) <= 1: yield structure; return
 
-The first line makes sure that the direction is normalized and is a `numpy`_
+The first line makes sure that the direction is normalized and is a numpy_
 array. The second makes sure the structure is not too absurd.
 
 >>>   # orders position with respect to cylindrical coordinate.
@@ -499,7 +499,7 @@ matrix, and folds the former into the Wigner-Seitz cell (aka first brillouin
 zone, aka first Voronoi region of ``center``). The second line creates a list
 of tuples, where the first item is an index into the structure, and the second
 item is the cylindrical coordinate ``r``. Now, all we need do is sort the list
-with respect to ``r``. This is the third line. `getitem`_ tells python to sort
+with respect to ``r``. This is the third line. getitem_ tells python to sort
 with respect to the second item in each tuple. 
 
 .. note:: Technically, we should rather find the periodic image with the
@@ -530,24 +530,19 @@ loops possible.
 >>>   yield inner_layer_iterator()
 
 We loop over the (sorted) keys in the mapping just created. Each iteration
-visits a different shell, starting with the innermost. For each, we `yield`_ a
-`generator`_ which will loop over the atoms in the shell. To yield means we
+visits a different shell, starting with the innermost. For each, we yield_ a
+generator_ which will loop over the atoms in the shell. To yield means we
 return *temporarily* from ``shell_iterator``. However, the next time the user
 asks to loop to the next shell, the python interpreter knows to reenter
 ``shell_iterator`` *right after the yield statement*, as though it had never
-left.  I strongly recommend taking a closer look at this `yield`_ deal.
-Programming is often about doing loops and `yield`_, once you've warped your
+left.  I strongly recommend taking a closer look at this yield_ deal.
+Programming is often about doing loops and yield_, once you've warped your
 brain around the concept, makes it extremely easy.
 
 .. seealso:: :class:`shell_iterator`, :class:`layer_iterator`, :class:`equivalence_iterator`
 
-.. _ipython: http://ipython.org/
 .. _docstring: http://en.wikipedia.org/wiki/Docstring#Python
 .. _pythonic steroids: http://ipython.org/ipython-doc/rel-0.12/interactive/tutorial.html#system-shell-commands
-.. _quantities: http://packages.python.org/quantities/index.html
-.. _numpy: http://numpy.scipy.org/
-.. _Numpy: http://numpy.scipy.org/
-.. _inv: http://docs.scipy.org/doc/numpy/reference/generated/numpy.linalg.inv.html
 .. _inv: http://docs.scipy.org/doc/numpy/reference/generated/numpy.linalg.inv.html
 .. _dot: http://docs.scipy.org/doc/numpy/reference/generated/numpy.dot.html
 .. _representation: http://docs.python.org/library/functions.html#repr

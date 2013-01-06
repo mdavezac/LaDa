@@ -2,7 +2,7 @@
 .. _dftcrystal_config_ug: 
 
 Configuring Pylada for CRYSTAL
-============================
+==============================
 
 Pylada calls CRYSTAL_ as an external program. By default, it expects to find the
 'crystal', 'Pcrystal', and 'MPPcrystal' programs in your path. However, it is

@@ -24,7 +24,7 @@ result analysis.
 .. warning:: 
 
    If you have not set-up Pylada to run :ref:`multiple mpi programs in parallel
-   <install_mmpi_ug>` yet, please add the one liner::
+   <configuration_mpi_ug>` yet, please add the one liner::
 
      do_multiple_mpi_programs = False 
 
@@ -318,8 +318,8 @@ job-folders are changed simultaneously.
 .. note::
 
   For ``%launch scattered`` to work, it is first necessary to setup Pylada to
-  work with the :ref:`ressource manager <install_pbs_ug>` and with
-  :ref:`MPI <install_mpi_ug>`.
+  work with the :ref:`ressource manager <configuration_pbs_ug>` and with
+  :ref:`MPI <configuration_mpi_ug>`.
 
 .. _ipython_collect_ug:
 
