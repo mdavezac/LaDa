@@ -198,9 +198,9 @@ namespace Pylada
       return 0;
     }
 
-    static PyObject* make_sure_itsdefined(NodeData* _in) 
+    static PyObject* make_sure_it_is_defined1(NodeData* _in) 
       { return bond_iterator_create<&bonditerator_type>(_in); }
-    static PyObject* make_sure_itsdefined2(NodeData* _in) 
+    static PyObject* make_sure_it_is_defined2(NodeData* _in) 
       { return bond_iterator_create<&dcbonditerator_type>(_in); }
 
     // Returns pointer to node type.
@@ -250,7 +250,7 @@ namespace Pylada
                         "Adds a bond between to nodes."),
           PYLADA_DECLARE(clear,  clear, NOARGS, "Removes all bonds."),
           PYLADA_DECLARE(sc_bond_iter, 
-                       bond_iterator_create<dcbonditerator_type>, 
+                       make_sure_it_is_defined2,
                        NOARGS, 
                        "Iterates over bonds without double counting.\n\n"
                        "This function allows iterating over the bonds of a"
@@ -299,7 +299,7 @@ namespace Pylada
           (inquiry)gcclear,                  /* tp_clear */
           0,		                             /* tp_richcompare */
           0,                                 /* tp_weaklistoffset */
-          (getiterfunc)&bond_iterator_create<bonditerator_type>,/* tp_iter */
+          (getiterfunc)&make_sure_it_is_defined1,/* tp_iter */
           0,		                             /* tp_iternext */
           methods,                           /* tp_methods */
           0,                                 /* tp_members */
