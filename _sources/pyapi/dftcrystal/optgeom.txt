@@ -1,6 +1,6 @@
 Geometry optimization block
 ---------------------------
-.. currentmodule:: lada.dftcrystal.optgeom
+.. currentmodule:: pylada.dftcrystal.optgeom
 
 .. autoclass:: OptGeom
    :show-inheritance:

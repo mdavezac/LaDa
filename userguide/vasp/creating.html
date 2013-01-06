@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Creating and Setting up the vasp functional &mdash; LaDa 1.0 documentation</title>
+    <title>Creating and Setting up the vasp functional &mdash; Pylada 1.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="author" title="About these documents" href="../../about.html" />
-    <link rel="top" title="LaDa 1.0 documentation" href="../../index.html" />
+    <link rel="top" title="Pylada 1.0 documentation" href="../../index.html" />
     <link rel="up" title="Interface to VASP" href="../vasp.html" />
     <link rel="next" title="Executing a VASP calculation" href="running.html" />
     <link rel="prev" title="Reading from pre-existing VASP files" href="reading.html" /> 
@@ -48,7 +48,7 @@
         <li class="right" >
           <a href="reading.html" title="Reading from pre-existing VASP files"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Pylada 1.0 documentation</a> &raquo;</li>
           <li><a href="../../userguide.html" >User Guide</a> &raquo;</li>
           <li><a href="../vasp.html" accesskey="U">Interface to VASP</a> &raquo;</li> 
       </ul>
@@ -66,8 +66,10 @@
 <p>As shown in the quick primer above, it is relatively easy to setup a new
 <tt class="xref py py-class docutils literal"><span class="pre">Vasp</span></tt>. The parameters to the calculation are generally
 the <a class="reference external" href="http://www.vasp.at/">VASP</a> defaults. They can be changed directly in the constructor:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">lada.vasp</span> <span class="kn">import</span> <span class="n">Vasp</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pylada.vasp</span> <span class="kn">import</span> <span class="n">Vasp</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">vasp</span> <span class="o">=</span> <span class="n">Vasp</span><span class="p">(</span><span class="n">ispin</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">vasp</span><span class="o">.</span><span class="n">ispin</span>
+<span class="go">2</span>
 </pre></div>
 </div>
 <p>or later, after creation:</p>
@@ -100,7 +102,7 @@ largest <cite>ENMAX</cite> of all the species in the calculation.</p>
 <li><p class="first">as floating point larger than 3, in which case it will printed as is in the INCAR.</p>
 </li>
 <li><p class="first">as floating point signed by a quantity:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">lada.physics</span> <span class="kn">import</span> <span class="n">Ry</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pylada.physics</span> <span class="kn">import</span> <span class="n">Ry</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">vasp</span><span class="o">.</span><span class="n">encut</span> <span class="o">=</span> <span class="mi">10</span><span class="o">*</span><span class="n">Ry</span>
 </pre></div>
 </div>
@@ -108,12 +110,12 @@ largest <cite>ENMAX</cite> of all the species in the calculation.</p>
 </li>
 </ul>
 </div></blockquote>
-<p>To see the full list of parameters  defined by LaDa, do <tt class="docutils literal"><span class="pre">vasp.[TAB]</span></tt> on the
-<a class="reference external" href="http://ipython.org/">ipython</a> command line, or go <a class="reference internal" href="../../pyapi/vasp/functional.html#lada.vasp.functional.Vasp" title="lada.vasp.functional.Vasp"><tt class="xref py py-class docutils literal"><span class="pre">Vasp</span></tt></a>.</p>
+<p>To see the full list of parameters  defined by Pylada, do <tt class="docutils literal"><span class="pre">vasp.[TAB]</span></tt> on the
+<a class="reference external" href="http://ipython.org/">ipython</a> command line, or go <a class="reference internal" href="../../pyapi/vasp/functional.html#pylada.vasp.functional.Vasp" title="pylada.vasp.functional.Vasp"><tt class="xref py py-class docutils literal"><span class="pre">Vasp</span></tt></a>.</p>
 </div>
-<div class="section" id="adding-parameters-lada-does-not-know-about">
-<h2>Adding parameters LaDa does not know about<a class="headerlink" href="#adding-parameters-lada-does-not-know-about" title="Permalink to this headline">¶</a></h2>
-<p>A large number of parameters control <a class="reference external" href="http://www.vasp.at/">VASP</a>. LaDa only knows about the most
+<div class="section" id="adding-parameters-pylada-does-not-know-about">
+<h2>Adding parameters Pylada does not know about<a class="headerlink" href="#adding-parameters-pylada-does-not-know-about" title="Permalink to this headline">¶</a></h2>
+<p>A large number of parameters control <a class="reference external" href="http://www.vasp.at/">VASP</a>. Pylada only knows about the most
 common. However, it is fairly easy to add parameters which are not there yet.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">vasp</span><span class="o">.</span><span class="n">add_keyword</span><span class="p">(</span><span class="s">&#39;encut&#39;</span><span class="p">,</span> <span class="mi">300</span><span class="p">)</span>
 </pre></div>
@@ -127,7 +129,8 @@ modified just as if it where a pre-existing parameter.</p>
 </div>
 <p>The attribute <tt class="docutils literal"><span class="pre">vasp.encut</span></tt> is (in this case) an integer which can be
 manipulated as any other python integer. Any python object can be given. It
-will appear in the INCAR as it appears above when printed.</p>
+will appear in the INCAR as it appears when transformed to a string (using
+python&#8217;s <a class="reference external" href="http://docs.python.org/2/library/functions.html#str">str</a> function).</p>
 <p>If you do <em>not</em> want a parameter printed to the INCAR, i.e. you want to use the
 <a class="reference external" href="http://www.vasp.at/">VASP</a> default for that parameter, then simply set that parameter to <tt class="docutils literal"><span class="pre">None</span></tt>:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">vasp</span><span class="o">.</span><span class="n">encut</span> <span class="o">=</span> <span class="bp">None</span>
@@ -158,8 +161,7 @@ that case, <a class="reference external" href="http://www.vasp.at/">VASP</a> doe
 </div>
 <p>As a callable function which takes the vasp functional and the structure as
 input. It must return either a string defining a semantically correct <a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/KPOINTS">KPOINTS</a>
-file, or an array of kpoints as above (or another similar callable, but why
-would you want to do that?).</p>
+file, or an array of kpoints as above.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">some_function</span><span class="p">(</span><span class="n">functional</span><span class="p">,</span> <span class="n">structure</span><span class="p">):</span>
 <span class="gp">&gt;&gt;&gt; </span>  <span class="o">....</span> <span class="n">do</span> <span class="n">something</span>
 <span class="gp">&gt;&gt;&gt; </span>  <span class="k">return</span> <span class="n">kpoints</span>
@@ -178,15 +180,14 @@ tailored to each call.</p>
 </div>
 <p>The first item is the name of the atomic specie. It corresponds to the type of
 the atom in the structure to compute. The second item is a path to a directory
-where the appropriate <em>unzipped</em> POTCAR resides. It is possible to specify more
-species than exists in a given structure. It will not affect calculations.
+where the appropriate <em>unzipped</em> POTCAR resides. It will not affect calculations.
 For convenience, the path may be given with the usual unix short-cuts and/or with
 a shell environment variable.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">vasp</span><span class="o">.</span><span class="n">add_specie</span> <span class="o">=</span> <span class="s">&#39;Tc&#39;</span><span class="p">,</span> <span class="s">&#39;~/pseudos/$PAW/Tc&#39;</span>
 </pre></div>
 </div>
 <p>To specify a Hubbard U parameter, do:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">lada.vasp.specie</span> <span class="kn">import</span> <span class="n">U</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pylada.vasp.specie</span> <span class="kn">import</span> <span class="n">U</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">vasp</span><span class="o">.</span><span class="n">add_specie</span> <span class="o">=</span> <span class="s">&#39;Tc&#39;</span><span class="p">,</span> <span class="s">&#39;~/pseudos/$PAW/Tc&#39;</span><span class="p">,</span> <span class="n">U</span><span class="p">(</span><span class="s">&#39;dudarev&#39;</span><span class="p">,</span> <span class="n">l</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">U</span><span class="o">=</span><span class="mf">1.5</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -199,6 +200,11 @@ a shell environment variable.</p>
 </div>
 <p>At which point, other elemental properties could be added for latter use in a
 script.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">It is possible to specify more species than exists in a given structure.
+Pylada will figure out at runtime.</p>
+</div>
 </div>
 </div>
 
@@ -212,7 +218,7 @@ script.</p>
   <ul>
 <li><a class="reference internal" href="#">Creating and Setting up the vasp functional</a><ul>
 <li><a class="reference internal" href="#specifying-vasp-parameters">Specifying vasp parameters</a></li>
-<li><a class="reference internal" href="#adding-parameters-lada-does-not-know-about">Adding parameters LaDa does not know about</a></li>
+<li><a class="reference internal" href="#adding-parameters-pylada-does-not-know-about">Adding parameters Pylada does not know about</a></li>
 <li><a class="reference internal" href="#specifying-kpoints">Specifying kpoints</a></li>
 <li><a class="reference internal" href="#specifying-the-pseudos-and-hubbard-u-parameters">Specifying the pseudos and Hubbard U parameters</a></li>
 </ul>
@@ -262,7 +268,7 @@ script.</p>
         <li class="right" >
           <a href="reading.html" title="Reading from pre-existing VASP files"
              >previous</a> |</li>
-        <li><a href="../../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Pylada 1.0 documentation</a> &raquo;</li>
           <li><a href="../../userguide.html" >User Guide</a> &raquo;</li>
           <li><a href="../vasp.html" >Interface to VASP</a> &raquo;</li> 
       </ul>

@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Python API &mdash; LaDa 1.0 documentation</title>
+    <title>Python API &mdash; Pylada 1.0 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -27,9 +27,9 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="author" title="About these documents" href="about.html" />
-    <link rel="top" title="LaDa 1.0 documentation" href="index.html" />
-    <link rel="next" title="crystal" href="pyapi/crystal.html" />
-    <link rel="prev" title="Configuring LaDa" href="userguide/config.html" /> 
+    <link rel="top" title="Pylada 1.0 documentation" href="index.html" />
+    <link rel="next" title="Configuring Pylada" href="pyapi/configuration.html" />
+    <link rel="prev" title="IPython high-throughput interface" href="userguide/ipython.html" /> 
   </head>
   <body>
     <div class="related">
@@ -42,12 +42,12 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="pyapi/crystal.html" title="crystal"
+          <a href="pyapi/configuration.html" title="Configuring Pylada"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="userguide/config.html" title="Configuring LaDa"
+          <a href="userguide/ipython.html" title="IPython high-throughput interface"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">LaDa 1.0 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Pylada 1.0 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -61,14 +61,19 @@
 <p>Contents:</p>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="pyapi/crystal.html"> lada.crystal</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="pyapi/configuration.html"> Configuration variables</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="pyapi/configuration.html#environment-variables">Environment Variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyapi/configuration.html#configuration-variables">Configuration variables</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="pyapi/crystal.html"> pylada.crystal</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="pyapi/crystal/classes.html">Atom, Structure, and HFTransform</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pyapi/crystal/methods.html">Methods</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pyapi/crystal/lattices.html">Predefined lattices</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="pyapi/error.html"> lada.error</a></li>
-<li class="toctree-l1"><a class="reference internal" href="pyapi/jobfolder.html"> lada.jobfolder</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="pyapi/error.html"> pylada.error</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pyapi/jobfolder.html"> pylada.jobfolder</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="pyapi/jobfolder/jobfolder.html">JobFolder class</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pyapi/jobfolder/manipulator.html">Parameter mass manipulation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pyapi/jobfolder/massextract.html">Result mass extraction</a></li>
@@ -76,19 +81,19 @@
 <li class="toctree-l2"><a class="reference internal" href="pyapi/jobfolder/forwardingdict.html">Forwading dictionary</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="pyapi/process.html"> lada.process</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="pyapi/process.html"> pylada.process</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="pyapi/process.html#process-types">Process Types</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pyapi/process.html#exceptions">Exceptions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pyapi/process.html#functions">Functions</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="pyapi/vasp.html"> lada.vasp</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="pyapi/vasp.html"> pylada.vasp</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="pyapi/vasp/functional.html">Vasp class</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pyapi/vasp/relax.html">Relaxation methods</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pyapi/vasp/extract.html">Extraction classes</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="pyapi/dftcrystal.html"> lada.dftcrystal</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="pyapi/dftcrystal.html"> pylada.dftcrystal</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="pyapi/dftcrystal/functional.html">Functional class and attributes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pyapi/dftcrystal/crystal.html">Crystal structure à la CRYSTAL</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pyapi/dftcrystal.html#others">Others</a></li>
@@ -105,11 +110,11 @@
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
-  <p class="topless"><a href="userguide/config.html"
-                        title="previous chapter">Configuring LaDa</a></p>
+  <p class="topless"><a href="userguide/ipython.html"
+                        title="previous chapter">IPython high-throughput interface</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="pyapi/crystal.html"
-                        title="next chapter">crystal</a></p>
+  <p class="topless"><a href="pyapi/configuration.html"
+                        title="next chapter">Configuring Pylada</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="_sources/pyapi.txt"
@@ -142,12 +147,12 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="pyapi/crystal.html" title="crystal"
+          <a href="pyapi/configuration.html" title="Configuring Pylada"
              >next</a> |</li>
         <li class="right" >
-          <a href="userguide/config.html" title="Configuring LaDa"
+          <a href="userguide/ipython.html" title="IPython high-throughput interface"
              >previous</a> |</li>
-        <li><a href="index.html">LaDa 1.0 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Pylada 1.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

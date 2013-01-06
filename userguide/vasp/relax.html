@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>A meta-functional: Strain relaxation &mdash; LaDa 1.0 documentation</title>
+    <title>A meta-functional: Strain relaxation &mdash; Pylada 1.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="author" title="About these documents" href="../../about.html" />
-    <link rel="top" title="LaDa 1.0 documentation" href="../../index.html" />
+    <link rel="top" title="Pylada 1.0 documentation" href="../../index.html" />
     <link rel="up" title="Interface to VASP" href="../vasp.html" />
     <link rel="next" title="Example: Epitaxial relaxation method" href="example.html" />
     <link rel="prev" title="Extracting results from VASP calculations" href="extract.html" /> 
@@ -48,7 +48,7 @@
         <li class="right" >
           <a href="extract.html" title="Extracting results from VASP calculations"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Pylada 1.0 documentation</a> &raquo;</li>
           <li><a href="../../userguide.html" >User Guide</a> &raquo;</li>
           <li><a href="../vasp.html" accesskey="U">Interface to VASP</a> &raquo;</li> 
       </ul>
@@ -62,8 +62,8 @@
   <div class="section" id="a-meta-functional-strain-relaxation">
 <span id="vasp-relax-ug"></span><h1>A <em>meta</em>-functional: Strain relaxation<a class="headerlink" href="#a-meta-functional-strain-relaxation" title="Permalink to this headline">¶</a></h1>
 <p>Relaxing structures generally takes a few actual VASP calculations, since the
-FFT and pseudo-potential grids are not adapted as the cell parameters and ionic
-positions change. It&#8217;s brain-dead work best handled automatically. LaDa
+FFT and pseudo-potential grids are not adapted to changing cell parameters and
+ionic positions. It&#8217;s brain-dead work best handled automatically. Pylada
 currently provides two relaxation methods: <tt class="xref py py-class docutils literal"><span class="pre">relax.Relax</span></tt> and
 <tt class="xref py py-class docutils literal"><span class="pre">relax.Epitaxial</span></tt>. The former handles general relaxation, including
 cellshape, volume, and ionic positions, while the latter performs relaxation on
@@ -71,7 +71,7 @@ a virtual substrate (e.g. for coherent Germanium on a (001)&#64;Si substrate, on
 the out-of-plane parameter should be relaxed, while the in-plane are fixed to
 Si).  The following only describes the first case.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="c"># create the functional</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">lada.vasp</span> <span class="kn">import</span> <span class="n">Relax</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pylada.vasp</span> <span class="kn">import</span> <span class="n">Relax</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span> <span class="o">=</span> <span class="n">Relax</span><span class="p">(</span><span class="n">relaxation</span><span class="o">=</span><span class="s">&#39;cellshape volume ions&#39;</span><span class="p">,</span> <span class="n">maxcalls</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">keepsteps</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span><span class="p">(</span><span class="n">structure</span><span class="p">)</span>
 </pre></div>
@@ -141,9 +141,10 @@ towards <tt class="docutils literal"><span class="pre">maxcalls</span></tt>.</li
 <p class="last">There is also a function <tt class="xref py py-func docutils literal"><span class="pre">relax.relax()</span></tt>, which does the exact same
 thing as the class. Whether to use one or the other is a matter of taste.
 And there&#8217;s also a generator <tt class="xref py py-func docutils literal"><span class="pre">relax.iter_relax()</span></tt> over actual calls
-to the <a class="reference external" href="http://www.vasp.at/">VASP</a> binary.  Internally, it allows LaDa to launch different
-relaxations in parrallel. In practice, both <tt class="xref py py-func docutils literal"><span class="pre">relax.relax()</span></tt> and
-<tt class="xref py py-class docutils literal"><span class="pre">relax.Relax</span></tt> make calls to <tt class="xref py py-func docutils literal"><span class="pre">relax.iter_relax()</span></tt>.</p>
+to the <a class="reference external" href="http://www.vasp.at/">VASP</a> binary.  Internally, it allows Pylada to launch different
+relaxations from different calculations side by side. In practice, both
+<tt class="xref py py-func docutils literal"><span class="pre">relax.relax()</span></tt> and <tt class="xref py py-class docutils literal"><span class="pre">relax.Relax</span></tt> make calls to
+<tt class="xref py py-func docutils literal"><span class="pre">relax.iter_relax()</span></tt>.</p>
 </div>
 </div>
 
@@ -196,7 +197,7 @@ relaxations in parrallel. In practice, both <tt class="xref py py-func docutils 
         <li class="right" >
           <a href="extract.html" title="Extracting results from VASP calculations"
              >previous</a> |</li>
-        <li><a href="../../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Pylada 1.0 documentation</a> &raquo;</li>
           <li><a href="../../userguide.html" >User Guide</a> &raquo;</li>
           <li><a href="../vasp.html" >Interface to VASP</a> &raquo;</li> 
       </ul>

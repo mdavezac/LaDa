@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Configuring LaDa for VASP &mdash; LaDa 1.0 documentation</title>
+    <title>Configuring Pylada for VASP &mdash; Pylada 1.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="author" title="About these documents" href="../../about.html" />
-    <link rel="top" title="LaDa 1.0 documentation" href="../../index.html" />
+    <link rel="top" title="Pylada 1.0 documentation" href="../../index.html" />
     <link rel="up" title="Interface to VASP" href="../vasp.html" />
     <link rel="next" title="Reading from pre-existing VASP files" href="reading.html" />
     <link rel="prev" title="A fast primer" href="primer.html" /> 
@@ -48,7 +48,7 @@
         <li class="right" >
           <a href="primer.html" title="A fast primer"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Pylada 1.0 documentation</a> &raquo;</li>
           <li><a href="../../userguide.html" >User Guide</a> &raquo;</li>
           <li><a href="../vasp.html" accesskey="U">Interface to VASP</a> &raquo;</li> 
       </ul>
@@ -59,18 +59,18 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="configuring-lada-for-vasp">
-<span id="vasp-config-ug"></span><h1>Configuring LaDa for VASP<a class="headerlink" href="#configuring-lada-for-vasp" title="Permalink to this headline">¶</a></h1>
-<p>LaDa calls <a class="reference external" href="http://www.vasp.at/">VASP</a> as an external program: all it needs is to know how to call it.
-The path to the program can be configured in your ~/.lada file by simply adding
+  <div class="section" id="configuring-pylada-for-vasp">
+<span id="vasp-config-ug"></span><h1>Configuring Pylada for VASP<a class="headerlink" href="#configuring-pylada-for-vasp" title="Permalink to this headline">¶</a></h1>
+<p>Pylada calls <a class="reference external" href="http://www.vasp.at/">VASP</a> as an external program: all it needs is to know how to call it.
+The path to the program can be configured in your ~/.pylada file by simply adding
 the following two lines:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">vasp_program</span> <span class="o">=</span> <span class="s">&quot;/path/to/vasp&quot;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">is_vasp_4</span> <span class="o">=</span> <span class="bp">True</span>
 </pre></div>
 </div>
-<p><a class="reference internal" href="../config.html#lada.vasp_program" title="lada.vasp_program"><tt class="xref py py-data docutils literal"><span class="pre">vasp_program</span></tt></a> can be absolute path, or simply the name of the
+<p><a class="reference internal" href="../../pyapi/configuration.html#pylada.vasp_program" title="pylada.vasp_program"><tt class="xref py py-data docutils literal"><span class="pre">vasp_program</span></tt></a> can be an absolute path, or simply the name of the
 <a class="reference external" href="http://www.vasp.at/">VASP</a> binary if it is available in you <tt class="docutils literal"><span class="pre">PATH</span></tt> environment variable.
-<a class="reference internal" href="../config.html#lada.is_vasp_4" title="lada.is_vasp_4"><tt class="xref py py-data docutils literal"><span class="pre">is_vasp_4</span></tt></a> should be set to True or False depending on which
+<a class="reference internal" href="../../pyapi/configuration.html#pylada.is_vasp_4" title="pylada.is_vasp_4"><tt class="xref py py-data docutils literal"><span class="pre">is_vasp_4</span></tt></a> should be set to True or False depending on which
 version of <a class="reference external" href="http://www.vasp.at/">VASP</a> is available. It will prevent some vasp-5 only parameters from
 being set and will preferentially write the <a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/POSCAR">POSCAR</a> in a vasp-5 format.</p>
 <div class="admonition note">
@@ -84,23 +84,17 @@ specific version:</p>
 If vasp does not have a <tt class="docutils literal"><span class="pre">program</span></tt> attribute, then it uses the global
 definition.</p>
 </div>
-<p>Since <a class="reference external" href="http://www.vasp.at/">VASP</a> is a parallel code, LaDa must also know how to launch MPI binaries.
-This is configured for all parallel jobs through <a class="reference internal" href="../config.html#lada.mpirun_exe" title="lada.mpirun_exe"><tt class="xref py py-data docutils literal"><span class="pre">mpirun_exe</span></tt></a>:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">mpirun_exe</span> <span class="o">=</span> <span class="s">&quot;mpirun -n {n} -npernode {ppn} {program} {cmdline}&quot;</span>
-</pre></div>
-</div>
-<p>Any string can be entered as long as it possesses the <tt class="docutils literal"><span class="pre">{program}</span></tt> and
-<tt class="docutils literal"><span class="pre">{cmdline}</span></tt> sections. It is a python <a class="reference external" href="http://docs.python.org/library/string.html#string-formatting">format string</a> which is later called
-with as user-defined dictionary. However, some options may well be the same for
-one run to another. As such a default dictionary can be provided
-(<a class="reference internal" href="../config.html#lada.default_comm" title="lada.default_comm"><tt class="xref py py-data docutils literal"><span class="pre">default_comm</span></tt></a>).</p>
-<p>The last configuration variable is <a class="reference internal" href="../config.html#lada.verbose_representation" title="lada.verbose_representation"><tt class="xref py py-data docutils literal"><span class="pre">verbose_representation</span></tt></a>. It
+<p>It is possible to run <a class="reference external" href="http://www.vasp.at/">VASP</a> in parallel. However, Pylada has to be set up
+correctly for running parallel code. Although it needs be done only once, it
+can be somewhat painful on some computers or supercomputers. Please see how
+to set up <a class="reference internal" href="../configuration.html#configuration-single-mpi-ug"><em>MPI calculations</em></a> first.</p>
+<p>The last configuration variable is <a class="reference internal" href="../../pyapi/configuration.html#pylada.verbose_representation" title="pylada.verbose_representation"><tt class="xref py py-data docutils literal"><span class="pre">verbose_representation</span></tt></a>. It
 controls whether or not the representation/print-out of the functional should
 include parameters which have not changed from the default. It is safest to
 keep it True.</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><a class="reference internal" href="../config.html#lada-config"><em>Configuring LaDa</em></a></p>
+<p class="last"><a class="reference internal" href="../../pyapi/configuration.html#pylada-config"><em>Configuring Pylada</em></a></p>
 </div>
 </div>
 
@@ -153,7 +147,7 @@ keep it True.</p>
         <li class="right" >
           <a href="primer.html" title="A fast primer"
              >previous</a> |</li>
-        <li><a href="../../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Pylada 1.0 documentation</a> &raquo;</li>
           <li><a href="../../userguide.html" >User Guide</a> &raquo;</li>
           <li><a href="../vasp.html" >Interface to VASP</a> &raquo;</li> 
       </ul>

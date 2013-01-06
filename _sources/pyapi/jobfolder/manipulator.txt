@@ -1,7 +1,7 @@
 Result mass extraction
 **********************
 
-.. automodule:: lada.jobfolder.manipulator
+.. automodule:: pylada.jobfolder.manipulator
 .. moduleauthor:: Mayeul d'Avezac
 
 .. autoclass:: JobParams
@@ -17,7 +17,7 @@ Result mass extraction
       
       If True, then if only one folder contains the requested (sub-)attribute,
       then it is returned as is, rather than wrapped within a
-      :py:attr:`~lada.jobfolder.forwarding_dict.ForwardingDict`.
+      :py:attr:`~pylada.jobfolder.forwarding_dict.ForwardingDict`.
 
    .. attribute:: view
 

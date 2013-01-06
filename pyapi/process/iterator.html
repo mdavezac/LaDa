@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Sequential execution of a generator of processes &mdash; LaDa 1.0 documentation</title>
+    <title>Sequential execution of a generator of processes &mdash; Pylada 1.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="author" title="About these documents" href="../../about.html" />
-    <link rel="top" title="LaDa 1.0 documentation" href="../../index.html" />
+    <link rel="top" title="Pylada 1.0 documentation" href="../../index.html" />
     <link rel="up" title="Process Module" href="../process.html" />
     <link rel="next" title="Execution of a callable" href="call.html" />
     <link rel="prev" title="Execution of an external program" href="program.html" /> 
@@ -48,7 +48,7 @@
         <li class="right" >
           <a href="program.html" title="Execution of an external program"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Pylada 1.0 documentation</a> &raquo;</li>
           <li><a href="../../pyapi.html" >Python API</a> &raquo;</li>
           <li><a href="../process.html" accesskey="U">Process Module</a> &raquo;</li> 
       </ul>
@@ -62,9 +62,9 @@
   <div class="section" id="sequential-execution-of-a-generator-of-processes">
 <h1>Sequential execution of a generator of processes<a class="headerlink" href="#sequential-execution-of-a-generator-of-processes" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
-<dt id="lada.process.iterator.IteratorProcess">
-<em class="property">class </em><tt class="descclassname">lada.process.iterator.</tt><tt class="descname">IteratorProcess</tt><big>(</big><em>functional</em>, <em>outdir</em>, <em>maxtrials=1</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../_modules/lada/process/iterator.html#IteratorProcess"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.process.iterator.IteratorProcess" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="process.html#lada.process.process.Process" title="lada.process.process.Process"><tt class="xref py py-class docutils literal"><span class="pre">lada.process.process.Process</span></tt></a></p>
+<dt id="pylada.process.iterator.IteratorProcess">
+<em class="property">class </em><tt class="descclassname">pylada.process.iterator.</tt><tt class="descname">IteratorProcess</tt><big>(</big><em>functional</em>, <em>outdir</em>, <em>maxtrials=1</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../_modules/pylada/process/iterator.html#IteratorProcess"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.process.iterator.IteratorProcess" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="process.html#pylada.process.process.Process" title="pylada.process.process.Process"><tt class="xref py py-class docutils literal"><span class="pre">pylada.process.process.Process</span></tt></a></p>
 <p>Executes an iteration function in child process.</p>
 <p>An iterator process is a <em>meta</em>-process which runs other processes
 sequentially. It is one which needs iterating over, as shown more
@@ -86,11 +86,11 @@ that the calculation is still on-going, not which particular step it is
 at.</p>
 <p>To do this, we use a <a class="reference external" href="http://docs.python.org/tutorial/classes.html#generators">generator</a>, i.e. an object which can be used in a
 loop. It should <a class="reference external" href="http://docs.python.org/reference/simple_stmts.html#yield">yield</a> one of two kinds of objects: (i) an extractor.
-such as <a class="reference internal" href="../vasp/extract.html#lada.vasp.extract.Extract" title="lada.vasp.extract.Extract"><tt class="xref py py-class docutils literal"><span class="pre">lada.vasp.extract.Extract</span></tt></a>, or an instance derived
+such as <a class="reference internal" href="../vasp/extract.html#pylada.vasp.extract.Extract" title="pylada.vasp.extract.Extract"><tt class="xref py py-class docutils literal"><span class="pre">pylada.vasp.extract.Extract</span></tt></a>, or an instance derived
 from <tt class="xref py py-class docutils literal"><span class="pre">Process</span></tt>. In the former case, the
-<a class="reference internal" href="#lada.process.iterator.IteratorProcess" title="lada.process.iterator.IteratorProcess"><tt class="xref py py-class docutils literal"><span class="pre">IteratorProcess</span></tt></a> simply keeps looping. In the latter case, the
+<a class="reference internal" href="#pylada.process.iterator.IteratorProcess" title="pylada.process.iterator.IteratorProcess"><tt class="xref py py-class docutils literal"><span class="pre">IteratorProcess</span></tt></a> simply keeps looping. In the latter case, the
 yielded process object is started and control is relinquished to the
-owner of the <a class="reference internal" href="#lada.process.iterator.IteratorProcess" title="lada.process.iterator.IteratorProcess"><tt class="xref py py-class docutils literal"><span class="pre">IteratorProcess</span></tt></a> instance. When the looping is
+owner of the <a class="reference internal" href="#pylada.process.iterator.IteratorProcess" title="pylada.process.iterator.IteratorProcess"><tt class="xref py py-class docutils literal"><span class="pre">IteratorProcess</span></tt></a> instance. When the looping is
 done, the final extraction object that was ever yielded is returned.</p>
 <p>This approach can be put into the following (pseudo) code:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="k">for</span> <span class="n">process</span> <span class="ow">in</span> <span class="n">generator</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -134,16 +134,16 @@ done, the final extraction object that was ever yielded is returned.</p>
 </pre></div>
 </div>
 <p>To implement it, we need an extraction class, such as
-<tt class="xref py py-class docutils literal"><span class="pre">lada.crystal.extract.Extract</span></tt>, capable of checking in a
+<tt class="xref py py-class docutils literal"><span class="pre">pylada.crystal.extract.Extract</span></tt>, capable of checking in a
 directory whether a successfull calculation already exists. If it does,
 the generator should yield the extraction object. If it doesn&#8217;t, it
-should yield some <a class="reference internal" href="process.html#lada.process.process.Process" title="lada.process.process.Process"><tt class="xref py py-class docutils literal"><span class="pre">Process</span></tt></a> instance
+should yield some <a class="reference internal" href="process.html#pylada.process.process.Process" title="pylada.process.process.Process"><tt class="xref py py-class docutils literal"><span class="pre">Process</span></tt></a> instance
 capable of starting the external program of interest.</p>
 <p>The processes yielded by the input generator could be anything. It could
-be, for instance, another instance of <a class="reference internal" href="#lada.process.iterator.IteratorProcess" title="lada.process.iterator.IteratorProcess"><tt class="xref py py-class docutils literal"><span class="pre">IteratorProcess</span></tt></a>, or
-simply a bunch of <a class="reference internal" href="program.html#lada.process.program.ProgramProcess" title="lada.process.program.ProgramProcess"><tt class="xref py py-class docutils literal"><span class="pre">ProgramProcess</span></tt></a>, or
+be, for instance, another instance of <a class="reference internal" href="#pylada.process.iterator.IteratorProcess" title="pylada.process.iterator.IteratorProcess"><tt class="xref py py-class docutils literal"><span class="pre">IteratorProcess</span></tt></a>, or
+simply a bunch of <a class="reference internal" href="program.html#pylada.process.program.ProgramProcess" title="pylada.process.program.ProgramProcess"><tt class="xref py py-class docutils literal"><span class="pre">ProgramProcess</span></tt></a>, or
 something more comples, as long as it presents the interface defined by
-<a class="reference internal" href="process.html#lada.process.process.Process" title="lada.process.process.Process"><tt class="xref py py-class docutils literal"><span class="pre">Process</span></tt></a>.</p>
+<a class="reference internal" href="process.html#pylada.process.process.Process" title="pylada.process.process.Process"><tt class="xref py py-class docutils literal"><span class="pre">Process</span></tt></a>.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
 <p class="last">It would be possible, of course, to simply create a python program which
@@ -158,11 +158,11 @@ approach is somewhat simpler, it has been implemented in
 <p class="first admonition-title">See also</p>
 <p class="last"><tt class="xref py py-class docutils literal"><span class="pre">CallProcess</span></tt>,
 <tt class="xref py py-class docutils literal"><span class="pre">JobFolderProcess</span></tt>,
-<a class="reference internal" href="pool.html#lada.process.pool.PoolProcess" title="lada.process.pool.PoolProcess"><tt class="xref py py-class docutils literal"><span class="pre">PoolProcess</span></tt></a>.</p>
+<a class="reference internal" href="pool.html#pylada.process.pool.PoolProcess" title="pylada.process.pool.PoolProcess"><tt class="xref py py-class docutils literal"><span class="pre">PoolProcess</span></tt></a>.</p>
 </div>
 <dl class="method">
-<dt id="lada.process.iterator.IteratorProcess.__init__">
-<tt class="descname">__init__</tt><big>(</big><em>functional</em>, <em>outdir</em>, <em>maxtrials=1</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../_modules/lada/process/iterator.html#IteratorProcess.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.process.iterator.IteratorProcess.__init__" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.process.iterator.IteratorProcess.__init__">
+<tt class="descname">__init__</tt><big>(</big><em>functional</em>, <em>outdir</em>, <em>maxtrials=1</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../_modules/pylada/process/iterator.html#IteratorProcess.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.process.iterator.IteratorProcess.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Initializes a process.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -183,43 +183,43 @@ arguments to :py:class:IteratorProcess`.</li>
 </dd></dl>
 
 <dl class="method">
-<dt id="lada.process.iterator.IteratorProcess._cleanup">
-<tt class="descname">_cleanup</tt><big>(</big><big>)</big><a class="headerlink" href="#lada.process.iterator.IteratorProcess._cleanup" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.process.iterator.IteratorProcess._cleanup">
+<tt class="descname">_cleanup</tt><big>(</big><big>)</big><a class="headerlink" href="#pylada.process.iterator.IteratorProcess._cleanup" title="Permalink to this definition">¶</a></dt>
 <dd><p>Cleans up behind process instance.</p>
 <p>This may mean closing standard input/output file, removing temporary
-files.. By default, calls cleanup of <a class="reference internal" href="#lada.process.iterator.IteratorProcess.process" title="lada.process.iterator.IteratorProcess.process"><tt class="xref py py-attr docutils literal"><span class="pre">process</span></tt></a>, and sets
-<a class="reference internal" href="#lada.process.iterator.IteratorProcess.process" title="lada.process.iterator.IteratorProcess.process"><tt class="xref py py-attr docutils literal"><span class="pre">process</span></tt></a> to None.</p>
+files.. By default, calls cleanup of <a class="reference internal" href="#pylada.process.iterator.IteratorProcess.process" title="pylada.process.iterator.IteratorProcess.process"><tt class="xref py py-attr docutils literal"><span class="pre">process</span></tt></a>, and sets
+<a class="reference internal" href="#pylada.process.iterator.IteratorProcess.process" title="pylada.process.iterator.IteratorProcess.process"><tt class="xref py py-attr docutils literal"><span class="pre">process</span></tt></a> to None.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.process.iterator.IteratorProcess.process">
-<tt class="descname">process</tt><a class="headerlink" href="#lada.process.iterator.IteratorProcess.process" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.process.iterator.IteratorProcess.process">
+<tt class="descname">process</tt><a class="headerlink" href="#pylada.process.iterator.IteratorProcess.process" title="Permalink to this definition">¶</a></dt>
 <dd><p>Holds currently running process.</p>
 <p>This would be the latest process yielded by the input generator
-<a class="reference internal" href="#lada.process.iterator.IteratorProcess.functional" title="lada.process.iterator.IteratorProcess.functional"><tt class="xref py py-attr docutils literal"><span class="pre">functional</span></tt></a>.</p>
+<a class="reference internal" href="#pylada.process.iterator.IteratorProcess.functional" title="pylada.process.iterator.IteratorProcess.functional"><tt class="xref py py-attr docutils literal"><span class="pre">functional</span></tt></a>.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.process.iterator.IteratorProcess.functional">
-<tt class="descname">functional</tt><em class="property"> = None</em><a class="headerlink" href="#lada.process.iterator.IteratorProcess.functional" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.process.iterator.IteratorProcess.functional">
+<tt class="descname">functional</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.process.iterator.IteratorProcess.functional" title="Permalink to this definition">¶</a></dt>
 <dd><p>Iterable to execute.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.process.iterator.IteratorProcess.outdir">
-<tt class="descname">outdir</tt><em class="property"> = None</em><a class="headerlink" href="#lada.process.iterator.IteratorProcess.outdir" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.process.iterator.IteratorProcess.outdir">
+<tt class="descname">outdir</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.process.iterator.IteratorProcess.outdir" title="Permalink to this definition">¶</a></dt>
 <dd><p>Execution directory of the folder.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.process.iterator.IteratorProcess.params">
-<tt class="descname">params</tt><em class="property"> = None</em><a class="headerlink" href="#lada.process.iterator.IteratorProcess.params" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.process.iterator.IteratorProcess.params">
+<tt class="descname">params</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.process.iterator.IteratorProcess.params" title="Permalink to this definition">¶</a></dt>
 <dd><p>Extra parameters to pass on to iterator.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="lada.process.iterator.IteratorProcess.poll">
-<tt class="descname">poll</tt><big>(</big><big>)</big><a class="reference internal" href="../../_modules/lada/process/iterator.html#IteratorProcess.poll"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.process.iterator.IteratorProcess.poll" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.process.iterator.IteratorProcess.poll">
+<tt class="descname">poll</tt><big>(</big><big>)</big><a class="reference internal" href="../../_modules/pylada/process/iterator.html#IteratorProcess.poll"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.process.iterator.IteratorProcess.poll" title="Permalink to this definition">¶</a></dt>
 <dd><p>Polls current job.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -235,8 +235,8 @@ files.. By default, calls cleanup of <a class="reference internal" href="#lada.p
 </dd></dl>
 
 <dl class="method">
-<dt id="lada.process.iterator.IteratorProcess.start">
-<tt class="descname">start</tt><big>(</big><em>comm</em><big>)</big><a class="reference internal" href="../../_modules/lada/process/iterator.html#IteratorProcess.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.process.iterator.IteratorProcess.start" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.process.iterator.IteratorProcess.start">
+<tt class="descname">start</tt><big>(</big><em>comm</em><big>)</big><a class="reference internal" href="../../_modules/pylada/process/iterator.html#IteratorProcess.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.process.iterator.IteratorProcess.start" title="Permalink to this definition">¶</a></dt>
 <dd><p>Starts current job.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -262,8 +262,8 @@ especially not simultaneously.</li>
 </dd></dl>
 
 <dl class="method">
-<dt id="lada.process.iterator.IteratorProcess.wait">
-<tt class="descname">wait</tt><big>(</big><big>)</big><a class="reference internal" href="../../_modules/lada/process/iterator.html#IteratorProcess.wait"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.process.iterator.IteratorProcess.wait" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.process.iterator.IteratorProcess.wait">
+<tt class="descname">wait</tt><big>(</big><big>)</big><a class="reference internal" href="../../_modules/pylada/process/iterator.html#IteratorProcess.wait"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.process.iterator.IteratorProcess.wait" title="Permalink to this definition">¶</a></dt>
 <dd><p>Waits for process to end, then cleanup.</p>
 </dd></dl>
 
@@ -320,7 +320,7 @@ especially not simultaneously.</li>
         <li class="right" >
           <a href="program.html" title="Execution of an external program"
              >previous</a> |</li>
-        <li><a href="../../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Pylada 1.0 documentation</a> &raquo;</li>
           <li><a href="../../pyapi.html" >Python API</a> &raquo;</li>
           <li><a href="../process.html" >Process Module</a> &raquo;</li> 
       </ul>

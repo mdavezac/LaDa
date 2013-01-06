@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Vasp class &mdash; LaDa 1.0 documentation</title>
+    <title>Vasp class &mdash; Pylada 1.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="author" title="About these documents" href="../../about.html" />
-    <link rel="top" title="LaDa 1.0 documentation" href="../../index.html" />
+    <link rel="top" title="Pylada 1.0 documentation" href="../../index.html" />
     <link rel="up" title="Vasp Module" href="../vasp.html" />
     <link rel="next" title="Relaxation methods" href="relax.html" />
     <link rel="prev" title="Vasp Module" href="../vasp.html" /> 
@@ -48,7 +48,7 @@
         <li class="right" >
           <a href="../vasp.html" title="Vasp Module"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Pylada 1.0 documentation</a> &raquo;</li>
           <li><a href="../../pyapi.html" >Python API</a> &raquo;</li>
           <li><a href="../vasp.html" accesskey="U">Vasp Module</a> &raquo;</li> 
       </ul>
@@ -59,20 +59,20 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="module-lada.vasp.functional">
-<span id="vasp-class"></span><h1>Vasp class<a class="headerlink" href="#module-lada.vasp.functional" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-pylada.vasp.functional">
+<span id="vasp-class"></span><h1>Vasp class<a class="headerlink" href="#module-pylada.vasp.functional" title="Permalink to this headline">¶</a></h1>
 <p>Sub-package containing the functional.</p>
 <dl class="class">
-<dt id="lada.vasp.functional.Vasp">
-<em class="property">class </em><tt class="descclassname">lada.vasp.functional.</tt><tt class="descname">Vasp</tt><big>(</big><em>copy=None</em>, <em>species=None</em>, <em>kpoints=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../_modules/lada/vasp/functional.html#Vasp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.vasp.functional.Vasp" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">lada.tools.input.block.AttrBlock</span></tt></p>
+<dt id="pylada.vasp.functional.Vasp">
+<em class="property">class </em><tt class="descclassname">pylada.vasp.functional.</tt><tt class="descname">Vasp</tt><big>(</big><em>copy=None</em>, <em>species=None</em>, <em>kpoints=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../_modules/pylada/vasp/functional.html#Vasp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.vasp.functional.Vasp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">pylada.tools.input.block.AttrBlock</span></tt></p>
 <p>Interface to VASP code.</p>
 <p>This interface makes it a bit easier to call <a class="reference external" href="http://www.vasp.at/">VASP</a> both for
 high-throughput calculations and for complex calculations involving more
 that one actual call to the program.</p>
 <p>The main way to use the code is as follows.</p>
 <p>First, one creates the actual functional:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">lada.vasp</span> <span class="kn">import</span> <span class="n">Vasp</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pylada.vasp</span> <span class="kn">import</span> <span class="n">Vasp</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span> <span class="o">=</span> <span class="n">Vasp</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -103,7 +103,7 @@ is then possible to access the new parameter as with any other:</p>
 </pre></div>
 </div>
 <p>There are few special parameters with enhanced behaviors, such as
-<a class="reference internal" href="#lada.vasp.functional.Vasp.magmom" title="lada.vasp.functional.Vasp.magmom"><tt class="xref py py-attr docutils literal"><span class="pre">magmom</span></tt></a>, <a class="reference internal" href="#lada.vasp.functional.Vasp.encut" title="lada.vasp.functional.Vasp.encut"><tt class="xref py py-attr docutils literal"><span class="pre">encut</span></tt></a>, or <a class="reference internal" href="#lada.vasp.functional.Vasp.ediff_per_atom" title="lada.vasp.functional.Vasp.ediff_per_atom"><tt class="xref py py-attr docutils literal"><span class="pre">ediff_per_atom</span></tt></a>. 
+<a class="reference internal" href="#pylada.vasp.functional.Vasp.magmom" title="pylada.vasp.functional.Vasp.magmom"><tt class="xref py py-attr docutils literal"><span class="pre">magmom</span></tt></a>, <a class="reference internal" href="#pylada.vasp.functional.Vasp.encut" title="pylada.vasp.functional.Vasp.encut"><tt class="xref py py-attr docutils literal"><span class="pre">encut</span></tt></a>, or <a class="reference internal" href="#pylada.vasp.functional.Vasp.ediff_per_atom" title="pylada.vasp.functional.Vasp.ediff_per_atom"><tt class="xref py py-attr docutils literal"><span class="pre">ediff_per_atom</span></tt></a>. 
 Any parameter can be completely disabled with:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">vasp</span><span class="o">.</span><span class="n">sigma</span> <span class="o">=</span> <span class="bp">None</span>
 </pre></div>
@@ -113,7 +113,7 @@ Any parameter can be completely disabled with:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">result</span> <span class="o">=</span> <span class="n">vasp</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="s">&#39;this/directory&#39;</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>The first argument is a <tt class="xref py py-class docutils literal"><span class="pre">lada.crystal.Structure</span></tt> instance on
+<p>The first argument is a <tt class="xref py py-class docutils literal"><span class="pre">pylada.crystal.Structure</span></tt> instance on
 which to perform the calculation. The species in the structure should all
 have a pseudo-potential declared vias <tt class="xref py py-attr docutils literal"><span class="pre">add_specie</span></tt>. The second
 argument is the directory where the calculations should take place. Other
@@ -121,20 +121,20 @@ arguments, such as <tt class="docutils literal"><span class="pre">sigma</span></
 for the duration of the call (the call is stateless).</p>
 <p>The result is an extraction object capable of grepping different
 properties from the OUTCAR. The major property is
-<a class="reference internal" href="extract.html#lada.vasp.extract.Extract.success" title="lada.vasp.extract.Extract.success"><tt class="xref py py-attr docutils literal"><span class="pre">success</span></tt></a>. For more, please see
-<a class="reference internal" href="extract.html#lada.vasp.extract.Extract" title="lada.vasp.extract.Extract"><tt class="xref py py-class docutils literal"><span class="pre">Extract</span></tt></a>.</p>
+<a class="reference internal" href="extract.html#pylada.vasp.extract.Extract.success" title="pylada.vasp.extract.Extract.success"><tt class="xref py py-attr docutils literal"><span class="pre">success</span></tt></a>. For more, please see
+<a class="reference internal" href="extract.html#pylada.vasp.extract.Extract" title="pylada.vasp.extract.Extract"><tt class="xref py py-class docutils literal"><span class="pre">Extract</span></tt></a>.</p>
 <p>The best way to use this functional is in conjunction with the
-high-throughput interface <a class="reference internal" href="../jobfolder.html#module-lada.jobfolder" title="lada.jobfolder"><tt class="xref py py-mod docutils literal"><span class="pre">lada.jobfolder</span></tt></a>.</p>
+high-throughput interface <a class="reference internal" href="../jobfolder.html#module-pylada.jobfolder" title="pylada.jobfolder"><tt class="xref py py-mod docutils literal"><span class="pre">pylada.jobfolder</span></tt></a>.</p>
 <dl class="method">
-<dt id="lada.vasp.functional.Vasp.iter">
-<tt class="descname">iter</tt><big>(</big><em>structure</em>, <em>outdir=None</em>, <em>comm=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../_modules/lada/vasp/functional.html#Vasp.iter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.vasp.functional.Vasp.iter" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.iter">
+<tt class="descname">iter</tt><big>(</big><em>structure</em>, <em>outdir=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../_modules/pylada/vasp/functional.html#Vasp.iter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.vasp.functional.Vasp.iter" title="Permalink to this definition">¶</a></dt>
 <dd><p>Allows asynchronous vasp calculations</p>
 <p>This is a generator which yields two types of objects:</p>
 <blockquote>
 <div><ul class="simple">
-<li><a class="reference internal" href="../process/program.html#lada.process.program.ProgramProcess" title="lada.process.program.ProgramProcess"><tt class="xref py py-class docutils literal"><span class="pre">ProgramProcess</span></tt></a>: once started,
+<li><a class="reference internal" href="../process/program.html#pylada.process.program.ProgramProcess" title="pylada.process.program.ProgramProcess"><tt class="xref py py-class docutils literal"><span class="pre">ProgramProcess</span></tt></a>: once started,
 this process will run an actual <a class="reference external" href="http://www.vasp.at/">VASP</a> calculation.</li>
-<li><a class="reference internal" href="#lada.vasp.functional.Vasp.Extract" title="lada.vasp.functional.Vasp.Extract"><tt class="xref py py-attr docutils literal"><span class="pre">Extract</span></tt></a>: once the program has been runned, and
+<li><a class="reference internal" href="#pylada.vasp.functional.Vasp.Extract" title="pylada.vasp.functional.Vasp.Extract"><tt class="xref py py-attr docutils literal"><span class="pre">Extract</span></tt></a>: once the program has been runned, and
 extraction object is yielded, in order that the results of the run
 can be analyzed.</li>
 </ul>
@@ -145,18 +145,18 @@ first, using the first object, before looping to the second object.
 Thie generator function makes it possible to run different instances of
 <a class="reference external" href="http://www.vasp.at/">VASP</a> simultaneously. It also makes it possible to create more complex
 calculations which necessitate more than one actual call to <a class="reference external" href="http://www.vasp.at/">VASP</a> (see
-<a class="reference internal" href="relax.html#lada.vasp.relax.iter_relax" title="lada.vasp.relax.iter_relax"><tt class="xref py py-class docutils literal"><span class="pre">iter_relax</span></tt></a>), while retaining the ability
+<a class="reference internal" href="relax.html#pylada.vasp.relax.iter_relax" title="pylada.vasp.relax.iter_relax"><tt class="xref py py-class docutils literal"><span class="pre">iter_relax</span></tt></a>), while retaining the ability
 to run multiple <a class="reference external" href="http://www.vasp.at/">VASP</a> programs simultaneously.</p>
 <p>If successful results (see <tt class="xref py py-attr docutils literal"><span class="pre">Extract.success</span></tt>) already exist in
-outdir, LaDa defaults to <em>not</em> repeating the calculations. In that
+outdir, Pylada defaults to <em>not</em> repeating the calculations. In that
 case, the first object described above is <em>skipped</em> and only an
 extraction object is yielded.</p>
-<p>The <a class="reference internal" href="#lada.vasp.functional.Vasp.__call__" title="lada.vasp.functional.Vasp.__call__"><tt class="xref py py-meth docutils literal"><span class="pre">__call__()</span></tt></a> method loops over this generator and makes
+<p>The <a class="reference internal" href="#pylada.vasp.functional.Vasp.__call__" title="pylada.vasp.functional.Vasp.__call__"><tt class="xref py py-meth docutils literal"><span class="pre">__call__()</span></tt></a> method loops over this generator and makes
 actual <a class="reference external" href="http://www.vasp.at/">VASP</a> calls. Looking at its code is a good place to start, if
 you want to understand this looping business. The benefit of this
-approach can be seen in <a class="reference internal" href="relax.html#lada.vasp.relax.iter_relax" title="lada.vasp.relax.iter_relax"><tt class="xref py py-class docutils literal"><span class="pre">iter_relax</span></tt></a> (more
+approach can be seen in <a class="reference internal" href="relax.html#pylada.vasp.relax.iter_relax" title="pylada.vasp.relax.iter_relax"><tt class="xref py py-class docutils literal"><span class="pre">iter_relax</span></tt></a> (more
 complex calculations) and
-<a class="reference internal" href="../process/jobfolder.html#lada.process.jobfolder.JobFolderProcess" title="lada.process.jobfolder.JobFolderProcess"><tt class="xref py py-class docutils literal"><span class="pre">lada.process.jobfolder.JobFolderProcess</span></tt></a>.</p>
+<a class="reference internal" href="../process/jobfolder.html#pylada.process.jobfolder.JobFolderProcess" title="pylada.process.jobfolder.JobFolderProcess"><tt class="xref py py-class docutils literal"><span class="pre">pylada.process.jobfolder.JobFolderProcess</span></tt></a>.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -208,41 +208,41 @@ parameters to the call are different.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="lada.vasp.functional.Vasp.__call__">
-<tt class="descname">__call__</tt><big>(</big><em>structure</em>, <em>outdir=None</em>, <em>comm=None</em>, <em>overwrite=False</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../_modules/lada/vasp/functional.html#Vasp.__call__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.vasp.functional.Vasp.__call__" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.__call__">
+<tt class="descname">__call__</tt><big>(</big><em>structure</em>, <em>outdir=None</em>, <em>comm=None</em>, <em>overwrite=False</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../_modules/pylada/vasp/functional.html#Vasp.__call__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.vasp.functional.Vasp.__call__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calls vasp program and waits until completion.</p>
 <p>This function makes a blocking call to the <a class="reference external" href="http://www.vasp.at/">VASP</a> external program. It
 will return only once the calculation is complete. To make asynchronous
-calls to <a class="reference external" href="http://www.vasp.at/">VASP</a>, please consider using <a class="reference internal" href="#lada.vasp.functional.Vasp.iter" title="lada.vasp.functional.Vasp.iter"><tt class="xref py py-meth docutils literal"><span class="pre">iter()</span></tt></a>.</p>
-<p>For a description of the parameters, please see <a class="reference internal" href="#lada.vasp.functional.Vasp.iter" title="lada.vasp.functional.Vasp.iter"><tt class="xref py py-meth docutils literal"><span class="pre">iter()</span></tt></a>.</p>
+calls to <a class="reference external" href="http://www.vasp.at/">VASP</a>, please consider using <a class="reference internal" href="#pylada.vasp.functional.Vasp.iter" title="pylada.vasp.functional.Vasp.iter"><tt class="xref py py-meth docutils literal"><span class="pre">iter()</span></tt></a>.</p>
+<p>For a description of the parameters, please see <a class="reference internal" href="#pylada.vasp.functional.Vasp.iter" title="pylada.vasp.functional.Vasp.iter"><tt class="xref py py-meth docutils literal"><span class="pre">iter()</span></tt></a>.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">An extraction object of type <a class="reference internal" href="#lada.vasp.functional.Vasp.Extract" title="lada.vasp.functional.Vasp.Extract"><tt class="xref py py-attr docutils literal"><span class="pre">Extract</span></tt></a>.</td>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">An extraction object of type <a class="reference internal" href="#pylada.vasp.functional.Vasp.Extract" title="pylada.vasp.functional.Vasp.Extract"><tt class="xref py py-attr docutils literal"><span class="pre">Extract</span></tt></a>.</td>
 </tr>
 </tbody>
 </table>
 </dd></dl>
 
 <dl class="method">
-<dt id="lada.vasp.functional.Vasp.add_keyword">
-<tt class="descname">add_keyword</tt><big>(</big><em>name</em>, <em>value=None</em><big>)</big><a class="headerlink" href="#lada.vasp.functional.Vasp.add_keyword" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.add_keyword">
+<tt class="descname">add_keyword</tt><big>(</big><em>name</em>, <em>value=None</em><big>)</big><a class="headerlink" href="#pylada.vasp.functional.Vasp.add_keyword" title="Permalink to this definition">¶</a></dt>
 <dd><p>Adds/Sets input keyword.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.Extract">
-<tt class="descname">Extract</tt><em class="property"> = &lt;class 'lada.vasp.extract.Extract'&gt;</em><a class="headerlink" href="#lada.vasp.functional.Vasp.Extract" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.Extract">
+<tt class="descname">Extract</tt><em class="property"> = &lt;class 'pylada.vasp.extract.Extract'&gt;</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.Extract" title="Permalink to this definition">¶</a></dt>
 <dd><p>Extraction class.</p>
 <p>This extraction class is used to grep output from an OUTCAR file.
 This attribute merely describes the type of the extraction object as
-<a class="reference internal" href="extract.html#lada.vasp.extract.Extract" title="lada.vasp.extract.Extract"><tt class="xref py py-class docutils literal"><span class="pre">Extract</span></tt></a>.</p>
+<a class="reference internal" href="extract.html#pylada.vasp.extract.Extract" title="pylada.vasp.extract.Extract"><tt class="xref py py-class docutils literal"><span class="pre">Extract</span></tt></a>.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.addgrid">
-<tt class="descname">addgrid</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.addgrid" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.addgrid">
+<tt class="descname">addgrid</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.addgrid" title="Permalink to this definition">¶</a></dt>
 <dd><p>Adds additional support grid for augmentation charge evaluation.</p>
 <p>Can be only True or False (or None for <a class="reference external" href="http://www.vasp.at/">VASP</a> default).</p>
 <div class="admonition-see-also admonition seealso">
@@ -252,8 +252,8 @@ This attribute merely describes the type of the extraction object as
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.algo">
-<tt class="descname">algo</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.algo" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.algo">
+<tt class="descname">algo</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.algo" title="Permalink to this definition">¶</a></dt>
 <dd><p>Electronic minimization.</p>
 <dl class="docutils">
 <dt>Defines the kind of algorithm vasp will run.</dt>
@@ -277,8 +277,8 @@ This attribute merely describes the type of the extraction object as
 </ul>
 </dd>
 </dl>
-<p>If <a class="reference internal" href="../../userguide/config.html#lada.is_vasp_4" title="lada.is_vasp_4"><tt class="xref py py-data docutils literal"><span class="pre">is_vasp_4</span></tt></a> is an existing configuration variable of
-<tt class="xref py py-mod docutils literal"><span class="pre">lada</span></tt> the parameters marked as vasp 5 will fail.</p>
+<p>If <a class="reference internal" href="../configuration.html#pylada.is_vasp_4" title="pylada.is_vasp_4"><tt class="xref py py-data docutils literal"><span class="pre">is_vasp_4</span></tt></a> is an existing configuration variable of
+<tt class="xref py py-mod docutils literal"><span class="pre">pylada</span></tt> the parameters marked as vasp 5 will fail.</p>
 <div class="admonition warning">
 <p class="first admonition-title">Warning</p>
 <p class="last">The string None is not  allowed, as it would lead to
@@ -297,51 +297,51 @@ the <a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.p
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.ediff">
-<tt class="descname">ediff</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.ediff" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.ediff">
+<tt class="descname">ediff</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.ediff" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sets the absolute energy convergence criteria for electronic minimization.</p>
 <p><a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/EDIFF">EDIFF</a> is set to this value in the <a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/INCAR">INCAR</a>.</p>
-<p>Disables <a class="reference internal" href="#lada.vasp.functional.Vasp.ediff_per_atom" title="lada.vasp.functional.Vasp.ediff_per_atom"><tt class="xref py py-attr docutils literal"><span class="pre">ediff_per_atom</span></tt></a> if set to anything but None. These
+<p>Disables <a class="reference internal" href="#pylada.vasp.functional.Vasp.ediff_per_atom" title="pylada.vasp.functional.Vasp.ediff_per_atom"><tt class="xref py py-attr docutils literal"><span class="pre">ediff_per_atom</span></tt></a> if set to anything but None. These
 two properties are mutually exclusive. If negative or null, defaults to
 zero.</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/EDIFF">EDIFF</a>, <a class="reference internal" href="#lada.vasp.functional.Vasp.ediff_per_atom" title="lada.vasp.functional.Vasp.ediff_per_atom"><tt class="xref py py-attr docutils literal"><span class="pre">ediff_per_atom</span></tt></a></p>
+<p class="last"><a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/EDIFF">EDIFF</a>, <a class="reference internal" href="#pylada.vasp.functional.Vasp.ediff_per_atom" title="pylada.vasp.functional.Vasp.ediff_per_atom"><tt class="xref py py-attr docutils literal"><span class="pre">ediff_per_atom</span></tt></a></p>
 </div>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.ediff_per_atom">
-<tt class="descname">ediff_per_atom</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.ediff_per_atom" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.ediff_per_atom">
+<tt class="descname">ediff_per_atom</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.ediff_per_atom" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sets the relative energy convergence criteria for electronic minimization.</p>
 <p><a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/EDIFF">EDIFF</a> is set to this value <em>times</em> the number of atoms in the
 structure.  This approach is more sensible than straight-off
-<a class="reference internal" href="#lada.vasp.functional.Vasp.ediff" title="lada.vasp.functional.Vasp.ediff"><tt class="xref py py-attr docutils literal"><span class="pre">ediff</span></tt></a> when doing high-throughput over many structures.</p>
-<p>Disables <a class="reference internal" href="#lada.vasp.functional.Vasp.ediff" title="lada.vasp.functional.Vasp.ediff"><tt class="xref py py-attr docutils literal"><span class="pre">ediff</span></tt></a> if set to anything but None. These two
+<a class="reference internal" href="#pylada.vasp.functional.Vasp.ediff" title="pylada.vasp.functional.Vasp.ediff"><tt class="xref py py-attr docutils literal"><span class="pre">ediff</span></tt></a> when doing high-throughput over many structures.</p>
+<p>Disables <a class="reference internal" href="#pylada.vasp.functional.Vasp.ediff" title="pylada.vasp.functional.Vasp.ediff"><tt class="xref py py-attr docutils literal"><span class="pre">ediff</span></tt></a> if set to anything but None. These two
 properties are mutually exclusive. If negative or null, defaults to
 zero.</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/EDIFF">EDIFF</a>, <a class="reference internal" href="#lada.vasp.functional.Vasp.ediff" title="lada.vasp.functional.Vasp.ediff"><tt class="xref py py-attr docutils literal"><span class="pre">ediff</span></tt></a></p>
+<p class="last"><a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/EDIFF">EDIFF</a>, <a class="reference internal" href="#pylada.vasp.functional.Vasp.ediff" title="pylada.vasp.functional.Vasp.ediff"><tt class="xref py py-attr docutils literal"><span class="pre">ediff</span></tt></a></p>
 </div>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.ediffg">
-<tt class="descname">ediffg</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.ediffg" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.ediffg">
+<tt class="descname">ediffg</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.ediffg" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sets the absolute energy convergence criteria for ionic relaxation.</p>
 <p><a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/EDIFFG">EDIFFG</a> is set to this value in the <a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/INCAR">INCAR</a>.</p>
-<p>Disables <a class="reference internal" href="#lada.vasp.functional.Vasp.ediffg_per_atom" title="lada.vasp.functional.Vasp.ediffg_per_atom"><tt class="xref py py-attr docutils literal"><span class="pre">ediffg_per_atom</span></tt></a> if set to anything but None. These
+<p>Disables <a class="reference internal" href="#pylada.vasp.functional.Vasp.ediffg_per_atom" title="pylada.vasp.functional.Vasp.ediffg_per_atom"><tt class="xref py py-attr docutils literal"><span class="pre">ediffg_per_atom</span></tt></a> if set to anything but None. These
 two properties are mutually exclusive.</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/EDIFFG">EDIFFG</a>, <a class="reference internal" href="#lada.vasp.functional.Vasp.ediffg_per_atom" title="lada.vasp.functional.Vasp.ediffg_per_atom"><tt class="xref py py-attr docutils literal"><span class="pre">ediffg_per_atom</span></tt></a></p>
+<p class="last"><a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/EDIFFG">EDIFFG</a>, <a class="reference internal" href="#pylada.vasp.functional.Vasp.ediffg_per_atom" title="pylada.vasp.functional.Vasp.ediffg_per_atom"><tt class="xref py py-attr docutils literal"><span class="pre">ediffg_per_atom</span></tt></a></p>
 </div>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.ediffg_per_atom">
-<tt class="descname">ediffg_per_atom</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.ediffg_per_atom" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.ediffg_per_atom">
+<tt class="descname">ediffg_per_atom</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.ediffg_per_atom" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sets the relative energy convergence criteria for ionic relaxation.</p>
 <ul class="simple">
 <li>if positive: <a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/EDIFFG">EDIFFG</a> is set to this value <em>times</em> the number of atoms
@@ -349,19 +349,19 @@ in the structure. This means that the criteria is for the total energy per atom.
 <li>if negative: same as a negative <a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/EDIFFG">EDIFFG</a>, since that convergence
 criteria is already per atom.</li>
 </ul>
-<p>This approach is more sensible than straight-off <a class="reference internal" href="#lada.vasp.functional.Vasp.ediffg" title="lada.vasp.functional.Vasp.ediffg"><tt class="xref py py-attr docutils literal"><span class="pre">ediffg</span></tt></a> when
-doing high-throughput over many structures.  Disables <a class="reference internal" href="#lada.vasp.functional.Vasp.ediffg" title="lada.vasp.functional.Vasp.ediffg"><tt class="xref py py-attr docutils literal"><span class="pre">ediffg</span></tt></a>
+<p>This approach is more sensible than straight-off <a class="reference internal" href="#pylada.vasp.functional.Vasp.ediffg" title="pylada.vasp.functional.Vasp.ediffg"><tt class="xref py py-attr docutils literal"><span class="pre">ediffg</span></tt></a> when
+doing high-throughput over many structures.  Disables <a class="reference internal" href="#pylada.vasp.functional.Vasp.ediffg" title="pylada.vasp.functional.Vasp.ediffg"><tt class="xref py py-attr docutils literal"><span class="pre">ediffg</span></tt></a>
 if set to anything but None. These two properties are mutually
 exclusive.</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/EDIFFG">EDIFFG</a>, <a class="reference internal" href="#lada.vasp.functional.Vasp.ediffg" title="lada.vasp.functional.Vasp.ediffg"><tt class="xref py py-attr docutils literal"><span class="pre">ediffg</span></tt></a></p>
+<p class="last"><a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/EDIFFG">EDIFFG</a>, <a class="reference internal" href="#pylada.vasp.functional.Vasp.ediffg" title="pylada.vasp.functional.Vasp.ediffg"><tt class="xref py py-attr docutils literal"><span class="pre">ediffg</span></tt></a></p>
 </div>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.encut">
-<tt class="descname">encut</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.encut" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.encut">
+<tt class="descname">encut</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.encut" title="Permalink to this definition">¶</a></dt>
 <dd><p>Defines cutoff factor for calculation.</p>
 <p>There are three ways to set this parameter:</p>
 <ul class="simple">
@@ -379,8 +379,8 @@ unit is acceptable.</li>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.encutgw">
-<tt class="descname">encutgw</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.encutgw" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.encutgw">
+<tt class="descname">encutgw</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.encutgw" title="Permalink to this definition">¶</a></dt>
 <dd><p>Defines cutoff factor for GW calculation.</p>
 <p>There are three ways to set this parameter:</p>
 <ul class="simple">
@@ -398,8 +398,8 @@ unit is acceptable.</li>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.extraelectron">
-<tt class="descname">extraelectron</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.extraelectron" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.extraelectron">
+<tt class="descname">extraelectron</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.extraelectron" title="Permalink to this definition">¶</a></dt>
 <dd><p>Number of electrons relative to neutral system.</p>
 <p>Gets the number of electrons in the (neutral) system. Then adds value to
 it and computes with the resulting number of electrons.</p>
@@ -408,59 +408,59 @@ it and computes with the resulting number of electrons.</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">vasp</span><span class="o">.</span><span class="n">extraelectron</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>  <span class="c"># charge +1 (1 extra hole)</span>
 </pre></div>
 </div>
-<p>Disables <a class="reference internal" href="#lada.vasp.functional.Vasp.nelect" title="lada.vasp.functional.Vasp.nelect"><tt class="xref py py-attr docutils literal"><span class="pre">nelect</span></tt></a> if set to anything but None: these two
+<p>Disables <a class="reference internal" href="#pylada.vasp.functional.Vasp.nelect" title="pylada.vasp.functional.Vasp.nelect"><tt class="xref py py-attr docutils literal"><span class="pre">nelect</span></tt></a> if set to anything but None: these two
 properties are mutually exclusive.</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/NELECT">NELECT</a>, <a class="reference internal" href="#lada.vasp.functional.Vasp.nelect" title="lada.vasp.functional.Vasp.nelect"><tt class="xref py py-attr docutils literal"><span class="pre">nelect</span></tt></a></p>
+<p class="last"><a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/NELECT">NELECT</a>, <a class="reference internal" href="#pylada.vasp.functional.Vasp.nelect" title="pylada.vasp.functional.Vasp.nelect"><tt class="xref py py-attr docutils literal"><span class="pre">nelect</span></tt></a></p>
 </div>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.ferdo">
-<tt class="descname">ferdo</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.ferdo" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.ferdo">
+<tt class="descname">ferdo</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.ferdo" title="Permalink to this definition">¶</a></dt>
 <dd><p>Occupancy of the down-spin states for <tt class="docutils literal"><span class="pre">ISMEAR=-2</span></tt>.</p>
 <p>List of floating points.</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/FERDO">FERDO</a>, <a class="reference internal" href="#lada.vasp.functional.Vasp.ismear" title="lada.vasp.functional.Vasp.ismear"><tt class="xref py py-attr docutils literal"><span class="pre">ismear</span></tt></a>, <a class="reference internal" href="#lada.vasp.functional.Vasp.ferwe" title="lada.vasp.functional.Vasp.ferwe"><tt class="xref py py-attr docutils literal"><span class="pre">ferwe</span></tt></a></p>
+<p class="last"><a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/FERDO">FERDO</a>, <a class="reference internal" href="#pylada.vasp.functional.Vasp.ismear" title="pylada.vasp.functional.Vasp.ismear"><tt class="xref py py-attr docutils literal"><span class="pre">ismear</span></tt></a>, <a class="reference internal" href="#pylada.vasp.functional.Vasp.ferwe" title="pylada.vasp.functional.Vasp.ferwe"><tt class="xref py py-attr docutils literal"><span class="pre">ferwe</span></tt></a></p>
 </div>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.ferwe">
-<tt class="descname">ferwe</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.ferwe" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.ferwe">
+<tt class="descname">ferwe</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.ferwe" title="Permalink to this definition">¶</a></dt>
 <dd><p>Occupancy of the states for <tt class="docutils literal"><span class="pre">ISMEAR=-2</span></tt>.</p>
 <p>List of floating points.</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/FERWE">FERWE</a>, <a class="reference internal" href="#lada.vasp.functional.Vasp.ismear" title="lada.vasp.functional.Vasp.ismear"><tt class="xref py py-attr docutils literal"><span class="pre">ismear</span></tt></a>, <a class="reference internal" href="#lada.vasp.functional.Vasp.ferdo" title="lada.vasp.functional.Vasp.ferdo"><tt class="xref py py-attr docutils literal"><span class="pre">ferdo</span></tt></a></p>
+<p class="last"><a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/FERWE">FERWE</a>, <a class="reference internal" href="#pylada.vasp.functional.Vasp.ismear" title="pylada.vasp.functional.Vasp.ismear"><tt class="xref py py-attr docutils literal"><span class="pre">ismear</span></tt></a>, <a class="reference internal" href="#pylada.vasp.functional.Vasp.ferdo" title="pylada.vasp.functional.Vasp.ferdo"><tt class="xref py py-attr docutils literal"><span class="pre">ferdo</span></tt></a></p>
 </div>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.ibrion">
-<tt class="descname">ibrion</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.ibrion" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.ibrion">
+<tt class="descname">ibrion</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.ibrion" title="Permalink to this definition">¶</a></dt>
 <dd><p>Ions/cell-shape/volume optimization method.</p>
 <p>Can only take a restricted set of values: -1 | 0 | 1 | 2 | 3 | 5 | 6 | 7 | 8 | 44.</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><a class="reference external" href="cms.mpi.univie.ac.at/wiki/index.php/IBRIONN">IBRION</a>, <a class="reference internal" href="#lada.vasp.functional.Vasp.relaxation" title="lada.vasp.functional.Vasp.relaxation"><tt class="xref py py-attr docutils literal"><span class="pre">relaxation</span></tt></a>, <a class="reference internal" href="#lada.vasp.functional.Vasp.isif" title="lada.vasp.functional.Vasp.isif"><tt class="xref py py-attr docutils literal"><span class="pre">isif</span></tt></a>, <a class="reference internal" href="#lada.vasp.functional.Vasp.nsw" title="lada.vasp.functional.Vasp.nsw"><tt class="xref py py-attr docutils literal"><span class="pre">nsw</span></tt></a></p>
+<p class="last"><a class="reference external" href="cms.mpi.univie.ac.at/wiki/index.php/IBRIONN">IBRION</a>, <a class="reference internal" href="#pylada.vasp.functional.Vasp.relaxation" title="pylada.vasp.functional.Vasp.relaxation"><tt class="xref py py-attr docutils literal"><span class="pre">relaxation</span></tt></a>, <a class="reference internal" href="#pylada.vasp.functional.Vasp.isif" title="pylada.vasp.functional.Vasp.isif"><tt class="xref py py-attr docutils literal"><span class="pre">isif</span></tt></a>, <a class="reference internal" href="#pylada.vasp.functional.Vasp.nsw" title="pylada.vasp.functional.Vasp.nsw"><tt class="xref py py-attr docutils literal"><span class="pre">nsw</span></tt></a></p>
 </div>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.icharg">
-<tt class="descname">icharg</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.icharg" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.icharg">
+<tt class="descname">icharg</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.icharg" title="Permalink to this definition">¶</a></dt>
 <dd><p>Charge from which to start.</p>
 <p>This tag decides whether to restart from a previously calculated charge
 density, or not. It is best to keep this attribute set to -1, in which
-case, LaDa takes care of copying the relevant files.</p>
+case, Pylada takes care of copying the relevant files.</p>
 <blockquote>
 <div><ul>
 <li><dl class="first docutils">
-<dt>-1: (Default) Automatically determined by LaDA. Depends on the</dt>
-<dd><p class="first last">value of <a class="reference internal" href="#lada.vasp.functional.Vasp.restart" title="lada.vasp.functional.Vasp.restart"><tt class="xref py py-attr docutils literal"><span class="pre">restart</span></tt></a> and the existence of the relevant
+<dt>-1: (Default) Automatically determined by Pylada. Depends on the</dt>
+<dd><p class="first last">value of <a class="reference internal" href="#pylada.vasp.functional.Vasp.restart" title="pylada.vasp.functional.Vasp.restart"><tt class="xref py py-attr docutils literal"><span class="pre">restart</span></tt></a> and the existence of the relevant
 files. Also takes care of non-scf bit.</p>
 </dd>
 </dl>
@@ -469,7 +469,7 @@ files. Also takes care of non-scf bit.</p>
 <dt>0: Tries to restart from wavefunctions. Uses the latest <a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/WAVECAR">WAVECAR</a></dt>
 <dd><p class="first">file between the one currently in the output directory and the
 one in the restart directory (if specified). Sets
-<a class="reference internal" href="#lada.vasp.functional.Vasp.nonscf" title="lada.vasp.functional.Vasp.nonscf"><tt class="xref py py-attr docutils literal"><span class="pre">nonscf</span></tt></a> to False.</p>
+<a class="reference internal" href="#pylada.vasp.functional.Vasp.nonscf" title="pylada.vasp.functional.Vasp.nonscf"><tt class="xref py py-attr docutils literal"><span class="pre">nonscf</span></tt></a> to False.</p>
 <div class="last admonition note">
 <p class="first admonition-title">Note</p>
 <p class="last"><a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/CHGCAR">CHGCAR</a> is also copied, just in case.</p>
@@ -481,25 +481,25 @@ one in the restart directory (if specified). Sets
 <dt>1: Tries to restart from wavefunctions. Uses the latest <a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/WAVECAR">WAVECAR</a></dt>
 <dd><p class="first last">file between the one currently in the output directory and the
 one in the restart directory (if specified). Sets
-<a class="reference internal" href="#lada.vasp.functional.Vasp.nonscf" title="lada.vasp.functional.Vasp.nonscf"><tt class="xref py py-attr docutils literal"><span class="pre">nonscf</span></tt></a> to False.</p>
+<a class="reference internal" href="#pylada.vasp.functional.Vasp.nonscf" title="pylada.vasp.functional.Vasp.nonscf"><tt class="xref py py-attr docutils literal"><span class="pre">nonscf</span></tt></a> to False.</p>
 </dd>
 </dl>
 </li>
 <li><dl class="first docutils">
 <dt>2: Superimposition of atomic charge densities. Sets</dt>
-<dd><p class="first last"><a class="reference internal" href="#lada.vasp.functional.Vasp.nonscf" title="lada.vasp.functional.Vasp.nonscf"><tt class="xref py py-attr docutils literal"><span class="pre">nonscf</span></tt></a> to False.</p>
+<dd><p class="first last"><a class="reference internal" href="#pylada.vasp.functional.Vasp.nonscf" title="pylada.vasp.functional.Vasp.nonscf"><tt class="xref py py-attr docutils literal"><span class="pre">nonscf</span></tt></a> to False.</p>
 </dd>
 </dl>
 </li>
 <li><dl class="first docutils">
 <dt>4: Reads potential from POT file (VASP-5.1 only). The POT file is</dt>
 <dd><p class="first last">deduced the same way as for CHGAR and <a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/WAVECAR">WAVECAR</a> above. Sets
-<a class="reference internal" href="#lada.vasp.functional.Vasp.nonscf" title="lada.vasp.functional.Vasp.nonscf"><tt class="xref py py-attr docutils literal"><span class="pre">nonscf</span></tt></a> to False.</p>
+<a class="reference internal" href="#pylada.vasp.functional.Vasp.nonscf" title="pylada.vasp.functional.Vasp.nonscf"><tt class="xref py py-attr docutils literal"><span class="pre">nonscf</span></tt></a> to False.</p>
 </dd>
 </dl>
 </li>
 <li><dl class="first docutils">
-<dt>10, 11, 12: Same as 0, 1, 2 above, but also sets <a class="reference internal" href="#lada.vasp.functional.Vasp.nonscf" title="lada.vasp.functional.Vasp.nonscf"><tt class="xref py py-attr docutils literal"><span class="pre">nonscf</span></tt></a></dt>
+<dt>10, 11, 12: Same as 0, 1, 2 above, but also sets <a class="reference internal" href="#pylada.vasp.functional.Vasp.nonscf" title="pylada.vasp.functional.Vasp.nonscf"><tt class="xref py py-attr docutils literal"><span class="pre">nonscf</span></tt></a></dt>
 <dd><p class="first">to True.  This is a shortcut. The value is actually kept to 0,
 1, or 2:</p>
 <div class="last highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">vasp</span><span class="o">.</span><span class="n">icharg</span> <span class="o">=</span> <span class="mi">10</span>
@@ -519,24 +519,24 @@ before.</p>
 </div>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/ICHARG">ICHARG</a>, <a class="reference internal" href="#lada.vasp.functional.Vasp.nonscf" title="lada.vasp.functional.Vasp.nonscf"><tt class="xref py py-attr docutils literal"><span class="pre">nonscf</span></tt></a>, <a class="reference internal" href="#lada.vasp.functional.Vasp.restart" title="lada.vasp.functional.Vasp.restart"><tt class="xref py py-attr docutils literal"><span class="pre">restart</span></tt></a>, <a class="reference internal" href="#lada.vasp.functional.Vasp.istruc" title="lada.vasp.functional.Vasp.istruc"><tt class="xref py py-attr docutils literal"><span class="pre">istruc</span></tt></a>,
-<a class="reference internal" href="#lada.vasp.functional.Vasp.istart" title="lada.vasp.functional.Vasp.istart"><tt class="xref py py-attr docutils literal"><span class="pre">istart</span></tt></a></p>
+<p class="last"><a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/ICHARG">ICHARG</a>, <a class="reference internal" href="#pylada.vasp.functional.Vasp.nonscf" title="pylada.vasp.functional.Vasp.nonscf"><tt class="xref py py-attr docutils literal"><span class="pre">nonscf</span></tt></a>, <a class="reference internal" href="#pylada.vasp.functional.Vasp.restart" title="pylada.vasp.functional.Vasp.restart"><tt class="xref py py-attr docutils literal"><span class="pre">restart</span></tt></a>, <a class="reference internal" href="#pylada.vasp.functional.Vasp.istruc" title="pylada.vasp.functional.Vasp.istruc"><tt class="xref py py-attr docutils literal"><span class="pre">istruc</span></tt></a>,
+<a class="reference internal" href="#pylada.vasp.functional.Vasp.istart" title="pylada.vasp.functional.Vasp.istart"><tt class="xref py py-attr docutils literal"><span class="pre">istart</span></tt></a></p>
 </div>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.isif">
-<tt class="descname">isif</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.isif" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.isif">
+<tt class="descname">isif</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.isif" title="Permalink to this definition">¶</a></dt>
 <dd><p>Degree of librerty to optimize during geometry optimization</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><a class="reference external" href="http://cms.mpi.univie.ac.at/vasp/guide/node112.html">ISIF</a>, <a class="reference internal" href="#lada.vasp.functional.Vasp.relaxation" title="lada.vasp.functional.Vasp.relaxation"><tt class="xref py py-attr docutils literal"><span class="pre">relaxation</span></tt></a>, <a class="reference internal" href="#lada.vasp.functional.Vasp.ibrion" title="lada.vasp.functional.Vasp.ibrion"><tt class="xref py py-attr docutils literal"><span class="pre">ibrion</span></tt></a>, <a class="reference internal" href="#lada.vasp.functional.Vasp.nsw" title="lada.vasp.functional.Vasp.nsw"><tt class="xref py py-attr docutils literal"><span class="pre">nsw</span></tt></a></p>
+<p class="last"><a class="reference external" href="http://cms.mpi.univie.ac.at/vasp/guide/node112.html">ISIF</a>, <a class="reference internal" href="#pylada.vasp.functional.Vasp.relaxation" title="pylada.vasp.functional.Vasp.relaxation"><tt class="xref py py-attr docutils literal"><span class="pre">relaxation</span></tt></a>, <a class="reference internal" href="#pylada.vasp.functional.Vasp.ibrion" title="pylada.vasp.functional.Vasp.ibrion"><tt class="xref py py-attr docutils literal"><span class="pre">ibrion</span></tt></a>, <a class="reference internal" href="#pylada.vasp.functional.Vasp.nsw" title="pylada.vasp.functional.Vasp.nsw"><tt class="xref py py-attr docutils literal"><span class="pre">nsw</span></tt></a></p>
 </div>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.ismear">
-<tt class="descname">ismear</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.ismear" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.ismear">
+<tt class="descname">ismear</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.ismear" title="Permalink to this definition">¶</a></dt>
 <dd><p>Smearing function</p>
 <p>Vasp allows a number of options:</p>
 <ul class="simple">
@@ -544,23 +544,23 @@ before.</p>
 Γ-centered <em>k</em>-mesh)</li>
 <li>tetra (-4): Tetrahedron method (requires a Γ-centered <em>k</em>-mesh)</li>
 <li>dynamic (-3): Performs a loop over smearing parameters supplied in
-<a class="reference internal" href="#lada.vasp.functional.Vasp.smearings" title="lada.vasp.functional.Vasp.smearings"><tt class="xref py py-attr docutils literal"><span class="pre">smearings</span></tt></a></li>
-<li>fixed: (-2): Fixed occupation, set <em>via</em> <a class="reference internal" href="#lada.vasp.functional.Vasp.ferwe" title="lada.vasp.functional.Vasp.ferwe"><tt class="xref py py-attr docutils literal"><span class="pre">ferwe</span></tt></a> and
-<a class="reference internal" href="#lada.vasp.functional.Vasp.ferdo" title="lada.vasp.functional.Vasp.ferdo"><tt class="xref py py-attr docutils literal"><span class="pre">ferdo</span></tt></a></li>
+<a class="reference internal" href="#pylada.vasp.functional.Vasp.smearings" title="pylada.vasp.functional.Vasp.smearings"><tt class="xref py py-attr docutils literal"><span class="pre">smearings</span></tt></a></li>
+<li>fixed: (-2): Fixed occupation, set <em>via</em> <a class="reference internal" href="#pylada.vasp.functional.Vasp.ferwe" title="pylada.vasp.functional.Vasp.ferwe"><tt class="xref py py-attr docutils literal"><span class="pre">ferwe</span></tt></a> and
+<a class="reference internal" href="#pylada.vasp.functional.Vasp.ferdo" title="pylada.vasp.functional.Vasp.ferdo"><tt class="xref py py-attr docutils literal"><span class="pre">ferdo</span></tt></a></li>
 <li>fermi (-1): Fermi function</li>
 <li>gaussian (0): Gaussian function</li>
 <li>mp n (n&gt;0): Methfessel-Paxton smearing function of order n</li>
 </ul>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/ISMEAR">ISMEAR</a>, <a class="reference internal" href="#lada.vasp.functional.Vasp.sigma" title="lada.vasp.functional.Vasp.sigma"><tt class="xref py py-attr docutils literal"><span class="pre">sigma</span></tt></a>, <a class="reference internal" href="#lada.vasp.functional.Vasp.smearings" title="lada.vasp.functional.Vasp.smearings"><tt class="xref py py-attr docutils literal"><span class="pre">smearings</span></tt></a>, <a class="reference internal" href="#lada.vasp.functional.Vasp.ferwe" title="lada.vasp.functional.Vasp.ferwe"><tt class="xref py py-attr docutils literal"><span class="pre">ferwe</span></tt></a>,
-<a class="reference internal" href="#lada.vasp.functional.Vasp.ferdo" title="lada.vasp.functional.Vasp.ferdo"><tt class="xref py py-attr docutils literal"><span class="pre">ferdo</span></tt></a></p>
+<p class="last"><a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/ISMEAR">ISMEAR</a>, <a class="reference internal" href="#pylada.vasp.functional.Vasp.sigma" title="pylada.vasp.functional.Vasp.sigma"><tt class="xref py py-attr docutils literal"><span class="pre">sigma</span></tt></a>, <a class="reference internal" href="#pylada.vasp.functional.Vasp.smearings" title="pylada.vasp.functional.Vasp.smearings"><tt class="xref py py-attr docutils literal"><span class="pre">smearings</span></tt></a>, <a class="reference internal" href="#pylada.vasp.functional.Vasp.ferwe" title="pylada.vasp.functional.Vasp.ferwe"><tt class="xref py py-attr docutils literal"><span class="pre">ferwe</span></tt></a>,
+<a class="reference internal" href="#pylada.vasp.functional.Vasp.ferdo" title="pylada.vasp.functional.Vasp.ferdo"><tt class="xref py py-attr docutils literal"><span class="pre">ferdo</span></tt></a></p>
 </div>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.ispin">
-<tt class="descname">ispin</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.ispin" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.ispin">
+<tt class="descname">ispin</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.ispin" title="Permalink to this definition">¶</a></dt>
 <dd><p>Whether to perform spin-polarized or spin-unpolarized calculations.</p>
 <p>Can be only 1 or 2 (or None for <a class="reference external" href="http://www.vasp.at/">VASP</a> default).</p>
 <div class="admonition-see-also admonition seealso">
@@ -570,16 +570,16 @@ before.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.istart">
-<tt class="descname">istart</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.istart" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.istart">
+<tt class="descname">istart</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.istart" title="Permalink to this definition">¶</a></dt>
 <dd><p>Starting wavefunctions.</p>
 <p>This tag is about which wavefunction (<a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/WAVECAR">WAVECAR</a>) file to read from, if
-any.  It is best to keep this attribute set to -1, in which case, LaDa
+any.  It is best to keep this attribute set to -1, in which case, Pylada
 takes care of copying the relevant files.</p>
 <blockquote>
 <div><ul class="simple">
-<li>-1, &#8216;auto&#8217;: (Default) Automatically determined by LaDA. Depends on
-the value of <a class="reference internal" href="#lada.vasp.functional.Vasp.restart" title="lada.vasp.functional.Vasp.restart"><tt class="xref py py-attr docutils literal"><span class="pre">restart</span></tt></a> and the existence of the relevant
+<li>-1, &#8216;auto&#8217;: (Default) Automatically determined by Pylada. Depends on
+the value of <a class="reference internal" href="#pylada.vasp.functional.Vasp.restart" title="pylada.vasp.functional.Vasp.restart"><tt class="xref py py-attr docutils literal"><span class="pre">restart</span></tt></a> and the existence of the relevant
 files. If a <a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/WAVECAR">WAVECAR</a> file exists, then <a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/ISTART">ISTART</a> will be set to 1
 (constant cutoff).</li>
 <li>0, &#8216;scratch&#8217;: Start from scratch.</li>
@@ -603,13 +603,13 @@ the attribute is set.</p>
 </div>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/ISTART">ISTART</a>, <a class="reference internal" href="#lada.vasp.functional.Vasp.icharg" title="lada.vasp.functional.Vasp.icharg"><tt class="xref py py-attr docutils literal"><span class="pre">icharg</span></tt></a>, <a class="reference internal" href="#lada.vasp.functional.Vasp.istruc" title="lada.vasp.functional.Vasp.istruc"><tt class="xref py py-attr docutils literal"><span class="pre">istruc</span></tt></a>, <a class="reference internal" href="#lada.vasp.functional.Vasp.restart" title="lada.vasp.functional.Vasp.restart"><tt class="xref py py-attr docutils literal"><span class="pre">restart</span></tt></a></p>
+<p class="last"><a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/ISTART">ISTART</a>, <a class="reference internal" href="#pylada.vasp.functional.Vasp.icharg" title="pylada.vasp.functional.Vasp.icharg"><tt class="xref py py-attr docutils literal"><span class="pre">icharg</span></tt></a>, <a class="reference internal" href="#pylada.vasp.functional.Vasp.istruc" title="pylada.vasp.functional.Vasp.istruc"><tt class="xref py py-attr docutils literal"><span class="pre">istruc</span></tt></a>, <a class="reference internal" href="#pylada.vasp.functional.Vasp.restart" title="pylada.vasp.functional.Vasp.restart"><tt class="xref py py-attr docutils literal"><span class="pre">restart</span></tt></a></p>
 </div>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.istruc">
-<tt class="descname">istruc</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.istruc" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.istruc">
+<tt class="descname">istruc</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.istruc" title="Permalink to this definition">¶</a></dt>
 <dd><p>Initial structure.</p>
 <p>Determines which structure is written to the POSCAR. In practice, it
 makes it possible to restart a crashed job from the latest contcar.
@@ -617,7 +617,7 @@ There are two possible options:</p>
 <blockquote>
 <div><ul>
 <li><dl class="first docutils">
-<dt>auto: LaDa determines automatically what to use. If a CONTCAR</dt>
+<dt>auto: Pylada determines automatically what to use. If a CONTCAR</dt>
 <dd><p class="first last">exists in either the current directory or in the restart
 directory (if any), then uses the latest. Otherwise, uses
 input structure.</p>
@@ -629,7 +629,7 @@ input structure.</p>
 <li><p class="first">contcar: Always use <a class="reference external" href="http://cms.mpi.univie.ac.at/vasp/guide/node60.html">CONTCAR</a> structure unless <tt class="docutils literal"><span class="pre">overwrite</span> <span class="pre">==</span>
 <span class="pre">True</span></tt>.</p>
 </li>
-<li><p class="first">input: Always use input structure, never <a class="reference internal" href="#lada.vasp.functional.Vasp.restart" title="lada.vasp.functional.Vasp.restart"><tt class="xref py py-attr docutils literal"><span class="pre">restart</span></tt></a> or
+<li><p class="first">input: Always use input structure, never <a class="reference internal" href="#pylada.vasp.functional.Vasp.restart" title="pylada.vasp.functional.Vasp.restart"><tt class="xref py py-attr docutils literal"><span class="pre">restart</span></tt></a> or
 <a class="reference external" href="http://cms.mpi.univie.ac.at/vasp/guide/node60.html">CONTCAR</a> structure.</p>
 </li>
 </ul>
@@ -642,13 +642,13 @@ input structure.</p>
 </div>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><a class="reference internal" href="#lada.vasp.functional.Vasp.restart" title="lada.vasp.functional.Vasp.restart"><tt class="xref py py-attr docutils literal"><span class="pre">restart</span></tt></a>, <a class="reference internal" href="#lada.vasp.functional.Vasp.icharg" title="lada.vasp.functional.Vasp.icharg"><tt class="xref py py-attr docutils literal"><span class="pre">icharg</span></tt></a>, <a class="reference internal" href="#lada.vasp.functional.Vasp.istart" title="lada.vasp.functional.Vasp.istart"><tt class="xref py py-attr docutils literal"><span class="pre">istart</span></tt></a></p>
+<p class="last"><a class="reference internal" href="#pylada.vasp.functional.Vasp.restart" title="pylada.vasp.functional.Vasp.restart"><tt class="xref py py-attr docutils literal"><span class="pre">restart</span></tt></a>, <a class="reference internal" href="#pylada.vasp.functional.Vasp.icharg" title="pylada.vasp.functional.Vasp.icharg"><tt class="xref py py-attr docutils literal"><span class="pre">icharg</span></tt></a>, <a class="reference internal" href="#pylada.vasp.functional.Vasp.istart" title="pylada.vasp.functional.Vasp.istart"><tt class="xref py py-attr docutils literal"><span class="pre">istart</span></tt></a></p>
 </div>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.isym">
-<tt class="descname">isym</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.isym" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.isym">
+<tt class="descname">isym</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.isym" title="Permalink to this definition">¶</a></dt>
 <dd><p>Symmetry scheme.</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
@@ -657,14 +657,14 @@ input structure.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.kpoints">
-<tt class="descname">kpoints</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.kpoints" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.kpoints">
+<tt class="descname">kpoints</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.kpoints" title="Permalink to this definition">¶</a></dt>
 <dd><p>kpoints for which to perform calculations.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.lcharg">
-<tt class="descname">lcharg</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.lcharg" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.lcharg">
+<tt class="descname">lcharg</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.lcharg" title="Permalink to this definition">¶</a></dt>
 <dd><p>Whether or not to write the charge density to the <a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/CHGCAR">CHGCAR</a>.</p>
 <p>Must be a boolean. Defaults to True.</p>
 <div class="admonition-see-also admonition seealso">
@@ -674,8 +674,8 @@ input structure.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.ldau">
-<tt class="descname">ldau</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.ldau" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.ldau">
+<tt class="descname">ldau</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.ldau" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sets U, nlep, and enlep parameters.</p>
 <p>The U, nlep, and enlep parameters of the atomic species are set at the
 same time as the pseudo-potentials. This object merely sets up the <a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/INCAR">INCAR</a>
@@ -684,13 +684,13 @@ with right input.</p>
 &#8220;all&#8221;, and defines the level of verbosity of VASP (with respect to U and nlep).</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/LDAU">LDAU</a>, <a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/LDAUTYPE">LDAUTYPE</a>, <a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/LDAUL">LDAUL</a>, <a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/LDAUJ">LDAUJ</a>, <a class="reference internal" href="#lada.vasp.functional.Vasp.species" title="lada.vasp.functional.Vasp.species"><tt class="xref py py-attr docutils literal"><span class="pre">species</span></tt></a></p>
+<p class="last"><a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/LDAU">LDAU</a>, <a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/LDAUTYPE">LDAUTYPE</a>, <a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/LDAUL">LDAUL</a>, <a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/LDAUJ">LDAUJ</a>, <a class="reference internal" href="#pylada.vasp.functional.Vasp.species" title="pylada.vasp.functional.Vasp.species"><tt class="xref py py-attr docutils literal"><span class="pre">species</span></tt></a></p>
 </div>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.lmaxmix">
-<tt class="descname">lmaxmix</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.lmaxmix" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.lmaxmix">
+<tt class="descname">lmaxmix</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.lmaxmix" title="Permalink to this definition">¶</a></dt>
 <dd><p>Cutoff <em>l</em>-quantum number of PAW charge densities passed to mixer</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
@@ -699,8 +699,8 @@ with right input.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.loptics">
-<tt class="descname">loptics</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.loptics" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.loptics">
+<tt class="descname">loptics</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.loptics" title="Permalink to this definition">¶</a></dt>
 <dd><p>Whether to compute the frequency dependent dielectic matrix.</p>
 <p>Must be a boolean or None (leaves default to <a class="reference external" href="http://www.vasp.at/">VASP</a>).</p>
 <div class="admonition-see-also admonition seealso">
@@ -710,8 +710,8 @@ with right input.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.lorbit">
-<tt class="descname">lorbit</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.lorbit" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.lorbit">
+<tt class="descname">lorbit</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.lorbit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Decides whether PROOUT and PROOCAR are writtent to disk.</p>
 <p>Can be one of 0|1|2|5|10|11|12|None.</p>
 <div class="admonition-see-also admonition seealso">
@@ -721,8 +721,8 @@ with right input.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.lpead">
-<tt class="descname">lpead</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.lpead" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.lpead">
+<tt class="descname">lpead</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.lpead" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute the finite-difference k-derivative of the wavefunctions.</p>
 <p>Must be a boolean or None (leaves default to <a class="reference external" href="http://www.vasp.at/">VASP</a>).</p>
 <div class="admonition-see-also admonition seealso">
@@ -732,8 +732,8 @@ with right input.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.lrpa">
-<tt class="descname">lrpa</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.lrpa" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.lrpa">
+<tt class="descname">lrpa</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.lrpa" title="Permalink to this definition">¶</a></dt>
 <dd><p>Whether to include local field effects at the Hartree level only.</p>
 <p>Must be a boolean or None (leaves default to <a class="reference external" href="http://www.vasp.at/">VASP</a>).</p>
 <div class="admonition-see-also admonition seealso">
@@ -743,16 +743,16 @@ with right input.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.lsorbit">
-<tt class="descname">lsorbit</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.lsorbit" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.lsorbit">
+<tt class="descname">lsorbit</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.lsorbit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run calculation with spin-orbit coupling.</p>
-<p>Accepts None, True, or False. If True, then sets <a class="reference internal" href="#lada.vasp.functional.Vasp.nonscf" title="lada.vasp.functional.Vasp.nonscf"><tt class="xref py py-attr docutils literal"><span class="pre">nonscf</span></tt></a> to
-True and <a class="reference internal" href="#lada.vasp.functional.Vasp.ispin" title="lada.vasp.functional.Vasp.ispin"><tt class="xref py py-attr docutils literal"><span class="pre">ispin</span></tt></a> to 2.</p>
+<p>Accepts None, True, or False. If True, then sets <a class="reference internal" href="#pylada.vasp.functional.Vasp.nonscf" title="pylada.vasp.functional.Vasp.nonscf"><tt class="xref py py-attr docutils literal"><span class="pre">nonscf</span></tt></a> to
+True and <a class="reference internal" href="#pylada.vasp.functional.Vasp.ispin" title="pylada.vasp.functional.Vasp.ispin"><tt class="xref py py-attr docutils literal"><span class="pre">ispin</span></tt></a> to 2.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.lvtot">
-<tt class="descname">lvtot</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.lvtot" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.lvtot">
+<tt class="descname">lvtot</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.lvtot" title="Permalink to this definition">¶</a></dt>
 <dd><p>Whether or not to write the local potential to the LOCPOT file.</p>
 <p>Must be a boolean. Defaults to False.</p>
 <div class="admonition-see-also admonition seealso">
@@ -762,8 +762,8 @@ True and <a class="reference internal" href="#lada.vasp.functional.Vasp.ispin" t
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.lwave">
-<tt class="descname">lwave</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.lwave" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.lwave">
+<tt class="descname">lwave</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.lwave" title="Permalink to this definition">¶</a></dt>
 <dd><p>Whether or not to write the wavefunctions to the <a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/WAVECAR">WAVECAR</a>.</p>
 <p>Must be a boolean. Defaults to False (unlike <a class="reference external" href="http://www.vasp.at/">VASP</a>).</p>
 <div class="admonition-see-also admonition seealso">
@@ -773,8 +773,8 @@ True and <a class="reference internal" href="#lada.vasp.functional.Vasp.ispin" t
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.magmom">
-<tt class="descname">magmom</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.magmom" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.magmom">
+<tt class="descname">magmom</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.magmom" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sets the initial magnetic moments on each atom.</p>
 <p>There are three types of usage:</p>
 <ul class="simple">
@@ -798,8 +798,8 @@ tag is not set.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.nbands">
-<tt class="descname">nbands</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.nbands" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.nbands">
+<tt class="descname">nbands</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.nbands" title="Permalink to this definition">¶</a></dt>
 <dd><p>Number of bands in the calculation.</p>
 <p>Can be any integer.</p>
 <div class="admonition-see-also admonition seealso">
@@ -809,19 +809,19 @@ tag is not set.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.nelect">
-<tt class="descname">nelect</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.nelect" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.nelect">
+<tt class="descname">nelect</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.nelect" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sets the absolute number of electrons.</p>
-<p>Disables <a class="reference internal" href="#lada.vasp.functional.Vasp.extraelectron" title="lada.vasp.functional.Vasp.extraelectron"><tt class="xref py py-attr docutils literal"><span class="pre">extraelectron</span></tt></a> if set to something other than None.</p>
+<p>Disables <a class="reference internal" href="#pylada.vasp.functional.Vasp.extraelectron" title="pylada.vasp.functional.Vasp.extraelectron"><tt class="xref py py-attr docutils literal"><span class="pre">extraelectron</span></tt></a> if set to something other than None.</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/NELECT">NELECT</a>, <a class="reference internal" href="#lada.vasp.functional.Vasp.extraelectron" title="lada.vasp.functional.Vasp.extraelectron"><tt class="xref py py-attr docutils literal"><span class="pre">extraelectron</span></tt></a></p>
+<p class="last"><a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/NELECT">NELECT</a>, <a class="reference internal" href="#pylada.vasp.functional.Vasp.extraelectron" title="pylada.vasp.functional.Vasp.extraelectron"><tt class="xref py py-attr docutils literal"><span class="pre">extraelectron</span></tt></a></p>
 </div>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.nelm">
-<tt class="descname">nelm</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.nelm" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.nelm">
+<tt class="descname">nelm</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.nelm" title="Permalink to this definition">¶</a></dt>
 <dd><p>Maximum number of self-consistent electronic minimization steps.</p>
 <p>Must be an integer or None (leaves default to <a class="reference external" href="http://www.vasp.at/">VASP</a>).</p>
 <div class="admonition-see-also admonition seealso">
@@ -831,8 +831,8 @@ tag is not set.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.nelmdl">
-<tt class="descname">nelmdl</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.nelmdl" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.nelmdl">
+<tt class="descname">nelmdl</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.nelmdl" title="Permalink to this definition">¶</a></dt>
 <dd><p>Number of non-selfconsistent steps at the beginning.</p>
 <p>Must be an integer or None (leaves default to <a class="reference external" href="http://www.vasp.at/">VASP</a>).</p>
 <div class="admonition-see-also admonition seealso">
@@ -842,8 +842,8 @@ tag is not set.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.nelmin">
-<tt class="descname">nelmin</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.nelmin" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.nelmin">
+<tt class="descname">nelmin</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.nelmin" title="Permalink to this definition">¶</a></dt>
 <dd><p>Minimum number of self-consistent electronic minimization steps.</p>
 <p>Must be an integer or None (leaves default to <a class="reference external" href="http://www.vasp.at/">VASP</a>).</p>
 <div class="admonition-see-also admonition seealso">
@@ -853,41 +853,41 @@ tag is not set.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.ngx">
-<tt class="descname">ngx</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.ngx" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.ngx">
+<tt class="descname">ngx</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.ngx" title="Permalink to this definition">¶</a></dt>
 <dd><p>number of grid points in the FFT-grid along the first lattice vector.</p>
 <p>Must be an integer or None (leaves default to <a class="reference external" href="http://www.vasp.at/">VASP</a>).</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/NGX">NGX</a>, <a class="reference internal" href="#lada.vasp.functional.Vasp.ngy" title="lada.vasp.functional.Vasp.ngy"><tt class="xref py py-attr docutils literal"><span class="pre">ngy</span></tt></a>, <a class="reference internal" href="#lada.vasp.functional.Vasp.ngz" title="lada.vasp.functional.Vasp.ngz"><tt class="xref py py-attr docutils literal"><span class="pre">ngz</span></tt></a></p>
+<p class="last"><a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/NGX">NGX</a>, <a class="reference internal" href="#pylada.vasp.functional.Vasp.ngy" title="pylada.vasp.functional.Vasp.ngy"><tt class="xref py py-attr docutils literal"><span class="pre">ngy</span></tt></a>, <a class="reference internal" href="#pylada.vasp.functional.Vasp.ngz" title="pylada.vasp.functional.Vasp.ngz"><tt class="xref py py-attr docutils literal"><span class="pre">ngz</span></tt></a></p>
 </div>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.ngy">
-<tt class="descname">ngy</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.ngy" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.ngy">
+<tt class="descname">ngy</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.ngy" title="Permalink to this definition">¶</a></dt>
 <dd><p>number of grid points in the FFT-grid along the second lattice vector.</p>
 <p>Must be an integer or None (leaves default to <a class="reference external" href="http://www.vasp.at/">VASP</a>).</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/NGY">NGY</a>, <a class="reference internal" href="#lada.vasp.functional.Vasp.ngx" title="lada.vasp.functional.Vasp.ngx"><tt class="xref py py-attr docutils literal"><span class="pre">ngx</span></tt></a>, <a class="reference internal" href="#lada.vasp.functional.Vasp.ngz" title="lada.vasp.functional.Vasp.ngz"><tt class="xref py py-attr docutils literal"><span class="pre">ngz</span></tt></a></p>
+<p class="last"><a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/NGY">NGY</a>, <a class="reference internal" href="#pylada.vasp.functional.Vasp.ngx" title="pylada.vasp.functional.Vasp.ngx"><tt class="xref py py-attr docutils literal"><span class="pre">ngx</span></tt></a>, <a class="reference internal" href="#pylada.vasp.functional.Vasp.ngz" title="pylada.vasp.functional.Vasp.ngz"><tt class="xref py py-attr docutils literal"><span class="pre">ngz</span></tt></a></p>
 </div>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.ngz">
-<tt class="descname">ngz</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.ngz" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.ngz">
+<tt class="descname">ngz</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.ngz" title="Permalink to this definition">¶</a></dt>
 <dd><p>number of grid points in the FFT-grid along the third lattice vector.</p>
 <p>Must be an integer or None (leaves default to <a class="reference external" href="http://www.vasp.at/">VASP</a>).</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/NGZ">NGZ</a>, <a class="reference internal" href="#lada.vasp.functional.Vasp.ngx" title="lada.vasp.functional.Vasp.ngx"><tt class="xref py py-attr docutils literal"><span class="pre">ngx</span></tt></a>, <a class="reference internal" href="#lada.vasp.functional.Vasp.ngy" title="lada.vasp.functional.Vasp.ngy"><tt class="xref py py-attr docutils literal"><span class="pre">ngy</span></tt></a></p>
+<p class="last"><a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/NGZ">NGZ</a>, <a class="reference internal" href="#pylada.vasp.functional.Vasp.ngx" title="pylada.vasp.functional.Vasp.ngx"><tt class="xref py py-attr docutils literal"><span class="pre">ngx</span></tt></a>, <a class="reference internal" href="#pylada.vasp.functional.Vasp.ngy" title="pylada.vasp.functional.Vasp.ngy"><tt class="xref py py-attr docutils literal"><span class="pre">ngy</span></tt></a></p>
 </div>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.nomega">
-<tt class="descname">nomega</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.nomega" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.nomega">
+<tt class="descname">nomega</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.nomega" title="Permalink to this definition">¶</a></dt>
 <dd><p>Number of frequency grid points.</p>
 <p>Can be any integer.</p>
 <div class="admonition-see-also admonition seealso">
@@ -897,17 +897,17 @@ tag is not set.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.nonscf">
-<tt class="descname">nonscf</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.nonscf" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.nonscf">
+<tt class="descname">nonscf</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.nonscf" title="Permalink to this definition">¶</a></dt>
 <dd><p>If True, performs a non-self consistent calculation.</p>
-<p>The value of this keyword is checked by <a class="reference internal" href="#lada.vasp.functional.Vasp.icharg" title="lada.vasp.functional.Vasp.icharg"><tt class="xref py py-attr docutils literal"><span class="pre">icharg</span></tt></a> and used
-appropriately. The attribute <a class="reference internal" href="#lada.vasp.functional.Vasp.lsorbit" title="lada.vasp.functional.Vasp.lsorbit"><tt class="xref py py-attr docutils literal"><span class="pre">lsorbit</span></tt></a> also acts and checks
+<p>The value of this keyword is checked by <a class="reference internal" href="#pylada.vasp.functional.Vasp.icharg" title="pylada.vasp.functional.Vasp.icharg"><tt class="xref py py-attr docutils literal"><span class="pre">icharg</span></tt></a> and used
+appropriately. The attribute <a class="reference internal" href="#pylada.vasp.functional.Vasp.lsorbit" title="pylada.vasp.functional.Vasp.lsorbit"><tt class="xref py py-attr docutils literal"><span class="pre">lsorbit</span></tt></a> also acts and checks
 on it. It is False by default.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.npar">
-<tt class="descname">npar</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.npar" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.npar">
+<tt class="descname">npar</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.npar" title="Permalink to this definition">¶</a></dt>
 <dd><p>Parallelization over bands.</p>
 <p>Npar defines how many nodes work on one band.
 It can be set to a particular number:</p>
@@ -935,8 +935,8 @@ processors.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.nsw">
-<tt class="descname">nsw</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.nsw" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.nsw">
+<tt class="descname">nsw</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.nsw" title="Permalink to this definition">¶</a></dt>
 <dd><p>Maxium number of ionic iterations.</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
@@ -945,8 +945,8 @@ processors.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.prec">
-<tt class="descname">prec</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.prec" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.prec">
+<tt class="descname">prec</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.prec" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sets accuracy of calculation.</p>
 <ul class="simple">
 <li>accurate (default)</li>
@@ -962,8 +962,8 @@ processors.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.precfock">
-<tt class="descname">precfock</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.precfock" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.precfock">
+<tt class="descname">precfock</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.precfock" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sets up FFT grid in hartree-fock related routines.</p>
 <p>Allowable options are:</p>
 <ul class="simple">
@@ -980,19 +980,19 @@ processors.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.program">
-<tt class="descname">program</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.program" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.program">
+<tt class="descname">program</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.program" title="Permalink to this definition">¶</a></dt>
 <dd><p>Path to vasp program.</p>
 <p>Can be one of the following:</p>
 <blockquote>
 <div><ul class="simple">
-<li>None: defaults to <a class="reference internal" href="../../userguide/config.html#lada.vasp_program" title="lada.vasp_program"><tt class="xref py py-attr docutils literal"><span class="pre">vasp_program</span></tt></a>.
-<a class="reference internal" href="../../userguide/config.html#lada.vasp_program" title="lada.vasp_program"><tt class="xref py py-attr docutils literal"><span class="pre">vasp_program</span></tt></a> can take the same values as described
+<li>None: defaults to <a class="reference internal" href="../configuration.html#pylada.vasp_program" title="pylada.vasp_program"><tt class="xref py py-attr docutils literal"><span class="pre">vasp_program</span></tt></a>.
+<a class="reference internal" href="../configuration.html#pylada.vasp_program" title="pylada.vasp_program"><tt class="xref py py-attr docutils literal"><span class="pre">vasp_program</span></tt></a> can take the same values as described
 here, except for None.</li>
 <li>string: Should be the path to the vasp executable. It can be either
 a full path, or an executable within the environment&#8217;s $PATH
 variable.</li>
-<li>callable: The callable is called with a <a class="reference internal" href="#lada.vasp.functional.Vasp" title="lada.vasp.functional.Vasp"><tt class="xref py py-class docutils literal"><span class="pre">Vasp</span></tt></a> as sole
+<li>callable: The callable is called with a <a class="reference internal" href="#pylada.vasp.functional.Vasp" title="pylada.vasp.functional.Vasp"><tt class="xref py py-class docutils literal"><span class="pre">Vasp</span></tt></a> as sole
 argument. It should return a string, as described above.  In other
 words, different vasp executables can be used depending on the
 parameters.</li>
@@ -1001,8 +1001,8 @@ parameters.</li>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.relaxation">
-<tt class="descname">relaxation</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.relaxation" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.relaxation">
+<tt class="descname">relaxation</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.relaxation" title="Permalink to this definition">¶</a></dt>
 <dd><p>Short-cut for setting up relaxation.</p>
 <p>It accepts two parameters:</p>
 <blockquote>
@@ -1012,32 +1012,32 @@ parameters.</li>
 requested.</li>
 </ul>
 </div></blockquote>
-<p>It makes sure that <a class="reference internal" href="#lada.vasp.functional.Vasp.isif" title="lada.vasp.functional.Vasp.isif"><tt class="xref py py-attr docutils literal"><span class="pre">isif</span></tt></a>, <a class="reference internal" href="#lada.vasp.functional.Vasp.ibrion" title="lada.vasp.functional.Vasp.ibrion"><tt class="xref py py-attr docutils literal"><span class="pre">ibrion</span></tt></a>, and
-<a class="reference internal" href="#lada.vasp.functional.Vasp.nsw" title="lada.vasp.functional.Vasp.nsw"><tt class="xref py py-attr docutils literal"><span class="pre">nsw</span></tt></a> take the right value for the
+<p>It makes sure that <a class="reference internal" href="#pylada.vasp.functional.Vasp.isif" title="pylada.vasp.functional.Vasp.isif"><tt class="xref py py-attr docutils literal"><span class="pre">isif</span></tt></a>, <a class="reference internal" href="#pylada.vasp.functional.Vasp.ibrion" title="pylada.vasp.functional.Vasp.ibrion"><tt class="xref py py-attr docutils literal"><span class="pre">ibrion</span></tt></a>, and
+<a class="reference internal" href="#pylada.vasp.functional.Vasp.nsw" title="pylada.vasp.functional.Vasp.nsw"><tt class="xref py py-attr docutils literal"><span class="pre">nsw</span></tt></a> take the right value for the
 kind of relaxation.</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><a class="reference internal" href="#lada.vasp.functional.Vasp.isif" title="lada.vasp.functional.Vasp.isif"><tt class="xref py py-attr docutils literal"><span class="pre">isif</span></tt></a>, <a class="reference internal" href="#lada.vasp.functional.Vasp.ibrion" title="lada.vasp.functional.Vasp.ibrion"><tt class="xref py py-attr docutils literal"><span class="pre">ibrion</span></tt></a>, <a class="reference internal" href="#lada.vasp.functional.Vasp.nsw" title="lada.vasp.functional.Vasp.nsw"><tt class="xref py py-attr docutils literal"><span class="pre">nsw</span></tt></a></p>
+<p class="last"><a class="reference internal" href="#pylada.vasp.functional.Vasp.isif" title="pylada.vasp.functional.Vasp.isif"><tt class="xref py py-attr docutils literal"><span class="pre">isif</span></tt></a>, <a class="reference internal" href="#pylada.vasp.functional.Vasp.ibrion" title="pylada.vasp.functional.Vasp.ibrion"><tt class="xref py py-attr docutils literal"><span class="pre">ibrion</span></tt></a>, <a class="reference internal" href="#pylada.vasp.functional.Vasp.nsw" title="pylada.vasp.functional.Vasp.nsw"><tt class="xref py py-attr docutils literal"><span class="pre">nsw</span></tt></a></p>
 </div>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.restart">
-<tt class="descname">restart</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.restart" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.restart">
+<tt class="descname">restart</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.restart" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculation from which to restart.</p>
-<p>Depending on the values of <a class="reference internal" href="#lada.vasp.functional.Vasp.istart" title="lada.vasp.functional.Vasp.istart"><tt class="xref py py-attr docutils literal"><span class="pre">istart</span></tt></a>, <a class="reference internal" href="#lada.vasp.functional.Vasp.icharg" title="lada.vasp.functional.Vasp.icharg"><tt class="xref py py-attr docutils literal"><span class="pre">icharg</span></tt></a>, and
-<a class="reference internal" href="#lada.vasp.functional.Vasp.istruc" title="lada.vasp.functional.Vasp.istruc"><tt class="xref py py-attr docutils literal"><span class="pre">istruc</span></tt></a>, this calculation will copy the charge density,
+<p>Depending on the values of <a class="reference internal" href="#pylada.vasp.functional.Vasp.istart" title="pylada.vasp.functional.Vasp.istart"><tt class="xref py py-attr docutils literal"><span class="pre">istart</span></tt></a>, <a class="reference internal" href="#pylada.vasp.functional.Vasp.icharg" title="pylada.vasp.functional.Vasp.icharg"><tt class="xref py py-attr docutils literal"><span class="pre">icharg</span></tt></a>, and
+<a class="reference internal" href="#pylada.vasp.functional.Vasp.istruc" title="pylada.vasp.functional.Vasp.istruc"><tt class="xref py py-attr docutils literal"><span class="pre">istruc</span></tt></a>, this calculation will copy the charge density,
 wavefunctions, and structure from this object. It should be either
 None, or an extraction object returned by a previous calculation (e.g.
-<a class="reference internal" href="extract.html#lada.vasp.extract.Extract" title="lada.vasp.extract.Extract"><tt class="xref py py-class docutils literal"><span class="pre">Extract</span></tt></a>):</p>
+<a class="reference internal" href="extract.html#pylada.vasp.extract.Extract" title="pylada.vasp.extract.Extract"><tt class="xref py py-class docutils literal"><span class="pre">Extract</span></tt></a>):</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">calc1</span> <span class="o">=</span> <span class="n">vasp</span><span class="p">(</span><span class="n">structure</span><span class="p">)</span>
 <span class="n">calc2</span> <span class="o">=</span> <span class="n">vasp</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">restart</span><span class="o">=</span><span class="n">calc2</span><span class="p">,</span> <span class="n">nonscf</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The snippet above performs a non-self-consistent calculation using the
 first calculation. In this example, it is expected that
-<a class="reference internal" href="#lada.vasp.functional.Vasp.istart" title="lada.vasp.functional.Vasp.istart"><tt class="xref py py-attr docutils literal"><span class="pre">istart</span></tt></a>, <a class="reference internal" href="#lada.vasp.functional.Vasp.icharg" title="lada.vasp.functional.Vasp.icharg"><tt class="xref py py-attr docutils literal"><span class="pre">icharg</span></tt></a>, and <a class="reference internal" href="#lada.vasp.functional.Vasp.istruc" title="lada.vasp.functional.Vasp.istruc"><tt class="xref py py-attr docutils literal"><span class="pre">istruc</span></tt></a> are all set
-to &#8216;auto&#8217;, in which case LaDa knows to do the right thing, e.g. copy
+<a class="reference internal" href="#pylada.vasp.functional.Vasp.istart" title="pylada.vasp.functional.Vasp.istart"><tt class="xref py py-attr docutils literal"><span class="pre">istart</span></tt></a>, <a class="reference internal" href="#pylada.vasp.functional.Vasp.icharg" title="pylada.vasp.functional.Vasp.icharg"><tt class="xref py py-attr docutils literal"><span class="pre">icharg</span></tt></a>, and <a class="reference internal" href="#pylada.vasp.functional.Vasp.istruc" title="pylada.vasp.functional.Vasp.istruc"><tt class="xref py py-attr docutils literal"><span class="pre">istruc</span></tt></a> are all set
+to &#8216;auto&#8217;, in which case Pylada knows to do the right thing, e.g. copy
 whatever is available, and nothing is <tt class="docutils literal"><span class="pre">vasp.restart</span> <span class="pre">is</span> <span class="pre">None</span></tt>.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
@@ -1046,13 +1046,13 @@ it is not considered.</p>
 </div>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><a class="reference internal" href="#lada.vasp.functional.Vasp.istart" title="lada.vasp.functional.Vasp.istart"><tt class="xref py py-attr docutils literal"><span class="pre">istart</span></tt></a>, <a class="reference internal" href="#lada.vasp.functional.Vasp.istruc" title="lada.vasp.functional.Vasp.istruc"><tt class="xref py py-attr docutils literal"><span class="pre">istruc</span></tt></a>, <a class="reference internal" href="#lada.vasp.functional.Vasp.icharg" title="lada.vasp.functional.Vasp.icharg"><tt class="xref py py-attr docutils literal"><span class="pre">icharg</span></tt></a></p>
+<p class="last"><a class="reference internal" href="#pylada.vasp.functional.Vasp.istart" title="pylada.vasp.functional.Vasp.istart"><tt class="xref py py-attr docutils literal"><span class="pre">istart</span></tt></a>, <a class="reference internal" href="#pylada.vasp.functional.Vasp.istruc" title="pylada.vasp.functional.Vasp.istruc"><tt class="xref py py-attr docutils literal"><span class="pre">istruc</span></tt></a>, <a class="reference internal" href="#pylada.vasp.functional.Vasp.icharg" title="pylada.vasp.functional.Vasp.icharg"><tt class="xref py py-attr docutils literal"><span class="pre">icharg</span></tt></a></p>
 </div>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.sigma">
-<tt class="descname">sigma</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.sigma" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.sigma">
+<tt class="descname">sigma</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.sigma" title="Permalink to this definition">¶</a></dt>
 <dd><p>Width of the smearing function.</p>
 <p>Accepts floating points which may be signed with an energy unit using
 the <a class="reference external" href="http://packages.python.org/quantities/index.html">quantities</a> package:</p>
@@ -1067,32 +1067,32 @@ the <a class="reference external" href="http://packages.python.org/quantities/in
 </div></blockquote>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/SIGMA">SIGMA</a>, <a class="reference external" href="http://packages.python.org/quantities/index.html">quantities</a>, <a class="reference internal" href="#lada.vasp.functional.Vasp.ismear" title="lada.vasp.functional.Vasp.ismear"><tt class="xref py py-attr docutils literal"><span class="pre">ismear</span></tt></a></p>
+<p class="last"><a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/SIGMA">SIGMA</a>, <a class="reference external" href="http://packages.python.org/quantities/index.html">quantities</a>, <a class="reference internal" href="#pylada.vasp.functional.Vasp.ismear" title="pylada.vasp.functional.Vasp.ismear"><tt class="xref py py-attr docutils literal"><span class="pre">ismear</span></tt></a></p>
 </div>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.smearings">
-<tt class="descname">smearings</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.smearings" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.smearings">
+<tt class="descname">smearings</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.smearings" title="Permalink to this definition">¶</a></dt>
 <dd><p>Smearing steps for <tt class="docutils literal"><span class="pre">ISMEAR=-3</span></tt>.</p>
 <p>List of floating points. Does not accept <a class="reference external" href="http://packages.python.org/quantities/index.html">quantities</a>.</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/ISMEAR">ISMEAR</a>, <a class="reference internal" href="#lada.vasp.functional.Vasp.ismear" title="lada.vasp.functional.Vasp.ismear"><tt class="xref py py-attr docutils literal"><span class="pre">ismear</span></tt></a></p>
+<p class="last"><a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/ISMEAR">ISMEAR</a>, <a class="reference internal" href="#pylada.vasp.functional.Vasp.ismear" title="pylada.vasp.functional.Vasp.ismear"><tt class="xref py py-attr docutils literal"><span class="pre">ismear</span></tt></a></p>
 </div>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.species">
-<tt class="descname">species</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.species" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.species">
+<tt class="descname">species</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.species" title="Permalink to this definition">¶</a></dt>
 <dd><p>Species in the system.</p>
 <p>Defines both <a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/POTCAR">POTCAR</a>, U, and/or NLEP parameters.  This is generally
 done using the method <tt class="xref py py-meth docutils literal"><span class="pre">add_specie()</span></tt>.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.functional.Vasp.system">
-<tt class="descname">system</tt><em class="property"> = None</em><a class="headerlink" href="#lada.vasp.functional.Vasp.system" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.functional.Vasp.system">
+<tt class="descname">system</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.vasp.functional.Vasp.system" title="Permalink to this definition">¶</a></dt>
 <dd><p>System title to use for calculation.</p>
 <ul>
 <li><dl class="first docutils">
@@ -1175,7 +1175,7 @@ the title</li>
         <li class="right" >
           <a href="../vasp.html" title="Vasp Module"
              >previous</a> |</li>
-        <li><a href="../../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Pylada 1.0 documentation</a> &raquo;</li>
           <li><a href="../../pyapi.html" >Python API</a> &raquo;</li>
           <li><a href="../vasp.html" >Vasp Module</a> &raquo;</li> 
       </ul>

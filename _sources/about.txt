@@ -1,7 +1,7 @@
 About
 =====
 
-LaDa is a modular python framework to control physics simulations, from DFT to
+Pylada is a modular python framework to control physics simulations, from DFT to
 empirical pseudo-potentials to point ion electrostatics. It's goal is to
 provide the basic building blocks from which methods incorporating different
 Hamiltonians can be constructed. It is designed around three main concepts:
@@ -17,14 +17,14 @@ Hamiltonians can be constructed. It is designed around three main concepts:
   * Manipulate, launch, and check the results for thousands of calculations
     simultaneously. Think of calculating different of carbone allotropes. It
     would be impractical to qsub each and every job and then check that each
-    ran correctly. Hence, LaDa provides an interface for that.
+    ran correctly. Hence, Pylada provides an interface for that.
 
 With these building blocks in hand, it is possible, fairly easy, and - I'm told
 - even fun,  to construct complex computational routines. Computing phonons or
 formation enthalpy requires some know-how, certainly. But it is also quite
-repetitive. LaDa takes the gruelling out of it.
+repetitive. Pylada takes the gruelling out of it.
 
-Here are a few of the projects LaDa helped us with.
+Here are a few of the projects Pylada helped us with.
 
   * *When brute force suffices:* A\ :sub:`2`\ BX\ :sub:`4` (A, B cations, X=O, S,
     Se, Te) form a vast family of compounds crystallizing in forty different
@@ -35,7 +35,7 @@ Here are a few of the projects LaDa helped us with.
     formation enthalpy of hundreds of unknown A\ :sub:`2`\ BX\ :sub:`4` as well
     as that of their (reported) competing binaries and ternaries. We found
     indeed quite a few compounds, some which may be fairly easily grown, which
-    simply passed through the sieve. LaDa made it a sinch to perform these
+    simply passed through the sieve. Pylada made it a sinch to perform these
     individual calculations. It allowed us to shove them in a database and then
     scour the data to automatically create phase diagrams for each system. 
 
@@ -48,7 +48,7 @@ Here are a few of the projects LaDa helped us with.
     concentration. To do this, we created a simple script to automatically
     determine possible vacancies and substitutions, as well as their charge
     state. These defects are all `the same`__, so no need to worry and create
-    each, one at a time.  LaDa made it possible to create the systems, launch
+    each, one at a time.  Pylada made it possible to create the systems, launch
     the appropriate chain of calculations, and gather the results, and let
     physicists do physics rather than word processing input files.
  
@@ -56,7 +56,7 @@ Here are a few of the projects LaDa helped us with.
     reproduce GW band-structures. It works by fitting a non-local potential.
     Originally, each fit would be performed by hand for each element. It turned
     out to be tedious. Especially since for more complicated compounds one
-    would rather fit all the elements involved simultaneously. But LaDa offers
+    would rather fit all the elements involved simultaneously. But Pylada offers
     python wrappers around DFT codes, and python offers a number of
     optimization functions. The two together make it possible to carry out
     painless optimization of a empirical DFT functional.

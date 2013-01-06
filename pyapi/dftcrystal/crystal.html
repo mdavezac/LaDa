@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Crystal structure à la CRYSTAL &mdash; LaDa 1.0 documentation</title>
+    <title>Crystal structure à la CRYSTAL &mdash; Pylada 1.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="author" title="About these documents" href="../../about.html" />
-    <link rel="top" title="LaDa 1.0 documentation" href="../../index.html" />
+    <link rel="top" title="Pylada 1.0 documentation" href="../../index.html" />
     <link rel="up" title="CRYSTAL wrapper module" href="../dftcrystal.html" />
     <link rel="prev" title="Computational and Hamiltonian parameters" href="comp.html" /> 
   </head>
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="comp.html" title="Computational and Hamiltonian parameters"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Pylada 1.0 documentation</a> &raquo;</li>
           <li><a href="../../pyapi.html" >Python API</a> &raquo;</li>
           <li><a href="../dftcrystal.html" accesskey="U">CRYSTAL wrapper module</a> &raquo;</li> 
       </ul>
@@ -55,22 +55,212 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="module-lada.dftcrystal.crystal">
-<span id="crystal-structure-a-la-crystal"></span><h1>Crystal structure à la CRYSTAL<a class="headerlink" href="#module-lada.dftcrystal.crystal" title="Permalink to this headline">¶</a></h1>
-<dl class="class">
-<dt id="lada.dftcrystal.crystal.Crystal">
-<em class="property">class </em><tt class="descclassname">lada.dftcrystal.crystal.</tt><tt class="descname">Crystal</tt><big>(</big><em>symmgroup=1</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../_modules/lada/dftcrystal/crystal.html#Crystal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.crystal.Crystal" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">lada.dftcrystal.molecule.Molecule</span></tt></p>
+  <div class="section" id="crystal-structure-a-la-crystal">
+<h1>Crystal structure à la CRYSTAL<a class="headerlink" href="#crystal-structure-a-la-crystal" title="Permalink to this headline">¶</a></h1>
+<p>There are presently three different input structure declarations:</p>
+<blockquote>
+<div><ul class="simple">
+<li><a class="reference internal" href="#pylada.dftcrystal.molecule.Molecule" title="pylada.dftcrystal.molecule.Molecule"><tt class="xref py py-class docutils literal"><span class="pre">Molecule</span></tt></a> defines a molecule, e.g. a
+0-d object.</li>
+<li><a class="reference internal" href="#pylada.dftcrystal.crystal.Crystal" title="pylada.dftcrystal.crystal.Crystal"><tt class="xref py py-class docutils literal"><span class="pre">Crystal</span></tt></a> defines a crystal, e.g. a
+3-d object.</li>
+<li><a class="reference internal" href="#pylada.dftcrystal.external.External" title="pylada.dftcrystal.external.External"><tt class="xref py py-class docutils literal"><span class="pre">External</span></tt></a> wraps around a
+<a class="reference internal" href="../crystal/classes.html#pylada.crystal.cppwrappers.Structure" title="pylada.crystal.cppwrappers.Structure"><tt class="xref py py-class docutils literal"><span class="pre">Structure</span></tt></a> instance. It allows mixing
+both declarative and transformative structural definitions.</li>
+</ul>
+</div></blockquote>
+<span class="target" id="module-pylada.dftcrystal.molecule"></span><dl class="class">
+<dt id="pylada.dftcrystal.molecule.Molecule">
+<em class="property">class </em><tt class="descclassname">pylada.dftcrystal.molecule.</tt><tt class="descname">Molecule</tt><big>(</big><em>symmgroup=1</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../_modules/pylada/dftcrystal/molecule.html#Molecule"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.dftcrystal.molecule.Molecule" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">pylada.tools.input.listblock.ListBlock</span></tt></p>
+<p>Base class for functional crystal structures for CRYSTAL.</p>
+<p>Usage is similar to <a class="reference internal" href="#pylada.dftcrystal.crystal.Crystal" title="pylada.dftcrystal.crystal.Crystal"><tt class="xref py py-class docutils literal"><span class="pre">Crystal</span></tt></a>. Please
+look there for more information.</p>
+<dl class="method">
+<dt id="pylada.dftcrystal.molecule.Molecule.add_atom">
+<tt class="descname">add_atom</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../_modules/pylada/dftcrystal/molecule.html#Molecule.add_atom"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.dftcrystal.molecule.Molecule.add_atom" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds an atom to the structure.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pylada.dftcrystal.molecule.Molecule.append">
+<tt class="descname">append</tt><big>(</big><em>keyword</em>, <em>raw=None</em><big>)</big><a class="reference internal" href="../../_modules/pylada/dftcrystal/molecule.html#Molecule.append"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.dftcrystal.molecule.Molecule.append" title="Permalink to this definition">¶</a></dt>
+<dd><p>Appends an item.</p>
+<p>Some shortcuts are accpted:</p>
+<ul class="simple">
+<li>&#8216;breaksym&#8217;</li>
+<li>&#8216;keepsymm&#8217;</li>
+<li>&#8216;angstrom&#8217;</li>
+<li>&#8216;bohr&#8217;</li>
+<li>&#8216;fractional&#8217;</li>
+</ul>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">self, so calls can be chained.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pylada.dftcrystal.molecule.Molecule.atoms">
+<tt class="descname">atoms</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.dftcrystal.molecule.Molecule.atoms" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of atoms.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pylada.dftcrystal.molecule.Molecule.copy">
+<tt class="descname">copy</tt><big>(</big><big>)</big><a class="reference internal" href="../../_modules/pylada/dftcrystal/molecule.html#Molecule.copy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.dftcrystal.molecule.Molecule.copy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns deep copy of self.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pylada.dftcrystal.molecule.Molecule.crystal_output">
+<tt class="descname">crystal_output</tt><a class="reference internal" href="../../_modules/pylada/dftcrystal/molecule.html#Molecule.crystal_output"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.dftcrystal.molecule.Molecule.crystal_output" title="Permalink to this definition">¶</a></dt>
+<dd><p>CRYSTAL program output.</p>
+<p>This is a string which contains the CRYSTAL output from a geometry run.
+Electronic calculations are not performed.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pylada.dftcrystal.molecule.Molecule.current_units">
+<tt class="descname">current_units</tt><a class="reference internal" href="../../_modules/pylada/dftcrystal/molecule.html#Molecule.current_units"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.dftcrystal.molecule.Molecule.current_units" title="Permalink to this definition">¶</a></dt>
+<dd><p>Current units in transformation list.</p>
+<p>This will one of &#8220;bohr&#8221;, &#8220;angstrom&#8221;, &#8220;fractional&#8221;, depending on the
+last encountered keyword in the list,</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pylada.dftcrystal.molecule.Molecule.eval">
+<tt class="descname">eval</tt><big>(</big><big>)</big><a class="reference internal" href="../../_modules/pylada/dftcrystal/molecule.html#Molecule.eval"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.dftcrystal.molecule.Molecule.eval" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluates current structure.</p>
+<p>Runs crystal to evaluate current structure.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">a <a class="reference internal" href="../crystal/classes.html#pylada.crystal.cppwrappers.Structure" title="pylada.crystal.cppwrappers.Structure"><tt class="xref py py-class docutils literal"><span class="pre">Structure</span></tt></a> instance.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pylada.dftcrystal.molecule.Molecule.extend">
+<tt class="descname">extend</tt><big>(</big><big>)</big><a class="headerlink" href="#pylada.dftcrystal.molecule.Molecule.extend" title="Permalink to this definition">¶</a></dt>
+<dd><p>L.extend(iterable) &#8211; extend list by appending elements from the iterable</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pylada.dftcrystal.molecule.Molecule.extprt">
+<tt class="descname">extprt</tt><a class="reference internal" href="../../_modules/pylada/dftcrystal/molecule.html#Molecule.extprt"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.dftcrystal.molecule.Molecule.extprt" title="Permalink to this definition">¶</a></dt>
+<dd><p>CRYSTAL external output.</p>
+<p>This is a string which contains the structure in <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a>&#8216;s external
+output format. Mostly for debugging.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pylada.dftcrystal.molecule.Molecule.insert">
+<tt class="descname">insert</tt><big>(</big><em>i</em>, <em>keyword</em>, <em>raw=None</em><big>)</big><a class="reference internal" href="../../_modules/pylada/dftcrystal/molecule.html#Molecule.insert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.dftcrystal.molecule.Molecule.insert" title="Permalink to this definition">¶</a></dt>
+<dd><p>Inserts item at given position.</p>
+<p>Some shortcuts are accpted:</p>
+<ul class="simple">
+<li>&#8216;breaksym&#8217;</li>
+<li>&#8216;keepsymm&#8217;</li>
+<li>&#8216;angstrom&#8217;</li>
+<li>&#8216;bohr&#8217;</li>
+<li>&#8216;fractional&#8217;</li>
+</ul>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pylada.dftcrystal.molecule.Molecule.is_angstrom">
+<tt class="descname">is_angstrom</tt><a class="reference internal" href="../../_modules/pylada/dftcrystal/molecule.html#Molecule.is_angstrom"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.dftcrystal.molecule.Molecule.is_angstrom" title="Permalink to this definition">¶</a></dt>
+<dd><p>True if current units are angstrom.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pylada.dftcrystal.molecule.Molecule.is_bohr">
+<tt class="descname">is_bohr</tt><a class="reference internal" href="../../_modules/pylada/dftcrystal/molecule.html#Molecule.is_bohr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.dftcrystal.molecule.Molecule.is_bohr" title="Permalink to this definition">¶</a></dt>
+<dd><p>True if current units are bohrs.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pylada.dftcrystal.molecule.Molecule.is_breaksym">
+<tt class="descname">is_breaksym</tt><a class="reference internal" href="../../_modules/pylada/dftcrystal/molecule.html#Molecule.is_breaksym"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.dftcrystal.molecule.Molecule.is_breaksym" title="Permalink to this definition">¶</a></dt>
+<dd><p>True if currently keeping symmetries.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pylada.dftcrystal.molecule.Molecule.is_fractional">
+<tt class="descname">is_fractional</tt><a class="reference internal" href="../../_modules/pylada/dftcrystal/molecule.html#Molecule.is_fractional"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.dftcrystal.molecule.Molecule.is_fractional" title="Permalink to this definition">¶</a></dt>
+<dd><p>True if current units are fractional.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pylada.dftcrystal.molecule.Molecule.pop">
+<tt class="descname">pop</tt><big>(</big><span class="optional">[</span><em>index</em><span class="optional">]</span><big>)</big> &rarr; item -- remove and return item at index (default last).<a class="headerlink" href="#pylada.dftcrystal.molecule.Molecule.pop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Raises IndexError if list is empty or index is out of range.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pylada.dftcrystal.molecule.Molecule.print_input">
+<tt class="descname">print_input</tt><big>(</big><em>**kwargs</em><big>)</big><a class="reference internal" href="../../_modules/pylada/dftcrystal/molecule.html#Molecule.print_input"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.dftcrystal.molecule.Molecule.print_input" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns CRYSTAL input.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pylada.dftcrystal.molecule.Molecule.remove">
+<tt class="descname">remove</tt><big>(</big><big>)</big><a class="headerlink" href="#pylada.dftcrystal.molecule.Molecule.remove" title="Permalink to this definition">¶</a></dt>
+<dd><p>L.remove(value) &#8211; remove first occurrence of value.
+Raises ValueError if the value is not present.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pylada.dftcrystal.molecule.Molecule.reverse">
+<tt class="descname">reverse</tt><big>(</big><big>)</big><a class="headerlink" href="#pylada.dftcrystal.molecule.Molecule.reverse" title="Permalink to this definition">¶</a></dt>
+<dd><p>L.reverse() &#8211; reverse <em>IN PLACE</em></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pylada.dftcrystal.molecule.Molecule.sort">
+<tt class="descname">sort</tt><big>(</big><big>)</big><a class="headerlink" href="#pylada.dftcrystal.molecule.Molecule.sort" title="Permalink to this definition">¶</a></dt>
+<dd><p>L.sort(cmp=None, key=None, reverse=False) &#8211; stable sort <em>IN PLACE</em>;
+cmp(x, y) -&gt; -1, 0, 1</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pylada.dftcrystal.molecule.Molecule.symmetry_operators">
+<tt class="descname">symmetry_operators</tt><a class="reference internal" href="../../_modules/pylada/dftcrystal/molecule.html#Molecule.symmetry_operators"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.dftcrystal.molecule.Molecule.symmetry_operators" title="Permalink to this definition">¶</a></dt>
+<dd><p>Symmetry operators, as determined by CRYSTAL.</p>
+<p>Runs crystal to evaluate the symmetry operators on the current
+structure.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pylada.dftcrystal.molecule.Molecule.symmgroup">
+<tt class="descname">symmgroup</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.dftcrystal.molecule.Molecule.symmgroup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Symmetry group.</p>
+</dd></dl>
+
+</dd></dl>
+
+<span class="target" id="module-pylada.dftcrystal.crystal"></span><dl class="class">
+<dt id="pylada.dftcrystal.crystal.Crystal">
+<em class="property">class </em><tt class="descclassname">pylada.dftcrystal.crystal.</tt><tt class="descname">Crystal</tt><big>(</big><em>symmgroup=1</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../_modules/pylada/dftcrystal/crystal.html#Crystal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.dftcrystal.crystal.Crystal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pylada.dftcrystal.molecule.Molecule" title="pylada.dftcrystal.molecule.Molecule"><tt class="xref py py-class docutils literal"><span class="pre">pylada.dftcrystal.molecule.Molecule</span></tt></a></p>
 <p>CRYSTAL-wise structure, e.g. functional approach.</p>
 <p><a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a> proposes a <a class="reference external" href="http://en.wikipedia.org/wiki/Functional_programming">functional</a> approach to crystals, as opposed to the
-<a class="reference external" href="http://en.wikipedia.org/wiki/Imperative_programming">imperative</a> style used by LaDa. In practice, this means that <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a>
+<a class="reference external" href="http://en.wikipedia.org/wiki/Imperative_programming">imperative</a> style used by Pylada. In practice, this means that <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a>
 declares a chain of functions which acts upon an initial data and
 transform it. The data is generally a space-group with a set of atomic
 sites. The functions can be affine transformations on these sites,
 additions and removals of sites, transformation upon the space-group, and
 even strain relaxation.</p>
 <p>In practice, both approaches can &#8220;do the same thing&#8221;, and indeed both
-<a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a> and LaDa provide similar functionalities, e.g. creating a
+<a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a> and Pylada provide similar functionalities, e.g. creating a
 supercell from  a unit-cell. However, there are clear benefits from
 allowing users to keep working the <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a> way when working with
 <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a>.</p>
@@ -78,22 +268,22 @@ allowing users to keep working the <a class="reference external" href="http://ww
 only a wrapper, in that it merely contains the data necessary to create a
 <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a> input file. It does not re-implement any of <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a>&#8216;s
 algorithms. However, it does provides the ability to call <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a> and
-extract the results as a LaDa
-<a class="reference internal" href="../crystal/classes.html#lada.crystal.cppwrappers.Structure" title="lada.crystal.cppwrappers.Structure"><tt class="xref py py-class docutils literal"><span class="pre">Structure</span></tt></a> instance. In this way,
+extract the results as a Pylada
+<a class="reference internal" href="../crystal/classes.html#pylada.crystal.cppwrappers.Structure" title="pylada.crystal.cppwrappers.Structure"><tt class="xref py py-class docutils literal"><span class="pre">Structure</span></tt></a> instance. In this way,
 both approaches can be mixed, allowing for a complete integration of
 <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a> with python. At present, both the initial data and chain of
-functions are represented and stored within the same <a class="reference internal" href="#lada.dftcrystal.crystal.Crystal" title="lada.dftcrystal.crystal.Crystal"><tt class="xref py py-class docutils literal"><span class="pre">Crystal</span></tt></a>
+functions are represented and stored within the same <a class="reference internal" href="#pylada.dftcrystal.crystal.Crystal" title="pylada.dftcrystal.crystal.Crystal"><tt class="xref py py-class docutils literal"><span class="pre">Crystal</span></tt></a>
 instance. This is a bit sub-optimal. A better implementation would make
 clear the separation bewteen initial data and functions. However, it is
 less wordy.</p>
 <p>The initial data upon which <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a> applies its chain of functions is
-defined using the <a class="reference internal" href="#lada.dftcrystal.crystal.Crystal.symmgroup" title="lada.dftcrystal.crystal.Crystal.symmgroup"><tt class="xref py py-attr docutils literal"><span class="pre">symmgroup</span></tt></a>, <tt class="xref py py-attr docutils literal"><span class="pre">args</span></tt>, and
-<a class="reference internal" href="#lada.dftcrystal.crystal.Crystal.atoms" title="lada.dftcrystal.crystal.Crystal.atoms"><tt class="xref py py-attr docutils literal"><span class="pre">atoms</span></tt></a>. The first references the space-group of the crystal,
+defined using the <a class="reference internal" href="#pylada.dftcrystal.crystal.Crystal.symmgroup" title="pylada.dftcrystal.crystal.Crystal.symmgroup"><tt class="xref py py-attr docutils literal"><span class="pre">symmgroup</span></tt></a>, <tt class="xref py py-attr docutils literal"><span class="pre">args</span></tt>, and
+<a class="reference internal" href="#pylada.dftcrystal.crystal.Crystal.atoms" title="pylada.dftcrystal.crystal.Crystal.atoms"><tt class="xref py py-attr docutils literal"><span class="pre">atoms</span></tt></a>. The first references the space-group of the crystal,
 the second defines the lattice parameters, and the last holds the
-(initial) atomic sites.  <a class="reference internal" href="#lada.dftcrystal.crystal.Crystal" title="lada.dftcrystal.crystal.Crystal"><tt class="xref py py-class docutils literal"><span class="pre">Crystal</span></tt></a> is also a list where each
+(initial) atomic sites.  <a class="reference internal" href="#pylada.dftcrystal.crystal.Crystal" title="pylada.dftcrystal.crystal.Crystal"><tt class="xref py py-class docutils literal"><span class="pre">Crystal</span></tt></a> is also a list where each
 item is an operation upon the initial crystal.</p>
 <p>In practice, the initial data is declared as follows:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">lada.dftcrystal</span> <span class="kn">import</span> <span class="n">Crystal</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pylada.dftcrystal</span> <span class="kn">import</span> <span class="n">Crystal</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">crystal</span> <span class="o">=</span> <span class="n">Crystal</span><span class="p">(</span><span class="mi">227</span><span class="p">,</span> <span class="mf">5.43</span><span class="p">)</span>                                        \
 <span class="gp">... </span>                 <span class="o">.</span><span class="n">add_atom</span><span class="p">(</span><span class="mf">0.125</span><span class="p">,</span> <span class="mf">0.125</span><span class="p">,</span> <span class="mf">0.125</span><span class="p">,</span> <span class="s">&quot;Si&quot;</span><span class="p">)</span>
 </pre></div>
@@ -104,7 +294,7 @@ parameters were needed they would be listed directly <tt class="docutils literal
 <span class="pre">c,</span> <span class="pre">alpha,</span> <span class="pre">beta,</span> <span class="pre">gamma)</span></tt>. Only the parameters required for that
 particular space-group should be listed.</p>
 <p>The second line adds an atomic site to the initial structure.
-<a class="reference internal" href="#lada.dftcrystal.crystal.Crystal.add_atom" title="lada.dftcrystal.crystal.Crystal.add_atom"><tt class="xref py py-meth docutils literal"><span class="pre">add_atom()</span></tt></a> returns an the <a class="reference internal" href="#lada.dftcrystal.crystal.Crystal" title="lada.dftcrystal.crystal.Crystal"><tt class="xref py py-class docutils literal"><span class="pre">Crystal</span></tt></a> instance itself,
+<a class="reference internal" href="#pylada.dftcrystal.crystal.Crystal.add_atom" title="pylada.dftcrystal.crystal.Crystal.add_atom"><tt class="xref py py-meth docutils literal"><span class="pre">add_atom()</span></tt></a> returns an the <a class="reference internal" href="#pylada.dftcrystal.crystal.Crystal" title="pylada.dftcrystal.crystal.Crystal"><tt class="xref py py-class docutils literal"><span class="pre">Crystal</span></tt></a> instance itself,
 so that atomic site declarations can be chained:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">crystal</span> <span class="o">=</span> <span class="n">Crystal</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>                                              \
 <span class="gp">... </span>          <span class="o">.</span><span class="n">add_atom</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>                                            \
@@ -114,7 +304,7 @@ so that atomic site declarations can be chained:</p>
 </div>
 <p>Only those atoms which are strictly inequivalent by symmetry operations
 should be listed.</p>
-<p><a class="reference internal" href="#lada.dftcrystal.crystal.Crystal" title="lada.dftcrystal.crystal.Crystal"><tt class="xref py py-class docutils literal"><span class="pre">Crystal</span></tt></a> instances function as lists of transformations which
+<p><a class="reference internal" href="#pylada.dftcrystal.crystal.Crystal" title="pylada.dftcrystal.crystal.Crystal"><tt class="xref py py-class docutils literal"><span class="pre">Crystal</span></tt></a> instances function as lists of transformations which
 are to be applied to the initial structure. The simplest way to add an
 operation is to use the traditional <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a> format:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">crystal</span> <span class="o">=</span> <span class="n">Crystal</span><span class="p">(</span><span class="mi">227</span><span class="p">,</span> <span class="mf">5.43</span><span class="p">)</span>                                        \
@@ -123,23 +313,23 @@ operation is to use the traditional <a class="reference external" href="http://w
 </pre></div>
 </div>
 <p>Here we have created a supercell of diamond with two unit cell in the
-(100) direction. The first string in <a class="reference internal" href="#lada.dftcrystal.crystal.Crystal.append" title="lada.dftcrystal.crystal.Crystal.append"><tt class="xref py py-meth docutils literal"><span class="pre">append()</span></tt></a> is the keyword and
-the second string its input. Much as <a class="reference internal" href="#lada.dftcrystal.crystal.Crystal.add_atom" title="lada.dftcrystal.crystal.Crystal.add_atom"><tt class="xref py py-meth docutils literal"><span class="pre">add_atom()</span></tt></a>,
-<a class="reference internal" href="#lada.dftcrystal.crystal.Crystal.append" title="lada.dftcrystal.crystal.Crystal.append"><tt class="xref py py-meth docutils literal"><span class="pre">append()</span></tt></a> returns the calling instance of <a class="reference internal" href="#lada.dftcrystal.crystal.Crystal" title="lada.dftcrystal.crystal.Crystal"><tt class="xref py py-class docutils literal"><span class="pre">Crystal</span></tt></a> so
+(100) direction. The first string in <a class="reference internal" href="#pylada.dftcrystal.crystal.Crystal.append" title="pylada.dftcrystal.crystal.Crystal.append"><tt class="xref py py-meth docutils literal"><span class="pre">append()</span></tt></a> is the keyword and
+the second string its input. Much as <a class="reference internal" href="#pylada.dftcrystal.crystal.Crystal.add_atom" title="pylada.dftcrystal.crystal.Crystal.add_atom"><tt class="xref py py-meth docutils literal"><span class="pre">add_atom()</span></tt></a>,
+<a class="reference internal" href="#pylada.dftcrystal.crystal.Crystal.append" title="pylada.dftcrystal.crystal.Crystal.append"><tt class="xref py py-meth docutils literal"><span class="pre">append()</span></tt></a> returns the calling instance of <a class="reference internal" href="#pylada.dftcrystal.crystal.Crystal" title="pylada.dftcrystal.crystal.Crystal"><tt class="xref py py-class docutils literal"><span class="pre">Crystal</span></tt></a> so
 that calls can be chained into a single declarative expression.</p>
 <p>A number of operations are implemented in a more pythonic manner. These
-can be added to the chain of functions by calling <a class="reference internal" href="#lada.dftcrystal.crystal.Crystal.append" title="lada.dftcrystal.crystal.Crystal.append"><tt class="xref py py-meth docutils literal"><span class="pre">append()</span></tt></a> with
+can be added to the chain of functions by calling <a class="reference internal" href="#pylada.dftcrystal.crystal.Crystal.append" title="pylada.dftcrystal.crystal.Crystal.append"><tt class="xref py py-meth docutils literal"><span class="pre">append()</span></tt></a> with
 an operation instance as a the only argument.</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">lada.dftcrystal</span> <span class="kn">import</span> <span class="n">Slabcut</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pylada.dftcrystal</span> <span class="kn">import</span> <span class="n">Slabcut</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">crystal</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="n">Slabcut</span><span class="p">(</span><span class="n">hkl</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">isup</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">nl</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span> <span class="p">)</span>
 </pre></div>
 </div>
 <p><tt class="xref py py-class docutils literal"><span class="pre">Slabcut</span></tt> is an operation to create a
 thin-film from a 3d bulk material.</p>
 <p>Finally, the whole  &#8220;data+functions&#8221; object can be evaluated with
-<a class="reference internal" href="#lada.dftcrystal.crystal.Crystal.eval" title="lada.dftcrystal.crystal.Crystal.eval"><tt class="xref py py-meth docutils literal"><span class="pre">eval()</span></tt></a>. This will return a
-<a class="reference internal" href="../crystal/classes.html#lada.crystal.cppwrappers.Structure" title="lada.crystal.cppwrappers.Structure"><tt class="xref py py-class docutils literal"><span class="pre">Structure</span></tt></a> instance which can be
-used with other LaDa functionalities. Internally, <a class="reference internal" href="#lada.dftcrystal.crystal.Crystal.eval" title="lada.dftcrystal.crystal.Crystal.eval"><tt class="xref py py-meth docutils literal"><span class="pre">eval()</span></tt></a> makes a
+<a class="reference internal" href="#pylada.dftcrystal.crystal.Crystal.eval" title="pylada.dftcrystal.crystal.Crystal.eval"><tt class="xref py py-meth docutils literal"><span class="pre">eval()</span></tt></a>. This will return a
+<a class="reference internal" href="../crystal/classes.html#pylada.crystal.cppwrappers.Structure" title="pylada.crystal.cppwrappers.Structure"><tt class="xref py py-class docutils literal"><span class="pre">Structure</span></tt></a> instance which can be
+used with other Pylada functionalities. Internally, <a class="reference internal" href="#pylada.dftcrystal.crystal.Crystal.eval" title="pylada.dftcrystal.crystal.Crystal.eval"><tt class="xref py py-meth docutils literal"><span class="pre">eval()</span></tt></a> makes a
 call to <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a> and greps the output to construct the output structure.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -164,37 +354,45 @@ three floats.</li>
 <p class="last">For operations, see <tt class="xref py py-mod docutils literal"><span class="pre">geometry</span></tt>.</p>
 </div>
 <dl class="attribute">
-<dt id="lada.dftcrystal.crystal.Crystal.symmgroup">
-<tt class="descname">symmgroup</tt><a class="headerlink" href="#lada.dftcrystal.crystal.Crystal.symmgroup" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.crystal.Crystal.symmgroup">
+<tt class="descname">symmgroup</tt><a class="headerlink" href="#pylada.dftcrystal.crystal.Crystal.symmgroup" title="Permalink to this definition">¶</a></dt>
 <dd><p>Index or name of the space-group. Either form need make sense to
 <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a>.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.dftcrystal.crystal.Crystal.params">
-<tt class="descname">params</tt><a class="headerlink" href="#lada.dftcrystal.crystal.Crystal.params" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.crystal.Crystal.params">
+<tt class="descname">params</tt><a class="headerlink" href="#pylada.dftcrystal.crystal.Crystal.params" title="Permalink to this definition">¶</a></dt>
 <dd><p>List of crystal parameters. These are printed as are and in the same
 order directly to <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a>&#8216;s input.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.dftcrystal.crystal.Crystal.atoms">
-<tt class="descname">atoms</tt><a class="headerlink" href="#lada.dftcrystal.crystal.Crystal.atoms" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.crystal.Crystal.atoms">
+<tt class="descname">atoms</tt><a class="headerlink" href="#pylada.dftcrystal.crystal.Crystal.atoms" title="Permalink to this definition">¶</a></dt>
 <dd><p>List of atomic sites in the initial structure. The items should be of
-type <a class="reference internal" href="../crystal/classes.html#lada.crystal.cppwrappers.Atom" title="lada.crystal.cppwrappers.Atom"><tt class="xref py py-class docutils literal"><span class="pre">Atom</span></tt></a>. The easiest approach is
-to add them using <a class="reference internal" href="#lada.dftcrystal.crystal.Crystal.add_atom" title="lada.dftcrystal.crystal.Crystal.add_atom"><tt class="xref py py-meth docutils literal"><span class="pre">add_atom()</span></tt></a>.</p>
+type <a class="reference internal" href="../crystal/classes.html#pylada.crystal.cppwrappers.Atom" title="pylada.crystal.cppwrappers.Atom"><tt class="xref py py-class docutils literal"><span class="pre">Atom</span></tt></a>. The easiest approach is
+to add them using <a class="reference internal" href="#pylada.dftcrystal.crystal.Crystal.add_atom" title="pylada.dftcrystal.crystal.Crystal.add_atom"><tt class="xref py py-meth docutils literal"><span class="pre">add_atom()</span></tt></a>.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="lada.dftcrystal.crystal.Crystal.add_atom">
-<tt class="descname">add_atom</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#lada.dftcrystal.crystal.Crystal.add_atom" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.crystal.Crystal.add_atom">
+<tt class="descname">add_atom</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pylada.dftcrystal.crystal.Crystal.add_atom" title="Permalink to this definition">¶</a></dt>
 <dd><p>Adds an atom to the structure.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="lada.dftcrystal.crystal.Crystal.append">
-<tt class="descname">append</tt><big>(</big><em>keyword</em>, <em>raw=None</em>, <em>breaksym=None</em><big>)</big><a class="headerlink" href="#lada.dftcrystal.crystal.Crystal.append" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.crystal.Crystal.append">
+<tt class="descname">append</tt><big>(</big><em>keyword</em>, <em>raw=None</em><big>)</big><a class="headerlink" href="#pylada.dftcrystal.crystal.Crystal.append" title="Permalink to this definition">¶</a></dt>
 <dd><p>Appends an item.</p>
+<p>Some shortcuts are accpted:</p>
+<ul class="simple">
+<li>&#8216;breaksym&#8217;</li>
+<li>&#8216;keepsymm&#8217;</li>
+<li>&#8216;angstrom&#8217;</li>
+<li>&#8216;bohr&#8217;</li>
+<li>&#8216;fractional&#8217;</li>
+</ul>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -206,52 +404,92 @@ to add them using <a class="reference internal" href="#lada.dftcrystal.crystal.C
 </dd></dl>
 
 <dl class="method">
-<dt id="lada.dftcrystal.crystal.Crystal.copy">
-<tt class="descname">copy</tt><big>(</big><big>)</big><a class="headerlink" href="#lada.dftcrystal.crystal.Crystal.copy" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.crystal.Crystal.copy">
+<tt class="descname">copy</tt><big>(</big><big>)</big><a class="headerlink" href="#pylada.dftcrystal.crystal.Crystal.copy" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns deep copy of self.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.dftcrystal.crystal.Crystal.crystal_output">
-<tt class="descname">crystal_output</tt><a class="headerlink" href="#lada.dftcrystal.crystal.Crystal.crystal_output" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.crystal.Crystal.crystal_output">
+<tt class="descname">crystal_output</tt><a class="headerlink" href="#pylada.dftcrystal.crystal.Crystal.crystal_output" title="Permalink to this definition">¶</a></dt>
 <dd><p>CRYSTAL program output.</p>
 <p>This is a string which contains the CRYSTAL output from a geometry run.
 Electronic calculations are not performed.</p>
 </dd></dl>
 
+<dl class="attribute">
+<dt id="pylada.dftcrystal.crystal.Crystal.current_units">
+<tt class="descname">current_units</tt><a class="headerlink" href="#pylada.dftcrystal.crystal.Crystal.current_units" title="Permalink to this definition">¶</a></dt>
+<dd><p>Current units in transformation list.</p>
+<p>This will one of &#8220;bohr&#8221;, &#8220;angstrom&#8221;, &#8220;fractional&#8221;, depending on the
+last encountered keyword in the list,</p>
+</dd></dl>
+
 <dl class="method">
-<dt id="lada.dftcrystal.crystal.Crystal.eval">
-<tt class="descname">eval</tt><big>(</big><big>)</big><a class="headerlink" href="#lada.dftcrystal.crystal.Crystal.eval" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.crystal.Crystal.eval">
+<tt class="descname">eval</tt><big>(</big><big>)</big><a class="headerlink" href="#pylada.dftcrystal.crystal.Crystal.eval" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluates current structure.</p>
 <p>Runs crystal to evaluate current structure.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">a <a class="reference internal" href="../crystal/classes.html#lada.crystal.cppwrappers.Structure" title="lada.crystal.cppwrappers.Structure"><tt class="xref py py-class docutils literal"><span class="pre">Structure</span></tt></a> instance.</td>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">a <a class="reference internal" href="../crystal/classes.html#pylada.crystal.cppwrappers.Structure" title="pylada.crystal.cppwrappers.Structure"><tt class="xref py py-class docutils literal"><span class="pre">Structure</span></tt></a> instance.</td>
 </tr>
 </tbody>
 </table>
 </dd></dl>
 
 <dl class="method">
-<dt id="lada.dftcrystal.crystal.Crystal.extend">
-<tt class="descname">extend</tt><big>(</big><big>)</big><a class="headerlink" href="#lada.dftcrystal.crystal.Crystal.extend" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.crystal.Crystal.extend">
+<tt class="descname">extend</tt><big>(</big><big>)</big><a class="headerlink" href="#pylada.dftcrystal.crystal.Crystal.extend" title="Permalink to this definition">¶</a></dt>
 <dd><p>L.extend(iterable) &#8211; extend list by appending elements from the iterable</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.dftcrystal.crystal.Crystal.extprt">
-<tt class="descname">extprt</tt><a class="headerlink" href="#lada.dftcrystal.crystal.Crystal.extprt" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.crystal.Crystal.extprt">
+<tt class="descname">extprt</tt><a class="headerlink" href="#pylada.dftcrystal.crystal.Crystal.extprt" title="Permalink to this definition">¶</a></dt>
 <dd><p>CRYSTAL external output.</p>
 <p>This is a string which contains the structure in <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a>&#8216;s external
 output format. Mostly for debugging.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="lada.dftcrystal.crystal.Crystal.insert">
-<tt class="descname">insert</tt><big>(</big><big>)</big><a class="headerlink" href="#lada.dftcrystal.crystal.Crystal.insert" title="Permalink to this definition">¶</a></dt>
-<dd><p>L.insert(index, object) &#8211; insert object before index</p>
+<dt id="pylada.dftcrystal.crystal.Crystal.insert">
+<tt class="descname">insert</tt><big>(</big><em>i</em>, <em>keyword</em>, <em>raw=None</em><big>)</big><a class="headerlink" href="#pylada.dftcrystal.crystal.Crystal.insert" title="Permalink to this definition">¶</a></dt>
+<dd><p>Inserts item at given position.</p>
+<p>Some shortcuts are accpted:</p>
+<ul class="simple">
+<li>&#8216;breaksym&#8217;</li>
+<li>&#8216;keepsymm&#8217;</li>
+<li>&#8216;angstrom&#8217;</li>
+<li>&#8216;bohr&#8217;</li>
+<li>&#8216;fractional&#8217;</li>
+</ul>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pylada.dftcrystal.crystal.Crystal.is_angstrom">
+<tt class="descname">is_angstrom</tt><a class="headerlink" href="#pylada.dftcrystal.crystal.Crystal.is_angstrom" title="Permalink to this definition">¶</a></dt>
+<dd><p>True if current units are angstrom.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pylada.dftcrystal.crystal.Crystal.is_bohr">
+<tt class="descname">is_bohr</tt><a class="headerlink" href="#pylada.dftcrystal.crystal.Crystal.is_bohr" title="Permalink to this definition">¶</a></dt>
+<dd><p>True if current units are bohrs.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pylada.dftcrystal.crystal.Crystal.is_breaksym">
+<tt class="descname">is_breaksym</tt><a class="headerlink" href="#pylada.dftcrystal.crystal.Crystal.is_breaksym" title="Permalink to this definition">¶</a></dt>
+<dd><p>True if currently keeping symmetries.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pylada.dftcrystal.crystal.Crystal.is_fractional">
+<tt class="descname">is_fractional</tt><a class="headerlink" href="#pylada.dftcrystal.crystal.Crystal.is_fractional" title="Permalink to this definition">¶</a></dt>
+<dd><p>True if current units are fractional.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -261,46 +499,277 @@ output format. Mostly for debugging.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="lada.dftcrystal.crystal.Crystal.pop">
-<tt class="descname">pop</tt><big>(</big><span class="optional">[</span><em>index</em><span class="optional">]</span><big>)</big> &rarr; item -- remove and return item at index (default last).<a class="headerlink" href="#lada.dftcrystal.crystal.Crystal.pop" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.crystal.Crystal.pop">
+<tt class="descname">pop</tt><big>(</big><span class="optional">[</span><em>index</em><span class="optional">]</span><big>)</big> &rarr; item -- remove and return item at index (default last).<a class="headerlink" href="#pylada.dftcrystal.crystal.Crystal.pop" title="Permalink to this definition">¶</a></dt>
 <dd><p>Raises IndexError if list is empty or index is out of range.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="lada.dftcrystal.crystal.Crystal.print_input">
-<tt class="descname">print_input</tt><big>(</big><em>**kwargs</em><big>)</big><a class="headerlink" href="#lada.dftcrystal.crystal.Crystal.print_input" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.crystal.Crystal.print_input">
+<tt class="descname">print_input</tt><big>(</big><em>**kwargs</em><big>)</big><a class="headerlink" href="#pylada.dftcrystal.crystal.Crystal.print_input" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns CRYSTAL input.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="lada.dftcrystal.crystal.Crystal.remove">
-<tt class="descname">remove</tt><big>(</big><big>)</big><a class="headerlink" href="#lada.dftcrystal.crystal.Crystal.remove" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.crystal.Crystal.remove">
+<tt class="descname">remove</tt><big>(</big><big>)</big><a class="headerlink" href="#pylada.dftcrystal.crystal.Crystal.remove" title="Permalink to this definition">¶</a></dt>
 <dd><p>L.remove(value) &#8211; remove first occurrence of value.
 Raises ValueError if the value is not present.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="lada.dftcrystal.crystal.Crystal.reverse">
-<tt class="descname">reverse</tt><big>(</big><big>)</big><a class="headerlink" href="#lada.dftcrystal.crystal.Crystal.reverse" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.crystal.Crystal.reverse">
+<tt class="descname">reverse</tt><big>(</big><big>)</big><a class="headerlink" href="#pylada.dftcrystal.crystal.Crystal.reverse" title="Permalink to this definition">¶</a></dt>
 <dd><p>L.reverse() &#8211; reverse <em>IN PLACE</em></p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.dftcrystal.crystal.Crystal.shift">
-<tt class="descname">shift</tt><a class="reference internal" href="../../_modules/lada/dftcrystal/crystal.html#Crystal.shift"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.crystal.Crystal.shift" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.crystal.Crystal.shift">
+<tt class="descname">shift</tt><a class="reference internal" href="../../_modules/pylada/dftcrystal/crystal.html#Crystal.shift"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.dftcrystal.crystal.Crystal.shift" title="Permalink to this definition">¶</a></dt>
 <dd><p>Non-standard shift of the origin.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="lada.dftcrystal.crystal.Crystal.sort">
-<tt class="descname">sort</tt><big>(</big><big>)</big><a class="headerlink" href="#lada.dftcrystal.crystal.Crystal.sort" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.crystal.Crystal.sort">
+<tt class="descname">sort</tt><big>(</big><big>)</big><a class="headerlink" href="#pylada.dftcrystal.crystal.Crystal.sort" title="Permalink to this definition">¶</a></dt>
 <dd><p>L.sort(cmp=None, key=None, reverse=False) &#8211; stable sort <em>IN PLACE</em>;
 cmp(x, y) -&gt; -1, 0, 1</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.dftcrystal.crystal.Crystal.symmetry_operators">
-<tt class="descname">symmetry_operators</tt><a class="headerlink" href="#lada.dftcrystal.crystal.Crystal.symmetry_operators" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.crystal.Crystal.symmetry_operators">
+<tt class="descname">symmetry_operators</tt><a class="headerlink" href="#pylada.dftcrystal.crystal.Crystal.symmetry_operators" title="Permalink to this definition">¶</a></dt>
+<dd><p>Symmetry operators, as determined by CRYSTAL.</p>
+<p>Runs crystal to evaluate the symmetry operators on the current
+structure.</p>
+</dd></dl>
+
+</dd></dl>
+
+<span class="target" id="module-pylada.dftcrystal.external"></span><dl class="class">
+<dt id="pylada.dftcrystal.external.External">
+<em class="property">class </em><tt class="descclassname">pylada.dftcrystal.external.</tt><tt class="descname">External</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../_modules/pylada/dftcrystal/external.html#External"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.dftcrystal.external.External" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pylada.dftcrystal.molecule.Molecule" title="pylada.dftcrystal.molecule.Molecule"><tt class="xref py py-class docutils literal"><span class="pre">pylada.dftcrystal.molecule.Molecule</span></tt></a></p>
+<p>Functional CRYSTAL-wise structure, starting from Pylada structure.</p>
+<p>Provides a mixture of <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a> and Pylada-style structures. The starting
+structure is a <a class="reference internal" href="../crystal/classes.html#pylada.crystal.cppwrappers.Structure" title="pylada.crystal.cppwrappers.Structure"><tt class="xref py py-class docutils literal"><span class="pre">Structure</span></tt></a> instance
+which is inputed into <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a> via the EXTERNAL keyword. This instance
+also accepts functional modifications which will act upon the initial
+structure, much as <a class="reference internal" href="#pylada.dftcrystal.crystal.Crystal" title="pylada.dftcrystal.crystal.Crystal"><tt class="xref py py-class docutils literal"><span class="pre">Crystal</span></tt></a>
+instances.</p>
+<p>There are two ways of initializing an instance. The first allows the same
+interface as <a class="reference internal" href="../crystal/classes.html#pylada.crystal.cppwrappers.Structure" title="pylada.crystal.cppwrappers.Structure"><tt class="xref py py-class docutils literal"><span class="pre">Structure</span></tt></a>.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">quantities</span> <span class="kn">import</span> <span class="n">angstrom</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pylada.dftcrystal</span> <span class="kn">import</span> <span class="n">External</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">external</span> <span class="o">=</span> <span class="n">External</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>
+<span class="gp">... </span>                     <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>
+<span class="gp">... </span>                     <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">scale</span><span class="o">=</span><span class="mf">5.45</span><span class="o">*</span><span class="n">angstrom</span><span class="p">)</span>            \
+<span class="gp">... </span>                   <span class="o">.</span><span class="n">add_atom</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span> <span class="s">&#39;Si&#39;</span><span class="p">)</span>                           \
+<span class="gp">... </span>                   <span class="o">.</span><span class="n">add_atom</span><span class="p">(</span><span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="s">&#39;Si&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The second approach is to use a predefined
+<a class="reference internal" href="../crystal/classes.html#pylada.crystal.cppwrappers.Structure" title="pylada.crystal.cppwrappers.Structure"><tt class="xref py py-class docutils literal"><span class="pre">Structure</span></tt></a> instance:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pylada.dftcrystal</span> <span class="kn">import</span> <span class="n">External</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">external</span> <span class="o">=</span> <span class="n">External</span><span class="p">(</span><span class="n">copy</span><span class="o">=</span><span class="n">diamond</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Where <tt class="docutils literal"><span class="pre">diamond</span></tt> in the snippet above is the instance in question. Note
+that it is deepcopied upon initialization.  In both cases, the initial
+structure can be accessed as <a class="reference internal" href="#pylada.dftcrystal.external.External.initial" title="pylada.dftcrystal.external.External.initial"><tt class="xref py py-attr docutils literal"><span class="pre">initial</span></tt></a>.</p>
+<p>In both cases, <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a> transformations can be added to modify the
+initial structure.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">external</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;bohr&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">external</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">DiplaceAtoms</span><span class="p">()</span><span class="o">.</span><span class="n">add_atom</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>In the snippet above, the displacement is in the current units of the
+structure, as understood by <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a>. E.g. in &#8220;bohr&#8220;&#8216;s here. In other
+words, the transformations should reference the structure the way
+<a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a> understands it. It might be indicated to use <a class="reference internal" href="#pylada.dftcrystal.external.External.eval" title="pylada.dftcrystal.external.External.eval"><tt class="xref py py-meth docutils literal"><span class="pre">eval()</span></tt></a>.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Pylada will attempt to discover the symmetries at run time. It is also
+possible to enter them explicitely by setting <a class="reference internal" href="#pylada.dftcrystal.external.External.initial" title="pylada.dftcrystal.external.External.initial"><tt class="xref py py-attr docutils literal"><span class="pre">initial</span></tt></a>&#8216;s
+<tt class="docutils literal"><span class="pre">spacegroup</span></tt> attribute to a list of 4x3 matrices.</p>
+</div>
+<dl class="method">
+<dt id="pylada.dftcrystal.external.External.add_atom">
+<tt class="descname">add_atom</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pylada.dftcrystal.external.External.add_atom" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds an atom to the structure.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pylada.dftcrystal.external.External.add_atoms">
+<tt class="descname">add_atoms</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../_modules/pylada/dftcrystal/external.html#External.add_atoms"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.dftcrystal.external.External.add_atoms" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds atom to initial structure.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pylada.dftcrystal.external.External.append">
+<tt class="descname">append</tt><big>(</big><em>keyword</em>, <em>raw=None</em><big>)</big><a class="headerlink" href="#pylada.dftcrystal.external.External.append" title="Permalink to this definition">¶</a></dt>
+<dd><p>Appends an item.</p>
+<p>Some shortcuts are accpted:</p>
+<ul class="simple">
+<li>&#8216;breaksym&#8217;</li>
+<li>&#8216;keepsymm&#8217;</li>
+<li>&#8216;angstrom&#8217;</li>
+<li>&#8216;bohr&#8217;</li>
+<li>&#8216;fractional&#8217;</li>
+</ul>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">self, so calls can be chained.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pylada.dftcrystal.external.External.atoms">
+<tt class="descname">atoms</tt><a class="reference internal" href="../../_modules/pylada/dftcrystal/external.html#External.atoms"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.dftcrystal.external.External.atoms" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias to the initial structure.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pylada.dftcrystal.external.External.cell">
+<tt class="descname">cell</tt><a class="reference internal" href="../../_modules/pylada/dftcrystal/external.html#External.cell"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.dftcrystal.external.External.cell" title="Permalink to this definition">¶</a></dt>
+<dd><p>Cell-vectors of the initial instance.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pylada.dftcrystal.external.External.copy">
+<tt class="descname">copy</tt><big>(</big><big>)</big><a class="headerlink" href="#pylada.dftcrystal.external.External.copy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns deep copy of self.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pylada.dftcrystal.external.External.crystal_output">
+<tt class="descname">crystal_output</tt><a class="headerlink" href="#pylada.dftcrystal.external.External.crystal_output" title="Permalink to this definition">¶</a></dt>
+<dd><p>CRYSTAL program output.</p>
+<p>This is a string which contains the CRYSTAL output from a geometry run.
+Electronic calculations are not performed.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pylada.dftcrystal.external.External.current_units">
+<tt class="descname">current_units</tt><a class="headerlink" href="#pylada.dftcrystal.external.External.current_units" title="Permalink to this definition">¶</a></dt>
+<dd><p>Current units in transformation list.</p>
+<p>This will one of &#8220;bohr&#8221;, &#8220;angstrom&#8221;, &#8220;fractional&#8221;, depending on the
+last encountered keyword in the list,</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pylada.dftcrystal.external.External.eval">
+<tt class="descname">eval</tt><big>(</big><big>)</big><a class="headerlink" href="#pylada.dftcrystal.external.External.eval" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluates current structure.</p>
+<p>Runs crystal to evaluate current structure.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">a <a class="reference internal" href="../crystal/classes.html#pylada.crystal.cppwrappers.Structure" title="pylada.crystal.cppwrappers.Structure"><tt class="xref py py-class docutils literal"><span class="pre">Structure</span></tt></a> instance.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pylada.dftcrystal.external.External.extend">
+<tt class="descname">extend</tt><big>(</big><big>)</big><a class="headerlink" href="#pylada.dftcrystal.external.External.extend" title="Permalink to this definition">¶</a></dt>
+<dd><p>L.extend(iterable) &#8211; extend list by appending elements from the iterable</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pylada.dftcrystal.external.External.extprt">
+<tt class="descname">extprt</tt><a class="headerlink" href="#pylada.dftcrystal.external.External.extprt" title="Permalink to this definition">¶</a></dt>
+<dd><p>CRYSTAL external output.</p>
+<p>This is a string which contains the structure in <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a>&#8216;s external
+output format. Mostly for debugging.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pylada.dftcrystal.external.External.initial">
+<tt class="descname">initial</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.dftcrystal.external.External.initial" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initial structure.</p>
+<p>This is a <a class="reference internal" href="../crystal/classes.html#pylada.crystal.cppwrappers.Structure" title="pylada.crystal.cppwrappers.Structure"><tt class="xref py py-class docutils literal"><span class="pre">Structure</span></tt></a> instance.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pylada.dftcrystal.external.External.insert">
+<tt class="descname">insert</tt><big>(</big><em>i</em>, <em>keyword</em>, <em>raw=None</em><big>)</big><a class="headerlink" href="#pylada.dftcrystal.external.External.insert" title="Permalink to this definition">¶</a></dt>
+<dd><p>Inserts item at given position.</p>
+<p>Some shortcuts are accpted:</p>
+<ul class="simple">
+<li>&#8216;breaksym&#8217;</li>
+<li>&#8216;keepsymm&#8217;</li>
+<li>&#8216;angstrom&#8217;</li>
+<li>&#8216;bohr&#8217;</li>
+<li>&#8216;fractional&#8217;</li>
+</ul>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pylada.dftcrystal.external.External.is_angstrom">
+<tt class="descname">is_angstrom</tt><a class="headerlink" href="#pylada.dftcrystal.external.External.is_angstrom" title="Permalink to this definition">¶</a></dt>
+<dd><p>True if current units are angstrom.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pylada.dftcrystal.external.External.is_bohr">
+<tt class="descname">is_bohr</tt><a class="headerlink" href="#pylada.dftcrystal.external.External.is_bohr" title="Permalink to this definition">¶</a></dt>
+<dd><p>True if current units are bohrs.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pylada.dftcrystal.external.External.is_breaksym">
+<tt class="descname">is_breaksym</tt><a class="headerlink" href="#pylada.dftcrystal.external.External.is_breaksym" title="Permalink to this definition">¶</a></dt>
+<dd><p>True if currently keeping symmetries.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pylada.dftcrystal.external.External.is_fractional">
+<tt class="descname">is_fractional</tt><a class="headerlink" href="#pylada.dftcrystal.external.External.is_fractional" title="Permalink to this definition">¶</a></dt>
+<dd><p>True if current units are fractional.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pylada.dftcrystal.external.External.pop">
+<tt class="descname">pop</tt><big>(</big><span class="optional">[</span><em>index</em><span class="optional">]</span><big>)</big> &rarr; item -- remove and return item at index (default last).<a class="headerlink" href="#pylada.dftcrystal.external.External.pop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Raises IndexError if list is empty or index is out of range.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pylada.dftcrystal.external.External.print_input">
+<tt class="descname">print_input</tt><big>(</big><em>**kwargs</em><big>)</big><a class="headerlink" href="#pylada.dftcrystal.external.External.print_input" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns CRYSTAL input.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pylada.dftcrystal.external.External.remove">
+<tt class="descname">remove</tt><big>(</big><big>)</big><a class="headerlink" href="#pylada.dftcrystal.external.External.remove" title="Permalink to this definition">¶</a></dt>
+<dd><p>L.remove(value) &#8211; remove first occurrence of value.
+Raises ValueError if the value is not present.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pylada.dftcrystal.external.External.reverse">
+<tt class="descname">reverse</tt><big>(</big><big>)</big><a class="headerlink" href="#pylada.dftcrystal.external.External.reverse" title="Permalink to this definition">¶</a></dt>
+<dd><p>L.reverse() &#8211; reverse <em>IN PLACE</em></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pylada.dftcrystal.external.External.sort">
+<tt class="descname">sort</tt><big>(</big><big>)</big><a class="headerlink" href="#pylada.dftcrystal.external.External.sort" title="Permalink to this definition">¶</a></dt>
+<dd><p>L.sort(cmp=None, key=None, reverse=False) &#8211; stable sort <em>IN PLACE</em>;
+cmp(x, y) -&gt; -1, 0, 1</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pylada.dftcrystal.external.External.symmetry_operators">
+<tt class="descname">symmetry_operators</tt><a class="headerlink" href="#pylada.dftcrystal.external.External.symmetry_operators" title="Permalink to this definition">¶</a></dt>
 <dd><p>Symmetry operators, as determined by CRYSTAL.</p>
 <p>Runs crystal to evaluate the symmetry operators on the current
 structure.</p>
@@ -353,7 +822,7 @@ structure.</p>
         <li class="right" >
           <a href="comp.html" title="Computational and Hamiltonian parameters"
              >previous</a> |</li>
-        <li><a href="../../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Pylada 1.0 documentation</a> &raquo;</li>
           <li><a href="../../pyapi.html" >Python API</a> &raquo;</li>
           <li><a href="../dftcrystal.html" >CRYSTAL wrapper module</a> &raquo;</li> 
       </ul>

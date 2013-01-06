@@ -1,7 +1,7 @@
 Abstract base-class
 *******************
 
-.. automodule:: lada.process.process
+.. automodule:: pylada.process.process
 .. moduleauthor:: Mayeul d'Avezac
 .. autoclass:: Process
    :show-inheritance:

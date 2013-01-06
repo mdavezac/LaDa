@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>About &mdash; LaDa 1.0 documentation</title>
+    <title>About &mdash; Pylada 1.0 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -27,9 +27,9 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="author" title="About these documents" href="#" />
-    <link rel="top" title="LaDa 1.0 documentation" href="index.html" />
+    <link rel="top" title="Pylada 1.0 documentation" href="index.html" />
     <link rel="next" title="User Guide" href="userguide.html" />
-    <link rel="prev" title="LaDa documentation" href="index.html" /> 
+    <link rel="prev" title="Pylada documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -45,9 +45,9 @@
           <a href="userguide.html" title="User Guide"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="index.html" title="LaDa documentation"
+          <a href="index.html" title="Pylada documentation"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">LaDa 1.0 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Pylada 1.0 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -58,7 +58,7 @@
             
   <div class="section" id="about">
 <h1>About<a class="headerlink" href="#about" title="Permalink to this headline">¶</a></h1>
-<p>LaDa is a modular python framework to control physics simulations, from DFT to
+<p>Pylada is a modular python framework to control physics simulations, from DFT to
 empirical pseudo-potentials to point ion electrostatics. It&#8217;s goal is to
 provide the basic building blocks from which methods incorporating different
 Hamiltonians can be constructed. It is designed around three main concepts:</p>
@@ -75,14 +75,14 @@ per say.</li>
 <li>Manipulate, launch, and check the results for thousands of calculations
 simultaneously. Think of calculating different of carbone allotropes. It
 would be impractical to qsub each and every job and then check that each
-ran correctly. Hence, LaDa provides an interface for that.</li>
+ran correctly. Hence, Pylada provides an interface for that.</li>
 </ul>
 </div></blockquote>
 <p>With these building blocks in hand, it is possible, fairly easy, and - I&#8217;m told
 - even fun,  to construct complex computational routines. Computing phonons or
 formation enthalpy requires some know-how, certainly. But it is also quite
-repetitive. LaDa takes the gruelling out of it.</p>
-<p>Here are a few of the projects LaDa helped us with.</p>
+repetitive. Pylada takes the gruelling out of it.</p>
+<p>Here are a few of the projects Pylada helped us with.</p>
 <blockquote>
 <div><ul class="simple">
 <li><em>When brute force suffices:</em> A<sub>2</sub>BX<sub>4</sub> (A, B cations, X=O, S,
@@ -94,7 +94,7 @@ have been found? To answer this question, we systematically computed the
 formation enthalpy of hundreds of unknown A<sub>2</sub>BX<sub>4</sub> as well
 as that of their (reported) competing binaries and ternaries. We found
 indeed quite a few compounds, some which may be fairly easily grown, which
-simply passed through the sieve. LaDa made it a sinch to perform these
+simply passed through the sieve. Pylada made it a sinch to perform these
 individual calculations. It allowed us to shove them in a database and then
 scour the data to automatically create phase diagrams for each system.</li>
 <li><em>Stay abstract and leave off mano a mano calculations:</em> One of the goals of
@@ -106,14 +106,14 @@ external dopants are introduced and limit the material&#8217;s carrier
 concentration. To do this, we created a simple script to automatically
 determine possible vacancies and substitutions, as well as their charge
 state. These defects are all <a class="reference external" href="http://dx.doi.org/10.1088/0965-0393/17/8/084002">the same</a>, so no need to worry and create
-each, one at a time.  LaDa made it possible to create the systems, launch
+each, one at a time.  Pylada made it possible to create the systems, launch
 the appropriate chain of calculations, and gather the results, and let
 physicists do physics rather than word processing input files.</li>
 <li><em>Manipulating DFT functionals:</em> <a class="reference external" href="http://dx.doi.org/10.1103/PhysRevB.77.241201">This DFT functional</a> was introduced to
 reproduce GW band-structures. It works by fitting a non-local potential.
 Originally, each fit would be performed by hand for each element. It turned
 out to be tedious. Especially since for more complicated compounds one
-would rather fit all the elements involved simultaneously. But LaDa offers
+would rather fit all the elements involved simultaneously. But Pylada offers
 python wrappers around DFT codes, and python offers a number of
 optimization functions. The two together make it possible to carry out
 painless optimization of a empirical DFT functional.</li>
@@ -145,7 +145,7 @@ physics is still for the user to figure out.</li>
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
   <p class="topless"><a href="index.html"
-                        title="previous chapter">LaDa documentation</a></p>
+                        title="previous chapter">Pylada documentation</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="userguide.html"
                         title="next chapter">User Guide</a></p>
@@ -184,9 +184,9 @@ physics is still for the user to figure out.</li>
           <a href="userguide.html" title="User Guide"
              >next</a> |</li>
         <li class="right" >
-          <a href="index.html" title="LaDa documentation"
+          <a href="index.html" title="Pylada documentation"
              >previous</a> |</li>
-        <li><a href="index.html">LaDa 1.0 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Pylada 1.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

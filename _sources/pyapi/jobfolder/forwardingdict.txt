@@ -1,7 +1,7 @@
 Forwarding dictionary
 *********************
 
-.. automodule:: lada.jobfolder.forwarding_dict
+.. automodule:: pylada.jobfolder.forwarding_dict
 .. moduleauthor:: Mayeul d'Avezac
 .. autoclass:: ForwardingDict
    :show-inheritance:

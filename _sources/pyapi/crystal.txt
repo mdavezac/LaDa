@@ -1,7 +1,7 @@
 crystal
 =======
 
-.. automodule:: lada.crystal  
+.. automodule:: pylada.crystal  
 .. moduleauthor:: Mayeul d'Avezac <mayeul.davezac@nrel.gov>
 
 .. seealso:: :ref:`crystal_ug`

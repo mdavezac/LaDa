@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>IPython high-throughput interface &mdash; LaDa 1.0 documentation</title>
+    <title>IPython high-throughput interface &mdash; Pylada 1.0 documentation</title>
     
     <link rel="stylesheet" href="../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -27,9 +27,9 @@
     <script type="text/javascript" src="../_static/doctools.js"></script>
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="author" title="About these documents" href="../about.html" />
-    <link rel="top" title="LaDa 1.0 documentation" href="../index.html" />
+    <link rel="top" title="Pylada 1.0 documentation" href="../index.html" />
     <link rel="up" title="User Guide" href="../userguide.html" />
-    <link rel="next" title="Configuring LaDa" href="config.html" />
+    <link rel="next" title="Python API" href="../pyapi.html" />
     <link rel="prev" title="Organized high-throughput calculations: job-folders" href="jobfolders.html" /> 
   </head>
   <body>
@@ -43,12 +43,12 @@
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="config.html" title="Configuring LaDa"
+          <a href="../pyapi.html" title="Python API"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="jobfolders.html" title="Organized high-throughput calculations: job-folders"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+        <li><a href="../index.html">Pylada 1.0 documentation</a> &raquo;</li>
           <li><a href="../userguide.html" accesskey="U">User Guide</a> &raquo;</li> 
       </ul>
     </div>  
@@ -64,7 +64,7 @@
 shell.  It can be used for both bash related affairs such as copying files
 around creating directories, and for actual python programming. In fact, the
 two can be combined to create a truly powerfull shell.</p>
-<p>LaDa puts this tool to good use by providing a command-line approach to
+<p>Pylada puts this tool to good use by providing a command-line approach to
 manipulate <a class="reference internal" href="jobfolders.html#jobfolder-ug"><em>job-folders</em></a>, launch actual calculations, and
 collect the result.  When used in conjunction with python plotting libraries,
 e.g. <a class="reference external" href="http://matplotlib.sourceforge.net/">matplotlib</a>, it can provide rapid turnaround from conceptualization to
@@ -75,16 +75,16 @@ result analysis.</p>
 </div>
 <div class="admonition warning">
 <p class="first admonition-title">Warning</p>
-<p>If you have not set-up LaDa to run <a class="reference internal" href="installation/mpi.html#install-mmpi-ug"><em>multiple mpi programs in parallel</em></a> yet, please add the one liner:</p>
+<p>If you have not set-up Pylada to run <a class="reference internal" href="configuration.html#configuration-mpi-ug"><em>multiple mpi programs in parallel</em></a> yet, please add the one liner:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">do_multiple_mpi_programs</span> <span class="o">=</span> <span class="bp">False</span>
 </pre></div>
 </div>
-<p class="last">in your ~/.lada file. Don&#8217;t forget to remove it when time comes to run LaDa
+<p class="last">in your ~/.pylada file. Don&#8217;t forget to remove it when time comes to run Pylada
 for real.</p>
 </div>
 <div class="section" id="prep">
 <span id="ipython-prep-ug"></span><h2>Prep<a class="headerlink" href="#prep" title="Permalink to this headline">¶</a></h2>
-<p>LaDa&#8217;s IPython interface revolves around <a class="reference internal" href="jobfolders.html#jobfolder-ug"><em>job-folders</em></a>.
+<p>Pylada&#8217;s IPython interface revolves around <a class="reference internal" href="jobfolders.html#jobfolder-ug"><em>job-folders</em></a>.
 In order to explore its features, we first need to create job-folders,
 preferably some which do not involve heavy calculations. Please copy the
 following to a file in the directory from which <a class="reference external" href="http://ipython.org/">IPython</a> is launched. In the
@@ -95,7 +95,7 @@ following, it will be refered to as &#8220;dummy.py&#8221;.</p>
   <span class="kn">from</span> <span class="nn">os</span> <span class="kn">import</span> <span class="n">getcwd</span>
   <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">namedtuple</span>
   <span class="kn">from</span> <span class="nn">pickle</span> <span class="kn">import</span> <span class="n">load</span>
-  <span class="kn">from</span> <span class="nn">lada.misc</span> <span class="kn">import</span> <span class="n">Changedir</span>
+  <span class="kn">from</span> <span class="nn">pylada.misc</span> <span class="kn">import</span> <span class="n">Changedir</span>
 
   <span class="k">if</span> <span class="n">outdir</span> <span class="o">==</span> <span class="bp">None</span><span class="p">:</span> <span class="n">outdir</span> <span class="o">=</span> <span class="n">getcwd</span><span class="p">()</span>
   <span class="n">Extract</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s">&#39;Extract&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s">&#39;success&#39;</span><span class="p">,</span> <span class="s">&#39;directory&#39;</span><span class="p">,</span> <span class="s">&#39;energy&#39;</span><span class="p">,</span> <span class="s">&#39;structure&#39;</span><span class="p">,</span> <span class="s">&#39;value&#39;</span><span class="p">,</span> <span class="s">&#39;functional&#39;</span><span class="p">])</span>
@@ -111,7 +111,7 @@ following, it will be refered to as &#8220;dummy.py&#8221;.</p>
   <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
   <span class="kn">from</span> <span class="nn">pickle</span> <span class="kn">import</span> <span class="n">dump</span>
   <span class="kn">from</span> <span class="nn">random</span> <span class="kn">import</span> <span class="n">random</span>
-  <span class="kn">from</span> <span class="nn">lada.misc</span> <span class="kn">import</span> <span class="n">Changedir</span>
+  <span class="kn">from</span> <span class="nn">pylada.misc</span> <span class="kn">import</span> <span class="n">Changedir</span>
 
   <span class="n">structure</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">structure</span><span class="p">)</span>
   <span class="n">structure</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">value</span>
@@ -123,8 +123,8 @@ following, it will be refered to as &#8220;dummy.py&#8221;.</p>
 
 <span class="k">def</span> <span class="nf">create_jobs</span><span class="p">():</span>
   <span class="sd">&quot;&quot;&quot; Simple job-folders. &quot;&quot;&quot;</span>
-  <span class="kn">from</span> <span class="nn">lada.jobfolder</span> <span class="kn">import</span> <span class="n">JobFolder</span>
-  <span class="kn">from</span> <span class="nn">lada.crystal.binary</span> <span class="kn">import</span> <span class="n">zinc_blende</span>
+  <span class="kn">from</span> <span class="nn">pylada.jobfolder</span> <span class="kn">import</span> <span class="n">JobFolder</span>
+  <span class="kn">from</span> <span class="nn">pylada.crystal.binary</span> <span class="kn">import</span> <span class="n">zinc_blende</span>
 
   <span class="n">root</span> <span class="o">=</span> <span class="n">JobFolder</span><span class="p">()</span>
   
@@ -143,8 +143,8 @@ following, it will be refered to as &#8220;dummy.py&#8221;.</p>
 <p>The above defines three functions: a dummy functional, an extraction function
 capable of retrieving the results of the functional from disk, and a function
 to create a simple job-folder. In real life, the functional could be a
-<a class="reference internal" href="../pyapi/vasp/functional.html#lada.vasp.functional.Vasp" title="lada.vasp.functional.Vasp"><tt class="xref py py-class docutils literal"><span class="pre">Vasp</span></tt></a> object. The extraction function would then be
-<a class="reference internal" href="../pyapi/vasp/extract.html#lada.vasp.extract.Extract" title="lada.vasp.extract.Extract"><tt class="xref py py-class docutils literal"><span class="pre">Extract</span></tt></a>. And the folder-creation function would depend
+<a class="reference internal" href="../pyapi/vasp/functional.html#pylada.vasp.functional.Vasp" title="pylada.vasp.functional.Vasp"><tt class="xref py py-class docutils literal"><span class="pre">Vasp</span></tt></a> object. The extraction function would then be
+<a class="reference internal" href="../pyapi/vasp/extract.html#pylada.vasp.extract.Extract" title="pylada.vasp.extract.Extract"><tt class="xref py py-class docutils literal"><span class="pre">Extract</span></tt></a>. And the folder-creation function would depend
 on the actual research project.</p>
 </div>
 <div class="section" id="manipulating-job-folders">
@@ -163,7 +163,7 @@ then a simple job-folder can be created from the ipython interface with:</p>
 <p class="first admonition-title">Tip</p>
 <p>We need do <tt class="docutils literal"><span class="pre">import</span></tt> here because the functional is defined in the script
 itself. However, when using a functional defined somewhere else &#8211; such as
-any LaDa functional &#8211; it is easier for debugging purposes to do:</p>
+any Pylada functional &#8211; it is easier for debugging purposes to do:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">run</span> <span class="o">-</span><span class="n">i</span> <span class="n">dummy</span><span class="o">.</span><span class="n">py</span>
 </pre></div>
 </div>
@@ -186,11 +186,11 @@ were to exit ipython, the job-folder would be lost for ever and ever.</p>
 without arguments.</p>
 <p>The percent(%) sign indicates that these commands are ipython
 <a class="reference external" href="http://ipython.org/ipython-doc/dev/interactive/tutorial.html#magic-functions">magic-functions</a>. The percent can be obviated using <a class="reference external" href="http://ipython.org/ipython-doc/dev/interactive/reference.html#magic-command-system">%automagic</a>. To get
-more information about what LaDa magic functions do, call them with &#8220;&#8211;help&#8221;.</p>
+more information about what Pylada magic functions do, call them with &#8220;&#8211;help&#8221;.</p>
 <div class="admonition tip">
 <p class="first admonition-title">Tip</p>
 <p class="last">The current job-folder and the current job-folder path are stored in
-<tt class="docutils literal"><span class="pre">lada.interactive.jobfolder</span></tt> and <tt class="docutils literal"><span class="pre">lada.interactive.jobfolder_path</span></tt>.
+<tt class="docutils literal"><span class="pre">pylada.interactive.jobfolder</span></tt> and <tt class="docutils literal"><span class="pre">pylada.interactive.jobfolder_path</span></tt>.
 In practice, accessing those directly is rarely needed.</p>
 </div>
 </div>
@@ -304,12 +304,12 @@ any specific job-folder, then that job-folder is ignored.</p>
 <p class="first admonition-title">Tip</p>
 <p class="last">It is only possible to <em>modify</em> attributes, as opposed to add new
 attributes. (Actually, the cake is lie. Experts hackers may want to
-check-out <a class="reference internal" href="../pyapi/jobfolder/manipulator.html#lada.jobfolder.manipulator.JobParams.only_existing" title="lada.jobfolder.manipulator.JobParams.only_existing"><tt class="xref py py-attr docutils literal"><span class="pre">JobParams.only_existing</span></tt></a> and
-<a class="reference internal" href="config.html#lada.jobparams_only_existing" title="lada.jobparams_only_existing"><tt class="xref py py-data docutils literal"><span class="pre">lada.jobparams_only_existing</span></tt></a>.)</p>
+check-out <a class="reference internal" href="../pyapi/jobfolder/manipulator.html#pylada.jobfolder.manipulator.JobParams.only_existing" title="pylada.jobfolder.manipulator.JobParams.only_existing"><tt class="xref py py-attr docutils literal"><span class="pre">JobParams.only_existing</span></tt></a> and
+<a class="reference internal" href="../pyapi/configuration.html#pylada.jobparams_only_existing" title="pylada.jobparams_only_existing"><tt class="xref py py-data docutils literal"><span class="pre">pylada.jobparams_only_existing</span></tt></a>.)</p>
 </div>
 <p>Finally, it is possible to focus on a specific sub-set of jobfolders. By
 default the syntax is that of a unix-shell. However, the syntax can be switched
-to regular exppressions <cite>via</cite> the LaDa parameter <a class="reference internal" href="config.html#lada.unix_re" title="lada.unix_re"><tt class="xref py py-data docutils literal"><span class="pre">lada.unix_re</span></tt></a>. Only
+to regular exppressions <cite>via</cite> the Pylada parameter <a class="reference internal" href="../pyapi/configuration.html#pylada.unix_re" title="pylada.unix_re"><tt class="xref py py-data docutils literal"><span class="pre">pylada.unix_re</span></tt></a>. Only
 the former syntax is illustrated here:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">jobparams</span><span class="p">[</span><span class="s">&#39;*/alloy&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">name</span>
 <span class="go">&#39;hello&#39;</span>
@@ -319,13 +319,13 @@ the former syntax is illustrated here:</p>
 dictionary as in previous examples. Indeed, there is only one job-folder
 which corresponds to &#8220;*/alloy&#8221;. In that case, the object is returned as is,
 rather than wrapped in a dictionary. This behavior can be turned on and off
-using the parameters <a class="reference internal" href="config.html#lada.jobparams_naked_end" title="lada.jobparams_naked_end"><tt class="xref py py-data docutils literal"><span class="pre">jobparams_naked_end</span></tt></a> and
-<a class="reference internal" href="../pyapi/jobfolder/manipulator.html#lada.jobfolder.manipulator.JobParams.naked_end" title="lada.jobfolder.manipulator.JobParams.naked_end"><tt class="xref py py-attr docutils literal"><span class="pre">JobParams.naked_end</span></tt></a>. The unix shell-like syntax
+using the parameters <a class="reference internal" href="../pyapi/configuration.html#pylada.jobparams_naked_end" title="pylada.jobparams_naked_end"><tt class="xref py py-data docutils literal"><span class="pre">jobparams_naked_end</span></tt></a> and
+<a class="reference internal" href="../pyapi/jobfolder/manipulator.html#pylada.jobfolder.manipulator.JobParams.naked_end" title="pylada.jobfolder.manipulator.JobParams.naked_end"><tt class="xref py py-attr docutils literal"><span class="pre">JobParams.naked_end</span></tt></a>. The unix shell-like syntax
 can be either absolute paths, when preceded with &#8216;/&#8217;, or relative. In that last
 case, they are relative to the current position in the job-folder, as changed
 by <a class="reference internal" href="#ipython-goto-ug"><em>%goto</em></a>.</p>
 <p>In most cases (see below) the return from using <tt class="docutils literal"><span class="pre">jobparams.something</span></tt> is a
-<a class="reference internal" href="../pyapi/jobfolder/forwardingdict.html#lada.jobfolder.forwarding_dict.ForwardingDict" title="lada.jobfolder.forwarding_dict.ForwardingDict"><tt class="xref py py-class docutils literal"><span class="pre">kind</span> <span class="pre">of</span> <span class="pre">dictionary</span></tt></a>.
+<a class="reference internal" href="../pyapi/jobfolder/forwardingdict.html#pylada.jobfolder.forwarding_dict.ForwardingDict" title="pylada.jobfolder.forwarding_dict.ForwardingDict"><tt class="xref py py-class docutils literal"><span class="pre">kind</span> <span class="pre">of</span> <span class="pre">dictionary</span></tt></a>.
 It can be iterated over like any other dictionary:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">jobparams</span><span class="p">[</span><span class="s">&#39;diamond/*&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
 <span class="gp">... </span>  <span class="k">print</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span>
@@ -333,9 +333,9 @@ It can be iterated over like any other dictionary:</p>
 <span class="go">/diamond/alloy/ hello</span>
 </pre></div>
 </div>
-<p>The other available iteration methods are <a class="reference internal" href="../pyapi/jobfolder/manipulator.html#lada.jobfolder.manipulator.JobParams.iterkeys" title="lada.jobfolder.manipulator.JobParams.iterkeys"><tt class="xref py py-meth docutils literal"><span class="pre">iterkeys()</span></tt></a>,
-<a class="reference internal" href="../pyapi/jobfolder/manipulator.html#lada.jobfolder.manipulator.JobParams.keys" title="lada.jobfolder.manipulator.JobParams.keys"><tt class="xref py py-meth docutils literal"><span class="pre">keys()</span></tt></a>, <a class="reference internal" href="../pyapi/jobfolder/manipulator.html#lada.jobfolder.manipulator.JobParams.itervalues" title="lada.jobfolder.manipulator.JobParams.itervalues"><tt class="xref py py-meth docutils literal"><span class="pre">itervalues()</span></tt></a>,
-<a class="reference internal" href="../pyapi/jobfolder/manipulator.html#lada.jobfolder.manipulator.JobParams.values" title="lada.jobfolder.manipulator.JobParams.values"><tt class="xref py py-meth docutils literal"><span class="pre">values()</span></tt></a>, <a class="reference internal" href="../pyapi/jobfolder/manipulator.html#lada.jobfolder.manipulator.JobParams.items" title="lada.jobfolder.manipulator.JobParams.items"><tt class="xref py py-meth docutils literal"><span class="pre">items()</span></tt></a>.</p>
+<p>The other available iteration methods are <a class="reference internal" href="../pyapi/jobfolder/manipulator.html#pylada.jobfolder.manipulator.JobParams.iterkeys" title="pylada.jobfolder.manipulator.JobParams.iterkeys"><tt class="xref py py-meth docutils literal"><span class="pre">iterkeys()</span></tt></a>,
+<a class="reference internal" href="../pyapi/jobfolder/manipulator.html#pylada.jobfolder.manipulator.JobParams.keys" title="pylada.jobfolder.manipulator.JobParams.keys"><tt class="xref py py-meth docutils literal"><span class="pre">keys()</span></tt></a>, <a class="reference internal" href="../pyapi/jobfolder/manipulator.html#pylada.jobfolder.manipulator.JobParams.itervalues" title="pylada.jobfolder.manipulator.JobParams.itervalues"><tt class="xref py py-meth docutils literal"><span class="pre">itervalues()</span></tt></a>,
+<a class="reference internal" href="../pyapi/jobfolder/manipulator.html#pylada.jobfolder.manipulator.JobParams.values" title="pylada.jobfolder.manipulator.JobParams.values"><tt class="xref py py-meth docutils literal"><span class="pre">values()</span></tt></a>, <a class="reference internal" href="../pyapi/jobfolder/manipulator.html#pylada.jobfolder.manipulator.JobParams.items" title="pylada.jobfolder.manipulator.JobParams.items"><tt class="xref py py-meth docutils literal"><span class="pre">items()</span></tt></a>.</p>
 </div>
 </div>
 <div class="section" id="launching-calculations">
@@ -366,7 +366,7 @@ using the unix shell-like syntax previously.</p>
 <p>This will create one pbs/slurm job per executable job-folder. A number of
 options are possible to select the number of processors, the account or queue,
 the walltime, etc. To examine them, do <tt class="docutils literal"><span class="pre">%launch</span> <span class="pre">scattered</span> <span class="pre">--help</span></tt>. Most
-default values should be contained in <a class="reference internal" href="config.html#lada.default_pbs" title="lada.default_pbs"><tt class="xref py py-data docutils literal"><span class="pre">lada.default_pbs</span></tt></a>. The number
+default values should be contained in <a class="reference internal" href="../pyapi/configuration.html#pylada.default_pbs" title="pylada.default_pbs"><tt class="xref py py-data docutils literal"><span class="pre">pylada.default_pbs</span></tt></a>. The number
 of processors is by default equal to the even number closest to the number of
 atoms in the structure (apparently, this is a recommended VASP default). The
 number of processes can be given both as an integer, or as function which takes
@@ -380,9 +380,9 @@ directories with names similar to those of the job-folders. Try navigating with
 job-folders are changed simultaneously.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p class="last">For <tt class="docutils literal"><span class="pre">%launch</span> <span class="pre">scattered</span></tt> to work, it is first necessary to setup LaDa to
-work with the <a class="reference internal" href="installation/ressources.html#install-pbs-ug"><em>ressource manager</em></a> and with
-<a class="reference internal" href="installation/mpi.html#install-mpi-ug"><em>MPI</em></a>.</p>
+<p class="last">For <tt class="docutils literal"><span class="pre">%launch</span> <span class="pre">scattered</span></tt> to work, it is first necessary to setup Pylada to
+work with the <a class="reference internal" href="configuration.html#configuration-pbs-ug"><em>ressource manager</em></a> and with
+<a class="reference internal" href="configuration.html#configuration-mpi-ug"><em>MPI</em></a>.</p>
 </div>
 </div>
 </div>
@@ -468,8 +468,8 @@ displayed here.</p>
   <p class="topless"><a href="jobfolders.html"
                         title="previous chapter">Organized high-throughput calculations: job-folders</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="config.html"
-                        title="next chapter">Configuring LaDa</a></p>
+  <p class="topless"><a href="../pyapi.html"
+                        title="next chapter">Python API</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="../_sources/userguide/ipython.txt"
@@ -502,12 +502,12 @@ displayed here.</p>
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="config.html" title="Configuring LaDa"
+          <a href="../pyapi.html" title="Python API"
              >next</a> |</li>
         <li class="right" >
           <a href="jobfolders.html" title="Organized high-throughput calculations: job-folders"
              >previous</a> |</li>
-        <li><a href="../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+        <li><a href="../index.html">Pylada 1.0 documentation</a> &raquo;</li>
           <li><a href="../userguide.html" >User Guide</a> &raquo;</li> 
       </ul>
     </div>

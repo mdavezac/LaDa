@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Reading from pre-existing VASP files &mdash; LaDa 1.0 documentation</title>
+    <title>Reading from pre-existing VASP files &mdash; Pylada 1.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -27,10 +27,10 @@
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="author" title="About these documents" href="../../about.html" />
-    <link rel="top" title="LaDa 1.0 documentation" href="../../index.html" />
+    <link rel="top" title="Pylada 1.0 documentation" href="../../index.html" />
     <link rel="up" title="Interface to VASP" href="../vasp.html" />
     <link rel="next" title="Creating and Setting up the vasp functional" href="creating.html" />
-    <link rel="prev" title="Configuring LaDa for VASP" href="config.html" /> 
+    <link rel="prev" title="Configuring Pylada for VASP" href="config.html" /> 
   </head>
   <body>
     <div class="related">
@@ -46,9 +46,9 @@
           <a href="creating.html" title="Creating and Setting up the vasp functional"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="config.html" title="Configuring LaDa for VASP"
+          <a href="config.html" title="Configuring Pylada for VASP"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Pylada 1.0 documentation</a> &raquo;</li>
           <li><a href="../../userguide.html" >User Guide</a> &raquo;</li>
           <li><a href="../vasp.html" accesskey="U">Interface to VASP</a> &raquo;</li> 
       </ul>
@@ -63,33 +63,33 @@
 <h1>Reading from pre-existing VASP files<a class="headerlink" href="#reading-from-pre-existing-vasp-files" title="Permalink to this headline">¶</a></h1>
 <p>There is a fairly good equivalence between the <a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/INCAR">INCAR</a> file and the python
 functional. It is possible to re-create the python from an <a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/INCAR">INCAR</a>:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">lada.vasp</span> <span class="kn">import</span> <span class="n">read_incar</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pylada.vasp</span> <span class="kn">import</span> <span class="n">read_incar</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span> <span class="o">=</span> <span class="n">read_incar</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>By default, <a class="reference internal" href="../../pyapi/vasp.html#lada.vasp.read_incar" title="lada.vasp.read_incar"><tt class="xref py py-func docutils literal"><span class="pre">lada.vasp.read_incar()</span></tt></a> will read from &#8216;INCAR&#8217; in the
+<p>By default, <a class="reference internal" href="../../pyapi/vasp.html#pylada.vasp.read_incar" title="pylada.vasp.read_incar"><tt class="xref py py-func docutils literal"><span class="pre">pylada.vasp.read_incar()</span></tt></a> will read from &#8216;INCAR&#8217; in the
 current directory. However, it is also possible to pass as argument the path
 to a file situated somewhere else.</p>
 <p>Similarly, one can read a <a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/POSCAR">POSCAR</a> file and create a
-<tt class="xref py py-class docutils literal"><span class="pre">lada.crystal.Structure</span></tt> instance from it:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">lada.crystal</span> <span class="kn">import</span> <span class="n">read</span>
+<tt class="xref py py-class docutils literal"><span class="pre">pylada.crystal.Structure</span></tt> instance from it:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pylada.crystal</span> <span class="kn">import</span> <span class="n">read</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">structure</span> <span class="o">=</span> <span class="n">read</span><span class="o">.</span><span class="n">poscar</span><span class="p">(</span><span class="n">types</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;Al&#39;</span><span class="p">,</span> <span class="s">&#39;Mg&#39;</span><span class="p">,</span> <span class="s">&#39;O&#39;</span><span class="p">])</span>
 </pre></div>
 </div>
-<p><a class="reference internal" href="../../pyapi/crystal/methods.html#lada.crystal.read.poscar" title="lada.crystal.read.poscar"><tt class="xref py py-func docutils literal"><span class="pre">lada.crystal.read.poscar()</span></tt></a> will read both <a class="reference external" href="http://www.vasp.at/">VASP</a> 4 and 5 <a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/POSCAR">POSCAR</a>
+<p><a class="reference internal" href="../../pyapi/crystal/methods.html#pylada.crystal.read.poscar" title="pylada.crystal.read.poscar"><tt class="xref py py-func docutils literal"><span class="pre">pylada.crystal.read.poscar()</span></tt></a> will read both <a class="reference external" href="http://www.vasp.at/">VASP</a> 4 and 5 <a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/POSCAR">POSCAR</a>
 formats. However, in the former case, it is important to include the species in
 the <a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/POSCAR">POSCAR</a>, since those are actually missing from the file. If the <a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/POSCAR">POSCAR</a>
-file contains dynamic attributes, that information is stored in an explicitly
-created <tt class="docutils literal"><span class="pre">freeze</span></tt> attribute of each atom.</p>
+file contains dynamic attributes, that information is stored in each atom
+within an explicitly created <tt class="docutils literal"><span class="pre">freeze</span></tt> attribute.</p>
 <div class="admonition warning">
 <p class="first admonition-title">Warning</p>
 <p class="last">The <a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/INCAR">INCAR</a> file does not contain all the information necessary to recreate a
-run. For instance, <a class="reference internal" href="../../pyapi/vasp/functional.html#lada.vasp.functional.Vasp.kpoints" title="lada.vasp.functional.Vasp.kpoints"><tt class="xref py py-attr docutils literal"><span class="pre">kpoints</span></tt></a> is not set
-correctly at this point. Nor can it re-create a functional with parameters
-such as <tt class="xref py py-attr docutils literal"><span class="pre">ediff_per_specie</span></tt>. Hence,
-re-creating a functional from an INCAR of a previous LaDa run will not
-necessarily yield the exact same functional as that which created it in the
-first place.</p>
+run. For instance, <a class="reference internal" href="../../pyapi/vasp/functional.html#pylada.vasp.functional.Vasp.kpoints" title="pylada.vasp.functional.Vasp.kpoints"><tt class="xref py py-attr docutils literal"><span class="pre">kpoints</span></tt></a> is not set
+correctly at this point. Nor can it re-create a functional with &#8220;enhanced&#8221;
+parameters such as <tt class="xref py py-attr docutils literal"><span class="pre">ediff_per_specie</span></tt>.
+Hence, re-creating a functional from an INCAR of a previous Pylada run will
+not necessarily yield the exact same functional as that which created it in
+the first place. However, it will yield the exact same <a class="reference external" href="http://cms.mpi.univie.ac.at/wiki/index.php/INCAR">INCAR</a> file.</p>
 </div>
 </div>
 
@@ -101,7 +101,7 @@ first place.</p>
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
   <p class="topless"><a href="config.html"
-                        title="previous chapter">Configuring LaDa for VASP</a></p>
+                        title="previous chapter">Configuring Pylada for VASP</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="creating.html"
                         title="next chapter">Creating and Setting up the vasp functional</a></p>
@@ -140,9 +140,9 @@ first place.</p>
           <a href="creating.html" title="Creating and Setting up the vasp functional"
              >next</a> |</li>
         <li class="right" >
-          <a href="config.html" title="Configuring LaDa for VASP"
+          <a href="config.html" title="Configuring Pylada for VASP"
              >previous</a> |</li>
-        <li><a href="../../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Pylada 1.0 documentation</a> &raquo;</li>
           <li><a href="../../userguide.html" >User Guide</a> &raquo;</li>
           <li><a href="../vasp.html" >Interface to VASP</a> &raquo;</li> 
       </ul>

@@ -4,8 +4,8 @@ A *meta*-functional: Strain relaxation
 ======================================
 
 Relaxing structures generally takes a few actual VASP calculations, since the
-FFT and pseudo-potential grids are not adapted as the cell parameters and ionic
-positions change. It's brain-dead work best handled automatically. LaDa
+FFT and pseudo-potential grids are not adapted to changing cell parameters and
+ionic positions. It's brain-dead work best handled automatically. Pylada
 currently provides two relaxation methods: :py:class:`relax.Relax` and
 :py:class:`relax.Epitaxial`. The former handles general relaxation, including
 cellshape, volume, and ionic positions, while the latter performs relaxation on
@@ -14,7 +14,7 @@ the out-of-plane parameter should be relaxed, while the in-plane are fixed to
 Si).  The following only describes the first case.
 
 >>> # create the functional
->>> from lada.vasp import Relax
+>>> from pylada.vasp import Relax
 >>> functional = Relax(relaxation='cellshape volume ions', maxcalls=10, keepsteps=True)
 >>> functional(structure)
 
@@ -85,8 +85,9 @@ described below:
    There is also a function :py:func:`relax.relax`, which does the exact same
    thing as the class. Whether to use one or the other is a matter of taste.
    And there's also a generator :py:func:`relax.iter_relax` over actual calls
-   to the VASP_ binary.  Internally, it allows LaDa to launch different
-   relaxations in parrallel. In practice, both :py:func:`relax.relax` and
-   :py:class:`relax.Relax` make calls to :py:func:`relax.iter_relax`.
+   to the VASP_ binary.  Internally, it allows Pylada to launch different
+   relaxations from different calculations side by side. In practice, both
+   :py:func:`relax.relax` and :py:class:`relax.Relax` make calls to
+   :py:func:`relax.iter_relax`.
 
 

@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Execution of an external program &mdash; LaDa 1.0 documentation</title>
+    <title>Execution of an external program &mdash; Pylada 1.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="author" title="About these documents" href="../../about.html" />
-    <link rel="top" title="LaDa 1.0 documentation" href="../../index.html" />
+    <link rel="top" title="Pylada 1.0 documentation" href="../../index.html" />
     <link rel="up" title="Process Module" href="../process.html" />
     <link rel="next" title="Sequential execution of a generator of processes" href="iterator.html" />
     <link rel="prev" title="Abstract base-class" href="process.html" /> 
@@ -48,7 +48,7 @@
         <li class="right" >
           <a href="process.html" title="Abstract base-class"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Pylada 1.0 documentation</a> &raquo;</li>
           <li><a href="../../pyapi.html" >Python API</a> &raquo;</li>
           <li><a href="../process.html" accesskey="U">Process Module</a> &raquo;</li> 
       </ul>
@@ -59,12 +59,12 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="module-lada.process.program">
-<span id="execution-of-an-external-program"></span><h1>Execution of an external program<a class="headerlink" href="#module-lada.process.program" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-pylada.process.program">
+<span id="execution-of-an-external-program"></span><h1>Execution of an external program<a class="headerlink" href="#module-pylada.process.program" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
-<dt id="lada.process.program.ProgramProcess">
-<em class="property">class </em><tt class="descclassname">lada.process.program.</tt><tt class="descname">ProgramProcess</tt><big>(</big><em>program</em>, <em>outdir</em>, <em>cmdline=None</em>, <em>stdout=None</em>, <em>stderr=None</em>, <em>stdin=None</em>, <em>maxtrials=1</em>, <em>dompi=False</em>, <em>cmdlmodifier=None</em>, <em>onfinish=None</em>, <em>onfail=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../_modules/lada/process/program.html#ProgramProcess"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.process.program.ProgramProcess" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="process.html#lada.process.process.Process" title="lada.process.process.Process"><tt class="xref py py-class docutils literal"><span class="pre">lada.process.process.Process</span></tt></a></p>
+<dt id="pylada.process.program.ProgramProcess">
+<em class="property">class </em><tt class="descclassname">pylada.process.program.</tt><tt class="descname">ProgramProcess</tt><big>(</big><em>program</em>, <em>outdir</em>, <em>cmdline=None</em>, <em>stdout=None</em>, <em>stderr=None</em>, <em>stdin=None</em>, <em>maxtrials=1</em>, <em>dompi=False</em>, <em>cmdlmodifier=None</em>, <em>onfinish=None</em>, <em>onfail=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../_modules/pylada/process/program.html#ProgramProcess"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.process.program.ProgramProcess" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="process.html#pylada.process.process.Process" title="pylada.process.process.Process"><tt class="xref py py-class docutils literal"><span class="pre">pylada.process.process.Process</span></tt></a></p>
 <p>Executes an external program</p>
 <p>This process creates and manages the execution of an external program,
 say <a class="reference external" href="http://www.vasp.at/">VASP</a> or <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a>, via a <a class="reference external" href="http://docs.python.org/library/subprocess.html#subprocess.Popen">subprocess.Popen</a> instance. The external
@@ -88,19 +88,19 @@ using the super-computer&#8217;s MPI interface, with the number of processors
 specified by <tt class="docutils literal"><span class="pre">comm</span></tt>. It is launched in a directory <tt class="docutils literal"><span class="pre">dir</span></tt>. 
 The snippet above has python wait for the external program to finish,
 while checking for exceptions if the program fails.
-The external program is started only once <a class="reference internal" href="#lada.process.program.ProgramProcess.start" title="lada.process.program.ProgramProcess.start"><tt class="xref py py-meth docutils literal"><span class="pre">start()</span></tt></a> is called.</p>
+The external program is started only once <a class="reference internal" href="#pylada.process.program.ProgramProcess.start" title="pylada.process.program.ProgramProcess.start"><tt class="xref py py-meth docutils literal"><span class="pre">start()</span></tt></a> is called.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p class="last">A <a class="reference internal" href="../process.html#lada.process.Fail" title="lada.process.Fail"><tt class="xref py py-class docutils literal"><span class="pre">Fail</span></tt></a> exception is thrown when the program
+<p class="last">A <a class="reference internal" href="../process.html#pylada.process.Fail" title="pylada.process.Fail"><tt class="xref py py-class docutils literal"><span class="pre">Fail</span></tt></a> exception is thrown when the program
 returns with a non-zero exit code. However, some propietary MPI
 crapware, such as Cray&#8217;s. will return 0 whenever <tt class="docutils literal"><span class="pre">MPI::Finalize()</span></tt> is
 called, even when the program itself returns non-zero. As a result, it
-is not possible to rely on a <a class="reference internal" href="../process.html#lada.process.Fail" title="lada.process.Fail"><tt class="xref py py-class docutils literal"><span class="pre">Fail</span></tt></a> exception
+is not possible to rely on a <a class="reference internal" href="../process.html#pylada.process.Fail" title="pylada.process.Fail"><tt class="xref py py-class docutils literal"><span class="pre">Fail</span></tt></a> exception
 being thrown correctly on all machines at all times.</p>
 </div>
 <dl class="method">
-<dt id="lada.process.program.ProgramProcess.__init__">
-<tt class="descname">__init__</tt><big>(</big><em>program</em>, <em>outdir</em>, <em>cmdline=None</em>, <em>stdout=None</em>, <em>stderr=None</em>, <em>stdin=None</em>, <em>maxtrials=1</em>, <em>dompi=False</em>, <em>cmdlmodifier=None</em>, <em>onfinish=None</em>, <em>onfail=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../_modules/lada/process/program.html#ProgramProcess.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.process.program.ProgramProcess.__init__" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.process.program.ProgramProcess.__init__">
+<tt class="descname">__init__</tt><big>(</big><em>program</em>, <em>outdir</em>, <em>cmdline=None</em>, <em>stdout=None</em>, <em>stderr=None</em>, <em>stdin=None</em>, <em>maxtrials=1</em>, <em>dompi=False</em>, <em>cmdlmodifier=None</em>, <em>onfinish=None</em>, <em>onfail=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../_modules/pylada/process/program.html#ProgramProcess.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.process.program.ProgramProcess.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Initializes a process.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -129,10 +129,10 @@ of the <tt class="xref py py-mod docutils literal"><span class="pre">process</sp
 automically be restarted up to this number of times.</li>
 <li><strong>dompi</strong> (<em>bool</em>) &#8211; If True, then the external program is launched with MPI.
 The MPI infrastructure should be set up correctly, meaning
-<tt class="xref py py-func docutils literal"><span class="pre">lada.launch_program()</span></tt>,
-<tt class="xref py py-func docutils literal"><span class="pre">lada.machine_dependent_call_modifier()</span></tt>,
-<a class="reference internal" href="../../userguide/config.html#lada.modify_global_comm" title="lada.modify_global_comm"><tt class="xref py py-func docutils literal"><span class="pre">lada.modify_global_comm()</span></tt></a>, <a class="reference internal" href="../../userguide/config.html#lada.mpirun_exe" title="lada.mpirun_exe"><tt class="xref py py-data docutils literal"><span class="pre">lada.mpirun_exe</span></tt></a>,
-<a class="reference internal" href="../../userguide/config.html#lada.default_comm" title="lada.default_comm"><tt class="xref py py-data docutils literal"><span class="pre">default_comm</span></tt></a>, <a class="reference internal" href="../../userguide/config.html#lada.figure_out_machines" title="lada.figure_out_machines"><tt class="xref py py-data docutils literal"><span class="pre">figure_out_machines</span></tt></a>.</li>
+<tt class="xref py py-func docutils literal"><span class="pre">pylada.launch_program()</span></tt>,
+<tt class="xref py py-func docutils literal"><span class="pre">pylada.machine_dependent_call_modifier()</span></tt>,
+<a class="reference internal" href="../configuration.html#pylada.modify_global_comm" title="pylada.modify_global_comm"><tt class="xref py py-func docutils literal"><span class="pre">pylada.modify_global_comm()</span></tt></a>, <a class="reference internal" href="../configuration.html#pylada.mpirun_exe" title="pylada.mpirun_exe"><tt class="xref py py-data docutils literal"><span class="pre">pylada.mpirun_exe</span></tt></a>,
+<a class="reference internal" href="../configuration.html#pylada.default_comm" title="pylada.default_comm"><tt class="xref py py-data docutils literal"><span class="pre">default_comm</span></tt></a>, <a class="reference internal" href="../configuration.html#pylada.figure_out_machines" title="pylada.figure_out_machines"><tt class="xref py py-data docutils literal"><span class="pre">figure_out_machines</span></tt></a>.</li>
 <li><strong>cmdlmodifier</strong> (<em>cmdlmodifier(formatter, comm)-&gt;comm</em>) &#8211; This function is called prior to launching the program. It can be
 used to modify the formatting dictionary. It should return a
 communicator to use in the actual call. This communicator can be the
@@ -151,20 +151,20 @@ instance, the second is True if an error occurred.</li>
 </dd></dl>
 
 <dl class="method">
-<dt id="lada.process.program.ProgramProcess._cleanup">
-<tt class="descname">_cleanup</tt><big>(</big><big>)</big><a class="reference internal" href="../../_modules/lada/process/program.html#ProgramProcess._cleanup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.process.program.ProgramProcess._cleanup" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.process.program.ProgramProcess._cleanup">
+<tt class="descname">_cleanup</tt><big>(</big><big>)</big><a class="reference internal" href="../../_modules/pylada/process/program.html#ProgramProcess._cleanup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.process.program.ProgramProcess._cleanup" title="Permalink to this definition">¶</a></dt>
 <dd><p>Cleanup files and crap.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.process.program.ProgramProcess.cmdline">
-<tt class="descname">cmdline</tt><em class="property"> = None</em><a class="headerlink" href="#lada.process.program.ProgramProcess.cmdline" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.process.program.ProgramProcess.cmdline">
+<tt class="descname">cmdline</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.process.program.ProgramProcess.cmdline" title="Permalink to this definition">¶</a></dt>
 <dd><p>Command line for the program.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.process.program.ProgramProcess.cmdlmodifier">
-<tt class="descname">cmdlmodifier</tt><em class="property"> = None</em><a class="headerlink" href="#lada.process.program.ProgramProcess.cmdlmodifier" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.process.program.ProgramProcess.cmdlmodifier">
+<tt class="descname">cmdlmodifier</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.process.program.ProgramProcess.cmdlmodifier" title="Permalink to this definition">¶</a></dt>
 <dd><p>A function to modify command-line parameters.</p>
 <p>This function is only invoked for mpirun programs.
 It can be used to, say, make sure a program is launched only with an
@@ -172,14 +172,14 @@ even number of processes. It should add &#8216;placement&#8217; to the dictionar
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.process.program.ProgramProcess.dompi">
-<tt class="descname">dompi</tt><em class="property"> = None</em><a class="headerlink" href="#lada.process.program.ProgramProcess.dompi" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.process.program.ProgramProcess.dompi">
+<tt class="descname">dompi</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.process.program.ProgramProcess.dompi" title="Permalink to this definition">¶</a></dt>
 <dd><p>Whether to run with mpi or not.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.process.program.ProgramProcess.onfail">
-<tt class="descname">onfail</tt><em class="property"> = None</em><a class="headerlink" href="#lada.process.program.ProgramProcess.onfail" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.process.program.ProgramProcess.onfail">
+<tt class="descname">onfail</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.process.program.ProgramProcess.onfail" title="Permalink to this definition">¶</a></dt>
 <dd><p>Called if program fails.</p>
 <p>Some program, such as CRYSTAL, return error codes when unconverged.
 However, does not necessarily mean the program failed to run. This
@@ -189,8 +189,8 @@ otherwise.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.process.program.ProgramProcess.onfinish">
-<tt class="descname">onfinish</tt><em class="property"> = None</em><a class="headerlink" href="#lada.process.program.ProgramProcess.onfinish" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.process.program.ProgramProcess.onfinish">
+<tt class="descname">onfinish</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.process.program.ProgramProcess.onfinish" title="Permalink to this definition">¶</a></dt>
 <dd><p>Callback when the processes finishes.</p>
 <p>Called even on error. Should take two arguments:</p>
 <blockquote>
@@ -199,19 +199,19 @@ otherwise.</p>
 <li>error: True if an error occured.</li>
 </ul>
 </div></blockquote>
-<p>It is called before the <a class="reference internal" href="#lada.process.program.ProgramProcess._cleanup" title="lada.process.program.ProgramProcess._cleanup"><tt class="xref py py-meth docutils literal"><span class="pre">_cleanup()</span></tt></a> method. In other words, the
+<p>It is called before the <a class="reference internal" href="#pylada.process.program.ProgramProcess._cleanup" title="pylada.process.program.ProgramProcess._cleanup"><tt class="xref py py-meth docutils literal"><span class="pre">_cleanup()</span></tt></a> method. In other words, the
 process is passed as it is when the error is found.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.process.program.ProgramProcess.outdir">
-<tt class="descname">outdir</tt><em class="property"> = None</em><a class="headerlink" href="#lada.process.program.ProgramProcess.outdir" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.process.program.ProgramProcess.outdir">
+<tt class="descname">outdir</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.process.program.ProgramProcess.outdir" title="Permalink to this definition">¶</a></dt>
 <dd><p>Directory where to run job.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="lada.process.program.ProgramProcess.poll">
-<tt class="descname">poll</tt><big>(</big><big>)</big><a class="reference internal" href="../../_modules/lada/process/program.html#ProgramProcess.poll"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.process.program.ProgramProcess.poll" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.process.program.ProgramProcess.poll">
+<tt class="descname">poll</tt><big>(</big><big>)</big><a class="reference internal" href="../../_modules/pylada/process/program.html#ProgramProcess.poll"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.process.program.ProgramProcess.poll" title="Permalink to this definition">¶</a></dt>
 <dd><p>Polls current job.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -226,14 +226,14 @@ process is passed as it is when the error is found.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.process.program.ProgramProcess.program">
-<tt class="descname">program</tt><em class="property"> = None</em><a class="headerlink" href="#lada.process.program.ProgramProcess.program" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.process.program.ProgramProcess.program">
+<tt class="descname">program</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.process.program.ProgramProcess.program" title="Permalink to this definition">¶</a></dt>
 <dd><p>External program to execute.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="lada.process.program.ProgramProcess.start">
-<tt class="descname">start</tt><big>(</big><em>comm=None</em><big>)</big><a class="reference internal" href="../../_modules/lada/process/program.html#ProgramProcess.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.process.program.ProgramProcess.start" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.process.program.ProgramProcess.start">
+<tt class="descname">start</tt><big>(</big><em>comm=None</em><big>)</big><a class="reference internal" href="../../_modules/pylada/process/program.html#ProgramProcess.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.process.program.ProgramProcess.start" title="Permalink to this definition">¶</a></dt>
 <dd><p>Starts current job.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -259,26 +259,26 @@ especially not simultaneously.</li>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.process.program.ProgramProcess.stderr">
-<tt class="descname">stderr</tt><em class="property"> = None</em><a class="headerlink" href="#lada.process.program.ProgramProcess.stderr" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.process.program.ProgramProcess.stderr">
+<tt class="descname">stderr</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.process.program.ProgramProcess.stderr" title="Permalink to this definition">¶</a></dt>
 <dd><p>Name of standard error file, if any.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.process.program.ProgramProcess.stdin">
-<tt class="descname">stdin</tt><em class="property"> = None</em><a class="headerlink" href="#lada.process.program.ProgramProcess.stdin" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.process.program.ProgramProcess.stdin">
+<tt class="descname">stdin</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.process.program.ProgramProcess.stdin" title="Permalink to this definition">¶</a></dt>
 <dd><p>Name of standard error file, if any.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.process.program.ProgramProcess.stdout">
-<tt class="descname">stdout</tt><em class="property"> = None</em><a class="headerlink" href="#lada.process.program.ProgramProcess.stdout" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.process.program.ProgramProcess.stdout">
+<tt class="descname">stdout</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.process.program.ProgramProcess.stdout" title="Permalink to this definition">¶</a></dt>
 <dd><p>Name of standard output file, if any.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="lada.process.program.ProgramProcess.wait">
-<tt class="descname">wait</tt><big>(</big><big>)</big><a class="reference internal" href="../../_modules/lada/process/program.html#ProgramProcess.wait"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.process.program.ProgramProcess.wait" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.process.program.ProgramProcess.wait">
+<tt class="descname">wait</tt><big>(</big><big>)</big><a class="reference internal" href="../../_modules/pylada/process/program.html#ProgramProcess.wait"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.process.program.ProgramProcess.wait" title="Permalink to this definition">¶</a></dt>
 <dd><p>Waits for process to end, then cleanup.</p>
 </dd></dl>
 
@@ -335,7 +335,7 @@ especially not simultaneously.</li>
         <li class="right" >
           <a href="process.html" title="Abstract base-class"
              >previous</a> |</li>
-        <li><a href="../../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Pylada 1.0 documentation</a> &raquo;</li>
           <li><a href="../../pyapi.html" >Python API</a> &raquo;</li>
           <li><a href="../process.html" >Process Module</a> &raquo;</li> 
       </ul>

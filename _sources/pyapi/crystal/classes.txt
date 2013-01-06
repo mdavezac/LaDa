@@ -1,13 +1,13 @@
 Atom, Structure, and HFTransform
 -----------------------------------
 
-.. currentmodule:: lada.crystal.cppwrappers
+.. currentmodule:: pylada.crystal.cppwrappers
 
 .. autoclass:: Atom
   :show-inheritance:
   :members: pos, type
   
-  This class is also available directly under :py:mod:`lada.crystal`.
+  This class is also available directly under :py:mod:`pylada.crystal`.
 
   .. automethod:: copy()->Atom
   .. automethod:: to_dict()->dict
@@ -15,7 +15,7 @@ Atom, Structure, and HFTransform
 .. autoclass:: Structure
   :show-inheritance:
 
-  This class is also available directly under :py:mod:`lada.crystal`.
+  This class is also available directly under :py:mod:`pylada.crystal`.
 
   .. autoattribute:: volume
   .. autoattribute:: cell
@@ -36,7 +36,7 @@ Atom, Structure, and HFTransform
 .. autoclass:: HFTransform
   :show-inheritance:
 
-  This class is also available directly under :py:mod:`lada.crystal`.
+  This class is also available directly under :py:mod:`pylada.crystal`.
 
   .. autoattribute:: quotient
   .. autoattribute:: transform

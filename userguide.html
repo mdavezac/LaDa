@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>User Guide &mdash; LaDa 1.0 documentation</title>
+    <title>User Guide &mdash; Pylada 1.0 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -27,8 +27,8 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="author" title="About these documents" href="about.html" />
-    <link rel="top" title="LaDa 1.0 documentation" href="index.html" />
-    <link rel="next" title="Compiling, installing, and setup" href="userguide/installation.html" />
+    <link rel="top" title="Pylada 1.0 documentation" href="index.html" />
+    <link rel="next" title="Compiling and installing" href="userguide/compile.html" />
     <link rel="prev" title="About" href="about.html" /> 
   </head>
   <body>
@@ -42,12 +42,12 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="userguide/installation.html" title="Compiling, installing, and setup"
+          <a href="userguide/compile.html" title="Compiling and installing"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="about.html" title="About"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">LaDa 1.0 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Pylada 1.0 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -61,11 +61,18 @@
 <p>Contents:</p>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="userguide/installation.html">Compiling, installing, and setup</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="userguide/installation/mpi.html">Setting up MPI</a></li>
-<li class="toctree-l2"><a class="reference internal" href="userguide/installation/ressources.html">Setting up the PBS/Slurm ressources</a></li>
-<li class="toctree-l2"><a class="reference internal" href="userguide/installation/ipython.html">Setting up the ipython interface</a></li>
-<li class="toctree-l2"><a class="reference internal" href="userguide/installation/vasp.html">Setting up VASP</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userguide/compile.html">Compiling and installing</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="userguide/compile.html#requirements">Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="userguide/compile.html#recommended">Recommended</a></li>
+<li class="toctree-l2"><a class="reference internal" href="userguide/compile.html#procedure">Procedure</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="userguide/configuration.html">Seting up Pylada</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="userguide/configuration.html#setting-up-ipython">Setting up IPython</a></li>
+<li class="toctree-l2"><a class="reference internal" href="userguide/configuration.html#running-external-programs">Running external programs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="userguide/configuration.html#running-mpi-calculations">Running MPI calculations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="userguide/configuration.html#running-different-mpi-calculations-side-by-side">Running different MPI calculations side-by-side</a></li>
+<li class="toctree-l2"><a class="reference internal" href="userguide/configuration.html#setting-up-pylada-with-pbs-slurm">Setting up Pylada with PBS/Slurm</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="userguide/crystal.html">Creating and Manipulating crystal structures</a><ul>
@@ -76,13 +83,18 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="userguide/vasp.html">Interface to VASP</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="userguide/vasp/primer.html">A fast primer</a></li>
-<li class="toctree-l2"><a class="reference internal" href="userguide/vasp/config.html">Configuring LaDa for VASP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="userguide/vasp/config.html">Configuring Pylada for VASP</a></li>
 <li class="toctree-l2"><a class="reference internal" href="userguide/vasp/reading.html">Reading from pre-existing VASP files</a></li>
 <li class="toctree-l2"><a class="reference internal" href="userguide/vasp/creating.html">Creating and Setting up the vasp functional</a></li>
 <li class="toctree-l2"><a class="reference internal" href="userguide/vasp/running.html">Executing a VASP calculation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="userguide/vasp/extract.html">Extracting results from VASP calculations</a></li>
 <li class="toctree-l2"><a class="reference internal" href="userguide/vasp/relax.html">A *meta*-functional: Strain relaxation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="userguide/vasp/example.html">Example: Epitaxial relaxation method</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="userguide/dftcrystal.html">Interface to CRYSTAL</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="userguide/dftcrystal/config.html">Configuring Pylada for CRYSTAL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="userguide/dftcrystal/crystal.html">CRYSTAL&#8217;s approach to crystal structures</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="userguide/jobfolders.html">Organized high-thoughput calculations: job-folders</a><ul>
@@ -99,11 +111,6 @@
 <li class="toctree-l2"><a class="reference internal" href="userguide/ipython.html#collecting-results">Collecting results</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="userguide/config.html">Configuring LaDa</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="userguide/config.html#environment-variables">Environment Variables</a></li>
-<li class="toctree-l2"><a class="reference internal" href="userguide/config.html#configuration-variables">Configuration variables</a></li>
-</ul>
-</li>
 </ul>
 </div>
 </div>
@@ -118,8 +125,8 @@
   <p class="topless"><a href="about.html"
                         title="previous chapter">About</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="userguide/installation.html"
-                        title="next chapter">Compiling, installing, and setup</a></p>
+  <p class="topless"><a href="userguide/compile.html"
+                        title="next chapter">Compiling and installing</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="_sources/userguide.txt"
@@ -152,12 +159,12 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="userguide/installation.html" title="Compiling, installing, and setup"
+          <a href="userguide/compile.html" title="Compiling and installing"
              >next</a> |</li>
         <li class="right" >
           <a href="about.html" title="About"
              >previous</a> |</li>
-        <li><a href="index.html">LaDa 1.0 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Pylada 1.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

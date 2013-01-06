@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>JobFolder Module &mdash; LaDa 1.0 documentation</title>
+    <title>JobFolder Module &mdash; Pylada 1.0 documentation</title>
     
     <link rel="stylesheet" href="../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../_static/doctools.js"></script>
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="author" title="About these documents" href="../about.html" />
-    <link rel="top" title="LaDa 1.0 documentation" href="../index.html" />
+    <link rel="top" title="Pylada 1.0 documentation" href="../index.html" />
     <link rel="up" title="Python API" href="../pyapi.html" />
     <link rel="next" title="Jobdict class" href="jobfolder/jobfolder.html" />
     <link rel="prev" title="Exceptions" href="error.html" /> 
@@ -48,7 +48,7 @@
         <li class="right" >
           <a href="error.html" title="Exceptions"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+        <li><a href="../index.html">Pylada 1.0 documentation</a> &raquo;</li>
           <li><a href="../pyapi.html" accesskey="U">Python API</a> &raquo;</li> 
       </ul>
     </div>  
@@ -58,10 +58,10 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="module-lada.jobfolder">
-<span id="jobfolder-module"></span><h1>JobFolder Module<a class="headerlink" href="#module-lada.jobfolder" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-pylada.jobfolder">
+<span id="jobfolder-module"></span><h1>JobFolder Module<a class="headerlink" href="#module-pylada.jobfolder" title="Permalink to this headline">¶</a></h1>
 <p>Classes and functions pertaining to job-management.</p>
-<p>The  <a class="reference internal" href="#module-lada.jobfolder" title="lada.jobfolder"><tt class="xref py py-mod docutils literal"><span class="pre">lada.jobfolder</span></tt></a> provides tools for high-throughput calculations.
+<p>The  <a class="reference internal" href="#module-pylada.jobfolder" title="pylada.jobfolder"><tt class="xref py py-mod docutils literal"><span class="pre">pylada.jobfolder</span></tt></a> provides tools for high-throughput calculations.
 It is centered around an object - the job-folder - which organizes calculations
 within a tree of folders, much as one would manually organize calculations
 within a tree of directories. Each folder can be executable, e.g.  there is
@@ -84,8 +84,8 @@ collect the computational results across all executable sub-folders.</p>
 </ul>
 </div>
 <dl class="function">
-<dt id="lada.jobfolder.load">
-<tt class="descclassname">lada.jobfolder.</tt><tt class="descname">load</tt><big>(</big><em>path='jobfolder.dict'</em>, <em>timeout=None</em><big>)</big><a class="reference internal" href="../_modules/lada/jobfolder.html#load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.jobfolder.load" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.jobfolder.load">
+<tt class="descclassname">pylada.jobfolder.</tt><tt class="descname">load</tt><big>(</big><em>path='jobfolder.dict'</em>, <em>timeout=None</em><big>)</big><a class="reference internal" href="../_modules/pylada/jobfolder.html#load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.jobfolder.load" title="Permalink to this definition">¶</a></dt>
 <dd><p>Unpickles a job-folder from file.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -109,15 +109,15 @@ function.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="lada.jobfolder.save">
-<tt class="descclassname">lada.jobfolder.</tt><tt class="descname">save</tt><big>(</big><em>jobfolder</em>, <em>path='jobfolder.dict'</em>, <em>overwrite=False</em>, <em>timeout=None</em><big>)</big><a class="reference internal" href="../_modules/lada/jobfolder.html#save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.jobfolder.save" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.jobfolder.save">
+<tt class="descclassname">pylada.jobfolder.</tt><tt class="descname">save</tt><big>(</big><em>jobfolder</em>, <em>path='jobfolder.dict'</em>, <em>overwrite=False</em>, <em>timeout=None</em><big>)</big><a class="reference internal" href="../_modules/pylada/jobfolder.html#save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.jobfolder.save" title="Permalink to this definition">¶</a></dt>
 <dd><p>Pickles a job-folder to file.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>jobfolder</strong> (<a class="reference internal" href="jobfolder/jobfolder.html#lada.jobfolder.jobfolder.JobFolder" title="lada.jobfolder.jobfolder.JobFolder"><tt class="xref py py-class docutils literal"><span class="pre">JobFolder</span></tt></a>) &#8211; A job-dictionary to pickle.</li>
+<li><strong>jobfolder</strong> (<a class="reference internal" href="jobfolder/jobfolder.html#pylada.jobfolder.jobfolder.JobFolder" title="pylada.jobfolder.jobfolder.JobFolder"><tt class="xref py py-class docutils literal"><span class="pre">JobFolder</span></tt></a>) &#8211; A job-dictionary to pickle.</li>
 <li><strong>path</strong> (<em>str</em>) &#8211; filename of file to which to save pickle. overwritten. If None then
 saves to &#8220;pickled_jobfolder&#8221;</li>
 <li><strong>timeout</strong> (<em>int</em>) &#8211; How long to wait when trying to acquire lock on file.
@@ -129,7 +129,7 @@ Defaults to forever.</li>
 </tbody>
 </table>
 <p>This method first acquire an exclusive lock on the file before writing
-(see <tt class="xref py py-meth docutils literal"><span class="pre">lada.misc.open_exclusive()</span></tt>).  This way not two processes can
+(see <tt class="xref py py-meth docutils literal"><span class="pre">pylada.misc.open_exclusive()</span></tt>).  This way not two processes can
 read/write to this file while using this function.</p>
 </dd></dl>
 
@@ -184,7 +184,7 @@ read/write to this file while using this function.</p>
         <li class="right" >
           <a href="error.html" title="Exceptions"
              >previous</a> |</li>
-        <li><a href="../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+        <li><a href="../index.html">Pylada 1.0 documentation</a> &raquo;</li>
           <li><a href="../pyapi.html" >Python API</a> &raquo;</li> 
       </ul>
     </div>

@@ -1,9 +1,9 @@
 Extraction classes
 ******************
-.. module:: lada.vasp.extract
+.. module:: pylada.vasp.extract
 
 Instances of the extraction classes are returned by calls to the
-:py:class:`vasp <lada.vasp.functional.Vasp>` and affiliated methods. They
+:py:class:`vasp <pylada.vasp.functional.Vasp>` and affiliated methods. They
 simply grep the OUTCAR for values of interest, e.g. eigenvalues or vasp
 parameters. Indeed, these should contain an ``Extract`` attribute which refers
 to a class capable of handling the output of the method or vasp object. They
@@ -20,7 +20,7 @@ array(-666.667) * eV
 
 It is possible to extract calculations from a complete folder tree:
 
->>> from lada.vasp import MassExtract
+>>> from pylada.vasp import MassExtract
 >>> a = MassExtract('outdir')
 >>> a.total_energy
 {
@@ -29,8 +29,8 @@ It is possible to extract calculations from a complete folder tree:
 }
 
 The extraction classes are separated into I/O (:py:class:`IOMixin
-<lada.vasp.extract.mixin.IOMixin>`) and actual methods to grep the OUTCAR for
-results (:py:class:`ExtractBase <lada.vasp.extract.base.ExtractBase>`). This
+<pylada.vasp.extract.mixin.IOMixin>`) and actual methods to grep the OUTCAR for
+results (:py:class:`ExtractBase <pylada.vasp.extract.base.ExtractBase>`). This
 setup makes it convenient to change the kind of object that can be grepped,
 from the standard file on a hard-disk, to a file in a database.
 
@@ -39,8 +39,8 @@ from the standard file on a hard-disk, to a file in a database.
 .. toctree::
    :maxdepth: 1
 
-   lada.vasp.extract.base <extractbase>
-   lada.vasp.extract.mixin <mixin>
+   pylada.vasp.extract.base <extractbase>
+   pylada.vasp.extract.mixin <mixin>
 
 
 .. autoclass:: Extract

@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Executing a VASP calculation &mdash; LaDa 1.0 documentation</title>
+    <title>Executing a VASP calculation &mdash; Pylada 1.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="author" title="About these documents" href="../../about.html" />
-    <link rel="top" title="LaDa 1.0 documentation" href="../../index.html" />
+    <link rel="top" title="Pylada 1.0 documentation" href="../../index.html" />
     <link rel="up" title="Interface to VASP" href="../vasp.html" />
     <link rel="next" title="Extracting results from VASP calculations" href="extract.html" />
     <link rel="prev" title="Creating and Setting up the vasp functional" href="creating.html" /> 
@@ -48,7 +48,7 @@
         <li class="right" >
           <a href="creating.html" title="Creating and Setting up the vasp functional"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Pylada 1.0 documentation</a> &raquo;</li>
           <li><a href="../../userguide.html" >User Guide</a> &raquo;</li>
           <li><a href="../vasp.html" accesskey="U">Interface to VASP</a> &raquo;</li> 
       </ul>
@@ -66,8 +66,8 @@
 </pre></div>
 </div>
 <p>This will execute <a class="reference external" href="http://www.vasp.at/">VASP</a> with the current parameters, in the mycalc directory,
-as an mpi process defined by <a class="reference internal" href="../config.html#lada.mpirun_exe" title="lada.mpirun_exe"><tt class="xref py py-data docutils literal"><span class="pre">mpirun_exe</span></tt></a> and
-<a class="reference internal" href="../config.html#lada.default_comm" title="lada.default_comm"><tt class="xref py py-data docutils literal"><span class="pre">lada.default_comm</span></tt></a>. The directory can be given using the usual unix
+as an mpi process defined by <a class="reference internal" href="../../pyapi/configuration.html#pylada.mpirun_exe" title="pylada.mpirun_exe"><tt class="xref py py-data docutils literal"><span class="pre">mpirun_exe</span></tt></a> and
+<a class="reference internal" href="../../pyapi/configuration.html#pylada.default_comm" title="pylada.default_comm"><tt class="xref py py-data docutils literal"><span class="pre">pylada.default_comm</span></tt></a>. The directory can be given using the usual unix
 short-cuts and/or shell environment variables.</p>
 <p>To specify how the mpi process should go, add a dictionary called <tt class="docutils literal"><span class="pre">comm</span></tt>:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">vasp</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">outdir</span><span class="o">=</span><span class="s">&#39;~/$WORKDIR/mycalc&#39;</span><span class="p">,</span> <span class="n">comm</span><span class="o">=</span><span class="p">{</span><span class="s">&#39;n&#39;</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span> <span class="s">&#39;ppn&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">})</span>
@@ -75,7 +75,7 @@ short-cuts and/or shell environment variables.</p>
 </div>
 <p>Exactly what this dictionary should contain depends on the specific
 supercomputer. The call is formatted by the user-defined
-<a class="reference internal" href="../config.html#lada.mpirun_exe" title="lada.mpirun_exe"><tt class="xref py py-data docutils literal"><span class="pre">mpirun_exe</span></tt></a>. If the <tt class="docutils literal"><span class="pre">comm</span></tt> argument is <em>not</em> provided, it
+<a class="reference internal" href="../../pyapi/configuration.html#pylada.mpirun_exe" title="pylada.mpirun_exe"><tt class="xref py py-data docutils literal"><span class="pre">mpirun_exe</span></tt></a>. If the <tt class="docutils literal"><span class="pre">comm</span></tt> argument is <em>not</em> provided, it
 defaults to <tt class="docutils literal"><span class="pre">None</span></tt> and a serial calculation is performed.</p>
 <p>Finally, vasp parameters can be modified on a one-off basis:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">vasp</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">outdir</span><span class="o">=</span><span class="s">&#39;~/mycalc&#39;</span><span class="p">,</span> <span class="n">ispin</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
@@ -83,9 +83,9 @@ defaults to <tt class="docutils literal"><span class="pre">None</span></tt> and 
 </div>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p class="last">LaDa will <em>not</em> overwrite a successfull calculation, unless specifically
-requested with <tt class="docutils literal"><span class="pre">overwrite=True</span></tt> in the call, not even one performed
-without the use of LaDa.</p>
+<p class="last">Pylada will <em>not</em> overwrite a <em>successfull</em> calculation (unless specifically
+requested to do so with <tt class="docutils literal"><span class="pre">overwrite=True</span></tt> in the call), not even one
+performed without the use of Pylada.</p>
 </div>
 </div>
 
@@ -138,7 +138,7 @@ without the use of LaDa.</p>
         <li class="right" >
           <a href="creating.html" title="Creating and Setting up the vasp functional"
              >previous</a> |</li>
-        <li><a href="../../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Pylada 1.0 documentation</a> &raquo;</li>
           <li><a href="../../userguide.html" >User Guide</a> &raquo;</li>
           <li><a href="../vasp.html" >Interface to VASP</a> &raquo;</li> 
       </ul>

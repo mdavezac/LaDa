@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Organized high-throughput calculations: job-folders &mdash; LaDa 1.0 documentation</title>
+    <title>Organized high-throughput calculations: job-folders &mdash; Pylada 1.0 documentation</title>
     
     <link rel="stylesheet" href="../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -27,10 +27,10 @@
     <script type="text/javascript" src="../_static/doctools.js"></script>
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="author" title="About these documents" href="../about.html" />
-    <link rel="top" title="LaDa 1.0 documentation" href="../index.html" />
+    <link rel="top" title="Pylada 1.0 documentation" href="../index.html" />
     <link rel="up" title="User Guide" href="../userguide.html" />
     <link rel="next" title="IPython high-throughput interface" href="ipython.html" />
-    <link rel="prev" title="Example: Epitaxial relaxation method" href="vasp/example.html" /> 
+    <link rel="prev" title="CRYSTAL’s approach to crystal structures" href="dftcrystal/crystal.html" /> 
   </head>
   <body>
     <div class="related">
@@ -46,9 +46,9 @@
           <a href="ipython.html" title="IPython high-throughput interface"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="vasp/example.html" title="Example: Epitaxial relaxation method"
+          <a href="dftcrystal/crystal.html" title="CRYSTAL’s approach to crystal structures"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+        <li><a href="../index.html">Pylada 1.0 documentation</a> &raquo;</li>
           <li><a href="../userguide.html" accesskey="U">User Guide</a> &raquo;</li> 
       </ul>
     </div>  
@@ -60,7 +60,7 @@
             
   <div class="section" id="organized-high-throughput-calculations-job-folders">
 <span id="jobfolder-ug"></span><h1>Organized high-throughput calculations: job-folders<a class="headerlink" href="#organized-high-throughput-calculations-job-folders" title="Permalink to this headline">¶</a></h1>
-<p>LaDa provides tools to organize high-throughput calculations in a systematic
+<p>Pylada provides tools to organize high-throughput calculations in a systematic
 manner.  The whole high-throughput experience revolves around <strong>job-folders</strong>.
 These are convenient ways of organizing actual calculations. They can be though
 of as folders on a file system, or directories in unix parlance, each one
@@ -84,7 +84,7 @@ is no limit to what can be achieved.</p>
 <p>The following describes how job-folders are created. The fun bits,
 launching jobs, collecting results, manipulating all job-folders
 simultaneously, can be found in the next section. Indeed, all of these are
-intrinsically linked to the LaDa&#8217;s IPython interface.</p>
+intrinsically linked to the Pylada&#8217;s IPython interface.</p>
 <div class="section" id="prep">
 <h2>Prep<a class="headerlink" href="#prep" title="Permalink to this headline">¶</a></h2>
 <p>First off, we will need a functional. Rather that use something heavy, like
@@ -97,7 +97,7 @@ refer to it later on.</p>
   <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
   <span class="kn">from</span> <span class="nn">pickle</span> <span class="kn">import</span> <span class="n">dump</span>
   <span class="kn">from</span> <span class="nn">random</span> <span class="kn">import</span> <span class="n">random</span>
-  <span class="kn">from</span> <span class="nn">lada.misc</span> <span class="kn">import</span> <span class="n">Changedir</span>
+  <span class="kn">from</span> <span class="nn">pylada.misc</span> <span class="kn">import</span> <span class="n">Changedir</span>
 
   <span class="n">structure</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">structure</span><span class="p">)</span>
   <span class="n">structure</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">value</span>
@@ -112,7 +112,7 @@ writes a file to disk. That&#8217;s pretty much it.</p>
 <div class="section" id="creating-and-accessing-job-folders">
 <h2>Creating and accessing job-folders<a class="headerlink" href="#creating-and-accessing-job-folders" title="Permalink to this headline">¶</a></h2>
 <p>Job-folders can be created with two simple lines of codes:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">lada.jobfolder</span> <span class="kn">import</span> <span class="n">JobFolder</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pylada.jobfolder</span> <span class="kn">import</span> <span class="n">JobFolder</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">root</span> <span class="o">=</span> <span class="n">JobFolder</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -167,7 +167,7 @@ of syntax that one would use (on unices) to access other directories:</p>
 <p>The whole point of a job-folder is to create an architecture for calculations.
 Each job-folder can contain at most a single calculation. A calculation is
 setup by passing to the job-folder a function and the parameters for calling it.</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">lada.crystal.binary</span> <span class="kn">import</span> <span class="n">zinc_blende</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pylada.crystal.binary</span> <span class="kn">import</span> <span class="n">zinc_blende</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">dummy</span> <span class="kn">import</span> <span class="n">functional</span>
 <span class="go">&gt;&gt;&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">jobA</span><span class="o">.</span><span class="n">functional</span> <span class="o">=</span> <span class="n">functional</span>
@@ -232,12 +232,12 @@ current directory.</p>
 <div class="admonition tip">
 <p class="first admonition-title">Tip</p>
 <p class="last">Executable olders can be iterated the same way dictionaries can, with
-<a class="reference internal" href="../pyapi/jobfolder/jobfolder.html#lada.jobfolder.jobfolder.JobFolder.keys" title="lada.jobfolder.jobfolder.JobFolder.keys"><tt class="xref py py-meth docutils literal"><span class="pre">keys()</span></tt></a>,
-<a class="reference internal" href="../pyapi/jobfolder/jobfolder.html#lada.jobfolder.jobfolder.JobFolder.iterkeys" title="lada.jobfolder.jobfolder.JobFolder.iterkeys"><tt class="xref py py-meth docutils literal"><span class="pre">iterkeys()</span></tt></a>,
-<a class="reference internal" href="../pyapi/jobfolder/jobfolder.html#lada.jobfolder.jobfolder.JobFolder.values" title="lada.jobfolder.jobfolder.JobFolder.values"><tt class="xref py py-meth docutils literal"><span class="pre">values()</span></tt></a>,
-<a class="reference internal" href="../pyapi/jobfolder/jobfolder.html#lada.jobfolder.jobfolder.JobFolder.itervalues" title="lada.jobfolder.jobfolder.JobFolder.itervalues"><tt class="xref py py-meth docutils literal"><span class="pre">itervalues()</span></tt></a>,
-<a class="reference internal" href="../pyapi/jobfolder/jobfolder.html#lada.jobfolder.jobfolder.JobFolder.items" title="lada.jobfolder.jobfolder.JobFolder.items"><tt class="xref py py-meth docutils literal"><span class="pre">items()</span></tt></a>,
-<a class="reference internal" href="../pyapi/jobfolder/jobfolder.html#lada.jobfolder.jobfolder.JobFolder.iteritems" title="lada.jobfolder.jobfolder.JobFolder.iteritems"><tt class="xref py py-meth docutils literal"><span class="pre">iteritems()</span></tt></a>.</p>
+<a class="reference internal" href="../pyapi/jobfolder/jobfolder.html#pylada.jobfolder.jobfolder.JobFolder.keys" title="pylada.jobfolder.jobfolder.JobFolder.keys"><tt class="xref py py-meth docutils literal"><span class="pre">keys()</span></tt></a>,
+<a class="reference internal" href="../pyapi/jobfolder/jobfolder.html#pylada.jobfolder.jobfolder.JobFolder.iterkeys" title="pylada.jobfolder.jobfolder.JobFolder.iterkeys"><tt class="xref py py-meth docutils literal"><span class="pre">iterkeys()</span></tt></a>,
+<a class="reference internal" href="../pyapi/jobfolder/jobfolder.html#pylada.jobfolder.jobfolder.JobFolder.values" title="pylada.jobfolder.jobfolder.JobFolder.values"><tt class="xref py py-meth docutils literal"><span class="pre">values()</span></tt></a>,
+<a class="reference internal" href="../pyapi/jobfolder/jobfolder.html#pylada.jobfolder.jobfolder.JobFolder.itervalues" title="pylada.jobfolder.jobfolder.JobFolder.itervalues"><tt class="xref py py-meth docutils literal"><span class="pre">itervalues()</span></tt></a>,
+<a class="reference internal" href="../pyapi/jobfolder/jobfolder.html#pylada.jobfolder.jobfolder.JobFolder.items" title="pylada.jobfolder.jobfolder.JobFolder.items"><tt class="xref py py-meth docutils literal"><span class="pre">items()</span></tt></a>,
+<a class="reference internal" href="../pyapi/jobfolder/jobfolder.html#pylada.jobfolder.jobfolder.JobFolder.iteritems" title="pylada.jobfolder.jobfolder.JobFolder.iteritems"><tt class="xref py py-meth docutils literal"><span class="pre">iteritems()</span></tt></a>.</p>
 </div>
 </div>
 <div class="section" id="saving-and-loading-folders">
@@ -245,7 +245,7 @@ current directory.</p>
 <p>The <a class="reference internal" href="ipython.html#ipython-ug"><em>IPython interface</em></a> provides better ways to both.
 However, it is still possible to load and save job-folders to disk from a
 script:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">lada.jobfolder</span> <span class="kn">import</span> <span class="n">load</span><span class="p">,</span> <span class="n">save</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pylada.jobfolder</span> <span class="kn">import</span> <span class="n">load</span><span class="p">,</span> <span class="n">save</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">save</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="s">&#39;root.dict&#39;</span><span class="p">)</span> <span class="c"># saves to file</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">root</span> <span class="o">=</span> <span class="n">load</span><span class="p">(</span><span class="s">&#39;root.dict&#39;</span><span class="p">)</span> <span class="c"># loads from file</span>
 </pre></div>
@@ -259,7 +259,7 @@ processes can access the file without fear of getting into one another&#8217;s w
 <div class="admonition tip">
 <p class="first admonition-title">Tip</p>
 <p class="last">If either load or save takes for ever, check whether the lock-directory
-&#8221;.filename-lada_lockdir&#8221; exists. If you are <em>sure</em> that no other process
+&#8221;.filename-pylada_lockdir&#8221; exists. If you are <em>sure</em> that no other process
 exists which is trying to access the file on disk, then you can delete the
 lock-directory and try saving/loading again. Alternatively, a timeout
 argument can be provided to raise an exception if the file cannot be locked.</p>
@@ -285,8 +285,8 @@ argument can be provided to raise an exception if the file cannot be locked.</p>
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="vasp/example.html"
-                        title="previous chapter">Example: Epitaxial relaxation method</a></p>
+  <p class="topless"><a href="dftcrystal/crystal.html"
+                        title="previous chapter">CRYSTAL&#8217;s approach to crystal structures</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="ipython.html"
                         title="next chapter">IPython high-throughput interface</a></p>
@@ -325,9 +325,9 @@ argument can be provided to raise an exception if the file cannot be locked.</p>
           <a href="ipython.html" title="IPython high-throughput interface"
              >next</a> |</li>
         <li class="right" >
-          <a href="vasp/example.html" title="Example: Epitaxial relaxation method"
+          <a href="dftcrystal/crystal.html" title="CRYSTAL’s approach to crystal structures"
              >previous</a> |</li>
-        <li><a href="../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+        <li><a href="../index.html">Pylada 1.0 documentation</a> &raquo;</li>
           <li><a href="../userguide.html" >User Guide</a> &raquo;</li> 
       </ul>
     </div>

@@ -1,7 +1,7 @@
 Execution of an external program
 ********************************
 
-.. automodule:: lada.process.program
+.. automodule:: pylada.process.program
 .. moduleauthor:: Mayeul d'Avezac
 .. autoclass:: ProgramProcess
    :show-inheritance:

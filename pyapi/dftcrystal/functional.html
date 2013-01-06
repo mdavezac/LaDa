@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Functional class and attributes &mdash; LaDa 1.0 documentation</title>
+    <title>Functional class and attributes &mdash; Pylada 1.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="author" title="About these documents" href="../../about.html" />
-    <link rel="top" title="LaDa 1.0 documentation" href="../../index.html" />
+    <link rel="top" title="Pylada 1.0 documentation" href="../../index.html" />
     <link rel="up" title="CRYSTAL wrapper module" href="../dftcrystal.html" />
     <link rel="next" title="Geometry optimization block" href="optgeom.html" />
     <link rel="prev" title="CRYSTAL wrapper module" href="../dftcrystal.html" /> 
@@ -48,7 +48,7 @@
         <li class="right" >
           <a href="../dftcrystal.html" title="CRYSTAL wrapper module"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Pylada 1.0 documentation</a> &raquo;</li>
           <li><a href="../../pyapi.html" >Python API</a> &raquo;</li>
           <li><a href="../dftcrystal.html" accesskey="U">CRYSTAL wrapper module</a> &raquo;</li> 
       </ul>
@@ -59,11 +59,11 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="module-lada.dftcrystal.functional">
-<span id="functional-class-and-attributes"></span><h1>Functional class and attributes<a class="headerlink" href="#module-lada.dftcrystal.functional" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-pylada.dftcrystal.functional">
+<span id="functional-class-and-attributes"></span><h1>Functional class and attributes<a class="headerlink" href="#module-pylada.dftcrystal.functional" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
-<dt id="lada.dftcrystal.functional.Functional">
-<em class="property">class </em><tt class="descclassname">lada.dftcrystal.functional.</tt><tt class="descname">Functional</tt><big>(</big><em>copy=None</em>, <em>program=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../_modules/lada/dftcrystal/functional.html#Functional"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.functional.Functional" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.functional.Functional">
+<em class="property">class </em><tt class="descclassname">pylada.dftcrystal.functional.</tt><tt class="descname">Functional</tt><big>(</big><em>program=None</em>, <em>copy=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../_modules/pylada/dftcrystal/functional.html#Functional"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.dftcrystal.functional.Functional" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
 <p>Wrapper for the CRYSTAL program.</p>
 <p>This object provides a pythonic interface to the <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a> program. It is
@@ -71,8 +71,8 @@ modelled loosely after <a class="reference external" href="http://www.crystal.un
 <blockquote>
 <div><ul>
 <li><p class="first">The OPTGEOM keyword of the first code block can be accessed through
-the <a class="reference internal" href="optgeom.html#lada.dftcrystal.optgeom.OptGeom" title="lada.dftcrystal.optgeom.OptGeom"><tt class="xref py py-class docutils literal"><span class="pre">optgeom</span></tt></a>
-<a class="reference internal" href="#lada.dftcrystal.functional.Functional.optgeom" title="lada.dftcrystal.functional.Functional.optgeom"><tt class="xref py py-attr docutils literal"><span class="pre">attribute</span></tt></a>:</p>
+the <a class="reference internal" href="optgeom.html#pylada.dftcrystal.optgeom.OptGeom" title="pylada.dftcrystal.optgeom.OptGeom"><tt class="xref py py-class docutils literal"><span class="pre">optgeom</span></tt></a>
+<a class="reference internal" href="#pylada.dftcrystal.functional.Functional.optgeom" title="pylada.dftcrystal.functional.Functional.optgeom"><tt class="xref py py-attr docutils literal"><span class="pre">attribute</span></tt></a>:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="c"># enable geometry optimization</span>
 <span class="n">functional</span><span class="o">.</span><span class="n">optgeom</span><span class="o">.</span><span class="n">enabled</span> <span class="o">=</span> <span class="bp">True</span>
 <span class="c"># change some of the keywords</span>
@@ -83,7 +83,7 @@ the <a class="reference internal" href="optgeom.html#lada.dftcrystal.optgeom.Opt
 first line above.</p>
 </li>
 <li><p class="first">The interface to the second block of input (basis-functions) can be
-accessed through the <a class="reference internal" href="basis.html#lada.dftcrystal.basis.BasisSet" title="lada.dftcrystal.basis.BasisSet"><tt class="xref py py-class docutils literal"><span class="pre">basis</span></tt></a> <a class="reference internal" href="#lada.dftcrystal.functional.Functional.basis" title="lada.dftcrystal.functional.Functional.basis"><tt class="xref py py-attr docutils literal"><span class="pre">attribute</span></tt></a>. It
+accessed through the <a class="reference internal" href="basis.html#pylada.dftcrystal.basis.BasisSet" title="pylada.dftcrystal.basis.BasisSet"><tt class="xref py py-class docutils literal"><span class="pre">basis</span></tt></a> <a class="reference internal" href="#pylada.dftcrystal.functional.Functional.basis" title="pylada.dftcrystal.functional.Functional.basis"><tt class="xref py py-attr docutils literal"><span class="pre">attribute</span></tt></a>. It
 allows to set the basis set itself, as well as keywords specific to
 the basis set:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">functional</span><span class="o">.</span><span class="n">basis</span><span class="p">[</span><span class="s">&#39;H&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">Shell</span><span class="p">(</span><span class="s">&#39;s&#39;</span><span class="p">,</span> <span class="n">a0</span><span class="o">=</span><span class="p">(</span><span class="mf">15.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span> <span class="n">a1</span><span class="o">=</span><span class="p">(</span><span class="mf">8.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)),</span> <span class="o">...</span><span class="p">]</span>
@@ -93,8 +93,8 @@ the basis set:</p>
 </li>
 <li><p class="first">The third input block (Hamiltonian and miscellaneous) can be accessed
 directly through the functional, or, alternatively, <em>via</em> the
-<a class="reference internal" href="comp.html#lada.dftcrystal.electronic.Electronic" title="lada.dftcrystal.electronic.Electronic"><tt class="xref py py-class docutils literal"><span class="pre">scf</span></tt></a>
-<a class="reference internal" href="#lada.dftcrystal.functional.Functional.scf" title="lada.dftcrystal.functional.Functional.scf"><tt class="xref py py-attr docutils literal"><span class="pre">attribute</span></tt></a>.</p>
+<a class="reference internal" href="comp.html#pylada.dftcrystal.electronic.Electronic" title="pylada.dftcrystal.electronic.Electronic"><tt class="xref py py-class docutils literal"><span class="pre">scf</span></tt></a>
+<a class="reference internal" href="#pylada.dftcrystal.functional.Functional.scf" title="pylada.dftcrystal.functional.Functional.scf"><tt class="xref py py-attr docutils literal"><span class="pre">attribute</span></tt></a>.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">functional</span><span class="o">.</span><span class="n">scf</span><span class="o">.</span><span class="n">dft</span><span class="o">.</span><span class="n">b3lyp</span> <span class="o">=</span> <span class="bp">True</span>
 <span class="n">functional</span><span class="o">.</span><span class="n">dft</span><span class="o">.</span><span class="n">b3lyp</span> <span class="o">=</span> <span class="bp">True</span>
 
@@ -115,14 +115,14 @@ be written as <tt class="docutils literal"><span class="pre">functional.scf.toli
 </ul>
 </div>
 <dl class="attribute">
-<dt id="lada.dftcrystal.functional.Functional.Extract">
-<tt class="descname">Extract</tt><em class="property"> = &lt;class 'lada.dftcrystal.extract.Extract'&gt;</em><a class="headerlink" href="#lada.dftcrystal.functional.Functional.Extract" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.functional.Functional.Extract">
+<tt class="descname">Extract</tt><em class="property"> = &lt;class 'pylada.dftcrystal.extract.Extract'&gt;</em><a class="headerlink" href="#pylada.dftcrystal.functional.Functional.Extract" title="Permalink to this definition">¶</a></dt>
 <dd><p>Extraction class.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="lada.dftcrystal.functional.Functional.__call__">
-<tt class="descname">__call__</tt><big>(</big><em>structure</em>, <em>outdir=None</em>, <em>workdir=None</em>, <em>comm=None</em>, <em>overwrite=False</em>, <em>test=False</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../_modules/lada/dftcrystal/functional.html#Functional.__call__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.functional.Functional.__call__" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.functional.Functional.__call__">
+<tt class="descname">__call__</tt><big>(</big><em>structure</em>, <em>outdir=None</em>, <em>workdir=None</em>, <em>comm=None</em>, <em>overwrite=False</em>, <em>test=False</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../_modules/pylada/dftcrystal/functional.html#Functional.__call__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.dftcrystal.functional.Functional.__call__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Performs a CRYSTAL calculation</p>
 <p>If successfull results (see <tt class="xref py py-attr docutils literal"><span class="pre">extract.Extract.success</span></tt>) already
 exist in outdir, calculations are not repeated. Instead, an extraction
@@ -158,7 +158,7 @@ deepcopied correctly.</p>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
-<li><strong>RuntimeError</strong> &#8211; when computations do not complete.</li>
+<li><strong>ExternalRunFailed</strong> &#8211; when computations do not complete.</li>
 <li><strong>IOError</strong> &#8211; when outdir exists but is not a directory.</li>
 </ul>
 </td>
@@ -167,7 +167,7 @@ deepcopied correctly.</p>
 </table>
 <p>This version performs a blocking call to the <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a> program. It works as
 follows:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">lada.dftcrystal</span> <span class="kn">import</span> <span class="n">Crystal</span><span class="p">,</span> <span class="n">Functional</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pylada.dftcrystal</span> <span class="kn">import</span> <span class="n">Crystal</span><span class="p">,</span> <span class="n">Functional</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c"># create an object</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span> <span class="o">=</span> <span class="n">Functional</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c"># initialize it</span>
@@ -182,8 +182,8 @@ follows:</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="lada.dftcrystal.functional.Functional.iter">
-<tt class="descname">iter</tt><big>(</big><em>structure</em>, <em>outdir=None</em>, <em>comm=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../_modules/lada/dftcrystal/functional.html#Functional.iter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.functional.Functional.iter" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.functional.Functional.iter">
+<tt class="descname">iter</tt><big>(</big><em>structure</em>, <em>outdir=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../_modules/pylada/dftcrystal/functional.html#Functional.iter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.dftcrystal.functional.Functional.iter" title="Permalink to this definition">¶</a></dt>
 <dd><p>Performs a CRYSTAL calculation</p>
 <p>If successfull results (see <tt class="xref py py-attr docutils literal"><span class="pre">extract.Extract.success</span></tt>) already
 exist in outdir, calculations are not repeated. Instead, an extraction
@@ -219,7 +219,7 @@ deepcopied correctly.</p>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
-<li><strong>RuntimeError</strong> &#8211; when computations do not complete.</li>
+<li><strong>ExternalRunFailed</strong> &#8211; when computations do not complete.</li>
 <li><strong>IOError</strong> &#8211; when outdir exists but is not a directory.</li>
 </ul>
 </td>
@@ -230,13 +230,13 @@ deepcopied correctly.</p>
 is a generator which yields two types of objects:</p>
 <blockquote>
 <div><ul class="simple">
-<li><a class="reference internal" href="#lada.dftcrystal.functional.Functional.Extract" title="lada.dftcrystal.functional.Functional.Extract"><tt class="xref py py-attr docutils literal"><span class="pre">Extract</span></tt></a> instances refering to finished <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a> calculations</li>
-<li><a class="reference internal" href="../process.html#module-lada.process" title="lada.process"><tt class="xref py py-mod docutils literal"><span class="pre">Processes</span></tt></a> which allow the user to call the
+<li><a class="reference internal" href="#pylada.dftcrystal.functional.Functional.Extract" title="pylada.dftcrystal.functional.Functional.Extract"><tt class="xref py py-attr docutils literal"><span class="pre">Extract</span></tt></a> instances refering to finished <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a> calculations</li>
+<li><a class="reference internal" href="../process.html#module-pylada.process" title="pylada.process"><tt class="xref py py-mod docutils literal"><span class="pre">Processes</span></tt></a> which allow the user to call the
 <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a> code at leisure</li>
 </ul>
 </div></blockquote>
 <p>The last object yielded should be an extraction object refering to the
-final calculation. In practice, <a class="reference internal" href="#lada.dftcrystal.functional.Functional.iter" title="lada.dftcrystal.functional.Functional.iter"><tt class="xref py py-meth docutils literal"><span class="pre">iter()</span></tt></a> is used as follows:</p>
+final calculation. In practice, <a class="reference internal" href="#pylada.dftcrystal.functional.Functional.iter" title="pylada.dftcrystal.functional.Functional.iter"><tt class="xref py py-meth docutils literal"><span class="pre">iter()</span></tt></a> is used as follows:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="k">for</span> <span class="n">process</span> <span class="ow">in</span> <span class="n">functional</span><span class="o">.</span><span class="n">iter</span><span class="p">(</span><span class="n">crystal</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span>
   <span class="c"># check whether the generator yielded a process or not</span>
   <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">process</span><span class="p">,</span> <span class="s">&#39;success&#39;</span><span class="p">):</span>
@@ -253,16 +253,16 @@ final calculation. In practice, <a class="reference internal" href="#lada.dftcry
 </dd></dl>
 
 <dl class="method">
-<dt id="lada.dftcrystal.functional.Functional.add_keyword">
-<tt class="descname">add_keyword</tt><big>(</big><em>name</em>, <em>value=None</em><big>)</big><a class="reference internal" href="../../_modules/lada/dftcrystal/functional.html#Functional.add_keyword"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.functional.Functional.add_keyword" title="Permalink to this definition">¶</a></dt>
-<dd><p>Passes on to <a class="reference internal" href="#lada.dftcrystal.functional.Functional.scf" title="lada.dftcrystal.functional.Functional.scf"><tt class="xref py py-attr docutils literal"><span class="pre">scf</span></tt></a></p>
+<dt id="pylada.dftcrystal.functional.Functional.add_keyword">
+<tt class="descname">add_keyword</tt><big>(</big><em>name</em>, <em>value=None</em><big>)</big><a class="reference internal" href="../../_modules/pylada/dftcrystal/functional.html#Functional.add_keyword"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.dftcrystal.functional.Functional.add_keyword" title="Permalink to this definition">¶</a></dt>
+<dd><p>Passes on to <a class="reference internal" href="#pylada.dftcrystal.functional.Functional.scf" title="pylada.dftcrystal.functional.Functional.scf"><tt class="xref py py-attr docutils literal"><span class="pre">scf</span></tt></a></p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.dftcrystal.functional.Functional.optgeom">
-<tt class="descname">optgeom</tt><a class="headerlink" href="#lada.dftcrystal.functional.Functional.optgeom" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.functional.Functional.optgeom">
+<tt class="descname">optgeom</tt><a class="headerlink" href="#pylada.dftcrystal.functional.Functional.optgeom" title="Permalink to this definition">¶</a></dt>
 <dd><p>Geometry relaxation parameters.</p>
-<p>This is an instance of <a class="reference internal" href="optgeom.html#lada.dftcrystal.optgeom.OptGeom" title="lada.dftcrystal.optgeom.OptGeom"><tt class="xref py py-class docutils literal"><span class="pre">OptGeom</span></tt></a>. Once
+<p>This is an instance of <a class="reference internal" href="optgeom.html#pylada.dftcrystal.optgeom.OptGeom" title="pylada.dftcrystal.optgeom.OptGeom"><tt class="xref py py-class docutils literal"><span class="pre">OptGeom</span></tt></a>. Once
 enabled with</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span><span class="o">.</span><span class="n">optgeom</span><span class="o">.</span><span class="n">enable</span> <span class="o">=</span> <span class="bp">True</span>
 </pre></div>
@@ -275,20 +275,20 @@ It controls the structural relaxation:</p>
 </div>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><a class="reference internal" href="optgeom.html#lada.dftcrystal.optgeom.OptGeom" title="lada.dftcrystal.optgeom.OptGeom"><tt class="xref py py-class docutils literal"><span class="pre">OptGeom</span></tt></a>,
+<p class="last"><a class="reference internal" href="optgeom.html#pylada.dftcrystal.optgeom.OptGeom" title="pylada.dftcrystal.optgeom.OptGeom"><tt class="xref py py-class docutils literal"><span class="pre">OptGeom</span></tt></a>,
 <tt class="xref py py-class docutils literal"><span class="pre">Relax</span></tt></p>
 </div>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.dftcrystal.functional.Functional.basis">
-<tt class="descname">basis</tt><a class="headerlink" href="#lada.dftcrystal.functional.Functional.basis" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.functional.Functional.basis">
+<tt class="descname">basis</tt><a class="headerlink" href="#pylada.dftcrystal.functional.Functional.basis" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
-<dt id="lada.dftcrystal.functional.Functional.dft">
-<tt class="descname">dft</tt><a class="headerlink" href="#lada.dftcrystal.functional.Functional.dft" title="Permalink to this definition">¶</a></dt>
-<dd><p>It is an instance of <a class="reference internal" href="comp.html#lada.dftcrystal.hamiltonian.Dft" title="lada.dftcrystal.hamiltonian.Dft"><tt class="xref py py-class docutils literal"><span class="pre">Dft</span></tt></a>.
+<dt id="pylada.dftcrystal.functional.Functional.dft">
+<tt class="descname">dft</tt><a class="headerlink" href="#pylada.dftcrystal.functional.Functional.dft" title="Permalink to this definition">¶</a></dt>
+<dd><p>It is an instance of <a class="reference internal" href="comp.html#pylada.dftcrystal.hamiltonian.Dft" title="pylada.dftcrystal.hamiltonian.Dft"><tt class="xref py py-class docutils literal"><span class="pre">Dft</span></tt></a>.
 Parameters from <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a>&#8216;s sub-block can be set here, for instance as:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">functional</span><span class="o">.</span><span class="n">dft</span><span class="o">.</span><span class="n">b3lyp</span> <span class="o">=</span> <span class="bp">True</span>
 </pre></div>
@@ -302,8 +302,8 @@ Parameters from <a class="reference external" href="http://www.crystal.unito.it/
 </dd></dl>
 
 <dl class="method">
-<dt id="lada.dftcrystal.functional.Functional.kpoint_blocking">
-<tt class="descname">kpoint_blocking</tt><big>(</big><em>structure</em>, <em>nprocs</em>, <em>nkpoints=None</em>, <em>cmplxfac=None</em><big>)</big><a class="headerlink" href="#lada.dftcrystal.functional.Functional.kpoint_blocking" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.functional.Functional.kpoint_blocking">
+<tt class="descname">kpoint_blocking</tt><big>(</big><em>structure</em>, <em>nprocs</em>, <em>nkpoints=None</em>, <em>cmplxfac=None</em><big>)</big><a class="reference internal" href="../../_modules/pylada/dftcrystal/functional.html#Functional.kpoint_blocking"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.dftcrystal.functional.Functional.kpoint_blocking" title="Permalink to this definition">¶</a></dt>
 <dd><p>Infers the number of procs per kpoint.</p>
 <p>This function is helpfull in checking whether MPPcrystal will run
 correcly or not. It returns a list consisting of the number of procs
@@ -316,26 +316,33 @@ Unfortunately, MPPCrystal does not recover well from this problem.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="lada.dftcrystal.functional.Functional.mpp_compatible_procs">
-<tt class="descname">mpp_compatible_procs</tt><big>(</big><em>structure</em>, <em>multipleof=1</em>, <em>dof=20</em>, <em>cmplxfac=None</em><big>)</big><a class="headerlink" href="#lada.dftcrystal.functional.Functional.mpp_compatible_procs" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.functional.Functional.mpp_compatible_procs">
+<tt class="descname">mpp_compatible_procs</tt><big>(</big><em>structure</em>, <em>multipleof=1</em>, <em>dof=20</em>, <em>cmplxfac=None</em><big>)</big><a class="reference internal" href="../../_modules/pylada/dftcrystal/functional.html#Functional.mpp_compatible_procs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.dftcrystal.functional.Functional.mpp_compatible_procs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns list of MPP compatible processor counts.</p>
 <p>Processor counts are compatible if:</p>
-<ul class="simple">
-<li><span class="math">\(N_p &lt; N_{AO} * N_k * N_s // dof\)</span></li>
-<li><span class="math">\(N_p % multipleof == 0\)</span></li>
-<li>the number of processors per k-point is never prime</li>
-</ul>
-<p>Where:</p>
+<ul>
+<li><p class="first"><span class="math">\(N_p &lt; N_{AO} * N_k * N_s // dof\)</span></p>
+</li>
+<li><p class="first"><span class="math">\(N_p % multipleof == 0\)</span></p>
+</li>
+<li><p class="first">the number of processors per k-point is never prime</p>
+<blockquote>
+<div><p>Where:</p>
 <ul class="simple">
 <li><span class="math">\(N_p\)</span> is the number of cores</li>
 <li><span class="math">\(N_k\)</span> is the number of irreducible kpoints</li>
-<li><span class="math">\(N_s\)</span> is the number of spins</li>
-<li><span class="math">\(N_{AO}\)</span> is the number of atomic orbitals</li>
+</ul>
+</div></blockquote>
+</li>
+<li><p class="first"><span class="math">\(N_s\)</span> is the number of spins</p>
+</li>
+<li><p class="first"><span class="math">\(N_{AO}\)</span> is the number of atomic orbitals</p>
+</li>
 </ul>
 <p>The last condition is somewhat more complex and depends upon the total
 number of kpoints, the number of k-points at the Brillouin zone edge,
 and the particular way <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a> assigns procs for each k-point. This
-decomposition is computed in <a class="reference internal" href="#lada.dftcrystal.functional.Functional.kpoint_blocking" title="lada.dftcrystal.functional.Functional.kpoint_blocking"><tt class="xref py py-meth docutils literal"><span class="pre">kpoint_blocking()</span></tt></a>.</p>
+decomposition is computed in <a class="reference internal" href="#pylada.dftcrystal.functional.Functional.kpoint_blocking" title="pylada.dftcrystal.functional.Functional.kpoint_blocking"><tt class="xref py py-meth docutils literal"><span class="pre">kpoint_blocking()</span></tt></a>.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -352,8 +359,8 @@ decomposition is computed in <a class="reference internal" href="#lada.dftcrysta
 </dd></dl>
 
 <dl class="method">
-<dt id="lada.dftcrystal.functional.Functional.nbelectrons">
-<tt class="descname">nbelectrons</tt><big>(</big><em>structure</em><big>)</big><a class="headerlink" href="#lada.dftcrystal.functional.Functional.nbelectrons" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.functional.Functional.nbelectrons">
+<tt class="descname">nbelectrons</tt><big>(</big><em>structure</em><big>)</big><a class="reference internal" href="../../_modules/pylada/dftcrystal/functional.html#Functional.nbelectrons"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.dftcrystal.functional.Functional.nbelectrons" title="Permalink to this definition">¶</a></dt>
 <dd><p>Number of electrons per formula unit.</p>
 </dd></dl>
 
@@ -364,40 +371,40 @@ decomposition is computed in <a class="reference internal" href="#lada.dftcrysta
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.dftcrystal.functional.Functional.program">
-<tt class="descname">program</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.functional.Functional.program" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.functional.Functional.program">
+<tt class="descname">program</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.dftcrystal.functional.Functional.program" title="Permalink to this definition">¶</a></dt>
 <dd><p>Path to crystal program.</p>
-<p>If this attribute is None, then <tt class="xref py py-data docutils literal"><span class="pre">crystal_program</span></tt> is
+<p>If this attribute is None, then <a class="reference internal" href="../configuration.html#pylada.crystal_program" title="pylada.crystal_program"><tt class="xref py py-data docutils literal"><span class="pre">crystal_program</span></tt></a> is
 used.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.dftcrystal.functional.Functional.restart">
-<tt class="descname">restart</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.functional.Functional.restart" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.functional.Functional.restart">
+<tt class="descname">restart</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.dftcrystal.functional.Functional.restart" title="Permalink to this definition">¶</a></dt>
 <dd><p>Place holder.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.dftcrystal.functional.Functional.scf">
-<tt class="descname">scf</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.functional.Functional.scf" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.functional.Functional.scf">
+<tt class="descname">scf</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.dftcrystal.functional.Functional.scf" title="Permalink to this definition">¶</a></dt>
 <dd><p>Holds scf/electronic keywords &#8211; block 3.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="lada.dftcrystal.functional.Functional.test_basis">
-<tt class="descname">test_basis</tt><big>(</big><em>structure</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#lada.dftcrystal.functional.Functional.test_basis" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.functional.Functional.test_basis">
+<tt class="descname">test_basis</tt><big>(</big><em>structure</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../_modules/pylada/dftcrystal/functional.html#Functional.test_basis"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.dftcrystal.functional.Functional.test_basis" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns output of test basis run.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="lada.dftcrystal.functional.Functional.test_hamiltonian">
-<tt class="descname">test_hamiltonian</tt><big>(</big><em>structure</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#lada.dftcrystal.functional.Functional.test_hamiltonian" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.functional.Functional.test_hamiltonian">
+<tt class="descname">test_hamiltonian</tt><big>(</big><em>structure</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../_modules/pylada/dftcrystal/functional.html#Functional.test_hamiltonian"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.dftcrystal.functional.Functional.test_hamiltonian" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns output of test basis run.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.dftcrystal.functional.Functional.title">
-<tt class="descname">title</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.functional.Functional.title" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.functional.Functional.title">
+<tt class="descname">title</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.dftcrystal.functional.Functional.title" title="Permalink to this definition">¶</a></dt>
 <dd><p>Title of the calculation.</p>
 <p>Overriden by the name of the input structure, if it exists.</p>
 </dd></dl>
@@ -455,7 +462,7 @@ used.</p>
         <li class="right" >
           <a href="../dftcrystal.html" title="CRYSTAL wrapper module"
              >previous</a> |</li>
-        <li><a href="../../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Pylada 1.0 documentation</a> &raquo;</li>
           <li><a href="../../pyapi.html" >Python API</a> &raquo;</li>
           <li><a href="../dftcrystal.html" >CRYSTAL wrapper module</a> &raquo;</li> 
       </ul>

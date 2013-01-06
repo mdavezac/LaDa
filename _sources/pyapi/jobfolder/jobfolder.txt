@@ -1,7 +1,7 @@
 Jobdict class
 *************
 
-.. automodule:: lada.jobfolder.jobfolder
+.. automodule:: pylada.jobfolder.jobfolder
 .. moduleauthor:: Mayeul d'Avezac
 .. autoclass:: JobFolder
    :show-inheritance:

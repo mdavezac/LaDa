@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Relaxation methods &mdash; LaDa 1.0 documentation</title>
+    <title>Relaxation methods &mdash; Pylada 1.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="author" title="About these documents" href="../../about.html" />
-    <link rel="top" title="LaDa 1.0 documentation" href="../../index.html" />
+    <link rel="top" title="Pylada 1.0 documentation" href="../../index.html" />
     <link rel="up" title="Vasp Module" href="../vasp.html" />
     <link rel="next" title="Extraction classes" href="extract.html" />
     <link rel="prev" title="Vasp class" href="functional.html" /> 
@@ -48,7 +48,7 @@
         <li class="right" >
           <a href="functional.html" title="Vasp class"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Pylada 1.0 documentation</a> &raquo;</li>
           <li><a href="../../pyapi.html" >Python API</a> &raquo;</li>
           <li><a href="../vasp.html" accesskey="U">Vasp Module</a> &raquo;</li> 
       </ul>
@@ -59,8 +59,8 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="module-lada.vasp.relax">
-<span id="relaxation-methods"></span><h1>Relaxation methods<a class="headerlink" href="#module-lada.vasp.relax" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-pylada.vasp.relax">
+<span id="relaxation-methods"></span><h1>Relaxation methods<a class="headerlink" href="#module-pylada.vasp.relax" title="Permalink to this headline">¶</a></h1>
 <p>Relaxation Methods</p>
 <p>An accurately strain-relaxed VASP calculation requires multiple restarts.
 The reasons for this lies in that the plane-wave basis is determined at the
@@ -70,11 +70,11 @@ pseudo-potential grids when relaxing ionic positions.</p>
 <p>This module contains methods to chain together VASP calculations until a
 fully relaxed structure is obtained.</p>
 <dl class="function">
-<dt id="lada.vasp.relax.relax">
-<tt class="descclassname">lada.vasp.relax.</tt><tt class="descname">relax</tt><big>(</big><em>vasp</em>, <em>structure</em>, <em>outdir=None</em>, <em>first_trial=None</em>, <em>maxcalls=10</em>, <em>keepsteps=True</em>, <em>nofail=False</em>, <em>convergence=None</em>, <em>minrelsteps=-1</em>, <em>comm=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#lada.vasp.relax.relax" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.relax.relax">
+<tt class="descclassname">pylada.vasp.relax.</tt><tt class="descname">relax</tt><big>(</big><em>vasp</em>, <em>structure</em>, <em>outdir=None</em>, <em>first_trial=None</em>, <em>maxcalls=10</em>, <em>keepsteps=True</em>, <em>nofail=False</em>, <em>convergence=None</em>, <em>minrelsteps=-1</em>, <em>comm=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pylada.vasp.relax.relax" title="Permalink to this definition">¶</a></dt>
 <dd><p>Iterator over calls to VASP during relaxation.</p>
 <blockquote>
-<div>This function is created automagically from      lada.vasp.relax.iter_relax. Please see that function for the
+<div>This function is created automagically from      pylada.vasp.relax.iter_relax. Please see that function for the
 description of its parameters.</div></blockquote>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -85,13 +85,13 @@ programs.</td>
 </tr>
 </tbody>
 </table>
-<p>Contains an <a class="reference internal" href="#lada.vasp.relax.RelaxExtract" title="lada.vasp.relax.RelaxExtract"><tt class="xref py py-class docutils literal"><span class="pre">Extract</span></tt></a> attribute which can be used
+<p>Contains an <a class="reference internal" href="#pylada.vasp.relax.RelaxExtract" title="pylada.vasp.relax.RelaxExtract"><tt class="xref py py-class docutils literal"><span class="pre">Extract</span></tt></a> attribute which can be used
 to instantiate the relevant extraction object.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="lada.vasp.relax.iter_relax">
-<tt class="descclassname">lada.vasp.relax.</tt><tt class="descname">iter_relax</tt><big>(</big><em>vasp</em>, <em>structure</em>, <em>outdir=None</em>, <em>first_trial=None</em>, <em>maxcalls=10</em>, <em>keepsteps=True</em>, <em>nofail=False</em>, <em>convergence=None</em>, <em>minrelsteps=-1</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../_modules/lada/vasp/relax.html#iter_relax"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.vasp.relax.iter_relax" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.relax.iter_relax">
+<tt class="descclassname">pylada.vasp.relax.</tt><tt class="descname">iter_relax</tt><big>(</big><em>vasp</em>, <em>structure</em>, <em>outdir=None</em>, <em>first_trial=None</em>, <em>maxcalls=10</em>, <em>keepsteps=True</em>, <em>nofail=False</em>, <em>convergence=None</em>, <em>minrelsteps=-1</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../_modules/pylada/vasp/relax.html#iter_relax"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.vasp.relax.iter_relax" title="Permalink to this definition">¶</a></dt>
 <dd><p>Iterator over calls to VASP during relaxation.</p>
 <p>This generator iterates over successive VASP calculations until a fully
 relaxed structure is obtained. Its last calculation is <em>static</em>, ensuring
@@ -111,7 +111,7 @@ ionic-relaxations.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>vasp</strong> &#8211; <a class="reference internal" href="functional.html#lada.vasp.functional.Vasp" title="lada.vasp.functional.Vasp"><tt class="xref py py-class docutils literal"><span class="pre">Vasp</span></tt></a> object with which to
+<li><strong>vasp</strong> &#8211; <a class="reference internal" href="functional.html#pylada.vasp.functional.Vasp" title="pylada.vasp.functional.Vasp"><tt class="xref py py-class docutils literal"><span class="pre">Vasp</span></tt></a> object with which to
 perform the relaxation.</li>
 <li><strong>structure</strong> &#8211; <tt class="xref py py-class docutils literal"><span class="pre">Structure</span></tt> object for which to
 perform the relaxation.</li>
@@ -154,57 +154,57 @@ towards <tt class="docutils literal"><span class="pre">maxcalls</span></tt>.</li
 </ul>
 </li>
 <li><strong>kwargs</strong> &#8211; Other parameters are applied to the input
-<a class="reference internal" href="functional.html#lada.vasp.functional.Vasp" title="lada.vasp.functional.Vasp"><tt class="xref py py-class docutils literal"><span class="pre">Vasp</span></tt></a> object.</li>
+<a class="reference internal" href="functional.html#pylada.vasp.functional.Vasp" title="pylada.vasp.functional.Vasp"><tt class="xref py py-class docutils literal"><span class="pre">Vasp</span></tt></a> object.</li>
 </ul>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">At each step, yields an extraction object if the relevant VASP
 calculation already exists. Otherwise, it yields a
-<a class="reference internal" href="../process/program.html#lada.process.program.ProgramProcess" title="lada.process.program.ProgramProcess"><tt class="xref py py-class docutils literal"><span class="pre">ProgramProcess</span></tt></a> object
+<a class="reference internal" href="../process/program.html#pylada.process.program.ProgramProcess" title="pylada.process.program.ProgramProcess"><tt class="xref py py-class docutils literal"><span class="pre">ProgramProcess</span></tt></a> object
 detailing the call to the external VASP program.</p>
 </td>
 </tr>
 </tbody>
 </table>
-<p>Contains an <a class="reference internal" href="#lada.vasp.relax.RelaxExtract" title="lada.vasp.relax.RelaxExtract"><tt class="xref py py-class docutils literal"><span class="pre">Extract</span></tt></a> attribute which can be used
+<p>Contains an <a class="reference internal" href="#pylada.vasp.relax.RelaxExtract" title="pylada.vasp.relax.RelaxExtract"><tt class="xref py py-class docutils literal"><span class="pre">Extract</span></tt></a> attribute which can be used
 to instantiate the relevant extraction object.</p>
 </dd></dl>
 
 <dl class="class">
-<dt id="lada.vasp.relax.Relax">
-<em class="property">class </em><tt class="descclassname">lada.vasp.relax.</tt><tt class="descname">Relax</tt><big>(</big><em>first_trial=None</em>, <em>maxcalls=10</em>, <em>keepsteps=True</em>, <em>nofail=False</em>, <em>convergence=None</em>, <em>minrelsteps=-1</em>, <em>copy=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#lada.vasp.relax.Relax" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="functional.html#lada.vasp.functional.Vasp" title="lada.vasp.functional.Vasp"><tt class="xref py py-class docutils literal"><span class="pre">lada.vasp.functional.Vasp</span></tt></a></p>
-<p>Functional form of the <a class="reference internal" href="#lada.vasp.relax.iter_relax" title="lada.vasp.relax.iter_relax"><tt class="xref py py-class docutils literal"><span class="pre">lada.vasp.relax.iter_relax</span></tt></a> method.</p>
-<p>This class was automagically generated by <tt class="xref py py-func docutils literal"><span class="pre">lada.tools.makeclass()</span></tt>.</p>
+<dt id="pylada.vasp.relax.Relax">
+<em class="property">class </em><tt class="descclassname">pylada.vasp.relax.</tt><tt class="descname">Relax</tt><big>(</big><em>first_trial=None</em>, <em>maxcalls=10</em>, <em>keepsteps=True</em>, <em>nofail=False</em>, <em>convergence=None</em>, <em>minrelsteps=-1</em>, <em>copy=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pylada.vasp.relax.Relax" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="functional.html#pylada.vasp.functional.Vasp" title="pylada.vasp.functional.Vasp"><tt class="xref py py-class docutils literal"><span class="pre">pylada.vasp.functional.Vasp</span></tt></a></p>
+<p>Functional form of the <a class="reference internal" href="#pylada.vasp.relax.iter_relax" title="pylada.vasp.relax.iter_relax"><tt class="xref py py-class docutils literal"><span class="pre">pylada.vasp.relax.iter_relax</span></tt></a> method.</p>
+<p>This class was automagically generated by <tt class="xref py py-func docutils literal"><span class="pre">pylada.tools.makeclass()</span></tt>.</p>
 <dl class="attribute">
-<dt id="lada.vasp.relax.Relax.first_trial">
-<tt class="descname">first_trial</tt><a class="headerlink" href="#lada.vasp.relax.Relax.first_trial" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.relax.Relax.first_trial">
+<tt class="descname">first_trial</tt><a class="headerlink" href="#pylada.vasp.relax.Relax.first_trial" title="Permalink to this definition">¶</a></dt>
 <dd><p>Holds parameters which are used only for the very first VASP calculation.
 It can be used to accelerate the first step of the relaxation if starting
 far from the optimum. Defaults to empty dictionary.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.relax.Relax.maxcalls">
-<tt class="descname">maxcalls</tt><a class="headerlink" href="#lada.vasp.relax.Relax.maxcalls" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.relax.Relax.maxcalls">
+<tt class="descname">maxcalls</tt><a class="headerlink" href="#pylada.vasp.relax.Relax.maxcalls" title="Permalink to this definition">¶</a></dt>
 <dd><p>Maximum number of calls to VASP before aborting. Defaults to 10.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.relax.Relax.keepsteps">
-<tt class="descname">keepsteps</tt><a class="headerlink" href="#lada.vasp.relax.Relax.keepsteps" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.relax.Relax.keepsteps">
+<tt class="descname">keepsteps</tt><a class="headerlink" href="#pylada.vasp.relax.Relax.keepsteps" title="Permalink to this definition">¶</a></dt>
 <dd><p>If True, intermediate steps are kept. If False, intermediate steps are erased.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.relax.Relax.nofail">
-<tt class="descname">nofail</tt><a class="headerlink" href="#lada.vasp.relax.Relax.nofail" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.relax.Relax.nofail">
+<tt class="descname">nofail</tt><a class="headerlink" href="#pylada.vasp.relax.Relax.nofail" title="Permalink to this definition">¶</a></dt>
 <dd><p>If True, will not fail if convergence is not achieved. Just keeps going. Defaults to False.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.relax.Relax.convergence">
-<tt class="descname">convergence</tt><a class="headerlink" href="#lada.vasp.relax.Relax.convergence" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.relax.Relax.convergence">
+<tt class="descname">convergence</tt><a class="headerlink" href="#pylada.vasp.relax.Relax.convergence" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convergence criteria. If <tt class="docutils literal"><span class="pre">minrelsteps</span></tt> is positive, it is only
 checked after <tt class="docutils literal"><span class="pre">minrelsteps</span></tt> have been performed.</p>
 <ul class="simple">
@@ -217,8 +217,8 @@ convergence is achieved and False otherwise.</li>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.relax.Relax.minrelsteps">
-<tt class="descname">minrelsteps</tt><a class="headerlink" href="#lada.vasp.relax.Relax.minrelsteps" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.relax.Relax.minrelsteps">
+<tt class="descname">minrelsteps</tt><a class="headerlink" href="#pylada.vasp.relax.Relax.minrelsteps" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fine tunes how convergence criteria is applied.</p>
 <ul class="simple">
 <li>positive: at least <tt class="docutils literal"><span class="pre">minrelsteps</span></tt> calls to VASP are performed before
@@ -231,11 +231,11 @@ towards <tt class="docutils literal"><span class="pre">maxcalls</span></tt>.</li
 </dd></dl>
 
 <dl class="method">
-<dt id="lada.vasp.relax.Relax.__call__">
-<tt class="descname">__call__</tt><big>(</big><em>structure</em>, <em>outdir=None</em>, <em>comm=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#lada.vasp.relax.Relax.__call__" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.relax.Relax.__call__">
+<tt class="descname">__call__</tt><big>(</big><em>structure</em>, <em>outdir=None</em>, <em>comm=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pylada.vasp.relax.Relax.__call__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Iterator over calls to VASP during relaxation.</p>
 <p>This function is created automagically from
-<a class="reference internal" href="#lada.vasp.relax.iter_relax" title="lada.vasp.relax.iter_relax"><tt class="xref py py-func docutils literal"><span class="pre">lada.vasp.relax.iter_relax()</span></tt></a>. Please see that 
+<a class="reference internal" href="#pylada.vasp.relax.iter_relax" title="pylada.vasp.relax.iter_relax"><tt class="xref py py-func docutils literal"><span class="pre">pylada.vasp.relax.iter_relax()</span></tt></a>. Please see that 
 function for the description of its parameters.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -249,28 +249,28 @@ programs.</td>
 </dd></dl>
 
 <dl class="method">
-<dt id="lada.vasp.relax.Relax.iter">
-<tt class="descname">iter</tt><big>(</big><em>structure</em>, <em>outdir=None</em>, <em>comm=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#lada.vasp.relax.Relax.iter" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.relax.Relax.iter">
+<tt class="descname">iter</tt><big>(</big><em>structure</em>, <em>outdir=None</em>, <em>comm=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pylada.vasp.relax.Relax.iter" title="Permalink to this definition">¶</a></dt>
 <dd><p>Iterator over calls to VASP during relaxation.</p>
-<p>This function is created automagically from <a class="reference internal" href="#lada.vasp.relax.iter_relax" title="lada.vasp.relax.iter_relax"><tt class="xref py py-func docutils literal"><span class="pre">iter_relax</span></tt></a>.
+<p>This function is created automagically from <a class="reference internal" href="#pylada.vasp.relax.iter_relax" title="pylada.vasp.relax.iter_relax"><tt class="xref py py-func docutils literal"><span class="pre">iter_relax</span></tt></a>.
 Please see that function for the description of its parameters.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.relax.Relax.Extract">
-<tt class="descname">Extract</tt><a class="headerlink" href="#lada.vasp.relax.Relax.Extract" title="Permalink to this definition">¶</a></dt>
-<dd><p>Class <a class="reference internal" href="#lada.vasp.relax.RelaxExtract" title="lada.vasp.relax.RelaxExtract"><tt class="xref py py-class docutils literal"><span class="pre">RelaxExtract</span></tt></a>. When called, it creates the appropriate
+<dt id="pylada.vasp.relax.Relax.Extract">
+<tt class="descname">Extract</tt><a class="headerlink" href="#pylada.vasp.relax.Relax.Extract" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class <a class="reference internal" href="#pylada.vasp.relax.RelaxExtract" title="pylada.vasp.relax.RelaxExtract"><tt class="xref py py-class docutils literal"><span class="pre">RelaxExtract</span></tt></a>. When called, it creates the appropriate
 relaxation object.</p>
 </dd></dl>
 
 </dd></dl>
 
 <dl class="function">
-<dt id="lada.vasp.relax.epitaxial">
-<tt class="descclassname">lada.vasp.relax.</tt><tt class="descname">epitaxial</tt><big>(</big><em>vasp, structure, outdir=None, direction=[0, 0, 1], epiconv=0.0001, initstep=0.05, comm=None, **kwargs</em><big>)</big><a class="headerlink" href="#lada.vasp.relax.epitaxial" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.relax.epitaxial">
+<tt class="descclassname">pylada.vasp.relax.</tt><tt class="descname">epitaxial</tt><big>(</big><em>vasp, structure, outdir=None, direction=[0, 0, 1], epiconv=0.0001, initstep=0.05, comm=None, **kwargs</em><big>)</big><a class="headerlink" href="#pylada.vasp.relax.epitaxial" title="Permalink to this definition">¶</a></dt>
 <dd><p>Performs epitaxial relaxation in given direction.</p>
 <blockquote>
-<div>This function is created automagically from      lada.vasp.relax.iter_epitaxial. Please see that function for the
+<div>This function is created automagically from      pylada.vasp.relax.iter_epitaxial. Please see that function for the
 description of its parameters.</div></blockquote>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -281,13 +281,13 @@ programs.</td>
 </tr>
 </tbody>
 </table>
-<p>Contains an <a class="reference internal" href="#lada.vasp.relax.RelaxExtract" title="lada.vasp.relax.RelaxExtract"><tt class="xref py py-class docutils literal"><span class="pre">Extract</span></tt></a> attribute which can be used
+<p>Contains an <a class="reference internal" href="#pylada.vasp.relax.RelaxExtract" title="pylada.vasp.relax.RelaxExtract"><tt class="xref py py-class docutils literal"><span class="pre">Extract</span></tt></a> attribute which can be used
 to instantiate the relevant extraction object.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="lada.vasp.relax.iter_epitaxial">
-<tt class="descclassname">lada.vasp.relax.</tt><tt class="descname">iter_epitaxial</tt><big>(</big><em>vasp, structure, outdir=None, direction=[0, 0, 1], epiconv=0.0001, initstep=0.05, **kwargs</em><big>)</big><a class="reference internal" href="../../_modules/lada/vasp/relax.html#iter_epitaxial"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.vasp.relax.iter_epitaxial" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.relax.iter_epitaxial">
+<tt class="descclassname">pylada.vasp.relax.</tt><tt class="descname">iter_epitaxial</tt><big>(</big><em>vasp, structure, outdir=None, direction=[0, 0, 1], epiconv=0.0001, initstep=0.05, **kwargs</em><big>)</big><a class="reference internal" href="../../_modules/pylada/vasp/relax.html#iter_epitaxial"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.vasp.relax.iter_epitaxial" title="Permalink to this definition">¶</a></dt>
 <dd><p>Performs epitaxial relaxation in given direction.</p>
 <p>This generator iterates over successive VASP calculations until an
 epitaxially relaxed structure is obtained.  The external (cell)
@@ -304,7 +304,7 @@ maximum accuracy.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>vasp</strong> &#8211; <a class="reference internal" href="functional.html#lada.vasp.functional.Vasp" title="lada.vasp.functional.Vasp"><tt class="xref py py-class docutils literal"><span class="pre">Vasp</span></tt></a> functional with wich to
+<li><strong>vasp</strong> &#8211; <a class="reference internal" href="functional.html#pylada.vasp.functional.Vasp" title="pylada.vasp.functional.Vasp"><tt class="xref py py-class docutils literal"><span class="pre">Vasp</span></tt></a> functional with wich to
 perform the relaxation.</li>
 <li><strong>structure</strong> &#8211; <tt class="xref py py-class docutils literal"><span class="pre">Structure</span></tt> for which to perform the
 relaxation.</li>
@@ -318,28 +318,28 @@ relax_ions subdirectory.</li>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">At each step, yields an extraction object if the relevant VASP
 calculation already exists. Otherwise, it yields a
-<a class="reference internal" href="../process/program.html#lada.process.program.ProgramProcess" title="lada.process.program.ProgramProcess"><tt class="xref py py-class docutils literal"><span class="pre">ProgramProcess</span></tt></a> object
+<a class="reference internal" href="../process/program.html#pylada.process.program.ProgramProcess" title="pylada.process.program.ProgramProcess"><tt class="xref py py-class docutils literal"><span class="pre">ProgramProcess</span></tt></a> object
 detailing the call to the external VASP program.</p>
 </td>
 </tr>
 </tbody>
 </table>
-<p>Contains an <a class="reference internal" href="#lada.vasp.relax.RelaxExtract" title="lada.vasp.relax.RelaxExtract"><tt class="xref py py-class docutils literal"><span class="pre">Extract</span></tt></a> attribute which can be used
+<p>Contains an <a class="reference internal" href="#pylada.vasp.relax.RelaxExtract" title="pylada.vasp.relax.RelaxExtract"><tt class="xref py py-class docutils literal"><span class="pre">Extract</span></tt></a> attribute which can be used
 to instantiate the relevant extraction object.</p>
 </dd></dl>
 
 <dl class="class">
-<dt id="lada.vasp.relax.Epitaxial">
-<em class="property">class </em><tt class="descclassname">lada.vasp.relax.</tt><tt class="descname">Epitaxial</tt><big>(</big><em>direction=[0, 0, 1], epiconv=0.0001, initstep=0.05, copy=None, **kwargs</em><big>)</big><a class="headerlink" href="#lada.vasp.relax.Epitaxial" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="functional.html#lada.vasp.functional.Vasp" title="lada.vasp.functional.Vasp"><tt class="xref py py-class docutils literal"><span class="pre">lada.vasp.functional.Vasp</span></tt></a></p>
-<p>Functional form of the <a class="reference internal" href="#lada.vasp.relax.iter_epitaxial" title="lada.vasp.relax.iter_epitaxial"><tt class="xref py py-class docutils literal"><span class="pre">lada.vasp.relax.iter_epitaxial</span></tt></a> method.</p>
-<p>This class was automagically generated by <tt class="xref py py-func docutils literal"><span class="pre">lada.tools.makeclass()</span></tt>.</p>
+<dt id="pylada.vasp.relax.Epitaxial">
+<em class="property">class </em><tt class="descclassname">pylada.vasp.relax.</tt><tt class="descname">Epitaxial</tt><big>(</big><em>direction=[0, 0, 1], epiconv=0.0001, initstep=0.05, copy=None, **kwargs</em><big>)</big><a class="headerlink" href="#pylada.vasp.relax.Epitaxial" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="functional.html#pylada.vasp.functional.Vasp" title="pylada.vasp.functional.Vasp"><tt class="xref py py-class docutils literal"><span class="pre">pylada.vasp.functional.Vasp</span></tt></a></p>
+<p>Functional form of the <a class="reference internal" href="#pylada.vasp.relax.iter_epitaxial" title="pylada.vasp.relax.iter_epitaxial"><tt class="xref py py-class docutils literal"><span class="pre">pylada.vasp.relax.iter_epitaxial</span></tt></a> method.</p>
+<p>This class was automagically generated by <tt class="xref py py-func docutils literal"><span class="pre">pylada.tools.makeclass()</span></tt>.</p>
 <dl class="method">
-<dt id="lada.vasp.relax.Epitaxial.__call__">
-<tt class="descname">__call__</tt><big>(</big><em>structure</em>, <em>outdir=None</em>, <em>comm=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#lada.vasp.relax.Epitaxial.__call__" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.relax.Epitaxial.__call__">
+<tt class="descname">__call__</tt><big>(</big><em>structure</em>, <em>outdir=None</em>, <em>comm=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pylada.vasp.relax.Epitaxial.__call__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Performs epitaxial relaxation in given direction.</p>
 <p>This function is created automagically from
-<a class="reference internal" href="#lada.vasp.relax.iter_epitaxial" title="lada.vasp.relax.iter_epitaxial"><tt class="xref py py-func docutils literal"><span class="pre">lada.vasp.relax.iter_epitaxial()</span></tt></a>. Please see that 
+<a class="reference internal" href="#pylada.vasp.relax.iter_epitaxial" title="pylada.vasp.relax.iter_epitaxial"><tt class="xref py py-func docutils literal"><span class="pre">pylada.vasp.relax.iter_epitaxial()</span></tt></a>. Please see that 
 function for the description of its parameters.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -353,44 +353,44 @@ programs.</td>
 </dd></dl>
 
 <dl class="method">
-<dt id="lada.vasp.relax.Epitaxial.iter">
-<tt class="descname">iter</tt><big>(</big><em>structure</em>, <em>outdir=None</em>, <em>comm=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#lada.vasp.relax.Epitaxial.iter" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.relax.Epitaxial.iter">
+<tt class="descname">iter</tt><big>(</big><em>structure</em>, <em>outdir=None</em>, <em>comm=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pylada.vasp.relax.Epitaxial.iter" title="Permalink to this definition">¶</a></dt>
 <dd><p>Performs epitaxial relaxation in given direction.</p>
-<p>This function is created automagically from <a class="reference internal" href="#lada.vasp.relax.iter_epitaxial" title="lada.vasp.relax.iter_epitaxial"><tt class="xref py py-func docutils literal"><span class="pre">iter_epitaxial</span></tt></a>.
+<p>This function is created automagically from <a class="reference internal" href="#pylada.vasp.relax.iter_epitaxial" title="pylada.vasp.relax.iter_epitaxial"><tt class="xref py py-func docutils literal"><span class="pre">iter_epitaxial</span></tt></a>.
 Please see that function for the description of its parameters.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.relax.Epitaxial.direction">
-<tt class="descname">direction</tt><a class="headerlink" href="#lada.vasp.relax.Epitaxial.direction" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.relax.Epitaxial.direction">
+<tt class="descname">direction</tt><a class="headerlink" href="#pylada.vasp.relax.Epitaxial.direction" title="Permalink to this definition">¶</a></dt>
 <dd><p>Epitaxial direction. Defaults to [0, 0, 1].</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.relax.Epitaxial.epiconv">
-<tt class="descname">epiconv</tt><a class="headerlink" href="#lada.vasp.relax.Epitaxial.epiconv" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.relax.Epitaxial.epiconv">
+<tt class="descname">epiconv</tt><a class="headerlink" href="#pylada.vasp.relax.Epitaxial.epiconv" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convergence criteria of the total energy.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.vasp.relax.Epitaxial.Extract">
-<tt class="descname">Extract</tt><a class="headerlink" href="#lada.vasp.relax.Epitaxial.Extract" title="Permalink to this definition">¶</a></dt>
-<dd><p>Class <a class="reference internal" href="#lada.vasp.relax.RelaxExtract" title="lada.vasp.relax.RelaxExtract"><tt class="xref py py-class docutils literal"><span class="pre">RelaxExtract</span></tt></a>. When called, it creates the appropriate
+<dt id="pylada.vasp.relax.Epitaxial.Extract">
+<tt class="descname">Extract</tt><a class="headerlink" href="#pylada.vasp.relax.Epitaxial.Extract" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class <a class="reference internal" href="#pylada.vasp.relax.RelaxExtract" title="pylada.vasp.relax.RelaxExtract"><tt class="xref py py-class docutils literal"><span class="pre">RelaxExtract</span></tt></a>. When called, it creates the appropriate
 relaxation object.</p>
 </dd></dl>
 
 </dd></dl>
 
 <dl class="class">
-<dt id="lada.vasp.relax.RelaxExtract">
-<em class="property">class </em><tt class="descclassname">lada.vasp.relax.</tt><tt class="descname">RelaxExtract</tt><big>(</big><em>directory=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../_modules/lada/vasp/relax.html#RelaxExtract"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.vasp.relax.RelaxExtract" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="extract.html#lada.vasp.extract.Extract" title="lada.vasp.extract.Extract"><tt class="xref py py-class docutils literal"><span class="pre">lada.vasp.extract.Extract</span></tt></a></p>
+<dt id="pylada.vasp.relax.RelaxExtract">
+<em class="property">class </em><tt class="descclassname">pylada.vasp.relax.</tt><tt class="descname">RelaxExtract</tt><big>(</big><em>directory=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../_modules/pylada/vasp/relax.html#RelaxExtract"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.vasp.relax.RelaxExtract" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="extract.html#pylada.vasp.extract.Extract" title="pylada.vasp.extract.Extract"><tt class="xref py py-class docutils literal"><span class="pre">pylada.vasp.extract.Extract</span></tt></a></p>
 <p>Extractor class for vasp relaxations.</p>
 <dl class="attribute">
-<dt id="lada.vasp.relax.RelaxExtract.details">
-<tt class="descname">details</tt><a class="reference internal" href="../../_modules/lada/vasp/relax.html#RelaxExtract.details"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.vasp.relax.RelaxExtract.details" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.vasp.relax.RelaxExtract.details">
+<tt class="descname">details</tt><a class="reference internal" href="../../_modules/pylada/vasp/relax.html#RelaxExtract.details"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.vasp.relax.RelaxExtract.details" title="Permalink to this definition">¶</a></dt>
 <dd><p>Intermediate steps.</p>
-<p><a class="reference internal" href="extract.html#lada.vasp.extract.MassExtract" title="lada.vasp.extract.MassExtract"><tt class="xref py py-class docutils literal"><span class="pre">MassExtract</span></tt></a> instance which maps extraction
+<p><a class="reference internal" href="extract.html#pylada.vasp.extract.MassExtract" title="pylada.vasp.extract.MassExtract"><tt class="xref py py-class docutils literal"><span class="pre">MassExtract</span></tt></a> instance which maps extraction
 objects for intermediate steps in the &#8216;relax_cellshape&#8217; and &#8216;relax_ions&#8217;
 subdirectories.</p>
 </dd></dl>
@@ -448,7 +448,7 @@ subdirectories.</p>
         <li class="right" >
           <a href="functional.html" title="Vasp class"
              >previous</a> |</li>
-        <li><a href="../../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Pylada 1.0 documentation</a> &raquo;</li>
           <li><a href="../../pyapi.html" >Python API</a> &raquo;</li>
           <li><a href="../vasp.html" >Vasp Module</a> &raquo;</li> 
       </ul>

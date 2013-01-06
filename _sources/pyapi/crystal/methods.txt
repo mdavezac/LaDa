@@ -1,8 +1,8 @@
 Methods
 -------
-All the methods below are available directly under :py:mod:`lada.crystal`.
+All the methods below are available directly under :py:mod:`pylada.crystal`.
 
-.. currentmodule:: lada.crystal.cppwrappers
+.. currentmodule:: pylada.crystal.cppwrappers
 
 Vector transformations
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -17,9 +17,9 @@ Structure transformations
 .. autofunction:: supercell(lattice, cell)->Structure
 .. autofunction:: primitive(supercell, tolerance=1e-8)->Structure
 .. autofunction:: transform(structure, operation)->Structure
-.. currentmodule:: lada.crystal
+.. currentmodule:: pylada.crystal
 .. autofunction:: vasp_ordered
-.. currentmodule:: lada.crystal.cppwrappers
+.. currentmodule:: pylada.crystal.cppwrappers
 
 Structure and Geometry Analysis
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -31,26 +31,23 @@ Structure and Geometry Analysis
 .. autofunction:: coordination_shells(structure, nshells, center, tolerance=1e-8, natoms=0)->[ [(Atom, numpy.array, float), ...], ...]
 .. autofunction:: periodic_dnc(structure, overlap, mesh=None, nperbox=None, tolerance=1e-8)->[ [(Atom, numpy.array, bool), ...], ...]
 .. autofunction:: splitconfigs(structure, center, nmax, configurations=None, tolerance=1e-8)->[ ( (Atom, numpy.array), ...), float), ...]
-.. currentmodule:: lada.crystal
+.. currentmodule:: pylada.crystal
 .. autofunction:: specieset
 
 
 Iterators
 ~~~~~~~~~
 
-.. currentmodule:: lada.crystal
-.. autofunction:: shell_iterator
-.. autofunction:: equivalence_iterator
-.. autofunction:: layer_iterator
+.. automodule:: pylada.crystal.iterator
 
 
 Reading and Writing
 ~~~~~~~~~~~~~~~~~~~
 
-.. currentmodule:: lada.crystal.read
+.. currentmodule:: pylada.crystal.read
 .. autofunction:: poscar
 .. autofunction:: castep
 
-.. currentmodule:: lada.crystal.write
+.. currentmodule:: pylada.crystal.write
 .. autofunction:: poscar
 .. autofunction:: castep

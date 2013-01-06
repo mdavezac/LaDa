@@ -1,10 +1,10 @@
-.. currentmodule:: lada.jobfolder
+.. currentmodule:: pylada.jobfolder
 .. _jobfolder_ug: 
 
 Organized high-throughput calculations: job-folders
 ***************************************************
 
-LaDa provides tools to organize high-throughput calculations in a systematic
+Pylada provides tools to organize high-throughput calculations in a systematic
 manner.  The whole high-throughput experience revolves around **job-folders**.
 These are convenient ways of organizing actual calculations. They can be though
 of as folders on a file system, or directories in unix parlance, each one
@@ -29,7 +29,7 @@ is no limit to what can be achieved.
 The following describes how job-folders are created. The fun bits, 
 launching jobs, collecting results, manipulating all job-folders
 simultaneously, can be found in the next section. Indeed, all of these are
-intrinsically linked to the LaDa's IPython interface.
+intrinsically linked to the Pylada's IPython interface.
 
 Prep
 ~~~~
@@ -51,7 +51,7 @@ Creating and accessing job-folders
 
 Job-folders can be created with two simple lines of codes:
 
-  >>> from lada.jobfolder import JobFolder
+  >>> from pylada.jobfolder import JobFolder
   >>> root = JobFolder()
 
 To add further job-folders, one can do:
@@ -107,7 +107,7 @@ The whole point of a job-folder is to create an architecture for calculations.
 Each job-folder can contain at most a single calculation. A calculation is
 setup by passing to the job-folder a function and the parameters for calling it.
 
-  >>> from lada.crystal.binary import zinc_blende
+  >>> from pylada.crystal.binary import zinc_blende
   >>> from dummy import functional
   >>>
   >>> jobA.functional = functional
@@ -185,7 +185,7 @@ The :ref:`IPython interface <ipython_ug>` provides better ways to both.
 However, it is still possible to load and save job-folders to disk from a
 script:
 
->>> from lada.jobfolder import load, save
+>>> from pylada.jobfolder import load, save
 >>> save(root, 'root.dict') # saves to file
 >>> root = load('root.dict') # loads from file
 
@@ -199,7 +199,7 @@ processes can access the file without fear of getting into one another's way.
 .. tip:: 
 
    If either load or save takes for ever, check whether the lock-directory
-   ".filename-lada_lockdir" exists. If you are *sure* that no other process
+   ".filename-pylada_lockdir" exists. If you are *sure* that no other process
    exists which is trying to access the file on disk, then you can delete the
    lock-directory and try saving/loading again. Alternatively, a timeout
    argument can be provided to raise an exception if the file cannot be locked.

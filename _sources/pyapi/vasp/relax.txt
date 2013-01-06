@@ -1,10 +1,10 @@
 Relaxation methods
 ------------------
 
-.. automodule:: lada.vasp.relax
+.. automodule:: pylada.vasp.relax
 .. moduleauthor:: Mayeul d'Avezac <mayeul.davezac@nrel.gov>
 
-.. currentmodule:: lada.vasp.relax
+.. currentmodule:: pylada.vasp.relax
 .. autofunction:: relax
 
    Contains an :py:class:`Extract <RelaxExtract>` attribute which can be used
@@ -102,6 +102,6 @@ Relaxation methods
 
    .. autoattribute:: details
 
-      :py:class:`~lada.vasp.extract.MassExtract` instance which maps extraction
+      :py:class:`~pylada.vasp.extract.MassExtract` instance which maps extraction
       objects for intermediate steps in the 'relax_cellshape' and 'relax_ions'
       subdirectories.

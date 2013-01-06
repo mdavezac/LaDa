@@ -10,8 +10,10 @@ As shown in the quick primer above, it is relatively easy to setup a new
 :py:class:`~functional.Vasp`. The parameters to the calculation are generally
 the VASP_ defaults. They can be changed directly in the constructor:
 
->>> from lada.vasp import Vasp
+>>> from pylada.vasp import Vasp
 >>> vasp = Vasp(ispin=2)
+>>> print vasp.ispin
+2
 
 or later, after creation:
 
@@ -42,19 +44,19 @@ one of those. It can be specified:
   - as floating point larger than 3, in which case it will printed as is in the INCAR.
   - as floating point signed by a quantity:
 
-    >>> from lada.physics import Ry
+    >>> from pylada.physics import Ry
     >>> vasp.encut = 10*Ry
 
     In that case, the result will be converted to electron-Volts in the INCAR.
 
-To see the full list of parameters  defined by LaDa, do ``vasp.[TAB]`` on the
-ipython_ command line, or go :py:class:`~lada.vasp.functional.Vasp`.
+To see the full list of parameters  defined by Pylada, do ``vasp.[TAB]`` on the
+ipython_ command line, or go :py:class:`~pylada.vasp.functional.Vasp`.
 
 
-Adding parameters LaDa does not know about
-------------------------------------------
+Adding parameters Pylada does not know about
+--------------------------------------------
 
-A large number of parameters control VASP_. LaDa only knows about the most
+A large number of parameters control VASP_. Pylada only knows about the most
 common. However, it is fairly easy to add parameters which are not there yet.
 
 >>> vasp.add_keyword('encut', 300)
@@ -68,7 +70,8 @@ modified just as if it where a pre-existing parameter.
 
 The attribute ``vasp.encut`` is (in this case) an integer which can be
 manipulated as any other python integer. Any python object can be given. It
-will appear in the INCAR as it appears above when printed.
+will appear in the INCAR as it appears when transformed to a string (using
+python's str_ function).
 
 If you do *not* want a parameter printed to the INCAR, i.e. you want to use the
 VASP_ default for that parameter, then simply set that parameter to ``None``:
@@ -79,10 +82,12 @@ VASP_ default for that parameter, then simply set that parameter to ``None``:
 
    The examples above specifies a parameter which already exists,
    :py:attr:`~functional.Vasp.encut`.  In this case, when calling
-   :py:meth:`~lada.functional.Vasp.add_keyword`,  the parameter is replaced
+   :py:meth:`~pylada.functional.Vasp.add_keyword`,  the parameter is replaced
    with a simple integer (or float, or whatnot).  Its special behavior
    described above is simply gone.  If you do not like a special behavior, you
    can always do away with it.
+
+.. _str: http://docs.python.org/2/library/functions.html#str
 
 Specifying kpoints
 ------------------
@@ -103,8 +108,7 @@ that case, VASP_ does not reduce the kpoints by symmetry, as explained `here
 
 As a callable function which takes the vasp functional and the structure as
 input. It must return either a string defining a semantically correct KPOINTS_
-file, or an array of kpoints as above (or another similar callable, but why
-would you want to do that?).
+file, or an array of kpoints as above.
 
 >>> def some_function(functional, structure):
 >>>   .... do something
@@ -125,8 +129,7 @@ Pseudo-potentials must be specified explicitely:
 
 The first item is the name of the atomic specie. It corresponds to the type of
 the atom in the structure to compute. The second item is a path to a directory
-where the appropriate *unzipped* POTCAR resides. It is possible to specify more
-species than exists in a given structure. It will not affect calculations.
+where the appropriate *unzipped* POTCAR resides. It will not affect calculations.
 For convenience, the path may be given with the usual unix short-cuts and/or with
 a shell environment variable.
 
@@ -134,7 +137,7 @@ a shell environment variable.
 
 To specify a Hubbard U parameter, do:
 
->>> from lada.vasp.specie import U
+>>> from pylada.vasp.specie import U
 >>> vasp.add_specie = 'Tc', '~/pseudos/$PAW/Tc', U('dudarev', l=2, U=1.5)
 
 The species can be latter accessed through a dictionary in the vasp object:
@@ -146,3 +149,8 @@ Specie('Tc', '~/pseudos/$PAW/Tc')
 
 At which point, other elemental properties could be added for latter use in a
 script.
+
+.. note::
+ 
+   It is possible to specify more species than exists in a given structure.
+   Pylada will figure out at runtime.

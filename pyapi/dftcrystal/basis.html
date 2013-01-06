@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Basis sets &mdash; LaDa 1.0 documentation</title>
+    <title>Basis sets &mdash; Pylada 1.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="author" title="About these documents" href="../../about.html" />
-    <link rel="top" title="LaDa 1.0 documentation" href="../../index.html" />
+    <link rel="top" title="Pylada 1.0 documentation" href="../../index.html" />
     <link rel="up" title="Functional class and attributes" href="functional.html" />
     <link rel="next" title="Computational and Hamiltonian parameters" href="comp.html" />
     <link rel="prev" title="Geometry optimization block" href="optgeom.html" /> 
@@ -48,7 +48,7 @@
         <li class="right" >
           <a href="optgeom.html" title="Geometry optimization block"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Pylada 1.0 documentation</a> &raquo;</li>
           <li><a href="../../pyapi.html" >Python API</a> &raquo;</li>
           <li><a href="../dftcrystal.html" >CRYSTAL wrapper module</a> &raquo;</li>
           <li><a href="functional.html" accesskey="U">Functional class and attributes</a> &raquo;</li> 
@@ -63,16 +63,16 @@
   <div class="section" id="basis-sets">
 <h1>Basis sets<a class="headerlink" href="#basis-sets" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
-<dt id="lada.dftcrystal.basis.BasisSet">
-<em class="property">class </em><tt class="descclassname">lada.dftcrystal.basis.</tt><tt class="descname">BasisSet</tt><a class="reference internal" href="../../_modules/lada/dftcrystal/basis.html#BasisSet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.basis.BasisSet" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">lada.dftcrystal.input.AttrBlock</span></tt></p>
+<dt id="pylada.dftcrystal.basis.BasisSet">
+<em class="property">class </em><tt class="descclassname">pylada.dftcrystal.basis.</tt><tt class="descname">BasisSet</tt><a class="reference internal" href="../../_modules/pylada/dftcrystal/basis.html#BasisSet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.dftcrystal.basis.BasisSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">pylada.dftcrystal.input.AttrBlock</span></tt></p>
 <p>Basis set block.</p>
 <p>Sub-block defining the basis set of the <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a> calculation. In
 practice, it is composed of a dictionary which holds the description of
 each specie-dependent sets of guassians, and of keyword parameters, such
-as <a class="reference internal" href="#lada.dftcrystal.basis.BasisSet.ghosts" title="lada.dftcrystal.basis.BasisSet.ghosts"><tt class="xref py py-attr docutils literal"><span class="pre">ghosts</span></tt></a>.</p>
+as <a class="reference internal" href="#pylada.dftcrystal.basis.BasisSet.ghosts" title="pylada.dftcrystal.basis.BasisSet.ghosts"><tt class="xref py py-attr docutils literal"><span class="pre">ghosts</span></tt></a>.</p>
 <p>Currently, only the general basis sets have been implemented, via the
-<a class="reference internal" href="#lada.dftcrystal.basis.Shell" title="lada.dftcrystal.basis.Shell"><tt class="xref py py-class docutils literal"><span class="pre">Shell</span></tt></a>. The input looks as follows:</p>
+<a class="reference internal" href="#pylada.dftcrystal.basis.Shell" title="pylada.dftcrystal.basis.Shell"><tt class="xref py py-class docutils literal"><span class="pre">Shell</span></tt></a>. The input looks as follows:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">functional</span><span class="o">.</span><span class="n">basis</span><span class="p">[</span><span class="s">&#39;Si&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span> <span class="n">Shell</span><span class="p">(</span><span class="s">&#39;s&#39;</span><span class="p">,</span> <span class="n">a0</span><span class="o">=</span><span class="p">[</span><span class="mf">16120.0</span><span class="p">,</span>  <span class="mf">0.001959</span><span class="p">],</span>
                                       <span class="n">a1</span><span class="o">=</span><span class="p">[</span> <span class="mf">2426.0</span><span class="p">,</span>  <span class="mf">0.01493</span><span class="p">],</span> 
                                       <span class="n">a2</span><span class="o">=</span><span class="p">[</span>  <span class="mf">553.9</span><span class="p">,</span>  <span class="mf">0.07285</span><span class="p">],</span>
@@ -100,23 +100,23 @@ numbers greater than 100, then one should use the integer format only
 information as the first record of a basis set description.</p>
 <p><em>List  of orbitals</em>: Each item of the list is a single set of orbitals.
 At present, only the general basis set has been implemented. The full
-description is given in <a class="reference internal" href="#lada.dftcrystal.basis.Shell" title="lada.dftcrystal.basis.Shell"><tt class="xref py py-class docutils literal"><span class="pre">Shell</span></tt></a>.</p>
+description is given in <a class="reference internal" href="#pylada.dftcrystal.basis.Shell" title="pylada.dftcrystal.basis.Shell"><tt class="xref py py-class docutils literal"><span class="pre">Shell</span></tt></a>.</p>
 <p><em>Usage and keywords</em>:Unlike <a class="reference external" href="http://www.crystal.unito.it/">CRYSTAL</a>, any number of species can be
 defined. Which should actually enter the input is determined at run-time.
 This makes it somewhat easier to define functionals for a whole set of
 calculations.  Finally, other parameters from the basis-block are defined
 simply as attributes (see last line of code above). As with other
 input-blocks, additional keywords can be defined via
-<a class="reference internal" href="#lada.dftcrystal.basis.BasisSet.add_keyword" title="lada.dftcrystal.basis.BasisSet.add_keyword"><tt class="xref py py-meth docutils literal"><span class="pre">add_keyword()</span></tt></a>.</p>
+<a class="reference internal" href="#pylada.dftcrystal.basis.BasisSet.add_keyword" title="pylada.dftcrystal.basis.BasisSet.add_keyword"><tt class="xref py py-meth docutils literal"><span class="pre">add_keyword()</span></tt></a>.</p>
 <dl class="method">
-<dt id="lada.dftcrystal.basis.BasisSet.add_keyword">
-<tt class="descname">add_keyword</tt><big>(</big><em>name</em>, <em>value=None</em><big>)</big><a class="headerlink" href="#lada.dftcrystal.basis.BasisSet.add_keyword" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.basis.BasisSet.add_keyword">
+<tt class="descname">add_keyword</tt><big>(</big><em>name</em>, <em>value=None</em><big>)</big><a class="headerlink" href="#pylada.dftcrystal.basis.BasisSet.add_keyword" title="Permalink to this definition">¶</a></dt>
 <dd><p>Adds/Sets input keyword.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="lada.dftcrystal.basis.BasisSet.add_specie">
-<tt class="descname">add_specie</tt><big>(</big><em>string</em><big>)</big><a class="reference internal" href="../../_modules/lada/dftcrystal/basis.html#BasisSet.add_specie"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.basis.BasisSet.add_specie" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.basis.BasisSet.add_specie">
+<tt class="descname">add_specie</tt><big>(</big><em>string</em><big>)</big><a class="reference internal" href="../../_modules/pylada/dftcrystal/basis.html#BasisSet.add_specie"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.dftcrystal.basis.BasisSet.add_specie" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add specie using CRYSTAL string input.</p>
 <p>Just a convenience function to quickly add species by copy/pasting
 crystal input.</p>
@@ -131,81 +131,81 @@ crystal input.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="lada.dftcrystal.basis.BasisSet.append">
-<tt class="descname">append</tt><big>(</big><em>specie</em>, <em>shell</em><big>)</big><a class="reference internal" href="../../_modules/lada/dftcrystal/basis.html#BasisSet.append"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.basis.BasisSet.append" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.basis.BasisSet.append">
+<tt class="descname">append</tt><big>(</big><em>specie</em>, <em>shell</em><big>)</big><a class="reference internal" href="../../_modules/pylada/dftcrystal/basis.html#BasisSet.append"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.dftcrystal.basis.BasisSet.append" title="Permalink to this definition">¶</a></dt>
 <dd><p>Adds shell to set.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="lada.dftcrystal.basis.BasisSet.items">
-<tt class="descname">items</tt><big>(</big><big>)</big><a class="reference internal" href="../../_modules/lada/dftcrystal/basis.html#BasisSet.items"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.basis.BasisSet.items" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.basis.BasisSet.items">
+<tt class="descname">items</tt><big>(</big><big>)</big><a class="reference internal" href="../../_modules/pylada/dftcrystal/basis.html#BasisSet.items"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.dftcrystal.basis.BasisSet.items" title="Permalink to this definition">¶</a></dt>
 <dd><p>Tuples (specie, basis-functions)</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="lada.dftcrystal.basis.BasisSet.iteritems">
-<tt class="descname">iteritems</tt><big>(</big><big>)</big><a class="reference internal" href="../../_modules/lada/dftcrystal/basis.html#BasisSet.iteritems"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.basis.BasisSet.iteritems" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.basis.BasisSet.iteritems">
+<tt class="descname">iteritems</tt><big>(</big><big>)</big><a class="reference internal" href="../../_modules/pylada/dftcrystal/basis.html#BasisSet.iteritems"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.dftcrystal.basis.BasisSet.iteritems" title="Permalink to this definition">¶</a></dt>
 <dd><p>Iterates over tuple (key, basis-functions).</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="lada.dftcrystal.basis.BasisSet.keys">
-<tt class="descname">keys</tt><big>(</big><big>)</big><a class="reference internal" href="../../_modules/lada/dftcrystal/basis.html#BasisSet.keys"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.basis.BasisSet.keys" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.basis.BasisSet.keys">
+<tt class="descname">keys</tt><big>(</big><big>)</big><a class="reference internal" href="../../_modules/pylada/dftcrystal/basis.html#BasisSet.keys"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.dftcrystal.basis.BasisSet.keys" title="Permalink to this definition">¶</a></dt>
 <dd><p>List of species.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="lada.dftcrystal.basis.BasisSet.iterkeys">
-<tt class="descname">iterkeys</tt><big>(</big><big>)</big><a class="reference internal" href="../../_modules/lada/dftcrystal/basis.html#BasisSet.iterkeys"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.basis.BasisSet.iterkeys" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.basis.BasisSet.iterkeys">
+<tt class="descname">iterkeys</tt><big>(</big><big>)</big><a class="reference internal" href="../../_modules/pylada/dftcrystal/basis.html#BasisSet.iterkeys"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.dftcrystal.basis.BasisSet.iterkeys" title="Permalink to this definition">¶</a></dt>
 <dd><p>Iterates over species.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="lada.dftcrystal.basis.BasisSet.values">
-<tt class="descname">values</tt><big>(</big><big>)</big><a class="reference internal" href="../../_modules/lada/dftcrystal/basis.html#BasisSet.values"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.basis.BasisSet.values" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.basis.BasisSet.values">
+<tt class="descname">values</tt><big>(</big><big>)</big><a class="reference internal" href="../../_modules/pylada/dftcrystal/basis.html#BasisSet.values"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.dftcrystal.basis.BasisSet.values" title="Permalink to this definition">¶</a></dt>
 <dd><p>List of basis functions,</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="lada.dftcrystal.basis.BasisSet.itervalues">
-<tt class="descname">itervalues</tt><big>(</big><big>)</big><a class="reference internal" href="../../_modules/lada/dftcrystal/basis.html#BasisSet.itervalues"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.basis.BasisSet.itervalues" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.basis.BasisSet.itervalues">
+<tt class="descname">itervalues</tt><big>(</big><big>)</big><a class="reference internal" href="../../_modules/pylada/dftcrystal/basis.html#BasisSet.itervalues"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.dftcrystal.basis.BasisSet.itervalues" title="Permalink to this definition">¶</a></dt>
 <dd><p>Iterates over basis-functions.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="lada.dftcrystal.basis.BasisSet.update">
-<tt class="descname">update</tt><big>(</big><em>basis</em><big>)</big><a class="reference internal" href="../../_modules/lada/dftcrystal/basis.html#BasisSet.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.basis.BasisSet.update" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.basis.BasisSet.update">
+<tt class="descname">update</tt><big>(</big><em>basis</em><big>)</big><a class="reference internal" href="../../_modules/pylada/dftcrystal/basis.html#BasisSet.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.dftcrystal.basis.BasisSet.update" title="Permalink to this definition">¶</a></dt>
 <dd><p>Updates dictionary of basis-sets.</p>
 <p>Overwrites existing species.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.dftcrystal.basis.BasisSet.atomsymm">
-<tt class="descname">atomsymm</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.basis.BasisSet.atomsymm" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.basis.BasisSet.atomsymm">
+<tt class="descname">atomsymm</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.dftcrystal.basis.BasisSet.atomsymm" title="Permalink to this definition">¶</a></dt>
 <dd><p>Prints point symmetry for each atomic position.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.dftcrystal.basis.BasisSet.charged">
-<tt class="descname">charged</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.basis.BasisSet.charged" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.basis.BasisSet.charged">
+<tt class="descname">charged</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.dftcrystal.basis.BasisSet.charged" title="Permalink to this definition">¶</a></dt>
 <dd><p>Allows charged system.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.dftcrystal.basis.BasisSet.chemod">
-<tt class="descname">chemod</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.basis.BasisSet.chemod" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.basis.BasisSet.chemod">
+<tt class="descname">chemod</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.dftcrystal.basis.BasisSet.chemod" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sets initial electronic occupation.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.dftcrystal.basis.BasisSet.gaussian94">
-<tt class="descname">gaussian94</tt><a class="reference internal" href="../../_modules/lada/dftcrystal/basis.html#BasisSet.gaussian94"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.basis.BasisSet.gaussian94" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.basis.BasisSet.gaussian94">
+<tt class="descname">gaussian94</tt><a class="reference internal" href="../../_modules/pylada/dftcrystal/basis.html#BasisSet.gaussian94"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.dftcrystal.basis.BasisSet.gaussian94" title="Permalink to this definition">¶</a></dt>
 <dd><p>Basis set in GAUSSIAN94 format</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.dftcrystal.basis.BasisSet.ghosts">
-<tt class="descname">ghosts</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.basis.BasisSet.ghosts" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.basis.BasisSet.ghosts">
+<tt class="descname">ghosts</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.dftcrystal.basis.BasisSet.ghosts" title="Permalink to this definition">¶</a></dt>
 <dd><p>Removes atoms but keeps basis functions.</p>
 <p>This keyword should be in the basis subsection of the input.
 In practice, it can be set as follows:</p>
@@ -237,28 +237,28 @@ those explicitely given are also removed.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.dftcrystal.basis.BasisSet.noprint">
-<tt class="descname">noprint</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.basis.BasisSet.noprint" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.basis.BasisSet.noprint">
+<tt class="descname">noprint</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.dftcrystal.basis.BasisSet.noprint" title="Permalink to this definition">¶</a></dt>
 <dd><p>Disable basis set printing.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.dftcrystal.basis.BasisSet.paramprt">
-<tt class="descname">paramprt</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.basis.BasisSet.paramprt" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.basis.BasisSet.paramprt">
+<tt class="descname">paramprt</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.dftcrystal.basis.BasisSet.paramprt" title="Permalink to this definition">¶</a></dt>
 <dd><p>Print code dimensions parameters.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.dftcrystal.basis.BasisSet.symmops">
-<tt class="descname">symmops</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.basis.BasisSet.symmops" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.basis.BasisSet.symmops">
+<tt class="descname">symmops</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.dftcrystal.basis.BasisSet.symmops" title="Permalink to this definition">¶</a></dt>
 <dd><p>Prints point symmetry operators/</p>
 </dd></dl>
 
 </dd></dl>
 
 <dl class="class">
-<dt id="lada.dftcrystal.basis.Shell">
-<em class="property">class </em><tt class="descclassname">lada.dftcrystal.basis.</tt><tt class="descname">Shell</tt><big>(</big><em>type='s'</em>, <em>charge=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../_modules/lada/dftcrystal/basis.html#Shell"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.basis.Shell" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.basis.Shell">
+<em class="property">class </em><tt class="descclassname">pylada.dftcrystal.basis.</tt><tt class="descname">Shell</tt><big>(</big><em>type='s'</em>, <em>charge=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../_modules/pylada/dftcrystal/basis.html#Shell"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.dftcrystal.basis.Shell" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
 <p>Defines a general gaussian basis set for a specific orbital shell.</p>
 <p>This class encodes a set of basis functions as follows.</p>
@@ -295,38 +295,38 @@ respectively.</li>
 </tbody>
 </table>
 <dl class="method">
-<dt id="lada.dftcrystal.basis.Shell.append">
-<tt class="descname">append</tt><big>(</big><em>alpha</em>, <em>coef1</em>, <em>coef2=None</em><big>)</big><a class="reference internal" href="../../_modules/lada/dftcrystal/basis.html#Shell.append"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.basis.Shell.append" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.basis.Shell.append">
+<tt class="descname">append</tt><big>(</big><em>alpha</em>, <em>coef1</em>, <em>coef2=None</em><big>)</big><a class="reference internal" href="../../_modules/pylada/dftcrystal/basis.html#Shell.append"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.dftcrystal.basis.Shell.append" title="Permalink to this definition">¶</a></dt>
 <dd><p>Appends a gaussian to the basis set.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.dftcrystal.basis.Shell.charge">
-<tt class="descname">charge</tt><a class="reference internal" href="../../_modules/lada/dftcrystal/basis.html#Shell.charge"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.basis.Shell.charge" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.basis.Shell.charge">
+<tt class="descname">charge</tt><a class="reference internal" href="../../_modules/pylada/dftcrystal/basis.html#Shell.charge"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.dftcrystal.basis.Shell.charge" title="Permalink to this definition">¶</a></dt>
 <dd><p>Nominal charge of the shell</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.dftcrystal.basis.Shell.functions">
-<tt class="descname">functions</tt><em class="property"> = None</em><a class="headerlink" href="#lada.dftcrystal.basis.Shell.functions" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.basis.Shell.functions">
+<tt class="descname">functions</tt><em class="property"> = None</em><a class="headerlink" href="#pylada.dftcrystal.basis.Shell.functions" title="Permalink to this definition">¶</a></dt>
 <dd><p>Radial functions description</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.dftcrystal.basis.Shell.raw">
-<tt class="descname">raw</tt><a class="reference internal" href="../../_modules/lada/dftcrystal/basis.html#Shell.raw"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.basis.Shell.raw" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.basis.Shell.raw">
+<tt class="descname">raw</tt><a class="reference internal" href="../../_modules/pylada/dftcrystal/basis.html#Shell.raw"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.dftcrystal.basis.Shell.raw" title="Permalink to this definition">¶</a></dt>
 <dd><p>Prints CRYSTAL input.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.dftcrystal.basis.Shell.type">
-<tt class="descname">type</tt><a class="reference internal" href="../../_modules/lada/dftcrystal/basis.html#Shell.type"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.basis.Shell.type" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.basis.Shell.type">
+<tt class="descname">type</tt><a class="reference internal" href="../../_modules/pylada/dftcrystal/basis.html#Shell.type"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.dftcrystal.basis.Shell.type" title="Permalink to this definition">¶</a></dt>
 <dd><p>Orbital type of this shell</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="lada.dftcrystal.basis.Shell.type_as_int">
-<tt class="descname">type_as_int</tt><a class="reference internal" href="../../_modules/lada/dftcrystal/basis.html#Shell.type_as_int"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lada.dftcrystal.basis.Shell.type_as_int" title="Permalink to this definition">¶</a></dt>
+<dt id="pylada.dftcrystal.basis.Shell.type_as_int">
+<tt class="descname">type_as_int</tt><a class="reference internal" href="../../_modules/pylada/dftcrystal/basis.html#Shell.type_as_int"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pylada.dftcrystal.basis.Shell.type_as_int" title="Permalink to this definition">¶</a></dt>
 <dd><p>Orbital type as CRYSTAL input.</p>
 </dd></dl>
 
@@ -383,7 +383,7 @@ respectively.</li>
         <li class="right" >
           <a href="optgeom.html" title="Geometry optimization block"
              >previous</a> |</li>
-        <li><a href="../../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Pylada 1.0 documentation</a> &raquo;</li>
           <li><a href="../../pyapi.html" >Python API</a> &raquo;</li>
           <li><a href="../dftcrystal.html" >CRYSTAL wrapper module</a> &raquo;</li>
           <li><a href="functional.html" >Functional class and attributes</a> &raquo;</li> 

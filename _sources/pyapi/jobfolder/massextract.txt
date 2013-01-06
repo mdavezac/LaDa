@@ -1,7 +1,7 @@
 Result mass extraction
 **********************
 
-.. automodule:: lada.jobfolder.massextract
+.. automodule:: pylada.jobfolder.massextract
 .. moduleauthor:: Mayeul d'Avezac
 
 .. autoclass:: MassExtract

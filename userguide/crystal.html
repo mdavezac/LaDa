@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Creating and Manipulating crystal structures &mdash; LaDa 1.0 documentation</title>
+    <title>Creating and Manipulating crystal structures &mdash; Pylada 1.0 documentation</title>
     
     <link rel="stylesheet" href="../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -27,10 +27,10 @@
     <script type="text/javascript" src="../_static/doctools.js"></script>
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="author" title="About these documents" href="../about.html" />
-    <link rel="top" title="LaDa 1.0 documentation" href="../index.html" />
+    <link rel="top" title="Pylada 1.0 documentation" href="../index.html" />
     <link rel="up" title="User Guide" href="../userguide.html" />
     <link rel="next" title="Interface to VASP" href="vasp.html" />
-    <link rel="prev" title="Setting up LaDa to call VASP" href="installation/vasp.html" /> 
+    <link rel="prev" title="Setting up Pylada" href="configuration.html" /> 
   </head>
   <body>
     <div class="related">
@@ -46,9 +46,9 @@
           <a href="vasp.html" title="Interface to VASP"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="installation/vasp.html" title="Setting up LaDa to call VASP"
+          <a href="configuration.html" title="Setting up Pylada"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+        <li><a href="../index.html">Pylada 1.0 documentation</a> &raquo;</li>
           <li><a href="../userguide.html" accesskey="U">User Guide</a> &raquo;</li> 
       </ul>
     </div>  
@@ -60,7 +60,7 @@
             
   <div class="section" id="creating-and-manipulating-crystal-structures">
 <span id="crystal-ug"></span><h1>Creating and Manipulating crystal structures<a class="headerlink" href="#creating-and-manipulating-crystal-structures" title="Permalink to this headline">¶</a></h1>
-<p>A good way to learn is to play with LaDa directly in the python interpreter.
+<p>A good way to learn is to play with Pylada directly in the python interpreter.
 Best of all, use the enhanced shell <a class="reference external" href="http://ipython.org/">ipython</a>. It comes with many goodies. For
 instance tab-completion. Or inline help. E.g., once you have typed up the first
 example below, try <tt class="docutils literal"><span class="pre">structure.[TAB]</span></tt> and see what it tells you. Then try
@@ -71,7 +71,7 @@ right, you can even use it like an ordinary bash shell on <a class="reference ex
 <div class="section" id="initialization">
 <h3>Initialization<a class="headerlink" href="#initialization" title="Permalink to this headline">¶</a></h3>
 <p>To start off, lets create the diamond crystal structure.</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">lada.crystal</span> <span class="kn">import</span> <span class="n">Structure</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pylada.crystal</span> <span class="kn">import</span> <span class="n">Structure</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">structure</span> <span class="o">=</span> <span class="n">Structure</span><span class="p">(</span> <span class="p">[</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>     \
 <span class="gp">... </span>                         <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>     \
 <span class="gp">... </span>                         <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="p">]</span> <span class="p">)</span>
@@ -80,8 +80,8 @@ right, you can even use it like an ordinary bash shell on <a class="reference ex
 </pre></div>
 </div>
 <p>The first line above imports the <tt class="xref py py-class docutils literal"><span class="pre">Structure</span></tt> class from the
-<a class="reference internal" href="../pyapi/crystal.html#module-lada.crystal" title="lada.crystal"><tt class="xref py py-mod docutils literal"><span class="pre">crystal</span></tt></a> module.  This class is the basic type which describes
-crystal structures in LaDa.  The second and subsequent lines creates diamond.
+<a class="reference internal" href="../pyapi/crystal.html#module-pylada.crystal" title="pylada.crystal"><tt class="xref py py-mod docutils literal"><span class="pre">crystal</span></tt></a> module.  This class is the basic type which describes
+crystal structures in Pylada.  The second and subsequent lines creates diamond.
 The unit-cell is initialized within the first parenthesis. It must be given as
 a <em>matrix</em>: the cell-vectors are columns (not rows as in many other physics
 code). The reason behind choice will soon be apparent when we start playing the
@@ -91,7 +91,7 @@ as done above, first inserting the x, y, and z cartesian coordinates and then
 the atomic occupation.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p class="last">Cartesian or fractional coordinates? Ask the question no more. LaDa
+<p class="last">Cartesian or fractional coordinates? Ask the question no more. Pylada
 <em>always</em> expects cartesian coordinates in real space. Period.
 However, keep reading to find an instance where the transformation is
 done. Just don&#8217;t forget to transform back.</p>
@@ -101,7 +101,7 @@ structure. If one believes in d0 magnetization in carbon substituted by
 Technetium, one could add a total moment to the structure, specify an atomic
 site for Technetium substitutions, and markup another site with a spin
 variable, all in a single one liner.</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">lada.crystal</span> <span class="kn">import</span> <span class="n">Structure</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pylada.crystal</span> <span class="kn">import</span> <span class="n">Structure</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">structure</span> <span class="o">=</span> <span class="n">Structure</span><span class="p">(</span> <span class="p">[</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>                         \
 <span class="gp">... </span>                         <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>                         \
 <span class="gp">... </span>                         <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="p">],</span> <span class="n">scale</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">moment</span><span class="o">=</span><span class="mi">5</span> <span class="p">)</span> \
@@ -114,8 +114,8 @@ single line.</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
 <p class="last">A number of predefined lattices can be found in
-<a class="reference internal" href="../pyapi/crystal/lattices.html#module-lada.crystal.bravais" title="lada.crystal.bravais"><tt class="xref py py-mod docutils literal"><span class="pre">bravais</span></tt></a>, <a class="reference internal" href="../pyapi/crystal/lattices.html#module-lada.crystal.binary" title="lada.crystal.binary"><tt class="xref py py-mod docutils literal"><span class="pre">binary</span></tt></a>,
-<a class="reference internal" href="../pyapi/crystal/lattices.html#module-lada.crystal.A2BX4" title="lada.crystal.A2BX4"><tt class="xref py py-mod docutils literal"><span class="pre">A2BX4</span></tt></a>, <a class="reference internal" href="../pyapi/crystal/lattices.html#module-lada.crystal.ABX" title="lada.crystal.ABX"><tt class="xref py py-mod docutils literal"><span class="pre">ABX</span></tt></a>. Other similar
+<a class="reference internal" href="../pyapi/crystal/lattices.html#module-pylada.crystal.bravais" title="pylada.crystal.bravais"><tt class="xref py py-mod docutils literal"><span class="pre">bravais</span></tt></a>, <a class="reference internal" href="../pyapi/crystal/lattices.html#module-pylada.crystal.binary" title="pylada.crystal.binary"><tt class="xref py py-mod docutils literal"><span class="pre">binary</span></tt></a>,
+<a class="reference internal" href="../pyapi/crystal/lattices.html#module-pylada.crystal.A2BX4" title="pylada.crystal.A2BX4"><tt class="xref py py-mod docutils literal"><span class="pre">A2BX4</span></tt></a>, <a class="reference internal" href="../pyapi/crystal/lattices.html#module-pylada.crystal.ABX" title="pylada.crystal.ABX"><tt class="xref py py-mod docutils literal"><span class="pre">ABX</span></tt></a>. Other similar
 modules are always welcomed.</p>
 </div>
 </div>
@@ -134,10 +134,10 @@ The cell can be accessed as follows:</p>
 <p>The first line in the code above accesses the x coordinate of the second cell
 vector and changes it to 0.6. The second line of code modifies the y
 coordinates of all three cell vectors simultaneously. Note that the cell a
-<a class="reference external" href="http://numpy.scipy.org/">numpy</a> array. <a class="reference external" href="http://numpy.scipy.org/">Numpy</a> is python&#8217;s numerical computation package. It does
+<a class="reference external" href="http://www.numpy.org">numpy</a> array. <a class="reference external" href="http://www.numpy.org">Numpy</a> is python&#8217;s numerical computation package. It does
 everything that BLAS or Lapack does, but is much easier to use. And since, when
 compiled correctly, it actually uses BLAS or similar library, it can be quite
-fast. Most, perhaps all, arrays of numbers in LaDa are <a class="reference external" href="http://numpy.scipy.org/">numpy</a> arrays.</p>
+fast. Most, perhaps all, arrays of numbers in Pylada are <a class="reference external" href="http://www.numpy.org">numpy</a> arrays.</p>
 <p>Atoms in the structure can be accessed in the structure as though it were a list:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">atom0</span> <span class="o">=</span> <span class="n">structure</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">atom1</span> <span class="o">=</span> <span class="n">structure</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
@@ -153,7 +153,7 @@ negative integers. It is possible to loop over it as well:</p>
 </pre></div>
 </div>
 <p>The above loops over all atoms and prints the position of each. Note that the
-position is also a <a class="reference external" href="http://numpy.scipy.org/">numpy</a> array. Finally, the structure can be sliced:</p>
+position is also a <a class="reference external" href="http://www.numpy.org">numpy</a> array. Finally, the structure can be sliced:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">structure</span><span class="o">.</span><span class="n">add_atom</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="s">&#39;Pu&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">atom</span> <span class="ow">in</span> <span class="n">structure</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span> <span class="k">print</span> <span class="n">atom</span><span class="o">.</span><span class="n">type</span>
 <span class="go">[&#39;C&#39; &#39;Tc&#39;]</span>
@@ -190,7 +190,7 @@ An integer:</p>
 </pre></div>
 </div>
 <p>Though how that would be useful is not clear. The position, however, is
-<em>always</em> a <a class="reference external" href="http://numpy.scipy.org/">numpy</a> array. Try otherwise, and you will get an error. Note above
+<em>always</em> a <a class="reference external" href="http://www.numpy.org">numpy</a> array. Try otherwise, and you will get an error. Note above
 that we set the type using <tt class="docutils literal"><span class="pre">atom0</span></tt> and then print it out using
 <tt class="docutils literal"><span class="pre">structure[0]</span></tt>. <tt class="docutils literal"><span class="pre">atom0</span></tt> is a variable created earlier. It references the
 structure&#8217;s first atom. You can use one or the other. Both refer to the same
@@ -211,15 +211,15 @@ some math:</p>
 </pre></div>
 </div>
 <p>The snippet above computes the fractional coordinates of the first atomic
-position. <a class="reference external" href="http://docs.scipy.org/doc/numpy/reference/generated/numpy.linalg.inv.html">inv</a> is a <a class="reference external" href="http://numpy.scipy.org/">numpy</a> method to invert 2d-arrays. <a class="reference external" href="http://docs.scipy.org/doc/numpy/reference/generated/numpy.dot.html">dot</a> provides
+position. <a class="reference external" href="http://docs.scipy.org/doc/numpy/reference/generated/numpy.linalg.inv.html">inv</a> is a <a class="reference external" href="http://www.numpy.org">numpy</a> method to invert 2d-arrays. <a class="reference external" href="http://docs.scipy.org/doc/numpy/reference/generated/numpy.dot.html">dot</a> provides
 matrix-matrix multiplication and matrix-vector multiplications, and
 vector-vector inner products.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
 <p class="last">Why use <a class="reference external" href="http://docs.scipy.org/doc/numpy/reference/generated/numpy.dot.html">dot</a>? By default, <tt class="docutils literal"><span class="pre">vectorA</span> <span class="pre">*</span> <span class="pre">vectorB</span></tt> multiplies arrays
-element per element in <a class="reference external" href="http://numpy.scipy.org/">numpy</a>. There does exist a class called
+element per element in <a class="reference external" href="http://www.numpy.org">numpy</a>. There does exist a class called
 Matrix which will change the behavior to actual matrix
-mutliplication. But to avoid any surprises, LaDa uses the default.
+mutliplication. But to avoid any surprises, Pylada uses the default.
 And hence makes use of <a class="reference external" href="http://docs.scipy.org/doc/numpy/reference/generated/numpy.dot.html">dot</a>.</p>
 </div>
 </div>
@@ -234,7 +234,7 @@ And hence makes use of <a class="reference external" href="http://docs.scipy.org
 </div>
 <p>The package <a class="reference external" href="http://packages.python.org/quantities/index.html">quantities</a> allows us to specify units explicitly. Note however
 that the scale is converted to angstroms. Units are arbitrary and an arbitrary
-choice was made to use angstroms throughout LaDa. <a class="reference external" href="http://packages.python.org/quantities/index.html">quantities</a> makes it
+choice was made to use angstroms throughout Pylada. <a class="reference external" href="http://packages.python.org/quantities/index.html">quantities</a> makes it
 possible to convert back and forth between other preferred unit systems.
 In other words, the unit-cell <tt class="docutils literal"><span class="pre">structure.scale</span> <span class="pre">*</span> <span class="pre">structure.cell</span></tt> is in
 angstrom once multiplied by the scale. And so are the atomic positions
@@ -247,7 +247,7 @@ angstrom once multiplied by the scale. And so are the atomic positions
 <h3>Supercells and primitive unit cells<a class="headerlink" href="#supercells-and-primitive-unit-cells" title="Permalink to this headline">¶</a></h3>
 <p>Quite often, one needs to a supercell, i.e. a multiple, of a smaller unit cell.
 Doing this takes all of a single line.</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">lada.crystal</span> <span class="kn">import</span> <span class="n">Structure</span><span class="p">,</span> <span class="n">supercell</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pylada.crystal</span> <span class="kn">import</span> <span class="n">Structure</span><span class="p">,</span> <span class="n">supercell</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c"># First create unit cell.</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">structure</span> <span class="o">=</span> <span class="n">Structure</span><span class="p">(</span> <span class="p">[</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>                  \
 <span class="gp">... </span>                         <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>                  \
@@ -281,7 +281,7 @@ conventional cell in fractional coordinates:</p>
 </div>
 <p>It is just a bit more verbose.</p>
 <p>Once a supercell is obtained, it is possible to go back to the original primitive unit-cell.</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">lada.crystal</span> <span class="kn">import</span> <span class="n">primitive</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pylada.crystal</span> <span class="kn">import</span> <span class="n">primitive</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">primitive</span><span class="p">(</span><span class="n">conventional</span><span class="p">,</span> <span class="n">tolerance</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">)</span>
 <span class="go">Structure( 0.5, 0.5, 0,\</span>
 <span class="go">           0, 0.5, 0.5,\</span>
@@ -295,7 +295,7 @@ conventional cell in fractional coordinates:</p>
 respect to numerical noise. The optional <tt class="docutils literal"><span class="pre">tolerance</span></tt> keyword argument may
 help to some degree. It defaults to 1e-8. There is also a method to check
 whether a structure is indeed primitive.</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">lada.crystal</span> <span class="kn">import</span> <span class="n">primitive</span><span class="p">,</span> <span class="n">is_primitive</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pylada.crystal</span> <span class="kn">import</span> <span class="n">primitive</span><span class="p">,</span> <span class="n">is_primitive</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">is_primitive</span><span class="p">(</span><span class="n">conventional</span><span class="p">)</span>
 <span class="go">False</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">is_primitive</span><span class="p">(</span><span class="n">primitive</span><span class="p">(</span><span class="n">conventional</span><span class="p">))</span>
@@ -307,7 +307,7 @@ its backbone lattice. In practice, it gives us a way to label an atom with
 respect to the group of periodic images it belongs to <a class="reference internal" href="#hf">[HF]</a>.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">random</span> <span class="kn">import</span> <span class="n">randint</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">array</span><span class="p">,</span> <span class="nb">all</span><span class="p">,</span> <span class="nb">abs</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">lada.crystal</span> <span class="kn">import</span> <span class="n">SmithTransform</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pylada.crystal</span> <span class="kn">import</span> <span class="n">SmithTransform</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c"># create smith transform.</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">st</span> <span class="o">=</span> <span class="n">SmithTransform</span><span class="p">(</span><span class="n">conventional</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c"># loop over random periodic images</span>
@@ -342,7 +342,7 @@ attribute can also be set using the <tt class="xref py py-func docutils literal"
 <h3>Space-group operations<a class="headerlink" href="#space-group-operations" title="Permalink to this headline">¶</a></h3>
 <p>The space group operations of a structure can also easily be obtained. This is
 the operations, not the name of the space group. The return is a list of 4x3
-<a class="reference external" href="http://numpy.scipy.org/">numpy</a> arrays where the upper 3x3 block is a rotation and the lowest row is a
+<a class="reference external" href="http://www.numpy.org">numpy</a> arrays where the upper 3x3 block is a rotation and the lowest row is a
 translation. The translation should be applied <em>after</em> the rotation. Going back
 to the original diamond structure:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">sg</span> <span class="o">=</span> <span class="n">space_group</span><span class="p">(</span><span class="n">structure</span><span class="p">)</span>
@@ -362,7 +362,7 @@ to the original diamond structure:</p>
 </pre></div>
 </div>
 <p>A structure can easily be transform according to any affine transformation defined the same way:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">lada.crystal</span> <span class="kn">import</span> <span class="n">transform</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pylada.crystal</span> <span class="kn">import</span> <span class="n">transform</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">transform</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">sg</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
 <span class="go">Structure( 0, 0.5, 0.5,\</span>
 <span class="go">           -0.5, 0, -0.5,\</span>
@@ -383,7 +383,7 @@ parameterization of the same lattice.</p>
 <h3>Neighbors and Coordination Shells<a class="headerlink" href="#neighbors-and-coordination-shells" title="Permalink to this headline">¶</a></h3>
 <p>A list of first neighbors can be obtained for any point in the structure.
 Still using the diamond structure.</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">lada.crystal</span> <span class="kn">import</span> <span class="n">neighbors</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pylada.crystal</span> <span class="kn">import</span> <span class="n">neighbors</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">n</span> <span class="o">=</span> <span class="n">neighbors</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="p">[</span><span class="mf">0.125</span><span class="p">,</span><span class="mf">0.125</span><span class="p">,</span> <span class="mf">0.125</span><span class="p">])</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
 <span class="go">8</span>
@@ -406,7 +406,7 @@ periodic image of that atom, and the distance from the center to the periodic
 image. Additionally, a <tt class="docutils literal"><span class="pre">coordination_shells</span></tt> method exists which returns a
 list of lists of neighbour, where each inner list is a single coordination
 shell.</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">lada.crystal</span> <span class="kn">import</span> <span class="n">coordination_shell</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pylada.crystal</span> <span class="kn">import</span> <span class="n">coordination_shell</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span> <span class="n">coordination_shell</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="p">[</span><span class="mf">0.125</span><span class="p">,</span> <span class="mf">0.125</span><span class="p">,</span> <span class="mf">0.125</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span> <span class="p">)</span>
 <span class="go">2</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span> <span class="n">coordination_shell</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="p">[</span><span class="mf">0.125</span><span class="p">,</span> <span class="mf">0.125</span><span class="p">,</span> <span class="mf">0.125</span><span class="p">])[</span><span class="mi">1</span><span class="p">]</span> <span class="p">)</span>
@@ -442,7 +442,7 @@ MPI easy.</p>
 </div>
 <div class="section" id="conclusion">
 <h3>Conclusion<a class="headerlink" href="#conclusion" title="Permalink to this headline">¶</a></h3>
-<p>LaDa makes it easy to manipulate crystal structures any way you fancy. Further
+<p>Pylada makes it easy to manipulate crystal structures any way you fancy. Further
 methods exist beyond those described here. There is a method to create periodic
 divide and conquer boxes, very practical when dealing with truly large
 structures. There is a method to transform structures into lattice agnostic
@@ -464,7 +464,7 @@ nanowires <a class="reference internal" href="#zalz">[ZALZ]</a>.</p>
 <p>The point here is to create an <a class="reference external" href="http://docs.python.org/tutorial/classes.html#generators">generator</a> which will allow us to iterate over
 shells in an outer loop and atoms (within the shell) in an inner loop. For
 instance, if we wanted to alternate Si and Ge layers.</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">lada.crystal</span> <span class="kn">import</span> <span class="n">shell_iterator</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pylada.crystal</span> <span class="kn">import</span> <span class="n">shell_iterator</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">shell</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">shell_iterator</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">center</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="n">direction</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])):</span>
 <span class="gp">&gt;&gt;&gt; </span>   <span class="k">for</span> <span class="n">atom</span> <span class="ow">in</span> <span class="n">shell</span><span class="p">:</span>
 <span class="gp">&gt;&gt;&gt; </span>     <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="mi">10</span><span class="p">:</span> <span class="n">atom</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s">&#39;Hg&#39;</span>
@@ -488,7 +488,7 @@ so that we can alternate Si and Ge.</p>
 <span class="gp">&gt;&gt;&gt; </span>      <span class="n">It</span> <span class="n">allows</span> <span class="n">to</span> <span class="n">rapidly</span> <span class="n">create</span> <span class="n">core</span><span class="o">-</span><span class="n">shell</span> <span class="n">nanowires</span><span class="o">.</span>
 <span class="go">&gt;&gt;&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span>      <span class="p">:</span><span class="n">Parameters</span><span class="p">:</span>
-<span class="gp">&gt;&gt;&gt; </span>        <span class="n">structure</span> <span class="p">:</span> <span class="p">:</span><span class="n">class</span><span class="p">:</span><span class="sb">`lada.crystal.Structure`</span>
+<span class="gp">&gt;&gt;&gt; </span>        <span class="n">structure</span> <span class="p">:</span> <span class="p">:</span><span class="n">class</span><span class="p">:</span><span class="sb">`pylada.crystal.Structure`</span>
 <span class="gp">&gt;&gt;&gt; </span>          <span class="n">Structure</span> <span class="ow">or</span> <span class="n">Lattice</span> <span class="n">over</span> <span class="n">which</span> <span class="n">to</span> <span class="n">iterate</span><span class="o">.</span>
 <span class="gp">&gt;&gt;&gt; </span>        <span class="n">center</span> <span class="p">:</span> <span class="mi">3</span><span class="n">d</span> <span class="n">vector</span>
 <span class="gp">&gt;&gt;&gt; </span>          <span class="n">Growth</span> <span class="n">direction</span> <span class="n">of</span> <span class="n">the</span> <span class="n">nanowire</span><span class="o">.</span>
@@ -528,7 +528,7 @@ so that we can alternate Si and Ge.</p>
 <span class="gp">&gt;&gt;&gt; </span>  <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">structure</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span> <span class="k">yield</span> <span class="n">structure</span><span class="p">;</span> <span class="k">return</span>
 </pre></div>
 </div>
-<p>The first line makes sure that the direction is normalized and is a <a class="reference external" href="http://numpy.scipy.org/">numpy</a>
+<p>The first line makes sure that the direction is normalized and is a <a class="reference external" href="http://www.numpy.org">numpy</a>
 array. The second makes sure the structure is not too absurd.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span>  <span class="c"># orders position with respect to cylindrical coordinate.</span>
 <span class="gp">&gt;&gt;&gt; </span>  <span class="n">positions</span> <span class="o">=</span> <span class="n">into_voronoi</span><span class="p">(</span><span class="n">array</span><span class="p">([</span><span class="n">atom</span><span class="o">.</span><span class="n">pos</span> <span class="o">-</span> <span class="n">center</span> <span class="k">for</span> <span class="n">atom</span> <span class="ow">in</span> <span class="n">structure</span><span class="p">]),</span> <span class="n">structure</span><span class="o">.</span><span class="n">cell</span><span class="p">)</span>
@@ -586,7 +586,7 @@ Programming is often about doing loops and <a class="reference external" href="h
 brain around the concept, makes it extremely easy.</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><a class="reference internal" href="../pyapi/crystal/methods.html#lada.crystal.shell_iterator" title="lada.crystal.shell_iterator"><tt class="xref py py-class docutils literal"><span class="pre">shell_iterator</span></tt></a>, <a class="reference internal" href="../pyapi/crystal/methods.html#lada.crystal.layer_iterator" title="lada.crystal.layer_iterator"><tt class="xref py py-class docutils literal"><span class="pre">layer_iterator</span></tt></a>, <a class="reference internal" href="../pyapi/crystal/methods.html#lada.crystal.equivalence_iterator" title="lada.crystal.equivalence_iterator"><tt class="xref py py-class docutils literal"><span class="pre">equivalence_iterator</span></tt></a></p>
+<p class="last"><tt class="xref py py-class docutils literal"><span class="pre">shell_iterator</span></tt>, <tt class="xref py py-class docutils literal"><span class="pre">layer_iterator</span></tt>, <tt class="xref py py-class docutils literal"><span class="pre">equivalence_iterator</span></tt></p>
 </div>
 <table class="docutils citation" frame="void" id="hf" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
@@ -649,8 +649,8 @@ Nano Lett. <strong>12</strong>, 984-991 (2012),
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="installation/vasp.html"
-                        title="previous chapter">Setting up LaDa to call VASP</a></p>
+  <p class="topless"><a href="configuration.html"
+                        title="previous chapter">Setting up Pylada</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="vasp.html"
                         title="next chapter">Interface to VASP</a></p>
@@ -689,9 +689,9 @@ Nano Lett. <strong>12</strong>, 984-991 (2012),
           <a href="vasp.html" title="Interface to VASP"
              >next</a> |</li>
         <li class="right" >
-          <a href="installation/vasp.html" title="Setting up LaDa to call VASP"
+          <a href="configuration.html" title="Setting up Pylada"
              >previous</a> |</li>
-        <li><a href="../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+        <li><a href="../index.html">Pylada 1.0 documentation</a> &raquo;</li>
           <li><a href="../userguide.html" >User Guide</a> &raquo;</li> 
       </ul>
     </div>

@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Example: Epitaxial relaxation method &mdash; LaDa 1.0 documentation</title>
+    <title>Example: Epitaxial relaxation method &mdash; Pylada 1.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -27,9 +27,9 @@
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="author" title="About these documents" href="../../about.html" />
-    <link rel="top" title="LaDa 1.0 documentation" href="../../index.html" />
+    <link rel="top" title="Pylada 1.0 documentation" href="../../index.html" />
     <link rel="up" title="Interface to VASP" href="../vasp.html" />
-    <link rel="next" title="Organized high-throughput calculations: job-folders" href="../jobfolders.html" />
+    <link rel="next" title="Interface to CRYSTAL" href="../dftcrystal.html" />
     <link rel="prev" title="A meta-functional: Strain relaxation" href="relax.html" /> 
   </head>
   <body>
@@ -43,12 +43,12 @@
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="../jobfolders.html" title="Organized high-throughput calculations: job-folders"
+          <a href="../dftcrystal.html" title="Interface to CRYSTAL"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="relax.html" title="A meta-functional: Strain relaxation"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Pylada 1.0 documentation</a> &raquo;</li>
           <li><a href="../../userguide.html" >User Guide</a> &raquo;</li>
           <li><a href="../vasp.html" accesskey="U">Interface to VASP</a> &raquo;</li> 
       </ul>
@@ -66,7 +66,7 @@ in-plane lattice parameters of that substrate. It is possible to model a
 sufficiently thick film as a bulk material on a virtual substrate. The trick is
 simply to lock the in-plane parameters while allowing the out-plane direction
 to relax.</p>
-<p><a class="reference external" href="http://www.vasp.at/">VASP</a> does not allow for this kind of relaxation directly. However, using LaDa
+<p><a class="reference external" href="http://www.vasp.at/">VASP</a> does not allow for this kind of relaxation directly. However, using Pylada
 when can simply design a method which will magically perform the relaxation.
 Below, a method based on the <a class="reference external" href="http://en.wikipedia.org/wiki/Secant_method">secant</a> method is presented:</p>
 <blockquote>
@@ -80,7 +80,8 @@ Or one could use the optimization methods provided by <a class="reference extern
 <tt class="xref py py-class docutils literal"><span class="pre">Vasp</span></tt> object, and be done with it, say this <a class="reference external" href="http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.brent.html">one</a>.</p>
 <p>First, we need a function capable of creating a strain matrix for the
 particular kind we have in mind, and apply it to the structure. The strain
-matrix can be obtained simply as the outer product of the epitaxial direction with itself.</p>
+matrix can be obtained simply as the outer product of the epitaxial direction
+with itself.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">strain</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">direction</span><span class="p">,</span> <span class="n">structure</span><span class="p">):</span>
   <span class="sd">&quot;&quot;&quot; Creates new structure with given input strain in c direction. &quot;&quot;&quot;</span>
   <span class="kn">from</span> <span class="nn">numpy.linalg</span> <span class="kn">import</span> <span class="n">inv</span>
@@ -224,10 +225,10 @@ namely a docstring and some sanity checks on the function&#8217;s input paramete
 <span class="sd">      maximum accuracy.</span>
 
 <span class="sd">      :param vasp: </span>
-<span class="sd">        :py:class:`Vasp &lt;lada.vasp.Vasp&gt;` functional with wich to perform the</span>
+<span class="sd">        :py:class:`Vasp &lt;pylada.vasp.Vasp&gt;` functional with wich to perform the</span>
 <span class="sd">        relaxation.</span>
 <span class="sd">      :param structure:</span>
-<span class="sd">        :py:class:`Structure &lt;lada.crystal.Structure&gt;` for which to perform the</span>
+<span class="sd">        :py:class:`Structure &lt;pylada.crystal.Structure&gt;` for which to perform the</span>
 <span class="sd">        relaxation.</span>
 <span class="sd">      :param str outdir: </span>
 <span class="sd">        Directory where to perform calculations. If None, defaults to current</span>
@@ -292,8 +293,8 @@ namely a docstring and some sanity checks on the function&#8217;s input paramete
   <p class="topless"><a href="relax.html"
                         title="previous chapter">A <em>meta</em>-functional: Strain relaxation</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="../jobfolders.html"
-                        title="next chapter">Organized high-throughput calculations: job-folders</a></p>
+  <p class="topless"><a href="../dftcrystal.html"
+                        title="next chapter">Interface to CRYSTAL</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="../../_sources/userguide/vasp/example.txt"
@@ -326,12 +327,12 @@ namely a docstring and some sanity checks on the function&#8217;s input paramete
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="../jobfolders.html" title="Organized high-throughput calculations: job-folders"
+          <a href="../dftcrystal.html" title="Interface to CRYSTAL"
              >next</a> |</li>
         <li class="right" >
           <a href="relax.html" title="A meta-functional: Strain relaxation"
              >previous</a> |</li>
-        <li><a href="../../index.html">LaDa 1.0 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Pylada 1.0 documentation</a> &raquo;</li>
           <li><a href="../../userguide.html" >User Guide</a> &raquo;</li>
           <li><a href="../vasp.html" >Interface to VASP</a> &raquo;</li> 
       </ul>

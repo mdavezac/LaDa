@@ -1,7 +1,7 @@
 Sequential execution of a generator of processes
 ************************************************
 
-.. currentmodule:: lada.process.iterator
+.. currentmodule:: pylada.process.iterator
 .. moduleauthor:: Mayeul d'Avezac
 .. autoclass:: IteratorProcess
    :show-inheritance:
