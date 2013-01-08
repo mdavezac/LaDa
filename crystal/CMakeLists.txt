@@ -8,6 +8,7 @@ set_target_properties(pycrystal PROPERTIES OUTPUT_NAME cppwrappers)
 set_target_properties(pycrystal PROPERTIES PREFIX "")
 install(TARGETS pycrystal DESTINATION ${CMAKE_PYINSTALL_PREFIX}/pylada/crystal)
 install(FILES ${LIBCRYSTAL_PYSOURCES} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/pylada/crystal)
+target_link_libraries(pycrystal ${PYTHON_LIBRARIES})
 
 set(PYCRYSTAL_SOURCES atom/pybase.cc atom/cdi.cc atom/members.cc atom/getset.cc
                       structure/pybase.cc structure/cdi.cc structure/members.cc

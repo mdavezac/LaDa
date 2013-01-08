@@ -268,7 +268,7 @@ namespace Pylada
 #     undef PYLADA_DECLARE
 #     define PYLADA_DECLARE(name, object, doc) \
         { const_cast<char*>(#name), T_OBJECT_EX, \
-          offsetof(FCIterator, object), 0, const_cast<char*>(doc) }
+          LADA_OFFSETOF(FCIterator, object), 0, const_cast<char*>(doc) }
       static PyMemberDef members[] = {
         PYLADA_DECLARE(yielded, yielded, "Object to be yielded."),
         {NULL, 0, 0, 0, NULL}  /* Sentinel */
