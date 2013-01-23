@@ -216,6 +216,8 @@ def create_global_comm(nprocs, dir=None):
   # we use that to deduce the number of machines and processes per machine.
   processes = [ line.group(1) for line                                         \
                 in finditer('PYLADA MACHINE HOSTNAME:\s*(\S*)', stdout) ]
+  for p in processes: print "  process.mpi: process: ", p  ################
+  print "  process.mpi: nprocs: ", nprocs  ################
   # sanity check.
   if nprocs != len(processes):
     envstring = ''

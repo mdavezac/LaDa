@@ -93,6 +93,9 @@ class Vasp(AttrBlock):
                           LMaxMix, EdiffPerAtom, EdiffgPerAtom, NonScf
     from ..tools.input import TypedKeyword, ChoiceKeyword
     super(Vasp, self).__init__()
+    print "vasp/functional: Vasp init: species: ", species
+    print "vasp/functional: Vasp init: kpoints: ", kpoints
+    print "vasp/functional: Vasp init: kwargs: ", kwargs
 
     self.species = species if species is not None else {}
     """ Species in the system.
@@ -804,6 +807,8 @@ class Vasp(AttrBlock):
 
         :returns: An extraction object of type :py:attr:`Extract`.
     """
+    print "vasp/functional: call: structure: ", structure
+    print "vasp/functional: call: outdir: ", outdir
     for program in self.iter(structure, outdir=outdir, comm=comm, overwrite=overwrite, **kwargs):
       # iterator may yield the result from a prior successful run. 
       if getattr(program, 'success', False): continue
@@ -898,6 +903,7 @@ class Vasp(AttrBlock):
     from .extract import Extract as ExtractVasp
 
     # check for pre-existing and successful run.
+    print "vasp/functional: iter: structure: ", structure
     if not overwrite:
       # Check with this instance's Extract, cos it is this calculation we shall
       # do here. Derived instance's Extract might be checking for other stuff.

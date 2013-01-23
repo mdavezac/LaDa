@@ -45,6 +45,7 @@ def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
 
   # loop over materials.
   for material in input.materials:
+    print '  test/hi/test.py: start material: ', material
 
     # creates dictionary to replace A2BX4 with meaningfull species.
     match = specie_regex.match(material)
@@ -58,6 +59,7 @@ def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
 
     # loop over lattices. 
     for lattice in input.lattices:
+      print "    test/hi/test.py: === start lattice ===\n%s\n=== end lattice ===" % (lattice,)
 
       # creates a structure.
       structure = deepcopy(lattice)
@@ -78,6 +80,8 @@ def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
       # saves some stuff for future reference.
       job.material = material
       job.lattice  = lattice
+      print '    test/hi/test.py: job: ', job
+      print '    test/hi/test.py: === job.functional ===\n%s\n=== end functional === ' % (job.functional,)
 
 
   interactive.jobfolder = jobfolder

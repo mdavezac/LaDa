@@ -263,6 +263,9 @@ relax = makefunc('relax', iter_relax, module='pylada.vasp.relax')
 Relax = makeclass( 'Relax', Vasp, iter_relax, None, module='pylada.vasp.relax',
                    doc = 'Functional form of the :py:class:`pylada.vasp.relax.iter_relax` method.' )
 
+print "  vasp/relax: relax: ", relax
+print "  vasp/relax: Relax: ", Relax
+
 def _get_is_converged(vasp, structure, convergence=None, minrelsteps=-1, **kwargs):
   """ Returns convergence function. """
   from ..error import ExternalRunFailed

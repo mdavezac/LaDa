@@ -1,5 +1,6 @@
 from pylada.crystal import A2BX4
 vasp = Relax()
+print "  test/hi/input: === vasp ===\n%s\n=== end vasp ===" % (vasp,)
 """ VASP functional """
 
 vasp.precision      = "accurate"

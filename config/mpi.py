@@ -147,7 +147,7 @@ queues = ()
     It is not required for slurm systems. 
     If empty, then %launch will not have a queue option.
 """
-accounts = ['BES000']
+accounts = ['CSC000']   # was: ['BES000']
 """ List of slurm or pbs accounts allowed for use. 
 
     This is used by ipython's %launch magic function. 
@@ -176,33 +176,50 @@ qsub_array_exe = None
 qdel_exe = 'scancel'
 """ Qdel/scancel executable. """
 
-default_pbs = { 'account': accounts[0], 'walltime': "06:00:00", 'nnodes': 1,
+default_pbs = { 'account': accounts[0], 'walltime': "00:30:00", 'nnodes': 1,
                 'ppn': 1, 'header': "", 'footer': "" }
 """ Defaults parameters filling the pbs script. """
-pbs_string =  "#! /bin/bash/\n"                                                \
-              "#SBATCH --account={account}\n"                                  \
-              "#SBATCH --time={walltime}\n"                                    \
-              "#SBATCH -N={nnodes}\n"                                          \
-              "#SBATCH -e={err}\n"                                             \
-              "#SBATCH -o={out}\n"                                             \
-              "#SBATCH -J={name}\n"                                            \
-              "#SBATCH -D={directory}\n\n"                                     \
-              "{header}\n"                                                     \
-              "python {scriptcommand}\n"                                       \
-              "{footer}\n"
+pbs_string =  '''#!/bin/bash
+#SBATCH --account={account}
+#SBATCH --time={walltime}
+#SBATCH -N {nnodes}
+#SBATCH -e {err}
+#SBATCH -o {out}
+#SBATCH -J {name}
+#SBATCH -D {directory}
+
+echo config/mpi.py pbs_string: header: {header}
+echo config/mpi.py pbs_string: scriptcommand: python {scriptcommand}
+echo config/mpi.py pbs_string: footer: {footer}
+'''
 """ Default pbs/slurm script. """
 
 do_multiple_mpi_programs = True
 """ Whether to get address of host machines at start of calculation. """
 
-figure_out_machines =  'from socket import gethostname\n'                      \
-                       'from boost.mpi import gather, world\n'                 \
-                       'hostname = gethostname()\n'                            \
-                       'results = gather(world, hostname, 0)\n'                \
-                       'if world.rank == 0:\n'                                 \
-                       '  for hostname in results:\n'                          \
-                       '    print "PYLADA MACHINE HOSTNAME:", hostname\n'        \
-                       'world.barrier()\n'
+figure_out_machines =  '''from socket import gethostname
+#from boost.mpi import gather, world
+#hostname = gethostname()
+#results = gather(world, hostname, 0)
+#if world.rank == 0:
+#  for hostname in results:
+#    print "PYLADA MACHINE HOSTNAME:", hostname
+#world.barrier()
+
+from mpi4py import MPI
+
+comm = MPI.COMM_WORLD
+size = comm.Get_size()
+rank = comm.Get_rank()
+
+nm = gethostname()
+print "config/mpi.py: size: %d  rank: %d  nm: %s" % (size, rank, nm,)
+
+names = comm.gather( nm, root=0)
+if rank == 0:
+  for nm in names:
+    print "PYLADA MACHINE HOSTNAME:", nm
+'''
 """ Figures out machine hostnames for a particular job.
 
     Can be any programs which outputs each hostname (once per processor),
