@@ -78,7 +78,7 @@
     {
       typedef typename Eigen::DenseBase<T_DERIVED0>::RealScalar t_real0;
       typedef typename Eigen::DenseBase<T_DERIVED1>::RealScalar t_real1;
-      BOOST_STATIC_ASSERT((boost::is_same<t_real0, t_real1>::value));
+      //BOOST_STATIC_ASSERT((boost::is_same<t_real0, t_real1>::value));
 #     ifdef PYLADA_DEBUG
         if(_a.rows() != _b.rows() or _a.cols() != _b.cols())
           BOOST_THROW_EXCEPTION(error::array_of_different_sizes());
@@ -95,7 +95,7 @@
     {
       typedef typename Eigen::DenseBase<T_DERIVED0>::RealScalar t_real0;
       typedef typename Eigen::DenseBase<T_DERIVED1>::RealScalar t_real1;
-      BOOST_STATIC_ASSERT((boost::is_same<t_real0, t_real1>::value));
+      //BOOST_STATIC_ASSERT((boost::is_same<t_real0, t_real1>::value));
 #     ifdef PYLADA_DEBUG
         if(_a.rows() != _b.rows() or _a.cols() != _b.cols())
           BOOST_THROW_EXCEPTION(error::array_of_different_sizes());

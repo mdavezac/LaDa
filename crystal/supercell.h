@@ -7,7 +7,7 @@
         PYLADA_PYTHROW(ValueError, "Lattice is empty.");
         return Structure();
       }
-      namespace bt = boost::tuples;
+      //namespace bt = boost::tuples;
       Structure result = _lattice.copy(); 
       if(not result) { PYLADA_PYTHROW(ValueError, "Could not deepcopy the lattice.");}
       result.clear();

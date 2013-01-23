@@ -138,7 +138,7 @@
     {
       case NPY_FLOAT     : return sizeof(type<npy_float>::np_type) > sizeof(T);
       case NPY_DOUBLE    : return sizeof(type<npy_double>::np_type) > sizeof(T);
-      case NPY_LONGDOUBLE: return sizeof(type<npy_longdouble>::np_type) > sizeof(T);
+      //case NPY_LONGDOUBLE: return sizeof(type<npy_longdouble>::np_type) > sizeof(T);
       case NPY_INT       : return sizeof(type<npy_int>::np_type) > sizeof(T);
       case NPY_UINT      : return sizeof(type<npy_uint>::np_type) > sizeof(T);
       case NPY_LONG      : return sizeof(type<npy_long>::np_type) > sizeof(T);
@@ -161,7 +161,7 @@
     {
       case NPY_FLOAT     : return (T)*((type<npy_float>::np_type const * const)      _data);
       case NPY_DOUBLE    : return (T)*((type<npy_double>::np_type const * const)     _data);
-      case NPY_LONGDOUBLE: return (T)*((type<npy_longdouble>::np_type const * const) _data);
+      //case NPY_LONGDOUBLE: return (T)*((type<npy_longdouble>::np_type const * const) _data);
       case NPY_INT       : return (T)*((type<npy_int>::np_type const * const)        _data);
       case NPY_UINT      : return (T)*((type<npy_uint>::np_type const * const)       _data);
       case NPY_LONG      : return (T)*((type<npy_long>::np_type const * const)       _data);
@@ -190,8 +190,8 @@
           return static_cast<T>(*((type<npy_float>::np_type*)      ptr_data));
         case NPY_DOUBLE    :
           return static_cast<T>(*((type<npy_double>::np_type*)     ptr_data));
-        case NPY_LONGDOUBLE:
-          return static_cast<T>(*((type<npy_longdouble>::np_type*) ptr_data));
+        //case NPY_LONGDOUBLE:
+        //  return static_cast<T>(*((type<npy_longdouble>::np_type*) ptr_data));
         case NPY_INT       :
           return static_cast<T>(*((type<npy_int>::np_type*)        ptr_data));
         case NPY_UINT      :

@@ -8,16 +8,13 @@
 
 #include <Python.h>
 
-#include <boost/throw_exception.hpp>
-#include <boost/exception/all.hpp>
-
 
 namespace Pylada
 {
   namespace error
   {
     //! Root exception for all pylada exceptions.
-    struct root: virtual boost::exception, virtual std::exception {};
+    struct root: virtual std::exception {};
 
     //! Root of input errors.
     struct input: virtual root {};
@@ -33,12 +30,16 @@ namespace Pylada
     struct infinite_loop: virtual root {};
 
     //! Convenience error info type to capture strings.
-    typedef boost::error_info<struct string_info,std::string> string;
+    // typedef boost::error_info<struct string_info,std::string> string;
     //! \brief Convenience error infor type to capture python objects.
     //! \details No increffing or decreffing. A python exception should already
     //!          exist.
-    typedef boost::error_info<struct string_info,PyObject*> pyobject;
+    typedef void * pyobject;
+
   }
+
+  void BOOST_THROW_EXCEPTION( error::root exc);
+
 }
 
 #endif
