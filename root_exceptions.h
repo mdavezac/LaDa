@@ -9,6 +9,9 @@
 #include <Python.h>
 
 
+#define BOOST_THROW_EXCEPTION( x) { throw(x); }
+
+
 namespace Pylada
 {
   namespace error
@@ -37,9 +40,6 @@ namespace Pylada
     typedef void * pyobject;
 
   }
-
-  void BOOST_THROW_EXCEPTION( error::root exc);
-
 }
 
 #endif

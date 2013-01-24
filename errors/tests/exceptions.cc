@@ -24,9 +24,9 @@ void dopythrow_message()
   BOOST_THROW_EXCEPTION(::Pylada::error::PYLADA_TYPE() << Pylada::error::string(message)); 
 }
 
-void BOOST_THROW_EXCEPTION( error::root exc) {
-  throw exc.what();
-}
+//void BOOST_THROW_EXCEPTION( error::root exc) {
+//  throw exc.what();
+//}
 
 BOOST_PYTHON_MODULE(PYLADA_MODULE)
 {

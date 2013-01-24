@@ -191,21 +191,23 @@ pbs_string =  '''#!/bin/bash
 echo config/mpi.py pbs_string: header: {header}
 echo config/mpi.py pbs_string: scriptcommand: python {scriptcommand}
 echo config/mpi.py pbs_string: footer: {footer}
+
+{header}
+python {scriptcommand}
+{footer}
+
 '''
 """ Default pbs/slurm script. """
 
 do_multiple_mpi_programs = True
 """ Whether to get address of host machines at start of calculation. """
 
-figure_out_machines =  '''from socket import gethostname
-#from boost.mpi import gather, world
-#hostname = gethostname()
-#results = gather(world, hostname, 0)
-#if world.rank == 0:
-#  for hostname in results:
-#    print "PYLADA MACHINE HOSTNAME:", hostname
-#world.barrier()
+# Figure out machine hostnames for a particular job.
+# Can be any programs which outputs each hostname (once per processor),
+# preceded by the string "PYLADA MACHINE HOSTNAME:"
 
+figure_out_machines =  '''
+from socket import gethostname
 from mpi4py import MPI
 
 comm = MPI.COMM_WORLD
@@ -213,15 +215,13 @@ size = comm.Get_size()
 rank = comm.Get_rank()
 
 nm = gethostname()
-print "config/mpi.py: size: %d  rank: %d  nm: %s" % (size, rank, nm,)
+fdebug = open("/home/ssulliva/temp.pylada.debug.%03d" % (rank,), "w")
+print >> fdebug, "config/mpi.py: figure_out_machines: size: %d  rank: %d  nm: %s" % (size, rank, nm,)
 
 names = comm.gather( nm, root=0)
 if rank == 0:
   for nm in names:
     print "PYLADA MACHINE HOSTNAME:", nm
+    print >> fdebug, "config/mpi.py: figure_out_machines: nm: %s" % (nm,)
+fdebug.close()
 '''
-""" Figures out machine hostnames for a particular job.
-
-    Can be any programs which outputs each hostname (once per processor),
-    preceded by the string "PYLADA MACHINE HOSTNAME:"
-"""
