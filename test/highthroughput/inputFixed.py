@@ -1,7 +1,7 @@
 from pylada.crystal import A2BX4
+print "  test/hi/input: entry"
 vasp = Relax()
 print "  test/hi/input: === vasp ===\n%s\n=== end vasp ===" % (vasp,)
-""" VASP functional """
 
 vasp.precision      = "accurate"
 vasp.ediff          = 1e-5 # precision per ATOM
@@ -45,4 +45,21 @@ do_ferro    = False
 do_antiferro = False
 
 lattices = [A2BX4.b5(), A2BX4.b21()]
- 
+
+mlen = len( materials)
+llen = len( lattices)
+matLatPairs = (mlen * llen) * [None]
+print "  test/hi/input: mlen: ", mlen
+print "  test/hi/input: llen: ", llen
+print "  test/hi/input: pairs len: ", len(matLatPairs)
+kk = 0
+for mat in materials:
+  print "  test/hi/input: mat: ", mat
+  for lat in lattices:
+    print "    test/hi/input: lat: ", lat
+    matLatPairs[kk] = (mat, lat,)
+    kk += 1
+
+print "test/hi/inputFixed: mats len: %d  lats len: %d  matLatPairs len: %d" \
+  % (mlen, llen, len( matLatPairs),)
+

@@ -21,7 +21,7 @@ def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
       memory automatically. No need to call explore. It is save to the path
       provided on input.
   """
-  from re import compile
+  import re
   from IPython.core.interactiveshell import InteractiveShell
   from copy import deepcopy
   from pylada.vasp import read_input
@@ -32,56 +32,56 @@ def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
   input = read_input(inputpath)
   input.update(kwargs)
 
-  # sanity checks.
-  for lattice in input.lattices:
-    if len(getattr(lattice, 'name', '').rstrip().lstrip()) == 0:
-      raise ValueError("Lattice has no name.")
-  
-  # regex
-  specie_regex = compile("([A-Z][a-z]?)2([A-Z][a-z]?)([A-Z][a-z]?)4")
-
   # Job dictionary.
   jobfolder = JobFolder()
 
-  # loop over materials.
-  for material in input.materials:
-    print '  test/hi/test.py: start material: ', material
+  # loop over material-lattice pairs.
+  for (material,lattice) in input.matLatPairs:
+    print '  test/hi/test: start material: ', material
+    print '  test/hi/test: start lattice: ', lattice
 
-    # creates dictionary to replace A2BX4 with meaningfull species.
-    match = specie_regex.match(material)
-    assert match is not None, RuntimeError("Incorrect material " + material + ".")
-    # checks species are known to vasp functional
+    # Check material
+    regex = "([A-Z][a-z]?)2([A-Z][a-z]?)([A-Z][a-z]?)4"
+    match = re.match( regex, material)
+    if match == None:
+      RuntimeError("Incorrect material: \"%s\"" % (material,))
+    # Checks species are known to vasp functional
     for i in range(1, 4):
       assert match.group(i) in input.vasp.species,\
-             RuntimeError("No pseudo-potential defined for {0}.".format(match.group(i)))
+        RuntimeError("No pseudo-potential defined for {0}.".format(
+          match.group(i)))
     # actually creates dictionary.
-    species_dict = {"A": match.group(1), "B": match.group(2), "X": match.group(3)}
+    species_dict = {"A": match.group(1), "B": match.group(2),
+      "X": match.group(3)}
+    print '  test/hi/test: species_dict: ', species_dict
+    
+    # Check lattice name
+    if len(getattr(lattice, 'name', '').strip()) == 0:
+      raise ValueError("Lattice has no name.")
 
-    # loop over lattices. 
-    for lattice in input.lattices:
-      print "    test/hi/test.py: === start lattice ===\n%s\n=== end lattice ===" % (lattice,)
 
-      # creates a structure.
-      structure = deepcopy(lattice)
-      # changes atomic species.
-      for atom in structure:  atom.type  = species_dict[atom.type]
-      # assigns it a name.
-      structure.name = "{0} in {1}, spin-unpolarized.".format(material, lattice.name)
-      # gets its scale.
-      structure.scale = input.scale(structure)
-  
-      # job folder for this lattice.
-      lat_jobfolder = jobfolder / material 
-  
-      job = lat_jobfolder / lattice.name / "non-magnetic"
-      job.functional = input.vasp
-      job.params["structure"] = structure
-      job.params["ispin"] = 1
-      # saves some stuff for future reference.
-      job.material = material
-      job.lattice  = lattice
-      print '    test/hi/test.py: job: ', job
-      print '    test/hi/test.py: === job.functional ===\n%s\n=== end functional === ' % (job.functional,)
+    # creates a structure.
+    structure = deepcopy(lattice)
+    # changes atomic species.
+    for atom in structure:  atom.type  = species_dict[atom.type]
+    # assigns it a name.
+    structure.name = "{0} in {1}, spin-unpolarized.".format(
+      material, lattice.name)
+    # gets its scale.
+    structure.scale = input.scale(structure)
+
+    # job folder for this lattice.
+    lat_jobfolder = jobfolder / material 
+
+    job = lat_jobfolder / lattice.name / "non-magnetic"
+    job.functional = input.vasp
+    job.params["structure"] = structure
+    job.params["ispin"] = 1
+    # saves some stuff for future reference.
+    job.material = material
+    job.lattice  = lattice
+    print '    test/hi/test.py: job: ', job
+    print '    test/hi/test.py: === job.functional ===\n%s\n=== end functional === ' % (job.functional,)
 
 
   interactive.jobfolder = jobfolder
