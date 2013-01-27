@@ -9,7 +9,9 @@ Contents:
 
    Compiling and installing <userguide/compile>
 
-   Seting up Pylada <userguide/configuration>
+   Setting up Pylada <userguide/configuration>
+
+   Testing <userguide/testing>
 
    Creating and Manipulating crystal structures <userguide/crystal>
 

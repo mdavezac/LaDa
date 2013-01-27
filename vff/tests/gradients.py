@@ -87,7 +87,6 @@ def test_stress(epsilon = 1e-4):
 
     stress = (xplus - xminus) / epsilon * 0.5                                  \
              * -1e0 / det(structure.cell*structure.scale)*angstrom**(-3)
-    stress = float(stress)
     assert abs(stress - out.stress[i, i]) < 1e2 * epsilon
 
 
@@ -120,7 +119,6 @@ def test_stress(epsilon = 1e-4):
 
       stress = (xplus - xminus) / epsilon * 0.5                                \
                * -1e0 / det(structure.cell*structure.scale)*angstrom**(-3)
-      stress = float(stress)
       assert abs(out.stress[i,j]-out.stress[j,i]) < 1e-8
       assert abs(stress - out.stress[i, j]) < 1e2 * epsilon
 
