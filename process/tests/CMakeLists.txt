@@ -1,7 +1,7 @@
 if(NOT compile_debug_tests)
-  if(${MPI_CXX_FOUND})
+  if(DEFINED MPI_CXX_COMPILER)
     add_executable (pifunc functional.cc)
-    set_target_properties(pifunc PROPERTIES INCLUDE_DIRECTORIES "${MPI_CXX_INCLUDE_PATH}")
+    include_directories(${MPI_CXX_INCLUDE_PATH})
     target_link_libraries(pifunc ${MPI_CXX_LIBRARIES} ${PYTHON_LIBRARIES})
     
     add_test(process_pifunc ${MPIEXEC} pifunc --order 4)
@@ -12,6 +12,6 @@ if(NOT compile_debug_tests)
       add_test(process_pool python ${CMAKE_CURRENT_SOURCE_DIR}/pool.py ${CMAKE_CURRENT_BINARY_DIR}/pifunc)
       add_test(process_jobfolder python ${CMAKE_CURRENT_SOURCE_DIR}/jobfolder.py ${CMAKE_CURRENT_BINARY_DIR}/pifunc)
     endif(jobfolder_package)
-  endif(${MPI_CXX_FOUND})
+  endif(DEFINED MPI_CXX_COMPILER)
 
 endif(NOT compile_debug_tests)
