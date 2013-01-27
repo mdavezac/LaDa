@@ -3,6 +3,7 @@ add_library (pymath SHARED module.cc noopt.cc)
 SET_SOURCE_FILES_PROPERTIES(noopt.cc PROPERTIES COMPILE_FLAGS -O0)
 set_target_properties(pymath PROPERTIES OUTPUT_NAME math)
 set_target_properties(pymath PROPERTIES PREFIX "")
+set_target_properties(pymath PROPERTIES SUFFIX ".so")
 target_link_libraries(pymath ${PYTHON_LIBRARIES})
 install(TARGETS pymath DESTINATION ${CMAKE_PYINSTALL_PREFIX}/pylada)
 

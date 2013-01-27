@@ -14,13 +14,14 @@
 """ 
 def test(Class): 
   import gc
-  from os import system, getpid
+  from os import getpid
   gc.set_debug(gc.DEBUG_OBJECTS | gc.DEBUG_UNCOLLECTABLE)
 
   id = getpid()
   def get_mem():
     from subprocess import Popen, PIPE
-    output = Popen(["ps","--pid", "{0}".format(id), '-o', 'rss'], stdout=PIPE).communicate()[0].split('\n')[-2]
+    output = Popen(["ps","-p", "{0}".format(id), '-o', 'rss'], stdout=PIPE).communicate()[0].splitlines()
+    output = output[-1]
     return int(output)
 
   def mklist():

@@ -5,6 +5,7 @@ if(NOT compile_debug_tests)
 
   add_library (atom_self SHARED "atom_self.cc")
   set_target_properties(atom_self PROPERTIES PREFIX "_")
+  set_target_properties(atom_self PROPERTIES SUFFIX ".so")
   target_link_libraries(atom_self ${PYTHON_LIBRARIES})
   add_test(crystal_atom_self python ${CMAKE_CURRENT_SOURCE_DIR}/atom_self.py ${CMAKE_CURRENT_BINARY_DIR})
 
