@@ -93,9 +93,9 @@ class Vasp(AttrBlock):
                           LMaxMix, EdiffPerAtom, EdiffgPerAtom, NonScf
     from ..tools.input import TypedKeyword, ChoiceKeyword
     super(Vasp, self).__init__()
-    print "vasp/functional: Vasp init: species: ", species
-    print "vasp/functional: Vasp init: kpoints: ", kpoints
-    print "vasp/functional: Vasp init: kwargs: ", kwargs
+    print "  vasp/functional.Vasp.__init__: species: ", species
+    print "  vasp/functional.Vasp.__init__: kpoints: ", kpoints
+    print "  vasp/functional.Vasp.__init__: kwargs: ", kwargs
 
     self.species = species if species is not None else {}
     """ Species in the system.
@@ -807,8 +807,8 @@ class Vasp(AttrBlock):
 
         :returns: An extraction object of type :py:attr:`Extract`.
     """
-    print "vasp/functional: call: structure: ", structure
-    print "vasp/functional: call: outdir: ", outdir
+    print "  vasp/functional: call: structure: ", structure
+    print "  vasp/functional: call: outdir: ", outdir
     for program in self.iter(structure, outdir=outdir, comm=comm, overwrite=overwrite, **kwargs):
       # iterator may yield the result from a prior successful run. 
       if getattr(program, 'success', False): continue
@@ -903,7 +903,7 @@ class Vasp(AttrBlock):
     from .extract import Extract as ExtractVasp
 
     # check for pre-existing and successful run.
-    print "vasp/functional: iter: structure: ", structure
+    print "  vasp/functional: iter: structure: ", structure
     if not overwrite:
       # Check with this instance's Extract, cos it is this calculation we shall
       # do here. Derived instance's Extract might be checking for other stuff.
@@ -941,19 +941,28 @@ class Vasp(AttrBlock):
     from ..misc.changedir import Changedir
     from . import files
 
+    print "  vasp/functional.Vasp.bringup: structure: ", structure
+    print "  vasp/functional.Vasp.bringup: outdir: ", outdir
+    print "  vasp/functional.Vasp.bringup: kwargs: ", kwargs
+
     with Changedir(outdir) as tmpdir:
       # creates INCAR file (and POSCAR via istruc).
-      self.write_incar( structure, path=join(outdir, files.INCAR), 
-                        outdir=outdir, **kwargs )
+      fpath = join(outdir, files.INCAR)
+      print "  vasp/functional.Vasp.bringup: incar fpath: ", fpath
+      self.write_incar( structure, path=fpath, outdir=outdir, **kwargs )
   
       # creates kpoints file
+      print "  vasp/functional.Vasp.bringup: files.KPOINTS: ", files.KPOINTS
       with open(files.KPOINTS, "w") as kp_file: 
         self.write_kpoints(kp_file, structure)
   
       # creates POTCAR file
+      print "  vasp/functional.Vasp.bringup: files.POTCAR: ", files.POTCAR
       with open(files.POTCAR, 'w') as potcar:
         for s in specieset(structure):
-          potcar.writelines( self.species[s].read_potcar() )
+          outLines = self.species[s].read_potcar()
+          potcar.writelines( outLines)
+          print "  vasp/functional.Vasp.bringup: POTCAR outLines: ", outLines
       # Add is running file marker.
       with open('.pylada_is_running', 'w') as file: pass
     
@@ -990,6 +999,9 @@ class Vasp(AttrBlock):
     from os.path import dirname
     from ..misc import RelativePath
     from .files import INCAR
+    print "    vasp/functional.Vasp.write_incar: structure: ", structure
+    print "    vasp/functional.Vasp.write_incar: path: ", path
+    print "    vasp/functional.Vasp.write_incar: kwargs: ", kwargs
 
     # check what type path is.
     # if not a file, opens one an does recurrent call.
@@ -1006,21 +1018,32 @@ class Vasp(AttrBlock):
     map = self.output_map(structure=structure, vasp=self, **kwargs)
     length = max(len(u) for u in map)
     for key, value in map.iteritems():
-      path.write( '{0: >{length}} = {1}\n'                                     \
-                  .format(key.upper(), value, length=length) )
+      outLine = '{0: >{length}} = {1}\n'.format(
+        key.upper(), value, length=length)
+      path.write( outLine)
+      print "      vasp/functional.Vasp.write_incar: outLine: ", outLine
 
   def write_kpoints(self, file, structure, kpoints=None):
     """ Writes kpoints to a stream. """
+    print "    vasp/functional.Vasp.write_kpoints: file: ", file
+    print "    vasp/functional.Vasp.write_kpoints: structure: ", structure
+    print "    vasp/functional.Vasp.write_kpoints: kpoints: ", kpoints
+
     if kpoints == None: kpoints = self.kpoints
     if isinstance(self.kpoints, str): file.write(self.kpoints)
     elif hasattr(self.kpoints, "__call__"):
       self.write_kpoints(file, structure, self.kpoints(self, structure))
     else: # numpy array or such.
-      file.write( "Explicit list of kpoints.\n{0}\nCartesian\n"                \
-                  .format(len(self.kpoints)) )
+      outLine = "Explicit list of kpoints.\n{0}\nCartesian\n".format(
+        len(self.kpoints))
+      file.write( outLine)
+      print "      vasp/functional.Vasp.write_kpoints: outLine: ", outLine
+
       for kpoint in self.kpoints:
-        file.write( "{0[0]} {0[1]} {0[2]} {1}\n"                               \
-                    .format(kpoint, 1 if len(kpoint) == 3 else kpoint[3]) )
+        outLine = "{0[0]} {0[1]} {0[2]} {1}\n".format(
+          kpoint, 1 if len(kpoint) == 3 else kpoint[3])
+        file.write( outLine)
+        print "      vasp/functional.Vasp.write_kpoints: outLine: ", outLine
 
   def __repr__(self, defaults=True, name=None):
     """ Returns representation of this instance """

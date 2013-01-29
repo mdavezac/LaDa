@@ -264,6 +264,9 @@ def crystal(file='fort.34'):
 
 
 
+
+
+
 def icsd_cif(filename): 
   """ Reads lattice from the ICSD \*cif files.
 
@@ -415,17 +418,32 @@ def icsd_cif(filename):
 
   ##########################################
 
-  from lada.crystal import Lattice
-  lattice = Lattice()
-  lattice.scale = 1.0
-  lattice.name = basename(filename)
-  lattice.set_cell = transpose(cell)
 
+  from pylada.crystal import Structure, primitive
+
+  structure = Structure(
+    transpose( cell),
+    scale = 1,
+    name = basename( filename))
   for i in range(len(symbols)):
-      for j in range(len(positions[i])):
-          lattice.add_site = dot(transpose(cell),positions[i][j]), symbols[i]
+    for j in range(len(positions[i])):
+      atpos = dot( transpose(cell), positions[i][j])
+      structure.add_atom( atpos[0], atpos[1], atpos[2], symbols[i])
 
-  lattice.make_primitive()
+  return primitive( structure)
 
-  return lattice
+
+#OLD
+#  lattice = Lattice()
+#  lattice.scale = 1.0
+#  lattice.name = basename(filename)
+#  lattice.set_cell = transpose(cell)
+#
+#  for i in range(len(symbols)):
+#      for j in range(len(positions[i])):
+#          lattice.add_site = dot(transpose(cell),positions[i][j]), symbols[i]
+#
+#  lattice.make_primitive()
+#
+#  return lattice
 

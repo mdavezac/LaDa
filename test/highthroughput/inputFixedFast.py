@@ -39,6 +39,7 @@ def scale(structure):
   if "O" in [atom.type for atom in structure]:    spvol = 8.5**3/4e0
   elif "Se" in [atom.type for atom in structure]: spvol = 9.5**3/4e0
   elif "Te" in [atom.type for atom in structure]: spvol = 10.5**3/4e0
+  else: raise ValueError("unknown atom.type: %s" % (atom.type,))
 
   nfu = float(len(structure)/7)*0.5 # 0.5 because 2 f.u. in spinel unit-cell.
   vol = det(structure.cell)

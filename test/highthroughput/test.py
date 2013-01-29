@@ -32,6 +32,51 @@ def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
   input = read_input(inputpath)
   input.update(kwargs)
 
+
+
+
+
+
+
+
+#  """ Materials to compute. """
+#  materials = [ "Al2MgO4"]
+#
+#  """ Number of random anti-ferro trials. """
+#  nbantiferro = 8
+#  nbrandom    = 3
+#  do_ferro    = False
+#  do_antiferro = False
+#
+#  from pylada.crystal import A2BX4
+#  lattices = [A2BX4.b5(), A2BX4.b21()]
+#
+#  mlen = len( materials)
+#  llen = len( lattices)
+#  matLatPairs = (mlen * llen) * [None]
+#  print "  test/hi/input: mlen: ", mlen
+#  print "  test/hi/input: llen: ", llen
+#  print "  test/hi/input: pairs len: ", len(matLatPairs)
+#
+#  kk = 0
+#  for mat in materials:
+#    print "  test/hi/input: mat: ", mat
+#    for lat in lattices:
+#      print "    test/hi/input: lat: ", lat
+#      matLatPairs[kk] = (mat, lat,)
+#      kk += 1
+#
+#  print "test/hi/inputFixed: mats len: %d  lats len: %d  matLatPairs len: %d" \
+#    % (mlen, llen, len( matLatPairs),)
+
+
+
+
+
+
+
+
+
   # Job dictionary.
   jobfolder = JobFolder()
 
@@ -39,36 +84,55 @@ def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
   for (material,lattice) in input.matLatPairs:
     print '  test/hi/test: start material: ', material
     print '  test/hi/test: start lattice: ', lattice
+    print ''
+    print '  test/hi/test: ========== species =========='
+    skeys = input.vasp.species.keys()
+    skeys.sort()
+    for skey in skeys:
+      print '    test/hi/test: species[%s]: %s' \
+        % (skey, input.vasp.species[skey], )
+    print ''
 
-    # Check material
-    regex = "([A-Z][a-z]?)2([A-Z][a-z]?)([A-Z][a-z]?)4"
-    match = re.match( regex, material)
-    if match == None:
-      RuntimeError("Incorrect material: \"%s\"" % (material,))
-    # Checks species are known to vasp functional
-    for i in range(1, 4):
-      assert match.group(i) in input.vasp.species,\
-        RuntimeError("No pseudo-potential defined for {0}.".format(
-          match.group(i)))
-    # actually creates dictionary.
-    species_dict = {"A": match.group(1), "B": match.group(2),
-      "X": match.group(3)}
-    print '  test/hi/test: species_dict: ', species_dict
-    
-    # Check lattice name
-    if len(getattr(lattice, 'name', '').strip()) == 0:
-      raise ValueError("Lattice has no name.")
+    if inputpath == "inputCif.py":
+      structure = deepcopy(lattice)
+
+    else:
+      # Check material
+      regex = "([A-Z][a-z]?)2([A-Z][a-z]?)([A-Z][a-z]?)4"
+      match = re.match( regex, material)
+      if match == None:
+        raise RuntimeError("Incorrect material: \"%s\"" % (material,))
+
+      # Checks species are known to vasp functional
+      for i in range(1, 4):
+        assert match.group(i) in input.vasp.species,\
+          RuntimeError("No pseudo-potential defined for {0}.".format(
+            match.group(i)))
+      # actually creates dictionary.
+      species_dict = {"A": match.group(1), "B": match.group(2),
+        "X": match.group(3)}
+      print '  test/hi/test: species_dict: ', species_dict
+      
+      # Check lattice name
+      if len(getattr(lattice, 'name', '').strip()) == 0:
+        raise ValueError("Lattice has no name.")
 
 
-    # creates a structure.
-    structure = deepcopy(lattice)
-    # changes atomic species.
-    for atom in structure:  atom.type  = species_dict[atom.type]
-    # assigns it a name.
-    structure.name = "{0} in {1}, spin-unpolarized.".format(
-      material, lattice.name)
-    # gets its scale.
-    structure.scale = input.scale(structure)
+      # creates a structure.
+      structure = deepcopy(lattice)
+      # changes atomic species, from ABX to real element names.
+      # from: Atom(0.5, 0.5, 0.5, 'A')
+      # to:   Atom(0.5, 0.5, 0.5, 'Al')
+      for atom in structure:  atom.type  = species_dict[atom.type]
+      # assigns it a name.
+      structure.name = "{0} in {1}, spin-unpolarized.".format(
+        material, lattice.name)
+
+      # gets its scale.
+      structure.scale = input.scale(structure)
+
+
+
 
     # job folder for this lattice.
     lat_jobfolder = jobfolder / material 
@@ -164,6 +228,8 @@ def magnetic_wave(path=None, inputpath='input.py', **kwargs):
         structure.name = "{0} in {1}, {2}ferro."\
                          .format(material, lattice.name, prefix)
         job = jobfolder / jobname
+        # Never executed:
+        print '########### test/hi/test: input.relaxer: ', input.relaxer
         job.functional = input.relaxer 
         job.params["structure"] = structure.copy()
         job.params["magmom"] = True

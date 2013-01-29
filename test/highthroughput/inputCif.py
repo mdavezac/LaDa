@@ -1,49 +1,54 @@
 from glob import iglob
-from lada.crystal import icsd_cif
-########################################
+from pylada.crystal.read import icsd_cif
+print "  test/hi/inputCif: entry"
+vasp = Relax()
+print "  test/hi/inputCif: === vasp ===\n%s\n=== end vasp ===" % (vasp,)
 
-vasp = Vasp()
-""" VASP functional """
-vasp.precision  = "accurate"
-vasp.ediff      = 1e-4
-vasp.encut      = 340.0
-vasp.npar       = 2
-vasp.lplane     = True
-vasp.addgrid    = True
-vasp.set_smearing   = "gaussian", 0.01
-vasp.relaxation = "ionic"
-vasp.set_symmetries = "off"
-vasp.kpoints        = "\n0\nAuto\n20"
-vasp.lorbit         = 10
-vasp.add_param      = "lmaxmix",4
+vasp.precision      = "accurate"
+vasp.ediff          = 1e-5 # precision per ATOM
+vasp.encut          = 1.0
 
+# See vasp/functional.py:  elementName, fileName, max or min oxidation state
+vasp.add_specie = "Al", "pseudos/Al", None, 3
+vasp.add_specie = "Mg", "pseudos/Mg", None, 2
+vasp.add_specie = "Mo", "pseudos/Mo"
+vasp.add_specie = "O", "pseudos/O", None, -2
+vasp.add_specie = "S", "pseudos/S", None, -2
 
-# "Al" => specie symbol
-# "pseudos/Al" => directory where relevant POTCAR is located
-
-vasp.add_specie = "Ti", "/scratch/vnsteva/lada/pseudos/Ti", U("dudarev", "d", 3.0)
-vasp.add_specie = "O", "/scratch/vnsteva/lada/pseudos/O"
-
-vasp.species["Ti"].moment = [1.e0]
-
-materials = {}
-
-for name in iglob("icsd_structures/*.cif"):
-    materials[name[name.index('/')+1:-4]]=icsd_cif(name)
-
-#########################################################
-
-first_trial = { "kpoints": "\n0\nAuto\n10", "encut": 0.9 }
+#first_trial = { "kpoints": "\n0\nAuto\n40", "encut": 1.0 }
+vasp.first_trial = {}
 """ parameter to override during first relaxation step. """
-relaxation_dof = "volume ionic cellshape"
-#relaxation_dof = "volume ionic"
-#relaxation_dof = "ionic"
-#relaxation_dof = "static"
+vasp.relaxation = "volume ionic cellshape"
 """ Degrees of freedom to relax. """
-relaxer = RelaxCellShape( vasp, relaxation_dof, first_trial, maxiter=5)
-""" Cell shape relaxation algorithm. """
+vasp.maxiter = 5
+""" Maximum number of iterations before bailing out. """
+vasp.keep_steps = True
+""" Whether to keep or delete intermediate steps. """
 
-""" Materials to compute. """
-nbantiferro = 3
-""" Number of random anti-ferro trials. """
+
+def scale(structure):
+  """ Returns *guessed* scale (eg volume^(0.33)) for a given structure. """
+  from numpy.linalg import det
+  if "O" in [atom.type for atom in structure]:    spvol = 8.5**3/4e0
+  elif "Se" in [atom.type for atom in structure]: spvol = 9.5**3/4e0
+  elif "Te" in [atom.type for atom in structure]: spvol = 10.5**3/4e0
+  else: raise ValueError("unknown atom.type: %s" % (atom.type,))
+
+  nfu = float(len(structure)/7)*0.5 # 0.5 because 2 f.u. in spinel unit-cell.
+  vol = det(structure.cell)
+  return (nfu * spvol / vol)**(1e0/3e0)
+
+
+matLatPairs = []
+
+for fname in iglob("icsd_structures/*.cif"):
+  material = fname[fname.index('/')+1:-4]
+  lattice = icsd_cif( fname)
+  print "  test/hi/inputCif: material: ", material
+  print "    test/hi/inputCif: lattice: ", lattice
+  matLatPairs.append( (material, lattice))
+
+print "test/hi/inputFixedCif: matLatPairs len: %d" % (len( matLatPairs),)
+
+
 
