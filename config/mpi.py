@@ -209,13 +209,15 @@ do_multiple_mpi_programs = True
 figure_out_machines =  '''
 from socket import gethostname
 from mpi4py import MPI
+import os
 
 comm = MPI.COMM_WORLD
 size = comm.Get_size()
 rank = comm.Get_rank()
 
 nm = gethostname()
-fdebug = open("/home/ssulliva/temp.pylada.debug.%03d" % (rank,), "w")
+fname = os.getenv("HOME") + "/temp.pylada.debug.%03d" % (rank,)
+fdebug = open( fname, "w")
 print >> fdebug, "config/mpi.py: figure_out_machines: size: %d  rank: %d  nm: %s" % (size, rank, nm,)
 
 names = comm.gather( nm, root=0)

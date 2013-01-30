@@ -1,15 +1,15 @@
 """ Methods to read structures from file. """
 def poscar(path="POSCAR", types=None):
   """ Tries to read a VASP POSCAR file.
-      
+
        :param path: Path to the POSCAR file. Can also be an object with
          file-like behavior.
        :type path: str or file object
        :param types: Species in the POSCAR.
        :type types: None or sequence of str
-      
+
       :return: `pylada.crystal.Structure` instance.
-  """ 
+  """
   import re
   from os.path import join, exists, isdir
   from copy import deepcopy
@@ -22,7 +22,7 @@ def poscar(path="POSCAR", types=None):
     if isinstance(types, str): types = [types] # can't see another way of doing this...
     elif not hasattr(types, "__iter__"): types = [str(types)] # single lone vasp.specie.Specie
     else: types = [str(s) for s in types]
-      
+
   if path is None: path = "POSCAR"
   if not hasattr(path, 'read'):
     assert exists(path), IOError("Could not find path %s." % (path))
@@ -31,7 +31,7 @@ def poscar(path="POSCAR", types=None):
       path = join(path, "POSCAR")
   result = Structure()
   poscar = path if hasattr(path, "read") else open(path, 'r')
-  
+
   try:
     # gets name of structure
     result.name = poscar.readline().strip()
@@ -50,8 +50,8 @@ def poscar(path="POSCAR", types=None):
     # checks for vasp 5 input.
     is_vasp_5 = True
     line = poscar.readline().split()
-    for i in line: 
-      if not re.match(r"[A-Z][a-z]?", i): 
+    for i in line:
+      if not re.match(r"[A-Z][a-z]?", i):
         is_vasp_5 = False
         break
     if is_vasp_5:
@@ -69,7 +69,7 @@ def poscar(path="POSCAR", types=None):
     # Check whether selective dynamics, cartesian, or direct.
     first_char = poscar.readline().strip().lower()[0]
     selective_dynamics = False
-    if first_char == 's': 
+    if first_char == 's':
       selective_dynamics = True
       first_char = poscar.readline().strip().lower()[0]
     # Checks whether cartesian or direct.
@@ -86,9 +86,9 @@ def poscar(path="POSCAR", types=None):
             if which.lower()[0] == 't':
               result[-1].freeze = getattr(result[-1], 'freeze', '') + freeze
   finally: poscar.close()
-            
+
   return result
-    
+
 
 def castep(file):
   """ Tries to read a castep structure file. """
@@ -97,11 +97,11 @@ def castep(file):
   from ..error import IOError, NotImplementedError, input as InputError
   from ..misc import RelativePath
   from . import Structure
-  if isinstance(file, str): 
+  if isinstance(file, str):
     if file.find('\n') == -1:
       with open(RelativePath(file).path, 'r') as file: return castep(file)
     else: file = file.splitlines()
-  
+
   file = [l for l in file]
 
   def parse_input(input):
@@ -111,19 +111,19 @@ def castep(file):
     for line in file:
       if '#' in line: line = line[:line.find('#')]
       if current_block is not None:
-        if line.split()[0].lower() == '%endblock': 
+        if line.split()[0].lower() == '%endblock':
           current_block = None
           continue
         result[current_block] += line
       elif len(line.split()) == 0: continue
-      elif len(line.split()[0]) == 0: continue 
+      elif len(line.split()[0]) == 0: continue
       elif line.split()[0].lower() == '%block':
         name = line.split()[1].lower().replace('.', '').replace('_', '')
         if name in result:
           raise InputError('Found two {0} blocks in input.'.format(name))
         result[name] = ""
         current_block = name
-      else: 
+      else:
         name = line.split()[0].lower().replace('.', '').replace('_', '')
         if name[-1] in ['=' or ':']: name = name[:-1]
         if name in result:
@@ -145,12 +145,12 @@ def castep(file):
 
     auv = UnitQuantity('auv', a0*Ry/h_bar) # velocity
     units = { 'a0': a0, 'bohr': a0, 'm': meter, 'cm': centimeter,
-              'mm': millimeter, 'ang': angstrom, 'me': emass, 'amu': amu, 
-              's': second, 'ms': millisecond, 'mus': microsecond, 
+              'mm': millimeter, 'ang': angstrom, 'me': emass, 'amu': amu,
+              's': second, 'ms': millisecond, 'mus': microsecond,
               'ns': nanosecond, 'ps': picosecond, 'fs': femtosecond,
               'e': elementary_charge, 'c': coulomb, 'hartree': hartree,
               'ha': hartree, 'mha': 1e-3*hartree, 'ev': eV, 'mev': meV,
-              'ry': Ry, 'mry': 1e-3*Ry, 'kj': 1e3*joule, 'mol': mol, 
+              'ry': Ry, 'mry': 1e-3*Ry, 'kj': 1e3*joule, 'mol': mol,
               'kcal': 1e3*cal, 'j': joule, 'erg': erg, 'hz': hertz,
               'mhz': megahertz, 'ghz': gigahertz, 'thz': tera*hertz,
               'k': kelvin, 'n': newton, 'dyne': dyne, 'auv': auv, 'pa': pascal,
@@ -170,9 +170,9 @@ def castep(file):
     cell = array([l.split() for l in data], dtype='float64')
   elif 'latticeabc' in input:
     raise NotImplementedError('Cannot read lattice in ABC format yet.')
-  else: 
+  else:
     raise InputError('Could not find lattice block in input.')
-                      
+
   # create structure
   result = Structure(cell, scale=units)
 
@@ -189,7 +189,7 @@ def castep(file):
   # and parse it
   for line in posdata:
     line = line.split()
-    if len(line) < 2: 
+    if len(line) < 2:
       raise IOError( 'Wrong file format: line with less '                      \
                      'than two items in positions block.')
     pos = array(line[1:4], dtype='float64')
@@ -200,7 +200,7 @@ def castep(file):
     result.add_atom(pos=pos, type=type)
     if len(line) == 5: result[-1].magmom = float(line[4])
   return result
-  
+
 def crystal(file='fort.34'):
   """ Reads CRYSTAL's external format. """
   from numpy import array, abs, zeros, any, dot
@@ -220,7 +220,7 @@ def crystal(file='fort.34'):
   except StopIteration: raise IOError('Premature end of stream.')
   else: dimensionality, centering, type = [int(u) for u in line.split()[:3]]
   # read cell
-  try: cell = array( [file.next().split()[:3] for i in xrange(3)], 
+  try: cell = array( [file.next().split()[:3] for i in xrange(3)],
                      dtype='float64' ).T
   except StopIteration: raise IOError('Premature end of stream.')
   result = Structure( cell=cell, centering=centering,
@@ -230,7 +230,7 @@ def crystal(file='fort.34'):
   try: N = int(file.next())
   except StopIteration: raise IOError('Premature end of stream.')
   for i in xrange(N):
-    try: op = array( [file.next().split()[:3] for j in xrange(4)],         
+    try: op = array( [file.next().split()[:3] for j in xrange(4)],
                      dtype='float64' )
     except StopIteration: raise IOError('Premature end of stream.')
     else: op[:3] = op[:3].copy().T
@@ -240,7 +240,7 @@ def crystal(file='fort.34'):
   # read atoms.
   try: N = int(file.next())
   except StopIteration: raise IOError('Premature end of stream.')
-  
+
   for i in xrange(N):
     try: line = file.next().split()
     except StopIteration: raise IOError('Premature end of stream.')
@@ -267,13 +267,13 @@ def crystal(file='fort.34'):
 
 
 
-def icsd_cif(filename): 
+def icsd_cif(filename):
   """ Reads lattice from the ICSD \*cif files.
 
-      It will not work in the case of other \*cif. 
+      It will not work in the case of other \*cif.
       It is likely to produce wrong output if the site occupations are fractional.
-      If the occupation is > 0.5 it will treat it as 1 and 
-      in the case occupation < 0.5 it will treat it as 0 and 
+      If the occupation is > 0.5 it will treat it as 1 and
+      in the case occupation < 0.5 it will treat it as 0 and
       it will accept all occupation = 0.5 as 1 and create a mess!
   """
   import re
@@ -283,10 +283,11 @@ def icsd_cif(filename):
   from numpy import pi, sin, cos, sqrt, dot
 
   lines = open(filename,'r').readlines()
+  print "  crystal/read: icsd_cif: filename: ", filename
 
   sym_big = 0
   sym_end = 0
-  pos_big = 0 
+  pos_big = 0
   pos_end = 0
 
   for l in lines:
@@ -299,7 +300,7 @@ def icsd_cif(filename):
               else:
                   index = len(x[-1])
               a = float(x[-1][:index])
-              
+
           if x[0] == '_cell_length_b':
               if '(' in x[-1]:
                   index = x[-1].index('(')
@@ -320,7 +321,7 @@ def icsd_cif(filename):
               else:
                   index = len(x[-1])
               alpha = float(x[-1][:index])
-              
+
           if x[0] == '_cell_angle_beta':
               if '(' in x[-1]:
                   index = x[-1].index('(')
@@ -344,7 +345,7 @@ def icsd_cif(filename):
           sym_end = lines.index(l)
 
       # WYCKOFF POSITIONS
-      
+
       if len(x)>0 and x[0] == '_atom_site_attached_hydrogens':
           pos_big = lines.index(l)
 
@@ -360,19 +361,39 @@ def icsd_cif(filename):
       if pos_end == 0 and l in ['\n', '\r\n'] and lines.index(l) > pos_big:
           pos_end = lines.index(l)
 
+
+  # _symmetry_equiv_pos_* lines are like:
+  #     1     'x, x-y, -z+1/2'
+  print "  crystal/read: icsd_cif: sym_big: ", sym_big
+  print "  crystal/read: icsd_cif: sym_end: ", sym_end
+
   symm_ops = [ '(' + x.split()[1][1:] + x.split()[2] + x.split()[3][:-1] + ')'\
                for x in lines[sym_big+1:sym_end-1] ]
+  print "  crystal/read: icsd_cif: symm_ops a: ", symm_ops
+  # ['(x,x-y,-z+1/2)', '(-x+y,y,-z+1/2)', ...]
 
+  # Insert decimal points after integers
   symm_ops = [re.sub(r'(\d+)', r'\1.', x) for x in symm_ops]
-  
+  print "  crystal/read: icsd_cif: symm_ops b: ", symm_ops
+  # ['(x,x-y,-z+1./2.)', '(-x+y,y,-z+1./2.)', ...]
+
+  # _atom_site_* lines are like:
+  #   Mo1 Mo4+ 2 c 0.3333 0.6667 0.25 1. 0
+  print "  crystal/read: icsd_cif: pos_big: ", pos_big
+  print "  crystal/read: icsd_cif: pos_end: ", pos_end
   wyckoff = [ [x.split()[0],[x.split()[4],x.split()[5],x.split()[6]],x.split()[7]]\
               for x in lines[pos_big+1:pos_end] ]
-  
+  print "  crystal/read: icsd_cif: wyckoff a: ", wyckoff
+  # [['Mo1', ['0.3333', '0.6667', '0.25'], '1.'], ['S1', ['0.3333', '0.6667', '0.621(4)'], '1.']]
+
   wyckoff = [w for w in wyckoff if int(float(w[-1][:4])+0.5) != 0]
+  print "  crystal/read: icsd_cif: wyckoff b: ", wyckoff
+  # [['Mo1', ['0.3333', '0.6667', '0.25'], '1.'], ['S1', ['0.3333', '0.6667', '0.621(4)'], '1.']]
 
   ############## Setting up a good wyckoff list
 
   for w in wyckoff:
+      # Strip trailing numerals from w[0] == 'Mo1'
       pom = 0
       for i in range(len(w[0])):
           try:
@@ -383,29 +404,47 @@ def icsd_cif(filename):
 
       w[0] = w[0][:pom]
 
+      # Strip trailing standard uncertainty, if any, from w[1], ..., w[3]
       for i in range(3):
-          if '(' in w[1][i]: 
+          if '(' in w[1][i]:
               index = w[1][i].index('(')
           else:
               index = len(w[1][i])
           w[1][i] = float(w[1][i][:index])
-          
+
+      # Delete w[4]
       del w[-1]
   ##########################################
+
+  # List of unique symbols ["Mo", "S"]
   symbols = list(set([w[0] for w in wyckoff]))
+  print "  crystal/read: icsd_cif: symbols: ", symbols
+
+  # List of position vectors for each symbol
   positions = [[] for i in range(len(symbols))]
 
   for w in wyckoff:
       symbol = w[0]
       x,y,z = w[1][0],w[1][1],w[1][2]
+      print "    symbol: ", symbol, "  x: ", x, "  y: ", y, "  z: ", z
       for i in range(len(symm_ops)):
+          # Set pom = new position based on symmetry transform
           pom = list(eval(symm_ops[i]))
+          print "      i: ", i, "  pom a: ", pom
+          # [0.3333, -0.3334, 0.25]
+
+          # Move positions to range [0,1]:
           for j in range(len(pom)):
               if pom[j] <  0.: pom[j] = pom[j]+1.
               if pom[j] >= 0.999: pom[j] = pom[j]-1.
+          print "      i: ", i, "  pom b: ", pom
+          # [0.3333, 0.6666, 0.25]
 
+          # If pom is not in positions[symbol], append pom
           if not any(norm(array(u)-array(pom)) < 0.01 for u in positions[symbols.index(symbol)]):
-              positions[symbols.index(symbol)].append(pom)
+              ix = symbols.index(symbol)
+              positions[ix].append(pom)
+              print "      new positions for ", symbol, ": ", positions[ix]
 
   ################ CELL ####################
 
@@ -415,19 +454,37 @@ def icsd_cif(filename):
   c2 = c/sin(gamma*pi/180.)*(-cos(beta*pi/180.)*cos(gamma*pi/180.) + cos(alpha*pi/180.))
   a3 = array([c1, c2, sqrt(c**2-(c1**2+c2**2))])
   cell = array([a1,a2,a3])
-
+  print "  crystal/read: icsd_cif: a1: ", a1
+  print "  crystal/read: icsd_cif: a2: ", a2
+  print "  crystal/read: icsd_cif: a3: ", a3
+  #  a1:  [ 3.15  0.    0.  ]
+  #  a2:  [-1.575       2.72798002  0.        ]
+  #  a3:  [  7.53157781e-16   1.30450754e-15   1.23000000e+01]
   ##########################################
 
 
   from pylada.crystal import Structure, primitive
+  print "  crystal/read: cell: ", cell
+  #  [[  3.15000000e+00   0.00000000e+00   0.00000000e+00]
+  #   [ -1.57500000e+00   2.72798002e+00   0.00000000e+00]
+  #   [  7.53157781e-16   1.30450754e-15   1.23000000e+01]]
 
   structure = Structure(
     transpose( cell),
     scale = 1,
     name = basename( filename))
   for i in range(len(symbols)):
+    print "    crystal/read: i: ", i, "  symbol: ", symbols[i], \
+      "  len position: ", len(positions[i])
+    # crystal/read: i:  0   symbol:  Mo   len position:  2
+
     for j in range(len(positions[i])):
       atpos = dot( transpose(cell), positions[i][j])
+      print "      crystal/read: j: ", j, "  pos: ", positions[i][j]
+      print "        atpos: ", atpos
+      #  j:  0   pos:  [0.3333, 0.6666000000000001, 0.25]
+      #  atpos:  [  6.32378655e-16   1.81847148e+00   3.07500000e+00]
+
       structure.add_atom( atpos[0], atpos[1], atpos[2], symbols[i])
 
   return primitive( structure)

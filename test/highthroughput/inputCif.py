@@ -8,6 +8,22 @@ vasp.precision      = "accurate"
 vasp.ediff          = 1e-5 # precision per ATOM
 vasp.encut          = 1.0
 
+
+# Fast: change precision from accurate to low
+vasp.precision      = "low"
+
+# Fast: change ediff from 1.e-5 to 1.e-3
+vasp.ediff          = 1e-3 # precision per ATOM
+
+# Fast: change encut from 1.0 to 0.5
+vasp.encut          = 0.5
+
+# Fast: specify kpoints
+vasp.kpoints        = "\n0\nGamma\n1 1 1\n0. 0. 0.\n"
+# Or could try:
+#vasp.kpoints        = "\n0\nAuto\n10\n"
+
+
 # See vasp/functional.py:  elementName, fileName, max or min oxidation state
 vasp.add_specie = "Al", "pseudos/Al", None, 3
 vasp.add_specie = "Mg", "pseudos/Mg", None, 2
