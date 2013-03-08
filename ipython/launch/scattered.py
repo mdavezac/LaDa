@@ -72,7 +72,10 @@ def launch(self, event, jobfolders):
       pbsargs['scriptcommand']                                                 \
            = "{0} --nbprocs {n} --ppn {ppn} --jobid={1} {2}"                   \
              .format(pyscript, name, path, **pbsargs)
-      pbsscripts.append( pbspaths(directory, name, 'script') )
+      ppath = pbspaths(directory, name, 'script')
+      print "scattered/launch: ppath: \"%s\"" % (ppath,)
+      print "scattered/launch: pbsargs: \"%s\"" % (pbsargs,)
+      pbsscripts.append( ppath)
 
       # write pbs scripts
       with Changedir(join(directory, name)) as pwd: pass
@@ -80,6 +83,7 @@ def launch(self, event, jobfolders):
       with open(pbsscripts[-1], "w") as file:
         string = pbs_string(**pbsargs) if hasattr(pbs_string, '__call__')      \
                  else pbs_string.format(**pbsargs) 
+        print "scattered/launch: string: \"%s\"" % (string,)
         file.write(string)
       assert exists(pbsscripts[-1])
     print "Created {0} scattered jobs from {1}.".format(len(pbsscripts), path)
@@ -87,6 +91,7 @@ def launch(self, event, jobfolders):
   if event.nolaunch: return
   # otherwise, launch.
   for script in pbsscripts:
+    print "scattered/launch: launch script: \"%s\"" % (script,)
     shell.system("{0} {1}".format(qsub_exe, script))
 
 

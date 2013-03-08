@@ -3,8 +3,8 @@ print "  test/hi/inputFixed: entry"
 vasp = Relax()
 print "  test/hi/inputFixed: === vasp ===\n%s\n=== end vasp ===" % (vasp,)
 
-vasp.precision      = "accurate"
-vasp.ediff          = 1e-5 # precision per ATOM
+vasp.prec           = "accurate"
+vasp.ediff          = 1e-5
 vasp.encut          = 1.0
 
 vasp.add_specie = "Al", "pseudos/Al", None, 3

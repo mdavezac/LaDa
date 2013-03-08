@@ -104,12 +104,30 @@ def launch_program( cmdl, comm=None, formatter=None, env=None,
   from pylada import machine_dependent_call_modifier
   from pylada.misc import Changedir
 
+  print "config/mpi: launch_program: entry"
+  print "  parm cmdl: %s  type: %s" % (cmdl, type(cmdl),)
+  print "  parm comm: %s  type: %s" % (comm, type(comm),)
+  print "  parm formatter: %s  type: %s" % (formatter, type(formatter),)
+  print "  parm env: %s  type: %s" % (env, type(env),)
+  print "  parm outdir: %s  type: %s" % (outdir, type(outdir),)
+
+  # At this point formatter is {"program": vasp}
+  # and cmdl is "mpirun -n {n} {placement} {program}"
+
+  # Set in formatter: 'placement': '', 'ppn': 8, 'n': 8
   # make sure that the formatter contains stuff from the communicator, eg the
   # number of processes.
   if comm is not None and formatter is not None:
     formatter.update(comm)
+  print "config/mpi: launch_program: comm mod formatter: %s" % (formatter,)
+
+  # Set in formatter: 'placement': '-machinefile /home.../pylada_commtempfile'
   # Stuff that will depend on the supercomputer.
   machine_dependent_call_modifier(formatter, comm, env)
+  print "config/mpi: launch_program: mach mod formatter: %s" % (formatter,)
+
+  formatter["placement"] = "numa_wrapper -ppn=8"
+  print "config/mpi: launch_program: plac formatter: %s" % (formatter,)
 
   # if a formatter exists, then use it on the cmdl string.
   if formatter is not None: cmdl = cmdl.format(**formatter)
@@ -117,7 +135,9 @@ def launch_program( cmdl, comm=None, formatter=None, env=None,
   elif comm is not None: cmdl = cmdl.format(**comm)
 
   # Split command from string to list
+  print "config/mpi: launch_program: final cmdl a: %s" % (cmdl,)
   cmdl = shlex_split(cmdl)
+  print "config/mpi: launch_program: final cmdl b: %s" % (cmdl,)
 
   # makes sure the directory exists:
   if outdir is not None:
@@ -216,7 +236,7 @@ size = comm.Get_size()
 rank = comm.Get_rank()
 
 nm = gethostname()
-fname = os.getenv("HOME") + "/temp.pylada.debug.%03d" % (rank,)
+fname = os.getenv("HOME") + "/temp.figure_out_machines.%03d" % (rank,)
 fdebug = open( fname, "w")
 print >> fdebug, "config/mpi.py: figure_out_machines: size: %d  rank: %d  nm: %s" % (size, rank, nm,)
 

@@ -74,6 +74,7 @@ class Incar(object):
     self.lrpa        = Boolean("lrpa", None)
     self.loptics     = Boolean("loptics", None)
     self.lpead       = Boolean("lpead", None)
+    self.lplane      = Boolean("lplane", None)
     self.nelm        = Integer("nelm", None)
     self.nelmin      = Integer("nelmin", None)
     self.nelmdl      = Integer("nelmdl", None)

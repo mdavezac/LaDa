@@ -93,7 +93,8 @@ def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
         % (skey, input.vasp.species[skey], )
     print ''
 
-    if inputpath == "inputCif.py":
+    # xxx fix this:
+    if inputpath.startswith("inputCif"):
       structure = deepcopy(lattice)
 
     else:

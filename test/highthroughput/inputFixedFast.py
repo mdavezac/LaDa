@@ -3,15 +3,15 @@ print "  test/hi/inputFixed: entry"
 vasp = Relax()
 print "  test/hi/inputFixedFast: === vasp ===\n%s\n=== end vasp ===" % (vasp,)
 
-vasp.precision      = "accurate"
-vasp.ediff          = 1e-5 # precision per ATOM
+vasp.prec           = "accurate"
+vasp.ediff          = 1e-5
 vasp.encut          = 1.0
 
 # Fast: change precision from accurate to low
-vasp.precision      = "low"
+vasp.prec           = "low"
 
 # Fast: change ediff from 1.e-5 to 1.e-3
-vasp.ediff          = 1e-3 # precision per ATOM
+vasp.ediff          = 1e-3
 
 # Fast: change encut from 1.0 to 0.5
 vasp.encut          = 0.5

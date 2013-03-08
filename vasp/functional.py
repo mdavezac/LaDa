@@ -370,6 +370,11 @@ class Vasp(AttrBlock):
         .. seealso:: LPEAD_
         .. _LPEAD: http://cms.mpi.univie.ac.at/wiki/index.php/LPEAD
     """
+
+
+    self.lplane     = BoolKeyword()
+
+
     self.nelm      = TypedKeyword(type=int)
     """ Maximum number of self-consistent electronic minimization steps.
        
