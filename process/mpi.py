@@ -158,9 +158,9 @@ class Communicator(dict):
       self['n'] = 0
     # remove nodefile, if it exists.
     nodefile, self._nodefile = self._nodefile, None
-    #if nodefile is not None and exists(nodefile):
-    #  try: remove(nodefile)
-    #  except: pass
+    if nodefile is not None and exists(nodefile):
+      try: remove(nodefile)
+      except: pass
 
   def __getstate__(self):
     """ Pickles a communicator. 
@@ -191,6 +191,7 @@ def create_global_comm(nprocs, dir=None):
   from ..misc import Changedir
   from ..error import ConfigError
   import pylada
+  from pylada.misc import bugLev
   
   if not do_multiple_mpi_programs: return
   if nprocs <= 0: raise MPISizeError(nprocs)
@@ -206,27 +207,31 @@ def create_global_comm(nprocs, dir=None):
     formatter = Communicator(n=nprocs).copy()
     formatter['program'] = executable + ' ' + filename
 
-    print "process.mpi: create_global_comm: formatter: ", formatter
-    print "process.mpi: filename: \"%s\"" % (filename,)
-    print "===content:===\n%s===end===" % ( open(filename).read(),)
-    print "process.mpi: create_global_comm: mpirun_exe: ", mpirun_exe
-    print "process.mpi: *** launch ***"
+    if bugLev >= 5:
+      print "process.mpi: create_global_comm: formatter: ", formatter
+      print "process.mpi: filename: \"%s\"" % (filename,)
+      print "===content:===\n%s===end===" % ( open(filename).read(),)
+      print "process.mpi: create_global_comm: mpirun_exe: ", mpirun_exe
+      print "process.mpi: *** launch ***"
+
     process = launch( mpirun_exe, stdout=PIPE, formatter=formatter,
                       stderr=PIPE, env=environ )
-    print "process.mpi: create_global_comm: process: ", process
-    print "process.mpi: *** start process.communicate ***"
+    if bugLev >= 5:
+      print "process.mpi: create_global_comm: process: ", process
+      print "process.mpi: *** start process.communicate ***"
+
     stdout, stderr = process.communicate()
   finally:
-    pass
-    #if exists(filename):
-    #  try: remove(filename)
-    #  except: pass
+    if exists(filename):
+      try: remove(filename)
+      except: pass
   # we use that to deduce the number of machines and processes per machine.
   processes = [ line.group(1) for line                                         \
                 in finditer('PYLADA MACHINE HOSTNAME:\s*(\S*)', stdout) ]
-  for p in processes:
-    print "  process.mpi: create_global_comm: process: ", p
-  print "process.mpi: nprocs: create_global_comm: ", nprocs
+  if bugLev >= 5:
+    for p in processes:
+      print "  process.mpi: create_global_comm: process: ", p
+    print "process.mpi: nprocs: create_global_comm: ", nprocs
   # sanity check.
   if nprocs != len(processes):
     envstring = ''

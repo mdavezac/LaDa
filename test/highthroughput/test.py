@@ -27,6 +27,7 @@ def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
   from pylada.vasp import read_input
   from pylada.jobfolder import JobFolder
   from pylada import interactive
+  from pylada.misc import bugLev
 
   # reads input.
   input = read_input(inputpath)
@@ -82,16 +83,17 @@ def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
 
   # loop over material-lattice pairs.
   for (material,lattice) in input.matLatPairs:
-    print '  test/hi/test: start material: ', material
-    print '  test/hi/test: start lattice: ', lattice
-    print ''
-    print '  test/hi/test: ========== species =========='
-    skeys = input.vasp.species.keys()
-    skeys.sort()
-    for skey in skeys:
-      print '    test/hi/test: species[%s]: %s' \
-        % (skey, input.vasp.species[skey], )
-    print ''
+    if bugLev >= 1:
+      print '  test/hi/test: start material: ', material
+      print '  test/hi/test: start lattice: ', lattice
+      print ''
+      print '  test/hi/test: ========== species =========='
+      skeys = input.vasp.species.keys()
+      skeys.sort()
+      for skey in skeys:
+        print '    test/hi/test: species[%s]: %s' \
+          % (skey, input.vasp.species[skey], )
+      print ''
 
     # xxx fix this:
     if inputpath.startswith("inputCif"):
@@ -112,7 +114,7 @@ def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
       # actually creates dictionary.
       species_dict = {"A": match.group(1), "B": match.group(2),
         "X": match.group(3)}
-      print '  test/hi/test: species_dict: ', species_dict
+      #print '  test/hi/test: species_dict: ', species_dict
       
       # Check lattice name
       if len(getattr(lattice, 'name', '').strip()) == 0:
@@ -145,8 +147,8 @@ def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
     # saves some stuff for future reference.
     job.material = material
     job.lattice  = lattice
-    print '    test/hi/test.py: job: ', job
-    print '    test/hi/test.py: === job.functional ===\n%s\n=== end functional === ' % (job.functional,)
+    #print '    test/hi/test.py: job: ', job
+    #print '    test/hi/test.py: === job.functional ===\n%s\n=== end functional === ' % (job.functional,)
 
 
   interactive.jobfolder = jobfolder
@@ -230,7 +232,6 @@ def magnetic_wave(path=None, inputpath='input.py', **kwargs):
                          .format(material, lattice.name, prefix)
         job = jobfolder / jobname
         # Never executed:
-        print '########### test/hi/test: input.relaxer: ', input.relaxer
         job.functional = input.relaxer 
         job.params["structure"] = structure.copy()
         job.params["magmom"] = True

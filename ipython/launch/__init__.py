@@ -115,17 +115,23 @@ def completer(self, info):
 
 def get_mppalloc(shell, event, withdefault=True):
   """ Gets mpp allocation. """
+  print "launch/init: shell: %s" % (shell,)
+  print "launch/init: event: %s" % (event,)
+  print "launch/init: withdefault: %s" % (withdefault,)
   try: mppalloc = shell.ev(event.nbprocs)
   except Exception as e: 
     print "Could not make sense of --nbprocs argument {0}.\n{1}"               \
           .format(event.nbprocs, e)
     return
+  print "launch/init: mppalloc a: %s" % (mppalloc,)
   if mppalloc is None and withdefault:
     def mppalloc(job): 
       """ Returns number of processes for this job. """
       N = len(job.structure) # number of atoms.
-      if N % 2 == 1: N -= 1
+      ##if N % 2 == 1: N -= 1
+      if N % 8 != 0: N = (N/8) * 8
       return max(N, 1)  
+  print "launch/init: mppalloc b: %s" % (mppalloc,)
   return mppalloc
 
 def get_walltime(shell, event, pbsargs):

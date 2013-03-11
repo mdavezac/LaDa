@@ -281,9 +281,11 @@ def icsd_cif(filename):
   from numpy.linalg import norm
   from numpy import array, transpose
   from numpy import pi, sin, cos, sqrt, dot
+  from pylada.misc import bugLev
 
   lines = open(filename,'r').readlines()
-  print "  crystal/read: icsd_cif: filename: ", filename
+  if bugLev >= 2:
+    print "  crystal/read: icsd_cif: filename: ", filename
 
   sym_big = 0
   sym_end = 0
@@ -364,30 +366,36 @@ def icsd_cif(filename):
 
   # _symmetry_equiv_pos_* lines are like:
   #     1     'x, x-y, -z+1/2'
-  print "  crystal/read: icsd_cif: sym_big: ", sym_big
-  print "  crystal/read: icsd_cif: sym_end: ", sym_end
+  if bugLev >= 5:
+    print "  crystal/read: icsd_cif: sym_big: ", sym_big
+    print "  crystal/read: icsd_cif: sym_end: ", sym_end
 
   symm_ops = [ '(' + x.split()[1][1:] + x.split()[2] + x.split()[3][:-1] + ')'\
                for x in lines[sym_big+1:sym_end-1] ]
-  print "  crystal/read: icsd_cif: symm_ops a: ", symm_ops
+  if bugLev >= 5:
+    print "  crystal/read: icsd_cif: symm_ops a: ", symm_ops
   # ['(x,x-y,-z+1/2)', '(-x+y,y,-z+1/2)', ...]
 
   # Insert decimal points after integers
   symm_ops = [re.sub(r'(\d+)', r'\1.', x) for x in symm_ops]
-  print "  crystal/read: icsd_cif: symm_ops b: ", symm_ops
+  if bugLev >= 5:
+    print "  crystal/read: icsd_cif: symm_ops b: ", symm_ops
   # ['(x,x-y,-z+1./2.)', '(-x+y,y,-z+1./2.)', ...]
 
   # _atom_site_* lines are like:
   #   Mo1 Mo4+ 2 c 0.3333 0.6667 0.25 1. 0
-  print "  crystal/read: icsd_cif: pos_big: ", pos_big
-  print "  crystal/read: icsd_cif: pos_end: ", pos_end
+  if bugLev >= 5:
+    print "  crystal/read: icsd_cif: pos_big: ", pos_big
+    print "  crystal/read: icsd_cif: pos_end: ", pos_end
   wyckoff = [ [x.split()[0],[x.split()[4],x.split()[5],x.split()[6]],x.split()[7]]\
               for x in lines[pos_big+1:pos_end] ]
-  print "  crystal/read: icsd_cif: wyckoff a: ", wyckoff
+  if bugLev >= 5:
+    print "  crystal/read: icsd_cif: wyckoff a: ", wyckoff
   # [['Mo1', ['0.3333', '0.6667', '0.25'], '1.'], ['S1', ['0.3333', '0.6667', '0.621(4)'], '1.']]
 
   wyckoff = [w for w in wyckoff if int(float(w[-1][:4])+0.5) != 0]
-  print "  crystal/read: icsd_cif: wyckoff b: ", wyckoff
+  if bugLev >= 5:
+    print "  crystal/read: icsd_cif: wyckoff b: ", wyckoff
   # [['Mo1', ['0.3333', '0.6667', '0.25'], '1.'], ['S1', ['0.3333', '0.6667', '0.621(4)'], '1.']]
 
   ############## Setting up a good wyckoff list
@@ -418,7 +426,8 @@ def icsd_cif(filename):
 
   # List of unique symbols ["Mo", "S"]
   symbols = list(set([w[0] for w in wyckoff]))
-  print "  crystal/read: icsd_cif: symbols: ", symbols
+  if bugLev >= 5:
+    print "  crystal/read: icsd_cif: symbols: ", symbols
 
   # List of position vectors for each symbol
   positions = [[] for i in range(len(symbols))]
@@ -426,25 +435,29 @@ def icsd_cif(filename):
   for w in wyckoff:
       symbol = w[0]
       x,y,z = w[1][0],w[1][1],w[1][2]
-      print "    symbol: ", symbol, "  x: ", x, "  y: ", y, "  z: ", z
+      if bugLev >= 5:
+        print "    symbol: ", symbol, "  x: ", x, "  y: ", y, "  z: ", z
       for i in range(len(symm_ops)):
           # Set pom = new position based on symmetry transform
           pom = list(eval(symm_ops[i]))
-          print "      i: ", i, "  pom a: ", pom
+          if bugLev >= 5:
+            print "      i: ", i, "  pom a: ", pom
           # [0.3333, -0.3334, 0.25]
 
           # Move positions to range [0,1]:
           for j in range(len(pom)):
               if pom[j] <  0.: pom[j] = pom[j]+1.
               if pom[j] >= 0.999: pom[j] = pom[j]-1.
-          print "      i: ", i, "  pom b: ", pom
+          if bugLev >= 5:
+            print "      i: ", i, "  pom b: ", pom
           # [0.3333, 0.6666, 0.25]
 
           # If pom is not in positions[symbol], append pom
           if not any(norm(array(u)-array(pom)) < 0.01 for u in positions[symbols.index(symbol)]):
               ix = symbols.index(symbol)
               positions[ix].append(pom)
-              print "      new positions for ", symbol, ": ", positions[ix]
+              if bugLev >= 5:
+                print "      new positions for ", symbol, ": ", positions[ix]
 
   ################ CELL ####################
 
@@ -454,9 +467,10 @@ def icsd_cif(filename):
   c2 = c/sin(gamma*pi/180.)*(-cos(beta*pi/180.)*cos(gamma*pi/180.) + cos(alpha*pi/180.))
   a3 = array([c1, c2, sqrt(c**2-(c1**2+c2**2))])
   cell = array([a1,a2,a3])
-  print "  crystal/read: icsd_cif: a1: ", a1
-  print "  crystal/read: icsd_cif: a2: ", a2
-  print "  crystal/read: icsd_cif: a3: ", a3
+  if bugLev >= 2:
+    print "  crystal/read: icsd_cif: a1: ", a1
+    print "  crystal/read: icsd_cif: a2: ", a2
+    print "  crystal/read: icsd_cif: a3: ", a3
   #  a1:  [ 3.15  0.    0.  ]
   #  a2:  [-1.575       2.72798002  0.        ]
   #  a3:  [  7.53157781e-16   1.30450754e-15   1.23000000e+01]
@@ -464,7 +478,8 @@ def icsd_cif(filename):
 
 
   from pylada.crystal import Structure, primitive
-  print "  crystal/read: cell: ", cell
+  if bugLev >= 2:
+    print "  crystal/read: cell: ", cell
   #  [[  3.15000000e+00   0.00000000e+00   0.00000000e+00]
   #   [ -1.57500000e+00   2.72798002e+00   0.00000000e+00]
   #   [  7.53157781e-16   1.30450754e-15   1.23000000e+01]]
@@ -474,14 +489,16 @@ def icsd_cif(filename):
     scale = 1,
     name = basename( filename))
   for i in range(len(symbols)):
-    print "    crystal/read: i: ", i, "  symbol: ", symbols[i], \
-      "  len position: ", len(positions[i])
+    if bugLev >= 5:
+      print "    crystal/read: i: ", i, "  symbol: ", symbols[i], \
+        "  len position: ", len(positions[i])
     # crystal/read: i:  0   symbol:  Mo   len position:  2
 
     for j in range(len(positions[i])):
       atpos = dot( transpose(cell), positions[i][j])
-      print "      crystal/read: j: ", j, "  pos: ", positions[i][j]
-      print "        atpos: ", atpos
+      if bugLev >= 5:
+        print "      crystal/read: j: ", j, "  pos: ", positions[i][j]
+        print "        atpos: ", atpos
       #  j:  0   pos:  [0.3333, 0.6666000000000001, 0.25]
       #  atpos:  [  6.32378655e-16   1.81847148e+00   3.07500000e+00]
 
