@@ -87,6 +87,7 @@ def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
       print '  test/hi/test: start material: ', material
       print '  test/hi/test: start lattice: ', lattice
       print ''
+    if bugLev >= 5:
       print '  test/hi/test: ========== species =========='
       skeys = input.vasp.species.keys()
       skeys.sort()
@@ -147,15 +148,15 @@ def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
     # saves some stuff for future reference.
     job.material = material
     job.lattice  = lattice
-    #print '    test/hi/test.py: job: ', job
-    #print '    test/hi/test.py: === job.functional ===\n%s\n=== end functional === ' % (job.functional,)
+    #print '    test/hi/test: job: ', job
+    #print '    test/hi/test: === job.functional ===\n%s\n=== end functional === ' % (job.functional,)
 
 
   interactive.jobfolder = jobfolder
   InteractiveShell.instance().magic("savefolders " + path)
 
 
-def magnetic_wave(path=None, inputpath='input.py', **kwargs):
+def magnetic_wave( path=None, inputpath='input.py', **kwargs):
   """ Creates magnetic wave for current job-folder.
 
       :Parameters:
@@ -184,19 +185,25 @@ def magnetic_wave(path=None, inputpath='input.py', **kwargs):
   from tempfile import NamedTemporaryFile
   from os.path import dirname, normpath, relpath, join
   from IPython.core.interactiveshell import InteractiveShell
-  from pylada.jobfolder import JobFolder
   from pylada.vasp import read_input
-  from pylada.opt import Input
+  from pylada.jobfolder import JobFolder
+  from pylada import interactive
+  from pylada.misc import bugLev
+  import pickle
+
+  with open(path) as fin:
+    jobfolder = pickle.load( fin)
+  basedir = dirname( path)
+  jobfolder_path = join( basedir, jobfolder.name)
 
   # Loads job-folder and path as requested. 
-  if interactive.jobfolder is None: 
+  if jobfolder is None: 
     print "No current job-folder."
     return
-  if interactive.jobfolder_path is None: 
+  if jobfolder_path is None: 
     print "No path for current job-folder."
     return
-  basedir = dirname(interactive.jobfolder_path)
-      
+
   input = read_input(inputpath)
 
   # will loop over all folders, looking for *successfull* *non-magnetic* calculations. 
@@ -204,35 +211,65 @@ def magnetic_wave(path=None, inputpath='input.py', **kwargs):
   nonmagname = "non-magnetic"
   nb_new_folders = 0
   for name, nonmagjob in jobfolder.iteritems():
+    if bugLev >= 1:
+      print "test/hi/test.mag: name: %s  nonmagjob: %s" % (name, nonmagjob,)
     # avoid tagged folders.
     if nonmagjob.is_tagged: continue
     # avoid other folders (eg magnetic folders).
     basename = normpath("/" + name + "/../")
+    if bugLev >= 1:
+      print "test/hi/test.mag: basename: %s" % (basename,)
     if relpath(name, basename[1:]) != nonmagname: continue
     # check for success and avoid failures.
     extract = nonmagjob.functional.Extract(join(basedir, name)) 
+    if bugLev >= 1:
+      print "test/hi/test.mag: extract: %s" % (extract,)
+      print "test/hi/test.mag: extract.success: %s" % (extract.success,)
     if not extract.success: continue
+
+    if bugLev >= 1:
+      print "test/hi/test.mag: nonmag structure: %s" % (nonmagjob.structure,)
+      print "test/hi/test.mag: extract.species: %s" % (extract.species,)
+
     if not is_magnetic_system(extract.structure, extract.functional.species): continue
 
     # loads lattice and material from non-magnetic job.
     material = nonmagjob.material
     lattice = nonmagjob.lattice
+    if bugLev >= 1:
+      print "test/hi/test.mag: material: %s" % (material,)
+      print "test/hi/test.mag: lattice: %s" % (lattice,)
 
     # figures out whether we have both high and low spins. 
+    if bugLev >= 1:
+      print "test/hi/test.mag: extract structure: %s" % (extract.structure,)
+      print "test/hi/test.mag: extract species: %s" \
+        % (extract.functional.species,)
     if has_high_and_low(extract.structure, extract.functional.species):
           hnl = [(min, "ls-"), (max, "hs-")]
     else: hnl = [(min, "")] 
     # now loops over moments.
     for func, prefix in hnl: 
+      if bugLev >= 1:
+        print "test/hi/test.mag: func: %s  prefix: %s" % (func, prefix,)
       # now tries and creates high-spin ferro folders if it does not already exist.
       jobname = normpath("{0}/{1}ferro".format(basename, prefix))
       structure, magmom = ferro(extract.structure, extract.functional.species, func)
+      if bugLev >= 1:
+        print "test/hi/test.mag: structure: %s" % (structure,)
+        print "test/hi/test.mag: jobfolder: %s" % (jobfolder,)
+        print "test/hi/test.mag: jobname: %s" % (jobname,)
+        print "test/hi/test.mag: magmom: %s" % (magmom,)
+        print "test/hi/test.mag: input.do_ferro: %s" % (input.do_ferro,)
       if magmom and jobname not in jobfolder and input.do_ferro:
         structure.name = "{0} in {1}, {2}ferro."\
                          .format(material, lattice.name, prefix)
         job = jobfolder / jobname
-        # Never executed:
-        job.functional = input.relaxer 
+        if bugLev >= 1:
+          print "test/hi/test.mag: structure.name: %s" % (structure.name,)
+          print "test/hi/test.mag: job: %s" % (job,)
+        # Never executed:  xxx ? is too!
+        job.functional = input.vasp
         job.params["structure"] = structure.copy()
         job.params["magmom"] = True
         job.params["ispin"] =  2
@@ -267,7 +304,7 @@ def magnetic_wave(path=None, inputpath='input.py', **kwargs):
         structure.name = "{0} in {1}, random anti-ferro.".format(material, lattice.name)
 
         job = jobfolder / jobname
-        job.functional = input.relaxer if inputpath is not None else nonmagjob.functional
+        job.functional = input.vasp if inputpath is not None else nonmagjob.functional
         job.params["structure"] = structure.copy()
         job.params["magmom"] = True
         job.params["ispin"] =  2
@@ -284,10 +321,25 @@ def magnetic_wave(path=None, inputpath='input.py', **kwargs):
 
 def is_magnetic_system(structure, species):
   """ True if system is magnetic. """
-  from pylada.crystal import specie_list
+  from pylada.misc import bugLev
 
-  for u in [u for name, u in species.items() if name in specie_list(structure)]:
+  # xxx structure has no .atoms
+  uatoms = sorted(list(set([a.type for a in structure])))
+  if bugLev >= 1:
+    print "test/hi/test.is_mag: uatoms: %s" % (uatoms,)
+    print "test/hi/test.is_mag: species.items(): %s" % (species.items(),)
+
+  # for each u==Specie in species.items where name is in uatoms ...
+  for u in [u for name, u in species.items() if name in uatoms]:
+    if bugLev >= 1:
+      print "test/hi/test.is_mag: u: %s" % (u,)
+      print "test/hi/test.is_mag: hasattr( u, \"moment\"): %s" \
+        % (hasattr( u, "momemt"),)
     if not hasattr(u, "moment"): continue
+
+    if bugLev >= 1:
+      print "test/hi/test.is_mag: hasattr( u.moment, \"_itier__\"): %s" \
+        % (hasattr( u.moment, "__iter__"),)
     if not hasattr(u.moment, "__iter__"): 
       if abs(u.moment) > 1e-12: return True
       continue
@@ -318,7 +370,7 @@ def deduce_moment(atom, species):
 def ferro(structure, species, func=min):
   """ Returns magmom VASP flag for low-spin ferromagnetic order. """
   result = structure.copy()
-  for atom in result: atom.magmom = func(deduce_moment(a, species))
+  for atom in result: atom.magmom = func(deduce_moment(atom, species))
   return result, True
 
 def species_antiferro(structure, species, func=min):
@@ -348,7 +400,7 @@ def species_antiferro(structure, species, func=min):
 def random(structure, species, func=min):
   """ High-spin random magnetic order. """
   from random import choice
-  result = strcture.copy()
+  result = structure.copy()
   for atom in result:
-    atom.magmom = choice([-1e0, 1e0]) * func(deduce_moment(a, species))
+    atom.magmom = choice([-1e0, 1e0]) * func(deduce_moment( atom, species))
   return result, True

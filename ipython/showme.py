@@ -44,11 +44,13 @@ def showme_functional(self):
       filename = file.name
       # editing INCAR.
       if isinstance(interactive.jobfolder.functional, FunctionType):
+        file.write('from pylada.vasp.specie import Specie\n')
         file.write('from {0.__module__} import {0.__name__}\n'\
                    'functional = {0.__name__}'\
                    .format(interactive.jobfolder.functional))
       else: 
-        string = repr(interactive.jobfolder.functional)
+        string = 'from pylada.vasp.specie import Specie\n'
+        string += repr(interactive.jobfolder.functional)
         if len(string) > 1 and string[0] == '<' and string[-1] == '>':
           print "Functional cannot be represented."
           print "Please use jobparams to modify it."

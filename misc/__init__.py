@@ -10,7 +10,7 @@ from changedir import Changedir
 from relativepath import RelativePath
 from lockfile import LockFile, open_exclusive
 
-bugLev = 1
+bugLev = 0
 """
 global debug verbosity
 """
@@ -177,6 +177,8 @@ def exec_input( script, global_dict=None, local_dict=None,
   for key in crystal.__all__: global_dict[key] = getattr(crystal, key)
   if local_dict is None: local_dict = {}
   # Executes input script.
+  if bugLev >= 5:
+    print "misc/init: exec_input: script: =====\n%s=====" % (script,)
   exec(script, global_dict, local_dict)
 
   # Makes sure expected paths are absolute.

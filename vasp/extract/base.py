@@ -5,6 +5,8 @@ from quantities import g, cm, eV
 from ...tools import make_cached
 from ...tools.extract import search_factory
 from ...error import GrepError
+from pylada.misc import bugLev
+
 
 OutcarSearchMixin = search_factory('OutcarSearchMixin', 'OUTCAR', __name__)
 
@@ -19,6 +21,7 @@ class ExtractBase(object):
   @make_cached
   def ialgo(self):
     """ Returns the kind of algorithms. """
+    # Look for line like:    IALGO  =     68    algorithm
     result = self._find_first_OUTCAR(r"""^\s*IALGO\s*=\s*(\d+)\s*""")
     return int(result.group(1))
 
@@ -26,6 +29,8 @@ class ExtractBase(object):
   @make_cached
   def algo(self):
     """ Returns the kind of algorithms. """
+    # This could be gotten in OUTCAR: use the 1 occurance of:
+    #   ALGO = Fast
     return { 68: 'Fast', 38: 'Normal', 48: 'Very Fast', 58: 'Conjugate',
              53: 'Damped', 4: 'Subrot', 90: 'Exact', 2: 'Nothing'}[self.ialgo]
 
@@ -43,6 +48,8 @@ class ExtractBase(object):
   @property 
   def encut(self):
     """ Energy cutoff. """
+    # OUTCAR: use the first occurance of:
+    #   ENCUT  =  252.0 eV  18.52 Ry  ...
     return float(self._find_first_OUTCAR(r"ENCUT\s*=\s*(\S+)").group(1)) * eV
 
 
@@ -50,7 +57,6 @@ class ExtractBase(object):
   @make_cached
   def functional(self):
     """ Returns vasp functional used for calculation.
-
         Requires the functional to be pasted at the end of the calculations. 
     """
     from re import compile
@@ -58,7 +64,7 @@ class ExtractBase(object):
     regex = compile('#+ FUNCTIONAL #+\n((.|\n)*)\n#+ END FUNCTIONAL #+')
     with self.__outcar__() as file: result = regex.search(file.read())
     if result is None: return None
-    return exec_input(result.group(1)).vasp
+    return exec_input(result.group(1)).relax
 
   @property
   def success(self):
@@ -70,6 +76,33 @@ class ExtractBase(object):
     regex = r"""General\s+timing\s+and\s+accounting\s+informations\s+for\s+this\s+job"""
     try: return self._find_last_OUTCAR(regex) is not None
     except: return False
+
+  @property
+  def iterTimes(self):
+    """ Returns a list of pairs: [[cpuTime,realTime], ...]
+    from lines like:
+         LOOP+:  cpu time   22.49: real time   24.43
+    or sometimes like:
+         LOOP+:  VPU time   42.93: CPU time   43.04
+         In this case "CPU" is wall time, and "VPU" is CPU.
+         See: http://cms.mpi.univie.ac.at/vasp-forum/forum_viewtopic.php?3.336
+    """
+    import re
+    regex = re.compile(
+      r'^\s*LOOP\+:\s+\w+\s+time\s+([.0-9]+):\s+\w+\s+time\s+([.0-9]+)\s*$')
+    tlist = []
+    with self.__outcar__() as file: lines = file.readlines()
+    for line in lines:
+      mat = re.match( regex, line)
+      if mat != None:
+        cpuTime = float(mat.group(1))
+        realTime = float(mat.group(2))
+        tlist.append( [cpuTime, realTime])
+    return tlist
+
+
+
+
 
   @property
   @make_cached
@@ -334,6 +367,7 @@ class ExtractBase(object):
   @make_cached
   def stoichiometry(self):
     """ Stoichiometry of the compound. """
+    # Find line like:    ions per type =               2   4
     result = self._find_first_OUTCAR(r"""\s*ions\s+per\s+type\s*=.*$""")
     if result is None: return None
     return [int(u) for u in result.group(0).split()[4:]]
@@ -591,6 +625,26 @@ class ExtractBase(object):
   @make_cached
   def multiplicity(self):
     """ Greps multiplicity of each k-point from OUTCAR. """
+    # If generated kpoints,
+    # get the "weight" field from the cartesion part of a section like:
+    #   Found     10 irreducible k-points:
+    #   Following reciprocal coordinates:
+    #              Coordinates               Weight
+    #    0.000000  0.000000  0.000000      1.000000
+    #    0.250000  0.000000  0.000000      2.000000
+    #    ...
+    #   Following cartesian coordinates:
+    #              Coordinates               Weight
+    #    0.000000  0.000000  0.000000      1.000000
+    #    0.079365  0.045821  0.000000      2.000000
+    #    ...
+    # If specified kpoints,
+    # get the "weight" field from a section like:
+    #   k-points in units of 2pi/SCALE and weight: Automatic mesh
+    #     0.00000000  0.00000000  0.00000000       0.016
+    #     0.00000000  0.25000000  0.25000000       0.188
+    #     ...
+
     from re import compile
     from numpy import array
 
@@ -656,6 +710,8 @@ class ExtractBase(object):
 
   def _unpolarized_values(self, which):
     """ Returns spin-unpolarized eigenvalues and occupations. """
+    # which = 1: select eigenvalues
+    # which = 2: select occupations
     from re import compile, finditer
     import re
 
@@ -668,6 +724,12 @@ class ExtractBase(object):
       if found is not None: break
     if found is None:
       raise GrepError("Could not extract eigenvalues/occupation from OUTCAR.")
+
+    # Here i is the distance from file end of the last line like:
+    #  k-point   1 :       0.0000    0.0000    0.0000
+    if bugLev >= 5:
+      print "vasp/ext/base: unpolarized_vals: is_dft: %s  i: %d  line: %s" \
+        % ( self.is_dft, i, line,)
 
     # now greps actual results.
     if self.is_dft:
@@ -683,8 +745,31 @@ class ExtractBase(object):
       skip, cols = 3, 8
     results = []
     for kp in finditer(kp_re, "".join(lines[-i-1:]), re.M):
+      # Each iteration is a k-point.
+      # dummy is a list of sublists, one sublist per OUTCAR line, like:
+      #   [['1', '-30.5498', '2.00000'],
+      #    ['2', '-30.5497', '2.00000'],
+      #    ['3', '-30.3889', '2.00000'],
+      #    ['4', '-30.3889', '2.00000'],
+      #    ['5', '-30.3857', '2.00000'],
+      #    ...
+      #    ['28', '7.5661', '0.00000'],
+      #    [], []]
+      # We only process those elements having len == cols (here, 3).
+      # We append the "which" column value to results.
+
       dummy = [u.split() for u in kp.group(0).split('\n')[skip:]]
       results.append([float(u[which]) for u in dummy if len(u) == cols])
+
+    # results is a list of sublists, one sublist per k-point,
+    # containing the band energies:
+    #  [[-30.5498, -30.5497, -30.3889, -30.3889, ...],
+    #   [-30.5371, -30.5371, -30.4543, -30.4542, ...],
+    #   ...
+    #   [-30.6596, -30.6596, -30.4905, -30.4905, ...],
+    #   [-30.6604, -30.6603, -30.4906, -30.4906, ...]]
+    if bugLev >= 5:
+      print "vasp/ext/base: unpolarized_vals: results: %s" % ( results,)
     return results
 
   def _spin_polarized_values(self, which):
@@ -733,6 +818,7 @@ class ExtractBase(object):
   @make_cached
   def ionic_charges(self):
     """ Greps ionic_charges from OUTCAR."""
+    # Line like:    ZVAL   =  12.00  6.00
     regex = """^\s*ZVAL\s*=\s*(.*)$"""
     result = self._find_last_OUTCAR(regex) 
     if result is None:
@@ -747,6 +833,12 @@ class ExtractBase(object):
     species = self.species
     atoms = [u.type for u in self.structure]
     result = 0
+
+    # ionic is like: [12.0, 6.0]
+    # species is like: ['Mo', 'S']
+    if bugLev >= 5:
+      print "vasp/ext/base: valence: ionic:", ionic
+      print "vasp/ext/base: valence: species:", species
     for c, s in zip(ionic, species): result += c * atoms.count(s)
     return result
   
@@ -754,6 +846,7 @@ class ExtractBase(object):
   @make_cached
   def nelect(self):
     """ Greps nelect from OUTCAR."""
+    # Find line like:    NELECT =      48.0000    total number of electrons
     regex = """^\s*NELECT\s*=\s*(\S+)\s+total\s+number\s+of\s+electrons\s*$"""
     result = self._find_last_OUTCAR(regex) 
     if result is None:
@@ -953,13 +1046,66 @@ class ExtractBase(object):
 
     if self.ispin == 2: eigs = rollaxis(self.eigenvalues, 0, 2)
     else: eigs = self.eigenvalues
+    if bugLev >= 5:
+      print "vasp/ext/base: fermi0K: eigs:", eigs
+      print "vasp/ext/base: fermi0K: multiplicity:", self.multiplicity
+    # eigs:
+    #   [[-30.5498 -30.5497 -30.3889 ...,   7.5536   7.5647   7.5661]
+    #    [-30.5371 -30.5371 -30.4543 ...,   7.3166   7.403    7.419 ]
+    #    [-30.5993 -30.5992 -30.5086 ...,   7.011    7.0944   7.3217]
+    #    ..., 
+    #    [-30.7117 -30.7117 -30.4854 ...,   6.9983   7.368    7.3682]
+    #    [-30.6596 -30.6596 -30.4905 ...,   6.885    7.3079   7.308 ]
+    #    [-30.6604 -30.6603 -30.4906 ...,   6.885    7.3096   7.3097]]
+    # Multiplicity:
+    #   [ 1.  2.  2.  2.  2.  2.  2.  2.  2.  ...  2.  2.  2.  2.  2.]
+
+    # Make array = a list of pairs replicating each multiplicity
+    # for all the eigvals of the given kpoint.
+    # If there are K kpoints and N eigvals per kpoint,
+    # and the multiplicities are m0, m1, ..., m[K-1],
+    # then array is:
+    #   [
+    #    (eigs[0,0],m0), (eigs[0,1],m0), ... (eigs[0,N-1],m0),
+    #    (eigs[1,0],m1), (eigs[1,1],m1), ... (eigs[1,N-1],m1),
+    #    (eigs[2,0],m2), (eigs[2,1],m2), ... (eigs[2,N-1],m2),
+    #    ...
+    #    (eigs[K-1,0],m[K-1]), (eigs[K-1,1],m[K-1]), ... (eigs[K-1,N-1],m[K-1])
+    #   ]
+    #
+    # The zip below is an array of pairs like:
+    #   [(array([-30.5498, -30.5497, -30.3889, ... 7.5647, 7.5661]) * eV, 1.0),
+    #    (array([-30.5371, -30.5371, -30.4543, ... 7.403 , 7.419 ]) * eV, 2.0),
+    #    ...
+    #    (array([-30.6604, -30.6603, -30.4906, ... 7.3096, 7.3097]) * eV, 2.0)]
+
     array = [(e, m) for u, m in zip(eigs, self.multiplicity) for e in u.flat]
+    #if bugLev >= 5:
+    #  print "vasp/ext/base: fermi0K: unsorted array:", array
+
+    # Sort by increasing eig
     array = sorted(array, key=itemgetter(0))
+
+    # Work through the list of sorted pairs accumulating
+    #   occ += multiplicity * factor
+    # where factor = 1 / sum(multiplicity)
+    # When occ >= valence quit: that eigval is the fermi0K.
+
     occ = 0e0
     factor = (2.0 if self.ispin == 1 else 1.0)/float(sum(self.multiplicity))
+    if bugLev >= 5:
+      print "vasp/ext/base: ispin: ", self.ispin
+      print "vasp/ext/base: sum(mult): ", sum(self.multiplicity)
+      #print "vasp/ext/base: fermi0K: sorted array:", array
+      print "vasp/ext/base: fermi0K: factor:", factor
+      print "vasp/ext/base: fermi0K: valence: %s" % (self.valence,)
     for i, (e, w) in enumerate(array):
       occ += w*factor
-      if occ >= self.valence - 1e-8: return e * self.eigenvalues.units
+      if occ >= self.valence - 1e-8:
+        if bugLev >= 5:
+          print "vasp/ext/base: fermi0K: found i: %s  e: %s  w: %s  occ: %s" \
+            % (i, e, w, occ,)
+        return e * self.eigenvalues.units
     return None
 
   @property
@@ -981,6 +1127,11 @@ class ExtractBase(object):
     """ Returns Condunction Band Minimum. """
     if not self.is_dft: raise AttributeError('not a DFT calculation.')
     from numpy import min
+    if bugLev >= 5:
+      print "vasp/ext/base: cbm: eigvals:", self.eigenvalues
+      print "vasp/ext/base: cbm: fermi a:", self.fermi0K
+      print "vasp/ext/base: cbm: fermi units:", self.fermi0K.units
+      print "vasp/ext/base: cbm: fermi b:", self.fermi0K+1e-8*self.fermi0K.units
     return min(self.eigenvalues[self.eigenvalues>self.fermi0K+1e-8*self.fermi0K.units])
 
   @property
