@@ -936,10 +936,10 @@ class Relaxation(BaseKeyword):
     ibrion = instance.ibrion if instance.ibrion is not None                    \
              else (-1 if nsw <= 0 else 2)
     if nsw <= 0 or ibrion == -1: return 'static'
-    return { None: 'ions',
-             0: 'ions', 
-             1: 'ions', 
-             2: 'ions', 
+    return { None: 'ionic',
+             0: 'ionic', 
+             1: 'ionic', 
+             2: 'ionic', 
              3: 'cellshape ions volume',
              4: 'cellshape ions',
              5: 'cellshape',

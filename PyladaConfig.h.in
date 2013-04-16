@@ -7,3 +7,5 @@
 #cmakedefine NUMPY_HAS_LONG_DOUBLE 
 #cmakedefine NUMPY_HAS_BOOL
 #cmakedefine PYLADA_WITH_EIGEN3 
+#cmakedefine LADA_NPY_NEWDEFS
+#cmakedefine LADA_NPY_HAS_ENABLEFLAGS

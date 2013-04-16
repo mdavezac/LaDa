@@ -124,7 +124,7 @@ namespace Pylada
       if(_self->yielded->flags & PYLADA_MACRO) _self->yielded->flags -= PYLADA_MACRO;
 #     undef PYLADA_MACRO
 #     ifdef NPY_ARRAY_C_CONTIGUOUS
-#       define PYLADA_MACRO NPY_ARRAY_C_CONTIGUOUS;
+#       define PYLADA_MACRO NPY_ARRAY_C_CONTIGUOUS
 #     else 
 #       define PYLADA_MACRO NPY_C_CONTIGUOUS
 #     endif

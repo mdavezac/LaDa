@@ -15,7 +15,7 @@
 #       error PYLADA_MACRO already defined
 #     endif
 #     ifdef NPY_ARRAY_C_CONTIGUOUS
-#       define PYLADA_MACRO NPY_ARRAY_C_CONTIGUOUS;
+#       define PYLADA_MACRO NPY_ARRAY_C_CONTIGUOUS
 #     else 
 #       define PYLADA_MACRO NPY_C_CONTIGUOUS
 #     endif
@@ -75,7 +75,7 @@
 #       error PYLADA_MACRO already defined
 #     endif
 #     ifdef NPY_ARRAY_C_CONTIGUOUS
-#       define PYLADA_MACRO NPY_ARRAY_C_CONTIGUOUS;
+#       define PYLADA_MACRO NPY_ARRAY_C_CONTIGUOUS
 #     else 
 #       define PYLADA_MACRO NPY_C_CONTIGUOUS
 #     endif
