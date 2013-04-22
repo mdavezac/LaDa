@@ -12,8 +12,14 @@ from lockfile import LockFile, open_exclusive
 
 bugLev = 0
 """
-global debug verbosity
+global debug level
 """
+
+
+def setBugLev( lev):
+  global bugLev
+  bugLev = lev
+
 
 def _copyfile_impl(src, dest):
   """ Copies files by hand. 

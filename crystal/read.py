@@ -360,7 +360,10 @@ def icsd_cif(filename):
       if len(x)>0 and x[0] == '_atom_site_0_iso_or_equiv':
           pos_big = lines.index(l)
 
-      if pos_end == 0 and l in ['\n', '\r\n'] and lines.index(l) > pos_big:
+      #if pos_end == 0 and l in ['\n', '\r\n'] and lines.index(l) > pos_big:
+      if pos_end == 0 and pos_big > 0 \
+        and (l in ['\n', '\r\n'] or l.startswith('#')) \
+        and lines.index(l) > pos_big:
           pos_end = lines.index(l)
 
 

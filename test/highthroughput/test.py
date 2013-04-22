@@ -28,6 +28,9 @@ def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
   from pylada.jobfolder import JobFolder
   from pylada import interactive
   from pylada.misc import bugLev
+  from pylada.misc import setBugLev
+
+  setBugLev(0)   # set global debug level
 
   # reads input.
   input = read_input(inputpath)
@@ -189,7 +192,7 @@ def magnetic_wave( path=None, inputpath='input.py', **kwargs):
   from pylada.jobfolder import JobFolder
   from pylada import interactive
   from pylada.misc import bugLev
-  import pickle
+  import pickle, random
 
   with open(path) as fin:
     jobfolder = pickle.load( fin)
@@ -231,7 +234,8 @@ def magnetic_wave( path=None, inputpath='input.py', **kwargs):
       print "test/hi/test.mag: nonmag structure: %s" % (nonmagjob.structure,)
       print "test/hi/test.mag: extract.species: %s" % (extract.species,)
 
-    if not is_magnetic_system(extract.structure, extract.functional.species): continue
+    if not is_magnetic_system(extract.structure, extract.functional.species):
+      continue
 
     # loads lattice and material from non-magnetic job.
     material = nonmagjob.material
@@ -276,42 +280,68 @@ def magnetic_wave( path=None, inputpath='input.py', **kwargs):
         # saves some stuff for future reference.
         job.material = material
         job.lattice  = lattice
+        print "test/hi/test.mag: created jobname: %s" % (jobname,)
         nb_new_folders += 1
 
       # now tries and creates anti-ferro-lattices folders if it does not already exist.
       structure, magmom = species_antiferro(extract.structure, extract.functional.species, func) 
       jobname = normpath("{0}/{1}anti-ferro-0".format(basename, prefix))
-      if magmom and jobname not in jobfolder and do_anti_ferro:
+      if magmom and jobname not in jobfolder and input.do_antiferro:
         structure.name = "{0} in {1}, {2}specie-anti-ferro."\
                          .format(material, lattice.name, prefix)
 
         job = jobfolder / jobname
-        job.functional = input.relaxer
+        job.functional = input.vasp
         job.params["structure"] = structure.copy()
         job.params["magmom"] = True
         job.params["ispin"] =  2
         # saves some stuff for future reference.
         job.material = material
         job.lattice  = lattice
+        print "test/hi/test.mag: created jobname: %s" % (jobname,)
         nb_new_folders += 1
 
       # random anti-ferro.
-      for i in range(1, 1+input.nbantiferro):
-        structure, magmom = random(extract.structure, extract.functional.species, func)
-        if not magmom: continue
-        jobname = normpath("{0}/{1}anti-ferro-{2}".format(basename, prefix, i))
-        if jobname in jobfolder: continue
-        structure.name = "{0} in {1}, random anti-ferro.".format(material, lattice.name)
+      natom = len( extract.structure)
 
-        job = jobfolder / jobname
-        job.functional = input.vasp if inputpath is not None else nonmagjob.functional
-        job.params["structure"] = structure.copy()
-        job.params["magmom"] = True
-        job.params["ispin"] =  2
-        # saves some stuff for future reference.
-        job.material = material
-        job.lattice  = lattice
-        nb_new_folders += 1
+      # Total num tests = 2**natom, but each one is counted
+      # twice, since ddd == uuu, and ddu == uud, etc.,
+      # where d = spin down, u = spin up.
+      # So the num unique tests = 2**natom / 2
+      numUnique = 2 ** (natom - 1)
+
+      # If the user asked for at least half the total num unique tests,
+      # we may as well do them all
+      print "test.py: natom: %d  numUnique: %d  input.nbantiferro: %d" \
+        % ( natom, numUnique, input.nbantiferro,)
+      if input.nbantiferro >= numUnique / 2:
+        # Do all possible combinations
+        print 'test.py: Do all possible antiferro combinations'
+        for itest in range( numUnique):
+          runAntiFerroTest(
+            bugLev, jobfolder, material, lattice,
+            inputpath, input,
+            extract, basename, prefix, itest, itest)
+          print "test/hi/test.mag: created jobname: %s" % (jobname,)
+          nb_new_folders += 1
+
+      else:
+        # Only run a few random combinations
+        print 'test.py: Do a random selection of antiferro combinations'
+        doneMap = {}
+        ix = 0
+        while True:
+          itest = random.randint( 0, numUnique - 1)
+          if itest not in doneMap:
+            doneMap[itest] = True
+            runAntiFerroTest(
+              bugLev, jobfolder, material, lattice,
+              inputpath, input,
+              extract, basename, prefix, ix, itest)
+            print "test/hi/test.mag: created jobname: %s" % (jobname,)
+            nb_new_folders += 1
+            ix += 1
+            if ix >= input.nbantiferro: break
 
   # now saves new job folder
   print "Created {0} new folders.".format(nb_new_folders)
@@ -397,10 +427,43 @@ def species_antiferro(structure, species, func=min):
     s += abs(atom.magmom)
   return result, s > 1e-6 
 
-def random(structure, species, func=min):
-  """ High-spin random magnetic order. """
-  from random import choice
-  result = structure.copy()
-  for atom in result:
-    atom.magmom = choice([-1e0, 1e0]) * func(deduce_moment( atom, species))
-  return result, True
+
+
+# Given itest use it's binary representation to set the spins.
+# For example if natom = 4 and itest = 5,
+# we set the spins to 0101.
+def runAntiFerroTest(
+  bugLev, jobfolder, material, lattice,
+  inputpath, input,
+  extract, basename, prefix, ix, itest):
+
+  from os.path import normpath
+
+  structure = extract.structure.copy()
+  natom = len( extract.structure)
+  if bugLev >= 1:
+    print "runAntiFerroTest: material: %s  natom: %d  ix: %d  itest: %d" \
+      % (material, natom, ix, itest,)
+
+  itmp = itest
+  for ii in range( natom):
+    spin = -1.
+    if itmp % 2 == 1: spin = 1.
+    atom = structure[natom-1-ii]
+    atom.magmom = spin * min( deduce_moment(atom, extract.functional.species))
+
+  jobname = normpath("{0}/{1}anti-ferro-{2}".format(
+    basename, prefix, ix))
+  if jobname not in jobfolder:
+    structure.name = "{0} in {1}, random anti-ferro.".format(
+      material, lattice.name)
+    job = jobfolder / jobname
+    if inputpath == None: job.functional = nonmagjob.functional
+    else: job.functional = input.vasp
+    job.params["structure"] = structure.copy()
+    job.params["magmom"] = True
+    job.params["ispin"] =  2
+    # saves some stuff for future reference.
+    job.material = material
+    job.lattice  = lattice
+

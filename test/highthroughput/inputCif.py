@@ -108,19 +108,18 @@ vasp.add_specie = "Zn", pseudoDir + "/Zn", U("dudarev", "d", 6.0), 2
 vasp.add_specie = "Zr", pseudoDir + "/Zr", U("dudarev", "d", 3.0), 4
 
 
-vasp.species["Co"].moment = [ 4.0, 0.6 ] 
-vasp.species["Cr"].moment = [ 8.0, 0.6 ]
-vasp.species["Cr"].moment = [ 8.0, 0.6 ]
-vasp.species["Cu"].moment = [ 8.0, 0.6 ] 
-vasp.species["Fe"].moment = [ 8.0, 0.6 ]
-vasp.species["Ir"].moment = [ 4.0, 0.6 ]
-vasp.species["Mn"].moment = [ 8.0, 0.6 ]
+vasp.species["Co"].moment = [ 1.0, 4.0 ] 
+vasp.species["Cr"].moment = [ 1.0, 4.0 ]
+vasp.species["Cu"].moment = [ 1.0, 4.0 ] 
+vasp.species["Fe"].moment = [ 1.0, 4.0 ]
+vasp.species["Ir"].moment = [ 1.0, 4.0 ]
+vasp.species["Mn"].moment = [ 1.0, 4.0 ]
 vasp.species["Mo"].moment = [ 1.0, 4.0 ]
-vasp.species["Ni"].moment = [ 4.0, 0.6 ]
-vasp.species["Rh"].moment = [ 8.0, 0.6 ]
-vasp.species["Sc"].moment = [ 8.0, 0.6 ]
-vasp.species["Ti"].moment = [ 5.0, 0.6 ]
-vasp.species["V" ].moment = [ 8.0, 0.6 ]
+vasp.species["Ni"].moment = [ 1.0, 4.0 ]
+vasp.species["Rh"].moment = [ 1.0, 4.0 ]
+vasp.species["Sc"].moment = [ 1.0, 4.0 ]
+vasp.species["Ti"].moment = [ 1.0, 4.0 ]
+vasp.species["V" ].moment = [ 1.0, 4.0 ]
 
 
 vasp.first_trial = { "kpoints": "\n0\nAuto\n10", "encut": 0.9 }
