@@ -5,6 +5,8 @@ from quantities import g, cm, eV
 from ...tools import make_cached
 from ...tools.extract import search_factory
 from ...error import GrepError
+from pylada.misc import bugLev
+
 
 OutcarSearchMixin = search_factory('OutcarSearchMixin', 'OUTCAR', __name__)
 
@@ -15,34 +17,39 @@ class ExtractBase(object):
     """ Initializes the extraction class. """
     super(ExtractBase, self).__init__()
 
-  @property 
+  @property
   @make_cached
   def ialgo(self):
     """ Returns the kind of algorithms. """
+    # Look for line like:    IALGO  =     68    algorithm
     result = self._find_first_OUTCAR(r"""^\s*IALGO\s*=\s*(\d+)\s*""")
     return int(result.group(1))
 
-  @property 
+  @property
   @make_cached
   def algo(self):
     """ Returns the kind of algorithms. """
+    # This could be gotten in OUTCAR: use the 1 occurance of:
+    #   ALGO = Fast
     return { 68: 'Fast', 38: 'Normal', 48: 'Very Fast', 58: 'Conjugate',
              53: 'Damped', 4: 'Subrot', 90: 'Exact', 2: 'Nothing'}[self.ialgo]
 
   @property
   def is_dft(self):
     """ True if this is a DFT calculation, as opposed to GW. """
-    try: return self.algo not in ['gw', 'gw0', 'chi', 'scgw', 'scgw0'] 
+    try: return self.algo not in ['gw', 'gw0', 'chi', 'scgw', 'scgw0']
     except: return False
   @property
   def is_gw(self):
     """ True if this is a GW calculation, as opposed to DFT. """
-    try: return self.algo in ['gw', 'gw0', 'chi', 'scgw', 'scgw0'] 
+    try: return self.algo in ['gw', 'gw0', 'chi', 'scgw', 'scgw0']
     except: return False
-    
-  @property 
+
+  @property
   def encut(self):
     """ Energy cutoff. """
+    # OUTCAR: use the first occurance of:
+    #   ENCUT  =  252.0 eV  18.52 Ry  ...
     return float(self._find_first_OUTCAR(r"ENCUT\s*=\s*(\S+)").group(1)) * eV
 
 
@@ -50,19 +57,18 @@ class ExtractBase(object):
   @make_cached
   def functional(self):
     """ Returns vasp functional used for calculation.
-
-        Requires the functional to be pasted at the end of the calculations. 
+        Requires the functional to be pasted at the end of the calculations.
     """
     from re import compile
     from .. import exec_input
     regex = compile('#+ FUNCTIONAL #+\n((.|\n)*)\n#+ END FUNCTIONAL #+')
     with self.__outcar__() as file: result = regex.search(file.read())
     if result is None: return None
-    return exec_input(result.group(1)).vasp
+    return exec_input(result.group(1)).relax
 
   @property
   def success(self):
-    """ Checks that VASP run has completed. 
+    """ Checks that VASP run has completed.
 
         At this point, checks for the existence of OUTCAR.
         Then checks that timing stuff is present at end of OUTCAR.
@@ -70,6 +76,33 @@ class ExtractBase(object):
     regex = r"""General\s+timing\s+and\s+accounting\s+informations\s+for\s+this\s+job"""
     try: return self._find_last_OUTCAR(regex) is not None
     except: return False
+
+  @property
+  def iterTimes(self):
+    """ Returns a list of pairs: [[cpuTime,realTime], ...]
+    from lines like:
+         LOOP+:  cpu time   22.49: real time   24.43
+    or sometimes like:
+         LOOP+:  VPU time   42.93: CPU time   43.04
+         In this case "CPU" is wall time, and "VPU" is CPU.
+         See: http://cms.mpi.univie.ac.at/vasp-forum/forum_viewtopic.php?3.336
+    """
+    import re
+    regex = re.compile(
+      r'^\s*LOOP\+:\s+\w+\s+time\s+([.0-9]+):\s+\w+\s+time\s+([.0-9]+)\s*$')
+    tlist = []
+    with self.__outcar__() as file: lines = file.readlines()
+    for line in lines:
+      mat = re.match( regex, line)
+      if mat != None:
+        cpuTime = float(mat.group(1))
+        realTime = float(mat.group(2))
+        tlist.append( [cpuTime, realTime])
+    return tlist
+
+
+
+
 
   @property
   @make_cached
@@ -100,7 +133,7 @@ class ExtractBase(object):
     except: pass
 
     result = Structure()
-    with self.__outcar__() as file: 
+    with self.__outcar__() as file:
       atom_index, cell_index = None, None
       cell_re = compile(r"""^\s*direct\s+lattice\s+vectors\s+""")
       atom_re = compile(r"""^\s*position\s+of\s+ions\s+in\s+fractional\s+coordinates""")
@@ -109,9 +142,9 @@ class ExtractBase(object):
       data = []
       for i in range(3):
         data.append(file.next().split())
-      try: 
+      try:
         for i in range(3): result.cell[:,i] = array(data[i][:3], dtype='float64')
-      except: 
+      except:
         for i in range(3): result.cell[i, :] = array(data[i][-3:], dtype='float64')
         result.cell = inv(result.cell)
       for line in file:
@@ -122,7 +155,7 @@ class ExtractBase(object):
           result.add_atom(pos=dot(result.cell, array(data, dtype='float64')), type=specie)
     return result
 
-  @property 
+  @property
   def _catted_contcar(self):
     """ Returns contcar found at end of OUTCAR. """
     from re import compile
@@ -159,15 +192,15 @@ class ExtractBase(object):
     if atom_index is None or cell_index is None:
       raise GrepError("Could not find structure description in OUTCAR.")
     result = Structure()
-    try: 
+    try:
       for i in range(3):
         result.cell[:,i] = array(lines[-cell_index+i].split()[:3], dtype="float64")
-    except: 
+    except:
       for i in range(3): result.cell[i,:] = array(lines[-cell_index+i].split()[-3:], dtype="float64")
       result.cell = inv(result.cell)
     species = [type for type, n in zip(self.species, self.stoichiometry) for i in xrange(n)]
     while atom_index > 0 and len(lines[-atom_index].split()) == 6:
-      result.add_atom( pos=array(lines[-atom_index].split()[:3], dtype="float64"), 
+      result.add_atom( pos=array(lines[-atom_index].split()[:3], dtype="float64"),
                        type=species.pop(-1) )
       atom_index -= 1
 
@@ -195,8 +228,8 @@ class ExtractBase(object):
       except GrepError: title = ''
       if len(title) != 0: result.name = title
     else: result.name = name
-    
-    if self.is_dft: result.energy = self.total_energy 
+
+    if self.is_dft: result.energy = self.total_energy
 
     try: initial = self.initial_structure
     except: pass
@@ -250,7 +283,7 @@ class ExtractBase(object):
     regex = r"""\s*angular\s+momentum\s+for\s+each\s+species\s+LDAUL\s+=""" + groups \
           + r"""\s*U\s+\(eV\)\s+for\s+each\s+species\s+LDAUU\s+="""         + groups \
           + r"""\s*J\s+\(eV\)\s+for\s+each\s+species\s+LDAUJ\s+="""         + groups
-    result = {} 
+    result = {}
     for k in species: result[k] = []
     for found in self._search_OUTCAR(regex, M):
       moment = found.group(1).split()
@@ -266,8 +299,8 @@ class ExtractBase(object):
     regex = r"""\s*angular\s+momentum\s+for\s+each\s+species,\s+LDAU#\s*(?:\d+)\s*:\s*L\s*=""" + groups \
           + r"""\s*U\s+\(eV\)\s+for\s+each\s+species,\s+LDAU\#\s*(?:\d+)\s*:\s*U\s*=""" + groups \
           + r"""\s*J\s+\(eV\)\s+for\s+each\s+species,\s+LDAU\#\s*(?:\d+)\s*:\s*J\s*=""" + groups \
-          + r"""\s*nlep\s+for\s+each\s+species,\s+LDAU\#\s*(?:\d+)\s*:\s*O\s*=""" + groups 
-    result = {} 
+          + r"""\s*nlep\s+for\s+each\s+species,\s+LDAU\#\s*(?:\d+)\s*:\s*O\s*=""" + groups
+    result = {}
     for k in species: result[k] = []
     for found in self._search_OUTCAR(regex, M):
       moment = found.group(1).split()
@@ -291,14 +324,14 @@ class ExtractBase(object):
 
   @property
   @make_cached
-  def volume(self): 
+  def volume(self):
     """ Unit-cell volume. """
     from numpy import abs
     from numpy.linalg import det
     from quantities import angstrom
     return abs(det(self.structure.scale * self.structure.cell)) * angstrom**3
 
-  @property 
+  @property
   @make_cached
   def reciprocal_volume(self):
     """ Reciprocal space volume (including 2pi). """
@@ -314,9 +347,9 @@ class ExtractBase(object):
     from quantities import atomic_mass_unit as amu
     from ... import periodic_table as pt
     result = 0e0 * amu;
-    for atom, n in zip(self.species, self.stoichiometry): 
+    for atom, n in zip(self.species, self.stoichiometry):
       if atom not in pt.__dict__: return None;
-      result += pt.__dict__[atom].atomic_weight * float(n) * amu 
+      result += pt.__dict__[atom].atomic_weight * float(n) * amu
     return (result / self.volume).rescale(g/cm**3)
 
   @property
@@ -334,11 +367,12 @@ class ExtractBase(object):
   @make_cached
   def stoichiometry(self):
     """ Stoichiometry of the compound. """
+    # Find line like:    ions per type =               2   4
     result = self._find_first_OUTCAR(r"""\s*ions\s+per\s+type\s*=.*$""")
     if result is None: return None
     return [int(u) for u in result.group(0).split()[4:]]
   @property
-  def ions_per_specie(self): 
+  def ions_per_specie(self):
     """ Alias for stoichiometry. """
     return self.stoichiometry
 
@@ -355,7 +389,7 @@ class ExtractBase(object):
     result = self._find_first_OUTCAR(r"""\s*ISIF\s*=\s*(-?\d+)\s+""")
     if result is None: return None
     return int(result.group(1))
-  
+
   @property
   @make_cached
   def nsw(self):
@@ -383,13 +417,13 @@ class ExtractBase(object):
     result = result.group(1).rstrip().lstrip().split()
     if len(result) == 1: return float(result[0]) * eV
     return array(result, dtype="float64") * eV
-  
+
   @property
-  def relaxation(self): 
+  def relaxation(self):
     """ Returns the kind of relaxation performed in this calculation. """
     from ..keywords import Relaxation
     return Relaxation().__get__(self)
-  
+
   @property
   @make_cached
   def ibrion(self):
@@ -485,7 +519,7 @@ class ExtractBase(object):
     """ Greps LSORBIT from OUTCAR. """
     result = self._find_first_OUTCAR(r"""\s*LSORBIT\s*=\s*(T|F)\s+""")
     if result is None: return None
-    return result.group(1) == 'T' 
+    return result.group(1) == 'T'
 
   @property
   @make_cached
@@ -493,7 +527,7 @@ class ExtractBase(object):
     """ Greps LASPH from OUTCAR. """
     result = self._find_first_OUTCAR(r"""\s*LASPH\s*=\s*(T|F)\s+""")
     if result is None: return None
-    return result.group(1) == 'T' 
+    return result.group(1) == 'T'
 
   @property
   @make_cached
@@ -501,7 +535,7 @@ class ExtractBase(object):
     """ Greps METAGGA from OUTCAR. """
     result = self._find_first_OUTCAR(r"""\s*METAGGA\s*=\s*(T|F)\s+""")
     if result is None: return None
-    return result.group(1) == 'T' 
+    return result.group(1) == 'T'
 
   @property
   @make_cached
@@ -509,7 +543,7 @@ class ExtractBase(object):
     """ Greps LREAL from OUTCAR. """
     result = self._find_first_OUTCAR(r"""\s*LREAL\s*=\s*(T|F)\s+""")
     if result is None: return None
-    return result.group(1) == 'T' 
+    return result.group(1) == 'T'
 
   @property
   @make_cached
@@ -517,7 +551,7 @@ class ExtractBase(object):
     """ Greps LCOMPAT from OUTCAR. """
     result = self._find_first_OUTCAR(r"""\s*LCOMPAT\s*=\s*(T|F)\s+""")
     if result is None: return None
-    return result.group(1) == 'T' 
+    return result.group(1) == 'T'
 
   @property
   @make_cached
@@ -525,7 +559,7 @@ class ExtractBase(object):
     """ Greps LREAL_COMPAT from OUTCAR. """
     result = self._find_first_OUTCAR(r"""\s*LREAL_COMPAT\s*=\s*(T|F)\s+""")
     if result is None: return None
-    return result.group(1) == 'T' 
+    return result.group(1) == 'T'
 
   @property
   @make_cached
@@ -533,7 +567,7 @@ class ExtractBase(object):
     """ Greps LGGA_COMPAT from OUTCAR. """
     result = self._find_first_OUTCAR(r"""\s*LGGA_COMPAT\s*=\s*(T|F)\s+""")
     if result is None: return None
-    return result.group(1) == 'T' 
+    return result.group(1) == 'T'
 
   @property
   @make_cached
@@ -541,7 +575,7 @@ class ExtractBase(object):
     """ Greps LCORR from OUTCAR. """
     result = self._find_first_OUTCAR(r"""\s*LCORR\s*=\s*(T|F)\s+""")
     if result is None: return None
-    return result.group(1) == 'T' 
+    return result.group(1) == 'T'
 
   @property
   @make_cached
@@ -549,15 +583,15 @@ class ExtractBase(object):
     """ Greps LDIAG from OUTCAR. """
     result = self._find_first_OUTCAR(r"""\s*LDIAG\s*=\s*(T|F)\s+""")
     if result is None: return None
-    return result.group(1) == 'T' 
+    return result.group(1) == 'T'
 
 
   @property
   @make_cached
   def kpoints(self):
     """ Greps k-points from OUTCAR.
-    
-        Numpy array where each row is a k-vector in cartesian units. 
+
+        Numpy array where each row is a k-vector in cartesian units.
     """
     from re import compile
     from numpy import array
@@ -579,18 +613,38 @@ class ExtractBase(object):
           data = line.split()
           if len(data) != 4: break;
           result.append( data[:3] )
-        return array(result, dtype="float64") 
+        return array(result, dtype="float64")
       if found == 2:
         for line in file:
           data = line.split()
           if len(data) == 0: break
           result.append(data[:3])
-        return array(result, dtype="float64") 
+        return array(result, dtype="float64")
 
   @property
   @make_cached
   def multiplicity(self):
     """ Greps multiplicity of each k-point from OUTCAR. """
+    # If generated kpoints,
+    # get the "weight" field from the cartesion part of a section like:
+    #   Found     10 irreducible k-points:
+    #   Following reciprocal coordinates:
+    #              Coordinates               Weight
+    #    0.000000  0.000000  0.000000      1.000000
+    #    0.250000  0.000000  0.000000      2.000000
+    #    ...
+    #   Following cartesian coordinates:
+    #              Coordinates               Weight
+    #    0.000000  0.000000  0.000000      1.000000
+    #    0.079365  0.045821  0.000000      2.000000
+    #    ...
+    # If specified kpoints,
+    # get the "weight" field from a section like:
+    #   k-points in units of 2pi/SCALE and weight: Automatic mesh
+    #     0.00000000  0.00000000  0.00000000       0.016
+    #     0.00000000  0.25000000  0.25000000       0.188
+    #     ...
+
     from re import compile
     from numpy import array
 
@@ -613,7 +667,7 @@ class ExtractBase(object):
           data = line.split()
           if len(data) != 4: break;
           result.append( data[-1] )
-        return array(result, dtype="float64") 
+        return array(result, dtype="float64")
       elif found == 2:
         for line in file:
           data = line.split()
@@ -621,7 +675,7 @@ class ExtractBase(object):
           result.append(float(data[3]))
         return array([round(r*float(len(result))) for r in result], dtype="float64")
 
-  @property 
+  @property
   @make_cached
   def ispin(self):
     """ Greps ISPIN from OUTCAR. """
@@ -656,6 +710,8 @@ class ExtractBase(object):
 
   def _unpolarized_values(self, which):
     """ Returns spin-unpolarized eigenvalues and occupations. """
+    # which = 1: select eigenvalues
+    # which = 2: select occupations
     from re import compile, finditer
     import re
 
@@ -669,13 +725,19 @@ class ExtractBase(object):
     if found is None:
       raise GrepError("Could not extract eigenvalues/occupation from OUTCAR.")
 
+    # Here i is the distance from file end of the last line like:
+    #  k-point   1 :       0.0000    0.0000    0.0000
+    if bugLev >= 5:
+      print "vasp/ext/base: unpolarized_vals: is_dft: %s  i: %d  line: %s" \
+        % ( self.is_dft, i, line,)
+
     # now greps actual results.
     if self.is_dft:
       kp_re = r"\s*k-point\s+(?:(?:\d|\*)+)\s*:\s*(?:\S+)\s*(?:\S+)\s*(?:\S+)\n"\
               r"\s*band\s+No\.\s+band\s+energies\s+occupation\s*\n"\
               r"(\s*(?:\d+)\s+(?:\S+)\s+(?:\S+)\s*\n)+"
       skip, cols = 2, 3
-    else: 
+    else:
       kp_re = r"\s*k-point\s+(?:(?:\d|\*)+)\s*:\s*(?:\S+)\s*(?:\S+)\s*(?:\S+)\n"\
               r"\s*band\s+No\.\s+.*\n\n"\
               r"(\s*(?:\d+)\s+(?:\S+)\s+(?:\S+)\s+(?:\S+)\s+(?:\S+)"\
@@ -683,8 +745,31 @@ class ExtractBase(object):
       skip, cols = 3, 8
     results = []
     for kp in finditer(kp_re, "".join(lines[-i-1:]), re.M):
+      # Each iteration is a k-point.
+      # dummy is a list of sublists, one sublist per OUTCAR line, like:
+      #   [['1', '-30.5498', '2.00000'],
+      #    ['2', '-30.5497', '2.00000'],
+      #    ['3', '-30.3889', '2.00000'],
+      #    ['4', '-30.3889', '2.00000'],
+      #    ['5', '-30.3857', '2.00000'],
+      #    ...
+      #    ['28', '7.5661', '0.00000'],
+      #    [], []]
+      # We only process those elements having len == cols (here, 3).
+      # We append the "which" column value to results.
+
       dummy = [u.split() for u in kp.group(0).split('\n')[skip:]]
       results.append([float(u[which]) for u in dummy if len(u) == cols])
+
+    # results is a list of sublists, one sublist per k-point,
+    # containing the band energies:
+    #  [[-30.5498, -30.5497, -30.3889, -30.3889, ...],
+    #   [-30.5371, -30.5371, -30.4543, -30.4542, ...],
+    #   ...
+    #   [-30.6596, -30.6596, -30.4905, -30.4905, ...],
+    #   [-30.6604, -30.6603, -30.4906, -30.4906, ...]]
+    if bugLev >= 5:
+      print "vasp/ext/base: unpolarized_vals: results: %s" % ( results,)
     return results
 
   def _spin_polarized_values(self, which):
@@ -699,7 +784,7 @@ class ExtractBase(object):
     for i, line in enumerate(lines[::-1]):
       found = spin_comp1_re.match(line)
       if found is None: continue
-      if found.group(1) == '1': 
+      if found.group(1) == '1':
         if spins[1] is None:
           raise GrepError("Could not find two spin components in OUTCAR.")
         spins[0] = i
@@ -714,7 +799,7 @@ class ExtractBase(object):
               r"\s*band\s+No\.\s+band\s+energies\s+occupation\s*\n"\
               r"(\s*(?:\d+)\s+(?:\S+)\s+(?:\S+)\s*\n)+"
       skip, cols = 2, 3
-    else: 
+    else:
       kp_re = r"\s*k-point\s+(?:(?:\d|\*)+)\s*:\s*(?:\S+)\s*(?:\S+)\s*(?:\S+)\n"\
               r"\s*band\s+No\.\s+.*\n\n"\
               r"(\s*(?:\d+)\s+(?:\S+)\s+(?:\S+)\s+(?:\S+)\s+(?:\S+)"\
@@ -733,8 +818,9 @@ class ExtractBase(object):
   @make_cached
   def ionic_charges(self):
     """ Greps ionic_charges from OUTCAR."""
+    # Line like:    ZVAL   =  12.00  6.00
     regex = """^\s*ZVAL\s*=\s*(.*)$"""
-    result = self._find_last_OUTCAR(regex) 
+    result = self._find_last_OUTCAR(regex)
     if result is None:
       raise GrepError("Could not find ionic_charges in OUTCAR")
     return [float(u) for u in result.group(1).split()]
@@ -747,18 +833,25 @@ class ExtractBase(object):
     species = self.species
     atoms = [u.type for u in self.structure]
     result = 0
+
+    # ionic is like: [12.0, 6.0]
+    # species is like: ['Mo', 'S']
+    if bugLev >= 5:
+      print "vasp/ext/base: valence: ionic:", ionic
+      print "vasp/ext/base: valence: species:", species
     for c, s in zip(ionic, species): result += c * atoms.count(s)
     return result
-  
+
   @property
   @make_cached
   def nelect(self):
     """ Greps nelect from OUTCAR."""
+    # Find line like:    NELECT =      48.0000    total number of electrons
     regex = """^\s*NELECT\s*=\s*(\S+)\s+total\s+number\s+of\s+electrons\s*$"""
-    result = self._find_last_OUTCAR(regex) 
+    result = self._find_last_OUTCAR(regex)
     if result is None:
       raise GrepError("Could not find energy in OUTCAR")
-    return float(result.group(1)) 
+    return float(result.group(1))
 
   @property
   def extraelectron(self):
@@ -775,49 +868,49 @@ class ExtractBase(object):
     """ Greps LWAVE from OUTCAR. """
     result = self._find_first_OUTCAR(r"""^\s*LWAVE\s*=\s*(\S)""")
     if result is None: return None
-    return result.group(1) == 'T' 
-   
+    return result.group(1) == 'T'
+
   @property
   def lcharg(self):
     """ Greps LWAVE from OUTCAR. """
     result = self._find_first_OUTCAR(r"""^\s*LCHARG\s*=\s*(\S)""")
     if result is None: return None
-    return result.group(1) == 'T' 
-   
+    return result.group(1) == 'T'
+
   @property
   def lnoncollinear(self):
     """ Greps LNONCOLLINEAR from OUTCAR. """
     result = self._find_first_OUTCAR(r"""^\s*LNONCOLLINEAR\s*=\s*(\S)""")
     if result is None: return None
-    return result.group(1) == 'T' 
-   
+    return result.group(1) == 'T'
+
   @property
   def lsecvar(self):
     """ Greps LSECVAR from OUTCAR. """
     result = self._find_first_OUTCAR(r"""^\s*LSECVAR\s*=\s*(\S)""")
     if result is None: return None
-    return result.group(1) == 'T' 
+    return result.group(1) == 'T'
 
   @property
   def lelf(self):
     """ Greps LELF from OUTCAR. """
     result = self._find_first_OUTCAR(r"""^\s*LELF\s*=\s*(\S)""")
     if result is None: return None
-    return result.group(1) == 'T' 
+    return result.group(1) == 'T'
 
   @property
   def ldipol(self):
     """ Greps LDIPOL from OUTCAR. """
     result = self._find_first_OUTCAR(r"""^\s*LDIPOL\s*=\s*(\S)""")
     if result is None: return None
-    return result.group(1) == 'T' 
+    return result.group(1) == 'T'
 
   @property
   def lvtot(self):
     """ Greps LVTOT from OUTCAR. """
     result = self._find_first_OUTCAR(r"""^\s*LVTOT\s*=\s*(\S)""")
     if result is None: return None
-    return result.group(1) == 'T' 
+    return result.group(1) == 'T'
 
   @property
   def nelm(self):
@@ -864,8 +957,8 @@ class ExtractBase(object):
 
 
   def iterfiles(self, **kwargs):
-    """ iterates over input/output files. 
-    
+    """ iterates over input/output files.
+
         :param bool stout: Include standard output files
         :param bool errors: Include stderr files.
         :param bool input: Include INCAR file
@@ -907,7 +1000,7 @@ class ExtractBase(object):
     if not self.is_dft: raise AttributeError('not a DFT calculation.')
     from quantities import eV
     regex = """energy\s+without\s+entropy\s*=\s*(\S+)\s+energy\(sigma->0\)\s+=\s+(\S+)"""
-    result = self._find_last_OUTCAR(regex) 
+    result = self._find_last_OUTCAR(regex)
     if result is None:
       raise GrepError("Could not find sigma0 energy in OUTCAR")
     return float(result.group(2)) * eV
@@ -941,8 +1034,8 @@ class ExtractBase(object):
   @property
   def fermi0K(self):
     """ Fermi energy at zero kelvin.
-    
-        This procedure recomputes the fermi energy using a step-function. 
+
+        This procedure recomputes the fermi energy using a step-function.
         It avoids negative occupation numbers. As such, it may be different
         from the fermi energy given by vasp, depeneding on the smearing and the
         smearing function.
@@ -953,13 +1046,66 @@ class ExtractBase(object):
 
     if self.ispin == 2: eigs = rollaxis(self.eigenvalues, 0, 2)
     else: eigs = self.eigenvalues
+    if bugLev >= 5:
+      print "vasp/ext/base: fermi0K: eigs:", eigs
+      print "vasp/ext/base: fermi0K: multiplicity:", self.multiplicity
+    # eigs:
+    #   [[-30.5498 -30.5497 -30.3889 ...,   7.5536   7.5647   7.5661]
+    #    [-30.5371 -30.5371 -30.4543 ...,   7.3166   7.403    7.419 ]
+    #    [-30.5993 -30.5992 -30.5086 ...,   7.011    7.0944   7.3217]
+    #    ...,
+    #    [-30.7117 -30.7117 -30.4854 ...,   6.9983   7.368    7.3682]
+    #    [-30.6596 -30.6596 -30.4905 ...,   6.885    7.3079   7.308 ]
+    #    [-30.6604 -30.6603 -30.4906 ...,   6.885    7.3096   7.3097]]
+    # Multiplicity:
+    #   [ 1.  2.  2.  2.  2.  2.  2.  2.  2.  ...  2.  2.  2.  2.  2.]
+
+    # Make array = a list of pairs replicating each multiplicity
+    # for all the eigvals of the given kpoint.
+    # If there are K kpoints and N eigvals per kpoint,
+    # and the multiplicities are m0, m1, ..., m[K-1],
+    # then array is:
+    #   [
+    #    (eigs[0,0],m0), (eigs[0,1],m0), ... (eigs[0,N-1],m0),
+    #    (eigs[1,0],m1), (eigs[1,1],m1), ... (eigs[1,N-1],m1),
+    #    (eigs[2,0],m2), (eigs[2,1],m2), ... (eigs[2,N-1],m2),
+    #    ...
+    #    (eigs[K-1,0],m[K-1]), (eigs[K-1,1],m[K-1]), ... (eigs[K-1,N-1],m[K-1])
+    #   ]
+    #
+    # The zip below is an array of pairs like:
+    #   [(array([-30.5498, -30.5497, -30.3889, ... 7.5647, 7.5661]) * eV, 1.0),
+    #    (array([-30.5371, -30.5371, -30.4543, ... 7.403 , 7.419 ]) * eV, 2.0),
+    #    ...
+    #    (array([-30.6604, -30.6603, -30.4906, ... 7.3096, 7.3097]) * eV, 2.0)]
+
     array = [(e, m) for u, m in zip(eigs, self.multiplicity) for e in u.flat]
+    #if bugLev >= 5:
+    #  print "vasp/ext/base: fermi0K: unsorted array:", array
+
+    # Sort by increasing eig
     array = sorted(array, key=itemgetter(0))
+
+    # Work through the list of sorted pairs accumulating
+    #   occ += multiplicity * factor
+    # where factor = 1 / sum(multiplicity)
+    # When occ >= valence quit: that eigval is the fermi0K.
+
     occ = 0e0
     factor = (2.0 if self.ispin == 1 else 1.0)/float(sum(self.multiplicity))
+    if bugLev >= 5:
+      print "vasp/ext/base: ispin: ", self.ispin
+      print "vasp/ext/base: sum(mult): ", sum(self.multiplicity)
+      #print "vasp/ext/base: fermi0K: sorted array:", array
+      print "vasp/ext/base: fermi0K: factor:", factor
+      print "vasp/ext/base: fermi0K: valence: %s" % (self.valence,)
     for i, (e, w) in enumerate(array):
       occ += w*factor
-      if occ >= self.valence - 1e-8: return e * self.eigenvalues.units
+      if occ >= self.valence - 1e-8:
+        if bugLev >= 5:
+          print "vasp/ext/base: fermi0K: found i: %s  e: %s  w: %s  occ: %s" \
+            % (i, e, w, occ,)
+        return e * self.eigenvalues.units
     return None
 
   @property
@@ -972,7 +1118,7 @@ class ExtractBase(object):
     if self.cbm - self.vbm > 0.01 * self.cbm.units: return False
 
     fermi = self.fermi0K
-    vbm0 = max(self.eigenvalues[0][self.eigenvalues[0]<=float(fermi)+1e-8]) 
+    vbm0 = max(self.eigenvalues[0][self.eigenvalues[0]<=float(fermi)+1e-8])
     vbm1 = max(self.eigenvalues[1][self.eigenvalues[1]<=float(fermi)+1e-8])
     return abs(float(vbm0-vbm1)) > 2e0 * min(float(fermi - vbm0), float(fermi - vbm1))
 
@@ -981,6 +1127,11 @@ class ExtractBase(object):
     """ Returns Condunction Band Minimum. """
     if not self.is_dft: raise AttributeError('not a DFT calculation.')
     from numpy import min
+    if bugLev >= 5:
+      print "vasp/ext/base: cbm: eigvals:", self.eigenvalues
+      print "vasp/ext/base: cbm: fermi a:", self.fermi0K
+      print "vasp/ext/base: cbm: fermi units:", self.fermi0K.units
+      print "vasp/ext/base: cbm: fermi b:", self.fermi0K+1e-8*self.fermi0K.units
     return min(self.eigenvalues[self.eigenvalues>self.fermi0K+1e-8*self.fermi0K.units])
 
   @property
@@ -1010,7 +1161,7 @@ class ExtractBase(object):
     if not self.is_dft: raise AttributeError('not a DFT calculation.')
     from quantities import eV
     regex = """energy\s+without\s+entropy=\s*(\S+)\s+energy\(sigma->0\)\s+=\s+(\S+)"""
-    result = self._find_last_OUTCAR(regex) 
+    result = self._find_last_OUTCAR(regex)
     if result is None:
       raise GrepError("Could not find energy in OUTCAR")
     return float(result.group(1)) * eV
@@ -1025,7 +1176,7 @@ class ExtractBase(object):
     if not self.is_dft: raise AttributeError('not a DFT calculation.')
     from quantities import eV
     regex = r"""E-fermi\s*:\s*(\S+)"""
-    result = self._find_last_OUTCAR(regex) 
+    result = self._find_last_OUTCAR(regex)
     if result is None:
       raise GrepError("Could not find fermi energy in OUTCAR")
     return float(result.group(1)) * eV
@@ -1036,7 +1187,7 @@ class ExtractBase(object):
     """ Returns magnetic moment from OUTCAR. """
     if not self.is_dft: raise AttributeError('not a DFT calculation.')
     regex = r"""^\s*number\s+of\s+electron\s+(\S+)\s+magnetization\s+(\S+)\s*$"""
-    result = self._find_last_OUTCAR(regex) 
+    result = self._find_last_OUTCAR(regex)
     if result is None:
       raise GrepError("Could not find magnetic moment in OUTCAR")
     return float(result.group(2))
@@ -1060,7 +1211,7 @@ class ExtractBase(object):
     if not self.is_dft: raise AttributeError('not a DFT calculation.')
     from quantities import kbar as kB
     regex = r"""external\s+pressure\s*=\s*(\S+)\s*kB\s+Pullay\s+stress\s*=\s*(\S+)\s*kB"""
-    result = self._find_last_OUTCAR(regex) 
+    result = self._find_last_OUTCAR(regex)
     if result is None: raise GrepError("Could not find pressure in OUTCAR")
     return float(result.group(1)) * kB
 
@@ -1070,7 +1221,7 @@ class ExtractBase(object):
     """ Greps alpha+bet from OUTCAR """
     if not self.is_dft: raise AttributeError('not a DFT calculation.')
     regex = r"""^\s*E-fermi\s*:\s*(\S+)\s+XC\(G=0\)\s*:\s*(\S+)\s+alpha\+bet\s*:(\S+)\s*$"""
-    result = self._find_last_OUTCAR(regex) 
+    result = self._find_last_OUTCAR(regex)
     if result is None: raise GrepError("Could not find alpha+bet in OUTCAR")
     return float(result.group(3))
 
@@ -1080,7 +1231,7 @@ class ExtractBase(object):
     """ Greps XC(G=0) from OUTCAR """
     if not self.is_dft: raise AttributeError('not a DFT calculation.')
     regex = r"""^\s*E-fermi\s*:\s*(\S+)\s+XC\(G=0\)\s*:\s*(\S+)\s+alpha\+bet\s*:(\S+)\s*$"""
-    result = self._find_last_OUTCAR(regex) 
+    result = self._find_last_OUTCAR(regex)
     if result is None: raise GrepError("Could not find xc(G=0) in OUTCAR")
     return float(result.group(2))
 
@@ -1092,7 +1243,7 @@ class ExtractBase(object):
     from quantities import kbar as kB
     regex = r"external\s+pressure\s*=\s*(\S+)\s*kB\s+"                        \
             r"Pullay\s+stress\s*=\s*(\S+)\s*kB"
-    result = self._find_last_OUTCAR(regex) 
+    result = self._find_last_OUTCAR(regex)
     if result is None:
      raise GrepError("Could not find pulay pressure in OUTCAR")
     return float(result.group(2)) * kB
@@ -1109,7 +1260,7 @@ class ExtractBase(object):
     with self.__outcar__() as file: result = search(regex, file.read(), re_M)
     if result is None: raise GrepError("Could not FFT grid in OUTCAR.""")
     return array([ int(result.group(1)),
-                   int(result.group(2)), 
+                   int(result.group(2)),
                    int(result.group(3)) ])
 
   @property
@@ -1132,22 +1283,47 @@ class ExtractBase(object):
         This is a numpy array where the first dimension is the ion (eg one row
         per ion), and the second the partial charges for each angular momentum.
         The total is not included. Implementation also used for magnetization.
+
+        The OUTCAR looks like the following, although in some
+        cases there may be an extra column for the f shell,
+        or the d shell may be missing.
+
+         total charge
+
+        # of ion     s       p       d       tot
+        ----------------------------------------
+          1        0.288   0.363   6.223   6.874
+          2        1.771   4.143   0.000   5.914
+        ------------------------------------------------
+        tot        2.059   4.506   6.223  12.788
+
+         magnetization (x)
+
+        # of ion     s       p       d       tot
+        ----------------------------------------
+          1       -0.017  -0.008  -1.935  -1.960
+          2       -0.005  -0.006   0.000  -0.011
+        ------------------------------------------------
+        tot       -0.022  -0.014  -1.935  -1.970
     """
-    import re 
+    import re
     from numpy import array
 
     result = []
     with self.__outcar__() as file: lines = file.readlines()
-    found = re.compile(grep) 
+    found = re.compile(grep)
     for index in xrange(1, len(lines)+1):
-      if found.search(lines[-index]) is not None: break 
+      if found.search(lines[-index]) is not None: break
     if index == len(lines): return None
     index -= 4
-    line_re = re.compile(r"""^\s*\d+\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s*$""")
-    for i in xrange(0, index): 
+    line_re = re.compile(r"""^\s*\d+((\s+\S+)+)\s*$""")
+    for i in xrange(0, index):
       match = line_re.match(lines[-index+i])
       if match is None: break
-      result.append([float(match.group(j)) for j in range(1, 5)])
+      stgs = match.group(1).split()
+      stgs = stgs[:-1]     # omit the last column, "tot"
+      vals = [float( stg) for stg in stgs]
+      result.append( vals)
     return array(result, dtype="float64")
 
   @property
@@ -1177,7 +1353,7 @@ class ExtractBase(object):
   @property
   @make_cached
   def eigenvalues(self):
-    """ Greps eigenvalues from OUTCAR. 
+    """ Greps eigenvalues from OUTCAR.
 
         In spin-polarized cases, the leading dimension of the numpy array are
         spins, followed by kpoints, and finally with bands. In spin-unpolarized
@@ -1194,7 +1370,7 @@ class ExtractBase(object):
   @property
   @make_cached
   def occupations(self):
-    """ Greps occupations from OUTCAR. 
+    """ Greps occupations from OUTCAR.
 
         In spin-polarized cases, the leading dimension of the numpy array are
         spins, followed by kpoints, and finally with bands. In spin-unpolarized
@@ -1205,7 +1381,7 @@ class ExtractBase(object):
     from numpy import array
     if self.ispin == 2:
       return array(self._spin_polarized_values(2), dtype="float64")
-    return array(self._unpolarized_values(2), dtype="float64") 
+    return array(self._unpolarized_values(2), dtype="float64")
 
   @property
   @make_cached
@@ -1259,10 +1435,10 @@ class ExtractBase(object):
       data = line.split()
       if len(data) == 0: break
       result.extend([m.group(1) for m in regex.finditer(line)])
-        
+
     return array(result, dtype="float64") * eV
 
-  @property 
+  @property
   @make_cached
   def electronic_dielectric_constant(self):
     """ Electronic contribution to the dielectric constant. """
@@ -1282,7 +1458,7 @@ class ExtractBase(object):
     return array( [result.group(i) for i in range(1,10)],                      \
                   dtype='float64').reshape((3,3) )
 
-  @property 
+  @property
   @make_cached
   def ionic_dielectric_constant(self):
     """ Ionic contribution to the dielectric constant. """
@@ -1297,12 +1473,12 @@ class ExtractBase(object):
             r"\s*(\S+)\s+(\S+)\s+(\S+)\s*\n"                                   \
             r"\s*-+\s*\n"
     result = self._find_last_OUTCAR(regex, multline)
-    if result is None: 
+    if result is None:
       raise GrepError('Could not find dielectric tensor in output.')
     return array( [result.group(i) for i in range(1,10)],                      \
                   dtype='float64').reshape((3,3) )
 
-  @property 
+  @property
   def dielectric_constant(self):
     """ Dielectric constant of the material. """
     if not self.is_dft: raise AttributeError('not a DFT calculation.')
@@ -1317,16 +1493,16 @@ class ExtractBase(object):
     from numpy import zeros, abs, array
     from numpy.linalg import det
     from quantities import eV, J, kbar
-    from re import finditer, M 
+    from re import finditer, M
     if self.isif < 1: return None
     pattern                                                                    \
       = """\s*Total\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s*\n"""    \
         """\s*in kB\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s*\n"""
     result = []
     with self.__outcar__() as file:
-      for regex in finditer(pattern, file.read(), M): 
-        stress = zeros((3,3), dtype="float64"), zeros((3,3), dtype="float64") 
-        for i in xrange(2): 
+      for regex in finditer(pattern, file.read(), M):
+        stress = zeros((3,3), dtype="float64"), zeros((3,3), dtype="float64")
+        for i in xrange(2):
           for j in xrange(3): stress[i][j, j] += float(regex.group(i*6+1+j))
           stress[i][0,1] += float(regex.group(i*6+4))
           stress[i][1,0] += float(regex.group(i*6+4))
@@ -1368,21 +1544,21 @@ class ExtractBase(object):
   @property
   @make_cached
   def errors(self):
-    """ List of errors. 
-    
+    """ List of errors.
+
         Errors that are encountered more than once are not repeated.
     """
     errors = []
     with self.__outcar__() as file:
       for line in file:
-        if 'ERROR'.lower() in line.lower() and line[-1] not in errors: 
+        if 'ERROR'.lower() in line.lower() and line[-1] not in errors:
           errors.append(line[:-1])
     return errors
   @property
   @make_cached
   def warnings(self):
-    """ List of warnings. 
-    
+    """ List of warnings.
+
         Warnings that are encountered more than once are not repeated.
     """
     warnings = []
@@ -1393,15 +1569,15 @@ class ExtractBase(object):
     return warnings
 
   def __dir__(self):
-    """ Attributes and members of this class. 
+    """ Attributes and members of this class.
 
         Removes dft and gw attributes if this is not a dft or gw calculation.
     """
     result = set([u for u in dir(self.__class__) if u[0] != '_'])              \
              | set([u for u in self.__dict__.iterkeys() if u[0] != '_' ])
-    if not self.is_gw: 
+    if not self.is_gw:
       result -= set(['qp_eigenvalues', 'self_energies'])
-    if not self.is_dft: 
+    if not self.is_dft:
       result -= set( [ 'energy_sigma0', 'energies_sigma0',
 		       'all_total_energies', 'fermi0K', 'halfmetallic', 'cbm',
 		       'vbm', 'total_energies', 'total_energy', 'fermi_energy',

@@ -161,7 +161,8 @@ bool is_primitive(Structure const &_structure, types::t_real _tolerance)
   if( _structure.size() == 0 )
   { 
     PYLADA_PYERROR(ValueError, "Empty structure.");
-    BOOST_THROW_EXCEPTION(error::internal() << error::string("empty structure"));
+    //BOOST_THROW_EXCEPTION(error::internal() << error::string("empty structure"));
+    BOOST_THROW_EXCEPTION(error::internal());
   }
 
   // copies lattice.

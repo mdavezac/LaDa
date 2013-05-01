@@ -219,6 +219,8 @@ class ProgramProcess(Process):
     from ..error import ValueError
     from .. import mpirun_exe, launch_program as launch
     from . import which
+    from pylada.misc import bugLev
+
     # Open stdout and stderr if necessary.
     with Changedir(self.outdir) as cwd:
       if self.stdout is None: file_out = None
@@ -241,18 +243,35 @@ class ProgramProcess(Process):
       formatter = {}
       cmdl = ' '.join(str(u) for u in self.cmdline)
       formatter['program'] = '{0} {1}'.format(program, cmdl)
+      if bugLev >= 5:
+        print "process.program: next: formatter: %s" % (formatter,)
+        print "process.program: next: self.cmdline: %s" % (self.cmdline,)
+        print "process.program: next: cmdl: \"%s\"" % (cmdl,)
+        print "process.program: next: formatter[pgm]: \"%s\"" \
+          % (formatter['program'],)
+
       # gives opportunity to modify the communicator before launching a
       # particular program.
       if self.cmdlmodifier is not None:
         self._modcomm = self.cmdlmodifier(formatter, self._comm)
         if self._modcomm is self._comm: self._modcomm = None
+      if bugLev >= 5:
+        print "process.program: next: self._comm: %s" % (self._comm,)
+        print "process.program: next: self._modcomm: %s" % (self._modcomm,)
       comm    = self._comm if self._modcomm is None else self._modcomm 
       cmdline = mpirun_exe
+      if bugLev >= 5:
+        print "process.program: next: cmdline: \"%s\"" % (cmdline,)
+        print "process.program: next: comm: %s" % (comm,)
     else:
       cmdl = ' '.join(str(u) for u in self.cmdline)
       cmdline   = '{0} {1}'.format(program, cmdl)
       comm      = None
       formatter = None
+      if bugLev >= 5:
+        print "process.program: next: no mpi: cmdl: \"%s\"" % (cmdl,)
+        print "process.program: next: no mpi: cmdline: \"%s\"" % (cmdline,)
+        print "process.program: next: no mpi: comm: %s" % (comm,)
 
     self.process = launch( cmdline, comm=comm, formatter=formatter,
                            env=environ, stdout=file_out, stderr=file_err,

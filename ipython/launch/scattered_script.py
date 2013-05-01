@@ -44,7 +44,11 @@ def main():
   timeout = None if options.timeout <= 0 else options.timeout
   
   jobfolder = jobfolder.load(options.pickle, timeout=timeout)
+  print '  ipy/lau/scattered_script: jobfolder: ', jobfolder
+  print '  ipy/lau/scattered_script: options: ', options
   for name in options.names:
+    print '  ipy/lau/scattered_script: before compute for name: ', name
     jobfolder[name].compute(comm=pylada.default_comm, outdir=name)
+    print '  ipy/lau/scattered_script: after compute for name: ', name
 
 if __name__ == "__main__": main()

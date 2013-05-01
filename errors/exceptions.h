@@ -54,7 +54,7 @@ namespace Pylada
 #   define PYLADA_PYTHROW(EXCEPTION, MESSAGE)                                       \
       {                                                                           \
         PYLADA_PYERROR(EXCEPTION, MESSAGE);                                         \
-        BOOST_THROW_EXCEPTION(error::EXCEPTION() << error::string(MESSAGE));      \
+        BOOST_THROW_EXCEPTION(error::EXCEPTION());      \
       }
 
     //! \def PYLADA_PYERROR(EXCEPTION, MESSAGE)

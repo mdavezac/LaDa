@@ -51,6 +51,8 @@ class BaseKeyword(object):
         <pylada.dftcrystal.functional.Functional>` functional would render as
         "SIGMA\n0.6\n".
     """
+    #print "tools/keywords: BaseKeyword.output: keyword: %s" \
+    #  % (self.keyword,)
     if getattr(self, 'keyword', None) is None: return None
     return {self.keyword: getattr(self, 'raw', None)}
 
@@ -98,6 +100,8 @@ class ValueKeyword(BaseKeyword):
   def __init__(self, keyword=None, value=None):
     """ Initializes a keyword with a value. """
     super(ValueKeyword, self).__init__(keyword=keyword)
+    #print "tools/keywords: ValueKeyword.const: keyword: %s  value: %s" \
+    #  % (keyword, value,)
     self.value = value
     """ The value to print to input. 
 
@@ -171,6 +175,8 @@ class ValueKeyword(BaseKeyword):
 
   def output_map(self, **kwargs):
     """ Map keyword, value """
+    #print "tools/keywords: ValueKeyword.output: keyword: %s  value: %s" \
+    #  % (self.keyword, self.value,)
     if self.value is None: return None
     return super(ValueKeyword, self).output_map(**kwargs)
   
@@ -251,6 +257,8 @@ class TypedKeyword(ValueKeyword):
     """ Initializes a keyword with a value. """
     from ...error import ValueError
     super(TypedKeyword, self).__init__(keyword=keyword, value=None)
+    #print "tools/keywords: TypedKeyword.const: keyword: %s  value: %s" \
+    #  % (keyword, value,)
     if isinstance(type, list) and len(type) == 0:
       raise ValueError('type must be class or a non-empty list of classes')
 
@@ -393,6 +401,8 @@ class BoolKeyword(ValueKeyword):
     self._value = (value == True)
   def output_map(self, **kwargs):
     """ Map keyword, value """
+    #print "tools/keywords: BoolKeyword.output: keyword: %s  value: %s" \
+    #  % (self.keyword, self.value,)
     if self.value == False: return None
     return super(BoolKeyword, self).output_map(**kwargs)
 
@@ -439,6 +449,8 @@ class ChoiceKeyword(BaseKeyword):
   def raw(self, value): self.value = value
   def output_map(self, **kwargs):
     """ Map keyword, value """
+    #print "tools/keywords: ChoiceKeyword.output: keyword: %s  value: %s" \
+    #  % (self.keyword, self.value,)
     if self._value is None: return None
     if getattr(self, 'keyword', None) is None: return None
     return { self.keyword: str(self.value) }
@@ -532,6 +544,8 @@ class AliasKeyword(ValueKeyword):
   def __init__(self, aliases=None, value=None, keyword=None):
     """ Initializes a an AliasKeyword """
     super(AliasKeyword, self).__init__(value=value, keyword=keyword)
+    #print "tools/keywords: AliasKeyword.const: keyword: %s  value: %s" \
+    #  % (keyword, value,)
     if aliases is not None:
       self.aliases = aliases
       """ Mapping from many aliases to same output. """
@@ -557,6 +571,8 @@ class AliasKeyword(ValueKeyword):
                        .format(self.keyword, value) )
   def output_map(self, **kwargs):
     """ Returns output map. """
+    #print "tools/keywords: AliasKeyword.output: keyword: %s  value: %s" \
+    #  % (self.keyword, self.value,)
     if self._value is None: return None
     if getattr(self, 'keyword', None) is None: return None
     return {self.keyword: str(self._value)}

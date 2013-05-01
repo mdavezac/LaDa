@@ -40,7 +40,7 @@ PyObject* dnc_boxes( const Structure &_structure,
                             math::iVector3d const &_mesh, 
                             types::t_real _overlap)
 {
-  namespace bt = boost::tuples;
+  //namespace bt = boost::tuples;
   typedef math::iVector3d iVector3d;
   typedef math::rVector3d rVector3d;
   typedef math::rMatrix3d rMatrix3d;

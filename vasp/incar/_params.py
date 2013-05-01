@@ -260,10 +260,13 @@ class Ediff(SpecialVaspParam):
   def __init__(self, value):
     """ Creates *per atom* tolerance. """
     super(Ediff, self).__init__(value)
+    print "vasp/incar/_params: Ediff.const: value: %s" % (value,)
   def incar_string(self, **kwargs):
     if self.value is None: return 
     if self.value < 0: return "EDIFF = {0} ".format(-self.value)
-    return "EDIFF = {0} ".format(self.value * float(len(kwargs["structure"])))
+    res = "EDIFF = {0} ".format(self.value * float(len(kwargs["structure"])))
+    print "vasp/incar/_params: Ediff.incar_string: res: %s" % (res,)
+    return res
   def __repr__(self):
     return "{0.__class__.__name__}({0.value!r})".format(self)
 

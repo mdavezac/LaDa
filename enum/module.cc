@@ -46,7 +46,7 @@ namespace Pylada
         }
       PYLADA_IFTYPE(NPY_FLOAT, python::numpy::type<npy_float>::np_type)
       else PYLADA_IFTYPE(NPY_DOUBLE, python::numpy::type<npy_double>::np_type)
-      else PYLADA_IFTYPE(NPY_LONGDOUBLE, python::numpy::type<npy_longdouble>::np_type)
+      //else PYLADA_IFTYPE(NPY_LONGDOUBLE, python::numpy::type<npy_longdouble>::np_type)
 #     undef PYLADA_WITH_DATA_TYPE
       Py_RETURN_TRUE;
     }

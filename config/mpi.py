@@ -103,13 +103,36 @@ def launch_program( cmdl, comm=None, formatter=None, env=None,
   from subprocess import Popen
   from pylada import machine_dependent_call_modifier
   from pylada.misc import Changedir
+  from pylada.misc import bugLev
 
+  if bugLev >= 5:
+    print "config/mpi: launch_program: entry"
+    print "  parm cmdl: %s  type: %s" % (cmdl, type(cmdl),)
+    print "  parm comm: %s  type: %s" % (comm, type(comm),)
+    print "  parm formatter: %s  type: %s" % (formatter, type(formatter),)
+    print "  parm env: %s  type: %s" % (env, type(env),)
+    print "  parm outdir: %s  type: %s" % (outdir, type(outdir),)
+
+  # At this point formatter is {"program": vasp}
+  # and cmdl is "mpirun -n {n} {placement} {program}"
+
+  # Set in formatter: 'placement': '', 'ppn': 8, 'n': 8
   # make sure that the formatter contains stuff from the communicator, eg the
   # number of processes.
   if comm is not None and formatter is not None:
     formatter.update(comm)
+  if bugLev >= 5:
+    print "config/mpi: launch_program: comm mod formatter: %s" % (formatter,)
+
+  # Set in formatter: 'placement': '-machinefile /home.../pylada_commtempfile'
   # Stuff that will depend on the supercomputer.
   machine_dependent_call_modifier(formatter, comm, env)
+  if bugLev >= 5:
+    print "config/mpi: launch_program: mach mod formatter: %s" % (formatter,)
+
+  formatter["placement"] = "numa_wrapper -ppn=8"
+  if bugLev >= 5:
+    print "config/mpi: launch_program: plac formatter: %s" % (formatter,)
 
   # if a formatter exists, then use it on the cmdl string.
   if formatter is not None: cmdl = cmdl.format(**formatter)
@@ -117,6 +140,8 @@ def launch_program( cmdl, comm=None, formatter=None, env=None,
   elif comm is not None: cmdl = cmdl.format(**comm)
 
   # Split command from string to list
+  if bugLev >= 1:
+    print "config/mpi: launch_program: final cmdl: \"%s\"" % (cmdl,)
   cmdl = shlex_split(cmdl)
 
   # makes sure the directory exists:
@@ -147,7 +172,7 @@ queues = ()
     It is not required for slurm systems. 
     If empty, then %launch will not have a queue option.
 """
-accounts = ['BES000']
+accounts = ['CSC000', 'BES000']   # was: ['BES000']
 """ List of slurm or pbs accounts allowed for use. 
 
     This is used by ipython's %launch magic function. 
@@ -176,35 +201,56 @@ qsub_array_exe = None
 qdel_exe = 'scancel'
 """ Qdel/scancel executable. """
 
-default_pbs = { 'account': accounts[0], 'walltime': "06:00:00", 'nnodes': 1,
+default_pbs = { 'account': accounts[0], 'walltime': "00:30:00", 'nnodes': 1,
                 'ppn': 1, 'header': "", 'footer': "" }
 """ Defaults parameters filling the pbs script. """
-pbs_string =  "#! /bin/bash/\n"                                                \
-              "#SBATCH --account={account}\n"                                  \
-              "#SBATCH --time={walltime}\n"                                    \
-              "#SBATCH -N={nnodes}\n"                                          \
-              "#SBATCH -e={err}\n"                                             \
-              "#SBATCH -o={out}\n"                                             \
-              "#SBATCH -J={name}\n"                                            \
-              "#SBATCH -D={directory}\n\n"                                     \
-              "{header}\n"                                                     \
-              "python {scriptcommand}\n"                                       \
-              "{footer}\n"
+pbs_string =  '''#!/bin/bash
+#SBATCH --account={account}
+#SBATCH --time={walltime}
+#SBATCH -N {nnodes}
+#SBATCH -e {err}
+#SBATCH -o {out}
+#SBATCH -J {name}
+#SBATCH -D {directory}
+
+echo config/mpi.py pbs_string: header: {header}
+echo config/mpi.py pbs_string: scriptcommand: python {scriptcommand}
+echo config/mpi.py pbs_string: footer: {footer}
+
+{header}
+python {scriptcommand}
+{footer}
+
+'''
 """ Default pbs/slurm script. """
 
 do_multiple_mpi_programs = True
 """ Whether to get address of host machines at start of calculation. """
 
-figure_out_machines =  'from socket import gethostname\n'                      \
-                       'from boost.mpi import gather, world\n'                 \
-                       'hostname = gethostname()\n'                            \
-                       'results = gather(world, hostname, 0)\n'                \
-                       'if world.rank == 0:\n'                                 \
-                       '  for hostname in results:\n'                          \
-                       '    print "PYLADA MACHINE HOSTNAME:", hostname\n'        \
-                       'world.barrier()\n'
-""" Figures out machine hostnames for a particular job.
+# Figure out machine hostnames for a particular job.
+# Can be any programs which outputs each hostname (once per processor),
+# preceded by the string "PYLADA MACHINE HOSTNAME:"
 
-    Can be any programs which outputs each hostname (once per processor),
-    preceded by the string "PYLADA MACHINE HOSTNAME:"
-"""
+figure_out_machines =  '''
+from socket import gethostname
+from mpi4py import MPI
+import os
+
+comm = MPI.COMM_WORLD
+size = comm.Get_size()
+rank = comm.Get_rank()
+
+nm = gethostname()
+#fname = os.getenv("HOME") + "/temp.figure_out_machines.%03d" % (rank,)
+#fdebug = open( fname, "w")
+#print >> fdebug, \
+#  "config/mpi.py: figure_out_machines: size: %d  rank: %d  nm: %s" \
+#  % (size, rank, nm,)
+
+names = comm.gather( nm, root=0)
+if rank == 0:
+  for nm in names:
+    print "PYLADA MACHINE HOSTNAME:", nm
+    #print >> fdebug, "config/mpi.py: figure_out_machines: nm: %s" % (nm,)
+#fdebug.close()
+'''
