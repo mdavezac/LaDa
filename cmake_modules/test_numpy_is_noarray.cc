@@ -1,8 +1,7 @@
 #include <Python.h>
 #include <numpy/ndarraytypes.h>
+#ifndef NPY_ARRAY_C_CONTIGUOUS
+# error "NO ARRAY"
+#endif
 
-int main() {
-  int a(NPY_ARRAY_C_CONTIGUOUS);
-    
-  return 0;
-}
+int main() { return 0; }
