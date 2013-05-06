@@ -30,6 +30,7 @@
           PyArray_STRIDES(result)[0] = _in.innerStride() * sizeof(typename t_ScalarType::np_type);
           PyArray_STRIDES(result)[1] = _in.outerStride() * sizeof(typename t_ScalarType::np_type);
         }
+        Py_INCREF(_parent);
         PyArray_SetBaseObject(result, _parent);
       }
       // otherwise, copy data.
@@ -73,6 +74,7 @@
           PyArray_STRIDES(result)[0] = _in.innerStride() * sizeof(typename t_ScalarType::np_type);
           PyArray_STRIDES(result)[1] = _in.outerStride() * sizeof(typename t_ScalarType::np_type);
         }
+        Py_INCREF(_parent);
         PyArray_SetBaseObject(result, _parent);
       }
       // otherwise, copy data.

@@ -17,6 +17,7 @@ PyObject* pylada_atom_getpos(PyAtomObject *_self, void *closure)
   int const value = python::numpy::type<math::rVector3d::Scalar>::value;
   PyArrayObject* result = (PyArrayObject*) PyArray_SimpleNewFromData(1, dims, value, _self->pos.data());
   if(result == NULL) return NULL;
+  Py_INCREF(_self);
   PyArray_SetBaseObject(result, (PyObject*)_self);
   return (PyObject*)result;
 }
