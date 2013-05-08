@@ -84,6 +84,8 @@
           for(int j(0); j < _in.cols(); ++j)
             *((typename t_ScalarType::np_type*) PyArray_GETPTR2(result, i, j)) = _in(i, j);
       }
+      if(not (PyArray_FLAGS(result) & NPY_ARRAY_WRITEABLE))
+        PyArray_ENABLEFLAGS(result, NPY_ARRAY_WRITEABLE);
       return (PyObject*)result;
     }
   //! Converts an input sequence to a cell.

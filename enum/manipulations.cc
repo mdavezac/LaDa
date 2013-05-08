@@ -3,7 +3,7 @@
 #include <Python.h>
 #define PY_ARRAY_UNIQUE_SYMBOL pylada_enum_ARRAY_API
 #define NO_IMPORT_ARRAY
-#include <numpy/arrayobject.h>
+#include <python/include_numpy.h>
 
 #include <vector>
 #include <algorithm>

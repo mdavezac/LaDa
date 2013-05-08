@@ -9,9 +9,9 @@
 #  define NPY_ARRAY_WRITEABLE    NPY_WRITEABLE
 #endif
 #ifndef LADA_NPY_HAS_ENABLEFLAGS
-#  define PyArray_ENABLEFLAGS(array, flags) array->flags |= flags
-#  define PyArray_CLEARFLAGS(array, flags)  array->flags &= (!flags)
-#  define PyArray_SetBaseObject(array, base) array->base = base
+#  define PyArray_ENABLEFLAGS(ARRAY, FLAGS) ARRAY->flags |= FLAGS
+#  define PyArray_CLEARFLAGS(ARRAY, FLAGS)  ARRAY->flags &= (!FLAGS)
+#  define PyArray_SetBaseObject(ARRAY, BASE) ARRAY->base = BASE
 #endif
 
 #endif

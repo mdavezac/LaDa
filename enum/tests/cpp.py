@@ -44,7 +44,8 @@ def test_ndimiterator():
   iterator = NDimIterator(5, 5, 5)
   u = iterator.next()
   try: u[1] = 2
-  except ValueError: pass
+  except ValueError: pass   # numpy >= 1.7
+  except RuntimeError: pass # numpy < 1.7
   else: raise Exception()
 
   try: NDimIterator(5, 0, 1)
