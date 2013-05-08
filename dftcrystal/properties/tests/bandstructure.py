@@ -52,8 +52,8 @@ def test():
                  -1.98097196,  -1.98097196,   1.00052165,   1.49996607,
                   1.49996607,   1.49996607,   1.63212276,   1.63212276,
                   1.63212276,   1.66407077] ] * hartree
-     assert all(abs(result0.bandstructure.eigenvalues[0,0] - test[0]) < 1e-3)
-     assert all(abs(result0.bandstructure.eigenvalues[0,-1] - test[1]) < 1e-3)
+     assert all(abs(result0.bandstructure.eigenvalues[0,0] - test[0]) < 1e-8)
+     assert all(abs(result0.bandstructure.eigenvalues[0,-1] - test[1]) < 1e-8)
      test = array([[  6.66666667e-02,   0, 0],
                    [  1.33333333e-01,   0, 0],
                    [  2.00000000e-01,   0, 0],
