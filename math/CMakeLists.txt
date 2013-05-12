@@ -15,7 +15,4 @@ if(NOT noinstall_headers)
   install(FILES ${PYMATH_HEADERS} DESTINATION include/Pylada/math)
 endif(NOT noinstall_headers)
 
-if(compile_tests OR compile_debug_tests)
-  add_subdirectory(tests)
-endif(compile_tests OR compile_debug_tests)
-
+add_subdirectory(tests)

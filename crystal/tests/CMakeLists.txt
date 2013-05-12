@@ -1,4 +1,4 @@
-if(NOT compile_debug_tests)
+if(do_tests)
 
   add_test(crystal_atom python ${CMAKE_CURRENT_SOURCE_DIR}/atom.py ${CMAKE_CURRENT_BINARY_DIR})
   add_test(crystal_atom_memory python ${CMAKE_CURRENT_SOURCE_DIR}/atom_memory.py ${CMAKE_CURRENT_BINARY_DIR})
@@ -34,4 +34,4 @@ if(NOT compile_debug_tests)
 
   add_test(crystal_gulp python ${CMAKE_CURRENT_SOURCE_DIR}/write_gulp.py)
 
-endif(NOT compile_debug_tests)
+endif(do_tests)

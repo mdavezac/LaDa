@@ -13,6 +13,4 @@ target_link_libraries(pyce ${PYTHON_LIBRARIES})
 install(TARGETS pyce DESTINATION ${CMAKE_PYINSTALL_PREFIX}/pylada/ce)
 
 
-if(compile_tests OR compile_debug_tests)
-  add_subdirectory(tests)
-endif(compile_tests OR compile_debug_tests)
+add_subdirectory(tests)

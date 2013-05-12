@@ -51,6 +51,4 @@ if(NOT noinstall_headers)
   install(FILES ${PYHELPER_HEADERS} DESTINATION include/Pylada/python)
 endif(NOT noinstall_headers)
 
-if(compile_tests OR compile_debug_tests)
-  add_subdirectory(tests)
-endif(compile_tests OR compile_debug_tests)
+add_subdirectory(tests)

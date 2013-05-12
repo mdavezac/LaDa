@@ -19,6 +19,4 @@ target_link_libraries(pyvff ${PYTHON_LIBRARIES})
 install(TARGETS pyvff DESTINATION ${CMAKE_PYINSTALL_PREFIX}/pylada/vff)
 
 
-if(compile_tests OR compile_debug_tests)
-  add_subdirectory(tests)
-endif(compile_tests OR compile_debug_tests)
+add_subdirectory(tests)

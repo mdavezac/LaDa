@@ -49,7 +49,7 @@ def test(Class):
     del b
     gc.collect()
   mem2 = float(get_mem() - startmem)
-  assert mem2 < mem / 10.0
+  assert mem2 < mem / 5.0
   assert len(gc.garbage) == 0
 
 if __name__ == "__main__": 

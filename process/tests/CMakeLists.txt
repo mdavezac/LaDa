@@ -1,4 +1,4 @@
-if(NOT compile_debug_tests)
+if(do_tests)
   if(DEFINED MPI_CXX_COMPILER)
     add_executable (pifunc functional.cc)
     include_directories(${MPI_CXX_INCLUDE_PATH})
@@ -14,4 +14,4 @@ if(NOT compile_debug_tests)
     endif(jobfolder_package)
   endif(DEFINED MPI_CXX_COMPILER)
 
-endif(NOT compile_debug_tests)
+endif(do_tests)

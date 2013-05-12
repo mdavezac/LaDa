@@ -12,6 +12,4 @@ set_target_properties(pyenum PROPERTIES SUFFIX ".so")
 target_link_libraries(pyenum ${PYTHON_LIBRARIES})
 install(TARGETS pyenum DESTINATION ${CMAKE_PYINSTALL_PREFIX}/pylada/enum)
 
-if(compile_tests OR compile_debug_tests)
-  add_subdirectory(tests)
-endif(compile_tests OR compile_debug_tests)
+add_subdirectory(tests)
