@@ -11,11 +11,8 @@ class BoolKeyword(BaseBoolKeyword):
   def __init__(self, keyword=None, value=None):
     """ Initializes FullOptG keyword. """
     super(BoolKeyword, self).__init__(keyword=keyword, value=value)
-    #print "vasp/keywords: init: value: ", value
   def output_map(self, **kwargs):
     """ Map keyword, value """
-    #print "vasp/keywords: BoolKeyword.output: keyword: %s  value: %s" \
-    #  % (self.keyword, self.value,)
     if self.value is None: return None
     if getattr(self, 'keyword', None) is None: return None
     return { self.keyword: '.TRUE.' if self.value else '.FALSE.' }
@@ -66,13 +63,10 @@ class Magmom(ValueKeyword):
                         'Should be True, False, None, or an adequate string'   \
                         .format(value) )
     else: self._value = value
-    #print "vasp/keywords: setter: value: ", value
 
   def output_map(self, **kwargs):
     """ MAGMOM input for VASP. """
     from ..crystal import specieset
-    #print "vasp/keywords: Magmom.output: keyword: %s  value: %s" \
-    #  % (self.keyword, self.value,)
     if self.value is None or self.value == False: return None
     if kwargs['vasp'].ispin == 1: return None
     if isinstance(self.value, str): return {self.keyword: str(self.value)}
@@ -117,8 +111,6 @@ class System(ValueKeyword):
 
         Never throws.
     """
-    #print "vasp/keywords: System.output: keyword: %s  value: %s" \
-    #  % (self.keyword, self.value,)
     try: 
       if self.value is None:
         if len(getattr(kwargs['structure'], 'name', '')) == 0: return None
@@ -162,8 +154,6 @@ class Npar(ValueKeyword):
 
   def output_map(self, **kwargs):
     from math import log, sqrt
-    #print "vasp/keywords: Npar.output: keyword: %s  value: %s" \
-    #  % (self.keyword, self.value,)
     if self.value is None: return None
     if not isinstance(self.value, str): 
       if self.value < 1: return None
@@ -220,8 +210,6 @@ class ExtraElectron(TypedKeyword):
     return fsum( valence[atom.type] for atom in structure )
     
   def output_map(self, **kwargs):
-    #print "vasp/keywords: ExtraElectron.output: keyword: %s  value: %s" \
-    #  % (self.keyword, self.value,)
     if self.value is None: return None
     if self.value == 0: return None
     # gets number of electrons.
@@ -342,9 +330,7 @@ class Ediff(TypedKeyword):
   def __init__(self, value=None):
     """ Creates *per atom* tolerance. """
     super(Ediff, self).__init__(value=value)
-    #print "vasp/incar/keywords: Ediff.const: value: %s" % (value,)
   def __set__(self, instance, value):
-    #print "vasp/incar/keywords: Ediff.set: value: %s" % (value,)
     if value is None: 
       self.value = None 
       return
@@ -382,8 +368,6 @@ class EdiffPerAtom(TypedKeyword):
     if value < 0e0: value = 0
     return super(EdiffPerAtom, self).__set__(instance, value)
   def output_map(self, **kwargs):
-    #print "vasp/keywords: EdiffPerAtom.output: keyword: %s  value: %s" \
-    #  % (self.keyword, self.value,)
     if self.value is None: return 
     return { self.keyword: str(self.value * float(len(kwargs["structure"]))) }
 
@@ -443,8 +427,6 @@ class EdiffgPerAtom(TypedKeyword):
     instance.ediffg = None
     return super(EdiffgPerAtom, self).__set__(instance, value)
   def output_map(self, **kwargs):
-    #print "vasp/keywords: EdiffgPerAtom.output: keyword: %s  value: %s" \
-    #  % (self.keyword, self.value,)
     if self.value is None: return 
     if self.value > 0e0:
       return { self.keyword: str(self.value * float(len(kwargs["structure"]))) }
@@ -469,26 +451,19 @@ class Encut(ValueKeyword):
   def __init__(self, value=None): super(Encut, self).__init__(value=value)
 
   def output_map(self, **kwargs):
-    #print "vasp/keywords: Encut.output: keyword: %s  value: %s" \
-    #  % (self.keyword, self.value,)
     from quantities import eV
     from ..crystal import specieset
     value = self.value
-    #print "  vasp/keywords: Encut.output: test a"
     if hasattr(self.value, 'units'):
-      #print "  vasp/keywords: Encut.output: test b"
       value = self.value.rescale(eV).magnitude
       return {self.keyword: str(value)} if value > 1e-12 else None
-    #print "  vasp/keywords: Encut.output: test c"
     if value is None:   return None
     elif value < 1e-12: return None
     elif value >= 1e-12 and value <= 3.0:
-      #print "  vasp/keywords: Encut.output: test d"
       types = specieset(kwargs["structure"])
       encut = max(kwargs["vasp"].species[type].enmax for type in types)
       if hasattr(encut, 'rescale'): encut = float(encut.rescale(eV))
       return {self.keyword: str(encut * value)}
-    #print "  vasp/keywords: Encut.output: test e"
     return {self.keyword: str(value)}
 
 class EncutGW(Encut):
@@ -587,8 +562,6 @@ class ICharg(AliasKeyword):
     from ..error import ValueError
     from . import files
 
-    #print "vasp/keywords: Icharg.output: keyword: %s  value: %s" \
-    #  % (self.keyword, self.value,)
     icharge = self._value
     if icharge is None: return None
 
@@ -667,8 +640,6 @@ class IStart(AliasKeyword):
     from ..error import ValueError
     from . import files
 
-    #print "vasp/keywords: Istart.output: keyword: %s  value: %s" \
-    #  % (self.keyword, self.value,)
     istart = self._value
     if istart is None: return None
     # some files will be copied.
@@ -745,8 +716,6 @@ class IStruc(AliasKeyword):
     from ..crystal import write, read, specieset
     from . import files
 
-    #print "vasp/keywords: Istruc.output: keyword: %s  value: %s" \
-    #  % (self.keyword, self.value,)
     istruc = self._value
     if istruc is None: istruc = 0
     if kwargs.get('overwrite', False): istruc = 0
@@ -824,8 +793,6 @@ class LDAU(BoolKeyword):
     from ..crystal import specieset
     from ..error import ValueError, ConfigError, internal
     from .. import vasp_has_nlep
-    #print "vasp/keywords: LDAU.output: keyword: %s  value: %s" \
-    #  % (self.keyword, self.value,)
     if self.value is None or self.value is False: return
     types = specieset(kwargs['structure'])
     species = kwargs['vasp'].species
@@ -941,8 +908,6 @@ class IBrion(BaseKeyword):
       raise ValueError('Unexpected value for IBRION')
     self.value = value
   def output_map(self, **kwargs):
-    #print "vasp/keywords: IBrion.output: keyword: %s  value: %s" \
-    #  % (self.keyword, self.value,)
     vasp = kwargs['vasp']
     if vasp.relaxation == 'static': 
       return {self.keyword: str(-1)}
@@ -1060,8 +1025,6 @@ class LSorbit(BoolKeyword):
       instance.ispin = 2
       instance.nonscf = True
   def output_map(self, **kwargs):
-    #print "vasp/keywords: LSorbit.output: keyword: %s  value: %s" \
-    #  % (self.keyword, self.value,)
     if self.value is None or self.value == False: return None
     vasp = kwargs['vasp']
     if not vasp.nonscf:

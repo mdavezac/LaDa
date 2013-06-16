@@ -26,11 +26,11 @@ namespace Pylada
         PYLADA_PYERROR(TypeError, "input must be a numpy array.\n");
         return NULL;
       }
-      if(PyArray_ISINTEGER(_array)) Py_RETURN_TRUE;
+      if(PyArray_ISINTEGER((PyArrayObject*)_array)) Py_RETURN_TRUE;
       python::Object iterator(PyArray_IterNew(_array));
       if(not iterator) return NULL;
       PyObject* i_iterator = iterator.borrowed();
-      int const type = ((PyArrayObject*)_array)->descr->type_num;
+      int const type = PyArray_TYPE((PyArrayObject*)_array);
 #     ifdef PYLADA_IFTYPE
 #       error PYLADA_IFTYPE already defined
 #     endif
@@ -87,8 +87,8 @@ namespace Pylada
         PYLADA_PYERROR(TypeError, "_lexcompare arguments should have the same size.");
         return NULL;
       }
-      if( first->descr->type_num != python::numpy::type<t_ndim>::value
-          or second->descr->type_num != python::numpy::type<t_ndim>::value )
+      if( PyArray_TYPE(first) != python::numpy::type<t_ndim>::value
+          or PyArray_TYPE(second) != python::numpy::type<t_ndim>::value )
       {
         PYLADA_PYERROR(TypeError, "Wrong kind for _lexcompare arguments.");
         return NULL;

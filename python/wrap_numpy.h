@@ -125,7 +125,7 @@
         }
         python::Object iterator = PyArray_IterNew(_in);
         if(not iterator) return false;
-        int const type = PyArray_DESCR(in_)->type_num;
+        int const type = PyArray_TYPE(in_);
 #       ifdef  PYLADA_NPYITER
 #         error PYLADA_NPYITER already defined
 #       endif
@@ -247,7 +247,7 @@
       {
         python::Object iterator = PyArray_IterNew(_in);
         if(not iterator) return false;
-        int const type = PyArray_DESCR((PyArrayObject*)_in)->type_num;
+        int const type = PyArray_TYPE((PyArrayObject*)_in);
 #       ifdef PYLADA_NPYITER
 #         error PYLADA_NPYITER is already defined.
 #       endif

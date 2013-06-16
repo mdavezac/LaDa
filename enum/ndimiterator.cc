@@ -120,25 +120,10 @@ namespace Pylada
       _self->yielded = (PyArrayObject*)
           PyArray_SimpleNewFromData(1, d, t_type::value, &_self->counter[0]);
       if(not _self->yielded) return -1;
-#     ifdef PYLADA_MACRO
-#       error PYLADA_MACRO already defined
-#     endif
-#     ifdef NPY_ARRAY_WRITEABLE
-#       define PYLADA_MACRO NPY_ARRAY_WRITEABLE
-#     else
-#       define PYLADA_MACRO NPY_WRITEABLE
-#     endif
-      if(_self->yielded->flags & PYLADA_MACRO) _self->yielded->flags -= PYLADA_MACRO;
-#     undef PYLADA_MACRO
-#     ifdef NPY_ARRAY_C_CONTIGUOUS
-#       define PYLADA_MACRO NPY_ARRAY_C_CONTIGUOUS
-#     else 
-#       define PYLADA_MACRO NPY_C_CONTIGUOUS
-#     endif
-      if(not (_self->yielded->flags & PYLADA_MACRO)) _self->yielded->flags += PYLADA_MACRO;
-#     undef PYLADA_MACRO
-      _self->yielded->base = (PyObject*)_self;
+      PyArray_CLEARFLAGS(_self->yielded,  NPY_ARRAY_WRITEABLE);
+      PyArray_ENABLEFLAGS(_self->yielded,  NPY_ARRAY_C_CONTIGUOUS);
       Py_INCREF(_self);
+      PyArray_SetBaseObject(_self->yielded, (PyObject*)_self);
       return 0;
     }
   
@@ -177,7 +162,7 @@ namespace Pylada
               PYLADA_PYERROR(internal, "Yielded was not initialized.");
               return NULL;
             }
-            if(_self->yielded->data != (char*)&_self->counter[0])
+            if(PyArray_DATA(_self->yielded) != (void*)&_self->counter[0])
             {
               PYLADA_PYERROR(internal, "Yielded does not reference counter.");
               return NULL;

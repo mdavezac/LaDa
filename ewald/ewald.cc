@@ -48,7 +48,7 @@ namespace Pylada
       const int verbosity(0);
       double energy(0);
       int error;
-      npy_intp dims[3] = {PyArray_DIM(positions, 0), 3, 6};
+      npy_intp dims[3] = {PyArray_DIM((PyArrayObject*)positions, 0), 3, 6};
       int const nptype = python::numpy::type<double>::value;
       python::Object forces = PyArray_ZEROS(2, dims, nptype, 0);
       if(not forces) return NULL;
@@ -60,17 +60,17 @@ namespace Pylada
 
       FC_GLOBAL( ewaldf, EWALDF )
       (
-        &verbosity,                                 // verbosity
-        &energy,                                    // Energy
-        (double*) PyArray_DATA(forces.borrowed()),  // forces (reduced)
-        (double*) PyArray_DATA(cforces.borrowed()), // forces (cartesian)
-        (double*) PyArray_DATA(stress.borrowed()),  // stress
-        &n0,                                        // number of atoms
-        (double*) PyArray_DATA(positions),          // reduced atomic coordinates.
-        (double*) PyArray_DATA(charges),            // atomic charges
-        &cutoff,                                    // g-space cutoff in Ry.
-        (double*) PyArray_DATA(cell),               // cell vectors
-        &n0,                                        // dimension of arrays.
+        &verbosity,                                                 // verbosity
+        &energy,                                                    // Energy
+        (double*) PyArray_DATA((PyArrayObject*)forces.borrowed()),  // forces (reduced)
+        (double*) PyArray_DATA((PyArrayObject*)cforces.borrowed()), // forces (cartesian)
+        (double*) PyArray_DATA((PyArrayObject*)stress.borrowed()),  // stress
+        &n0,                                                        // number of atoms
+        (double*) PyArray_DATA((PyArrayObject*)positions),          // reduced atomic coordinates.
+        (double*) PyArray_DATA((PyArrayObject*)charges),            // atomic charges
+        &cutoff,                                                    // g-space cutoff in Ry.
+        (double*) PyArray_DATA((PyArrayObject*)cell),               // cell vectors
+        &n0,                                                        // dimension of arrays.
         &error
       );
       if(error == 1)

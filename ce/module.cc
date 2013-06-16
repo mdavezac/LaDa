@@ -113,7 +113,7 @@ namespace Pylada
         }
 #     else
         PyArrayObject *result = (PyArrayObject*)PyTuple_GET_ITEM(_args, 0);
-        int const type = ((PyArrayObject*)result)->descr->type_num;
+        int const type = PyArray_TYPE((PyArrayObject*)result);
 #     endif
 
       Py_ssize_t const ndim = PyArray_NDIM(result);
